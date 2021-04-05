@@ -1,0 +1,32 @@
+.Component {
+  display: flex;
+  flex-flow: column;
+  flex: 1 0 auto;
+  width: 260px;
+  max-width: 260px;
+  align-self: center;
+  justify-content: center;
+
+  > *:not(:last-child) {
+    margin-bottom: 10px;
+  }
+
+  > .Wrapper {
+
+    > .Input {
+      flex: 1 1 auto;
+    }
+
+    > *:not(:last-child) {
+      margin-right: 10px;
+    }
+  }
+}
+
+.DialogContent {
+  flex-flow: column;
+  width: 335px;
+  justify-content: center;
+  align-items: center;
+  grid-row-gap: 10px;
+}

@@ -1,0 +1,8 @@
+_logs
+_files
+_tmp
+.idea
+
+*/.next
+*/.env
+*/node_modules

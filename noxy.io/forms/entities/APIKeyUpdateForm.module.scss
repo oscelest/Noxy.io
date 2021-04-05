@@ -1,0 +1,33 @@
+@import "../../variables";
+
+.Component {
+  flex:         1 0 auto;
+  flex-flow:    column;
+  grid-row-gap: 20px;
+
+  .Submit {
+    align-self: flex-start;
+  }
+
+  .Section {
+    flex:          1 1 auto;
+    flex-flow:     column;
+    grid-row-gap:  10px;
+    border:        $border-width solid $border-color;
+    border-radius: $border-radius;
+    padding:       10px;
+
+    .Header {
+
+    }
+
+    .Content {
+
+      .CheckboxList {
+        flex-flow: row;
+        grid-column-gap: 20px;
+
+      }
+    }
+  }
+}

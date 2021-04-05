@@ -1,0 +1,62 @@
+@import "../../variables";
+
+.Component {
+  flex: 0 0 auto;
+  flex-flow: column;
+  height: 38px;
+  padding: 0 4px;
+  background: white;
+  border-radius: 4px;
+  border: $border-width solid $border-color;
+  transition: .2s ease-in-out border;
+
+  &[data-active="true"] {
+    .Wrapper {
+      .Label {
+        font-size: 12px;
+      }
+
+      .Value {
+        height: 100%;
+      }
+    }
+  }
+
+  &[data-focus="true"] {
+    border: $focus-color solid $border-width;
+  }
+
+  .Wrapper {
+    flex: 1 1 auto;
+    flex-flow: column;
+    overflow: hidden;
+
+    .Label {
+      flex: 1 1 auto;
+      align-items: center;
+      height: 100%;
+      color: $text-color-muted;
+      font-size: 14px;
+      font-weight: bold;
+      transition: .2s ease-in-out font-size;
+      cursor: text;
+      user-select: none;
+
+      &.Error {
+        color: $text-color-error-light;
+      }
+    }
+
+    .Value {
+      flex: 1 1 auto;
+      align-items: center;
+      height: 0;
+      min-height: 0;
+      border: 0;
+      font-size: 14px;
+      line-height: 14px;
+      outline: none;
+      transition: .2s ease-in-out height;
+    }
+  }
+}

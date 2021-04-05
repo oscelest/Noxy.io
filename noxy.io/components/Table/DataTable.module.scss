@@ -1,0 +1,63 @@
+@import "../../variables";
+
+.Component {
+  flex: 1 1 auto;
+  flex-flow: column;
+
+  > .Header {
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+
+    > .HeaderRow {
+      flex: 1 1 auto;
+    }
+
+    > .HeaderFilter {
+      flex: 1 1 auto;
+      justify-content: flex-end;
+
+      > *:not(:first-child) {
+        margin-left: 5px;
+      }
+
+      > *:not(:nth-last-child(2)) {
+        margin-right: 5px;
+      }
+
+      > *:last-child {
+        margin: 0;
+      }
+
+      > .HeaderFilterInput {
+        min-width: 125px;
+      }
+
+      > .HeaderFilterComboBox {
+        min-width: 125px;
+      }
+
+      > .HeaderFilterDropdown {
+        left: auto;
+        right: 0;
+        padding: 5px;
+
+        .HeaderFilterDropdownItem {
+          width: calc(100% - 10px);
+          margin: 5px;
+        }
+      }
+    }
+  }
+
+  > .Body {
+    margin: 5px 0;
+  }
+
+  > .Footer {
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    //border-top: 3px solid #5A318E;
+  }
+}

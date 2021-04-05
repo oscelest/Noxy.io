@@ -1,0 +1,35 @@
+@import "../../variables";
+
+.Component {
+  flex-flow: column;
+
+  > .Loader {
+    align-items: center;
+    height: 24px;
+    overflow: hidden;
+    color: $text-color-muted;
+    text-indent: 5px;
+
+    > img {
+      margin-right: 5px;
+    }
+  }
+
+  > .Placeholder {
+    align-items: center;
+    height: 24px;
+    text-indent: 5px;
+    color: $text-color-muted;
+  }
+
+  > .Item {
+    cursor: pointer;
+    padding: 5px;
+
+    &.Selected {
+      color: white;
+      background-color: #1E90FF;
+    }
+  }
+
+}

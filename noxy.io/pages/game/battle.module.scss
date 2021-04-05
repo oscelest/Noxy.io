@@ -1,0 +1,100 @@
+.Component {
+  flex: 1 1 auto;
+  flex-flow: column;
+  padding: 20px;
+
+  > .Screen {
+    flex: 1 1 auto;
+    flex-flow: row;
+
+    > *:not(:first-of-type) {
+      margin-left: 10px;
+    }
+
+    > *:not(:last-of-type) {
+      margin-right: 10px;
+    }
+
+    > .TurnCounter {
+      flex: 0 0 auto;
+      width: 100px;
+      height: 100%;
+      border: 1px solid white;
+    }
+
+    > .Battlefield {
+      flex: 1 1 auto;
+      border: 1px solid white;
+    }
+
+    > .EnemyList {
+      flex: 0 0 auto;
+      width: 200px;
+      height: 100%;
+      border: 1px solid white;
+    }
+
+  }
+
+  > .Party {
+    flex: 0 0 auto;
+    height: 100px;
+
+    > *:not(:first-of-type) {
+      margin-left: 10px;
+    }
+
+    > *:not(:last-of-type) {
+      margin-right: 10px;
+    }
+
+    >.PartyMember {
+      width: 25%;
+      overflow: hidden;
+
+      >.Portrait {
+        flex: 0 0 auto;
+        width: 100px;
+        height: 100px;
+        border-radius: 70px;
+        border: 5px solid #ABABAB;
+        overflow: hidden;
+        z-index: 2;
+      }
+
+      >.Info{
+        width: 100%;
+        margin-top: 40px;
+        position: relative;
+        left: -20px;
+        z-index: 1;
+        flex-flow: column;
+
+        >.Name {
+          margin-left: 30px;
+          height: 20px;
+
+        }
+        >.Resources {
+          height: 40px;
+          flex-flow: column;
+
+          >.HealthBar {
+            flex: 1 1 auto;
+            background-color: darkgreen;
+            align-items: center;
+            justify-content: center;
+          }
+
+          >.PowerBar {
+            flex: 1 1 auto;
+            background-color: darkcyan;
+            align-items: center;
+            justify-content: center;
+          }
+        }
+      }
+    }
+  }
+
+}

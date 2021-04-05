@@ -1,0 +1,27 @@
+@import "../../variables";
+
+.Component {
+  flex:            0 0 auto;
+  align-items:     center;
+  justify-content: space-between;
+  grid-row-gap:    15px;
+  grid-column-gap: 15px;
+  min-height:      38px;
+
+  > .Title {
+    flex:            1 1 auto;
+    align-items:     flex-end;
+    justify-content: flex-start;
+    height:          100%;
+    border-bottom:   2px solid $background-secondary-color;
+    padding-bottom:  5px;
+    font-size:       22px;
+    line-height:     22px;
+  }
+
+  > .Content {
+    flex:            0 0 auto;
+    grid-row-gap:    10px;
+    grid-column-gap: 10px;
+  }
+}

@@ -1,0 +1,52 @@
+@import "../../variables";
+
+.Component {
+  flex-flow:                  column;
+  position:                   absolute;
+  top:                        100%;
+  left:                       0;
+  right:                      0;
+  overflow-x:                 hidden;
+  overflow-y:                 auto;
+  color:                      $background-secondary-color;
+  background-color:           white;
+  border:                     1px solid #afafaf;
+  border-bottom-left-radius:  $border-radius;
+  border-bottom-right-radius: $border-radius;
+  z-index:                    100;
+
+  &[hidden] {
+    border:     0 solid black !important;
+    max-height: 0 !important;
+    padding:    0 !important;
+  }
+
+  > .Loader {
+    justify-content: flex-start;
+    height:          24px;
+    margin:          2px;
+    position:        relative;
+    font-weight:     normal;
+    font-size:       14px;
+    line-height:     14px;
+    color:           rgba(100, 100, 100, 1);
+    cursor:          default;
+
+    > span {
+      margin-left: 5px;
+      padding-top: 2px;
+    }
+  }
+
+  > .Placeholder {
+    align-items: center;
+    height:      24px;
+    padding:     0 5px;
+    font-weight: normal;
+    font-size:   14px;
+    line-height: 14px;
+    color:       rgba(100, 100, 100, 1);
+    background:  rgba(240, 240, 240, 1);
+    cursor:      default;
+  }
+}

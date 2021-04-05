@@ -1,0 +1,27 @@
+.Component {
+  flex:         1 1 auto;
+  flex-flow:    column;
+  grid-row-gap: 10px;
+
+  .Content {
+    flex:            1 1 auto;
+    flex-flow:       row;
+    grid-column-gap: 10px;
+
+    .File {
+      flex: 1 1 auto;
+
+      .Preview {
+        flex:        1 1 auto;
+        align-items: flex-start;
+      }
+    }
+  }
+
+  .Sidebar {
+    flex:         0 0 auto;
+    flex-flow:    column;
+    width:        200px;
+    grid-row-gap: 10px;
+  }
+}

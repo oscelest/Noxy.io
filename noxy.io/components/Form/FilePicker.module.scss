@@ -1,0 +1,10 @@
+.Component {
+
+  > .Value {
+    display: none;
+  }
+
+  > .Button {
+    flex: 1 1 auto;
+  }
+}

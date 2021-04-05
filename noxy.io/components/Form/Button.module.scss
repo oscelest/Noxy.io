@@ -1,0 +1,41 @@
+@import "../../variables";
+
+.Component {
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  grid-column-gap: 5px;
+  height: 38px;
+  padding: 0 10px;
+  color: white;
+  border: $border-width solid $border-color;
+  border-radius: $border-radius;
+  background: $background-secondary-color;
+  cursor: pointer;
+  user-select: none;
+  transition: border .2s ease-in-out, color .2s ease-in-out, background .2s ease-in-out, box-shadow .2s ease-in-out;
+
+  &.Simple {
+    width: 38px;
+  }
+
+  &[data-disabled="false"] {
+    &:hover {
+      color: $focus-color;
+    }
+
+    &:focus {
+      outline: none;
+      border: $border-width solid $focus-color;
+    }
+
+    &:active {
+      background: $border-color;
+    }
+  }
+
+  &[data-disabled="true"] {
+    color: $disabled-color;
+    cursor: default;
+  }
+}

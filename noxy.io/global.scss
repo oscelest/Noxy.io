@@ -1,0 +1,67 @@
+@import "./variables.scss";
+
+html {
+  width:      100%;
+  height:     100%;
+  font-size:  10px;
+  //background: #743EAE;
+  background: linear-gradient(to top, #7e3ca1, #7c3ca4, #7a3da7, #773dab, #743eae);
+
+  body {
+    width:   100%;
+    height:  100%;
+    margin:  0;
+    padding: 0;
+    color:   white;
+    font:    $text-font;
+
+    div#__next {
+      flex-flow: column;
+      width:     100%;
+      height:    100%;
+      overflow:  auto;
+    }
+  }
+}
+
+p {
+  margin:      0;
+  line-height: 18px;
+}
+
+html, body, div, img, button, input, span, select, label {
+  display:    flex;
+  position:   relative;
+  box-sizing: border-box;
+}
+
+img {
+  flex:       0 0 auto;
+  max-width:  100%;
+  max-height: 100%;
+}
+
+button, input, select {
+  font: $text-font;
+}
+
+input {
+  margin:  0;
+  padding: 0;
+  width:   100%;
+}
+
+.Info {
+  border-color:     $info-primary-color;
+  background-color: $info-primary-color;
+
+  &:hover {
+    border-color:     $info-muted-color;
+    background-color: $info-primary-color;
+  }
+
+  &:focus {
+    background-color: $info-primary-color;
+    border-color:     $info-highlight-color;
+  }
+}

@@ -1,0 +1,15 @@
+@import "../../variables";
+
+.Component {
+  flex:         1 1 auto;
+  flex-flow:    column;
+  grid-row-gap: 10px;
+
+  .Switch {
+    flex:            1 1 auto;
+  }
+
+  .FileTagList {
+    grid-column-gap: 10px;
+  }
+}

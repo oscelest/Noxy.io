@@ -1,0 +1,30 @@
+@import "../../variables";
+
+.Component {
+  flex:         1 1 auto;
+  flex-flow:    column;
+  grid-row-gap: 10px;
+
+  .Search {
+    flex:            1 1 auto;
+    grid-column-gap: 10px;
+
+    .Input {
+      flex: 1 1 auto;
+    }
+
+    .Create {
+      flex: 0 0 auto;
+    }
+  }
+
+  .List {
+    flex:            1 1 auto;
+    grid-row-gap:    10px;
+    grid-column-gap: 10px;
+    min-height:      38px;
+    padding:         0 10px;
+    border-left:     2px solid $background-secondary-color;
+    border-right:    2px solid $background-secondary-color;
+  }
+}

@@ -1,0 +1,136 @@
+@import "../variables";
+
+.Component {
+  flex:         1 1 auto;
+  flex-flow:    column;
+  grid-row-gap: 20px;
+
+  > .Header {
+    flex:            0 0 auto;
+    align-items:     center;
+    justify-content: space-between;
+    grid-column-gap: 10px;
+
+    > .Title {
+      flex:            1 1 auto;
+      align-items:     flex-end;
+      justify-content: flex-start;
+      height:          100%;
+      border-bottom:   2px solid $background-secondary-color;
+      padding-bottom:  5px;
+      font-size:       22px;
+      line-height:     22px;
+    }
+
+    > .LogOut {
+      flex: 0 0 auto;
+    }
+
+    > .Masquerade {
+      flex:  0 0 auto;
+      width: 180px;
+    }
+  }
+
+  > .Main {
+    flex:            0 0 auto;
+    flex-flow:       row wrap;
+    justify-content: space-around;
+
+    > .Bubble {
+      flex:          0 0 auto;
+      flex-flow:     column;
+      align-self:    flex-start;
+      grid-row-gap:  10px;
+      padding:       25px;
+      margin-bottom: 25px;
+      border:        2px solid $background-secondary-color;
+      border-radius: $border-radius;
+
+      > .BubbleInput {
+        min-width: 240px;
+      }
+
+      > .BubbleTable {
+        flex-flow:       row;
+        justify-content: space-between;
+        grid-column-gap: 20px;
+
+        > .BubbleTableHeader {
+          flex-flow:    column;
+          align-items:  flex-end;
+          grid-row-gap: 5px;
+          font-weight:  bold;
+        }
+
+        > .BubbleTableText {
+          flex-flow:    column;
+          grid-row-gap: 5px;
+        }
+      }
+    }
+  }
+
+  > .Footer {
+    flex:         1 1 auto;
+    flex-flow:    column;
+    grid-row-gap: 20px;
+
+    > .Title {
+      flex:           0 0 auto;
+      border-bottom:  2px solid $background-secondary-color;
+      padding-bottom: 5px;
+      font-size:      22px;
+      line-height:    22px;
+    }
+  }
+}
+
+.Table {
+
+  .Header {
+    grid-column-gap: 10px;
+  }
+
+  .Content {
+    flex:            1 0 auto;
+    align-items:     center;
+    justify-content: center;
+    grid-column-gap: 20px;
+    margin:          10px;
+
+    .APIKey {
+      flex:      0 0 auto;
+      min-width: 18px;
+    }
+
+    > .Token {
+      flex:      1 0 auto;
+      min-width: 100px;
+    }
+
+    > .LimitDecasecond {
+      flex:      1 0 auto;
+      flex-flow: column;
+      min-width: 165px;
+    }
+
+    > .LimitMinute {
+      flex:      1 0 auto;
+      flex-flow: column;
+      min-width: 140px;
+    }
+
+    > .TimeCreated {
+      flex:      1 0 auto;
+      flex-flow: column;
+      min-width: 140px;
+    }
+
+    > .ActionList {
+      flex:            0 0 auto;
+      justify-content: space-around;
+      grid-column-gap: 10px;
+    }
+  }
+}
