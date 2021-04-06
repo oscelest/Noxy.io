@@ -53,9 +53,7 @@ export default class Permission {
   }
 
   public hasPermission(permission: PermissionLevel) {
-    const value = _.get(this, permission, null);
-    if (value === null) throw new ServerException(500, {permission}, "Permission level does not exist.");
-    return value;
+    return _.get(this, permission, false);
   }
 
   public toJSON() {

@@ -3,18 +3,19 @@ import * as FS from "fs";
 import _ from "lodash";
 import Path from "path";
 import * as TypeORM from "typeorm";
+import Logger from "../common/services/Logger";
 import Alias from "./classes/Alias";
 import HTTPMethods from "./enums/server/HTTPMethods";
-import Logger from "./services/Logger";
 import Server from "./services/Server";
+
 
 (async () => {
   if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");
   if (!process.env.LOG_PATH) throw new Error("LOG_PATH environmental value must be defined.");
   if (!process.env.FILE_PATH) throw new Error("FILE_PATH environmental value must be defined.");
 
-  if (!process.env.API_DOMAIN) throw new Error("API_DOMAIN environmental value must be defined.");
-  if (!process.env.MAIN_DOMAIN) throw new Error("MAIN_DOMAIN environmental value must be defined.");
+  if (!process.env.SERVICE) throw new Error("SERVICE environmental value must be defined.");
+  if (!process.env.DOMAIN) throw new Error("DOMAIN environmental value must be defined.");
 
   if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET environmental value must be defined.");
 
@@ -24,7 +25,7 @@ import Server from "./services/Server";
     FS.mkdir(process.env.LOG_PATH, _.noop);
     FS.mkdir(process.env.FILE_PATH, _.noop);
 
-    Logger.log({level: Logger.constants.levels.CONSOLE, message: "Server starting!"});
+    Logger.write(Logger.Level.INFO, "Server starting!");
 
     await TypeORM.createConnection({
       type:        "mysql",
@@ -46,10 +47,10 @@ import Server from "./services/Server";
 
     await Server.start();
 
-    Logger.log({level: Logger.constants.levels.CONSOLE, message: "Server started!"});
+    Logger.write(Logger.Level.INFO, "Server started!");
   }
   catch ({message, stack}) {
-    Logger.log({level: Logger.constants.levels.ERROR, message: message, stack: stack});
+    Logger.write(Logger.Level.ERROR, {message, stack});
     process.exit(0);
   }
 })();

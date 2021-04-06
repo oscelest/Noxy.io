@@ -14,3 +14,4 @@ export default class Alias {
   
 }
 
+type Constructor = {new(...args: any[]): any, name?: string}

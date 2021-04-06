@@ -1,5 +1,5 @@
 {
-  "name": "noxy.io-server",
+  "name": "@noxy.io/backend",
   "version": "1.0.0",
   "description": "Main API Server.",
   "scripts": {

@@ -1,6 +1,6 @@
 import _ from "lodash";
 import React from "react";
-import Order from "./enums/Order";
+import Order from "../common/enums/Order";
 
 namespace Util {
 

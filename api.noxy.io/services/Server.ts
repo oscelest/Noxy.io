@@ -9,6 +9,7 @@ import Multer from "multer";
 import Path from "path";
 import ServeFavicon from "serve-favicon";
 import {v4} from "uuid";
+import Logger from "../../common/services/Logger";
 import Alias from "../classes/Alias";
 import APIKey from "../entities/APIKey";
 import User from "../entities/User";
@@ -19,7 +20,6 @@ import HTTPStatusCode from "../enums/server/HTTPStatusCode";
 import ServerState from "../enums/server/ServerState";
 import EndpointParameterException from "../exceptions/EndpointParameterException";
 import ServerException from "../exceptions/ServerException";
-import Logger, {LoggerLevels} from "./Logger";
 import Validator from "./Validator";
 
 if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");
@@ -212,7 +212,6 @@ module Server {
           const received = received_parameter_list[name] as string | string[];
 
           if (received === undefined) {
-
             // Intentional split "if" statement - If received value is undefined, it should not go through the validator
             if (method === HTTPMethod.GET && flag_optional === false || method !== HTTPMethod.GET && flag_optional !== true) {
               error_collection[name] = new EndpointParameterException(`'${name}' is a mandatory field.`);
@@ -247,18 +246,12 @@ module Server {
     const time_started = this.locals?.time_created?.toISOString() ?? new Date().toISOString();
     const time_completed = new Date().toISOString();
 
-    if (value instanceof ServerException) {
-
-      if (value.code === 500) {
-        Logger.log({level: LoggerLevels.ERROR, message: value.message, content: value.content, stack: value.stack});
-        value.message = HTTPStatusCode[500];
-        value.content = {};
-      }
+    if (value instanceof ServerException && value.code !== 500) {
       this.res?.status(value.code).json({success: false, message: value.message, content: value.content, time_started, time_completed});
     }
-    else if (value instanceof Error && !(value instanceof ServerException)) {
+    else if (value instanceof Error) {
       this.res?.status(500).json({success: false, message: HTTPStatusCode[500], content: {}, time_started, time_completed});
-      Logger.log({level: LoggerLevels.ERROR, message: value.message, stack: value.stack});
+      Logger.write(Logger.Level.ERROR, value);
     }
     else {
       this.res?.status(200).json({success: true, message: HTTPStatusCode[200], content: value, time_started, time_completed});
@@ -273,7 +266,7 @@ module Server {
           if (!parameter[i]) continue;
           FS.unlink(Path.resolve(parameter[i].path), error => {
             if (!error || error.code === "ENOENT") return;
-            Logger.log({level: LoggerLevels.ERROR, message: error.message, stack: error.stack});
+            Logger.write(Logger.Level.ERROR, error);
           });
         }
       }

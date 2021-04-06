@@ -1,5 +1,5 @@
 import {SendEmailCommand, SendEmailRequest, SESClient} from "@aws-sdk/client-ses";
-import Logger, {LoggerLevels} from "./Logger";
+import Logger from "./Logger";
 
 if (!process.env.MAIL_ID) throw new Error("MAIL_ID environmental value must be defined.");
 if (!process.env.MAIL_REGION) throw new Error("MAIL_REGION environmental value must be defined.");
@@ -20,7 +20,7 @@ module Email {
       await client.send(new SendEmailCommand(request));
     }
     catch (error) {
-      Logger.log({level: LoggerLevels.ERROR, message: error.message, stack: error.stack});
+      Logger.write(Logger.Level.ERROR, error);
     }
   }
 
