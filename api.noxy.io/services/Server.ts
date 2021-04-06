@@ -22,18 +22,14 @@ import EndpointParameterException from "../exceptions/EndpointParameterException
 import ServerException from "../exceptions/ServerException";
 import Validator from "./Validator";
 
+if (!process.env.PORT) throw new Error("PORT environmental value must be defined.");
 if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");
 
 module Server {
 
-  const port = process.env.NODE_PORT || 40491;
+  const port = process.env.PORT || 80;
   const alias_collection: AliasCollection = {};
   const route_collection: EndpointCollection = {};
-
-  let state: ServerState = ServerState.DEAD;
-  let instance: HTTP.Server;
-  let application = Express();
-
 
   export function bindRoute(alias: Alias, method: HTTPMethod, path: string | string[], options: EndpointOptions, cb: Express.RequestHandler) {
     path = _.concat(options.prefix ?? [], path);
@@ -71,9 +67,7 @@ module Server {
 
 
   export async function start() {
-    if (state === ServerState.INITIALIZING) throw new Error(`Server is already being initialized.`);
-    if (state === ServerState.ALIVE) throw new Error(`Server has already been started.`);
-    state = ServerState.INITIALIZING;
+    const application = Express();
 
     application.set("query parser", "simple");
     application.use("/static", Express.static(Path.resolve(process.env.PATH_ROOT!, "static")));
@@ -90,9 +84,7 @@ module Server {
 
     application.use(attachNotFound);
 
-    instance = HTTP.createServer(application).listen(port);
-    state = ServerState.ALIVE;
-    return Server;
+    HTTP.createServer(application).listen(port);
   }
 
 
