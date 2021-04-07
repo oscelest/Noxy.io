@@ -3,11 +3,10 @@ import * as FS from "fs";
 import _ from "lodash";
 import Path from "path";
 import * as TypeORM from "typeorm";
+import Alias from "../common/classes/Alias";
 import Logger from "../common/services/Logger";
-import Alias from "./classes/Alias";
 import HTTPMethods from "./enums/server/HTTPMethods";
-import Server from "./services/Server";
-
+import Server from "../common/services/Server";
 
 (async () => {
   if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");
@@ -63,14 +62,4 @@ declare global {
 
   export type Constructor = {new(...args: any[]): any}
 
-  export interface FileHandle extends File {
-    fieldname: string
-    originalname: string
-    encoding: string
-    mimetype: string
-    destination: string
-    filename: string
-    path: string
-    size: number
-  }
 }

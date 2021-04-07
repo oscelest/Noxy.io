@@ -1,11 +1,11 @@
 import _ from "lodash";
 import * as TypeORM from "typeorm";
+import Alias from "../../common/classes/Alias";
 import EndpointParameterType from "../enums/server/EndpointParameterType";
 import HTTPMethods from "../enums/server/HTTPMethods";
 import SetOperation from "../enums/SetOperation";
 import ServerException from "../exceptions/ServerException";
-import Server from "../services/Server";
-import Alias from "./Alias";
+import Server from "../../common/services/Server";
 
 export default function Entity<E>() {
 

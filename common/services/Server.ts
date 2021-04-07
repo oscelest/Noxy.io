@@ -9,17 +9,16 @@ import Multer from "multer";
 import Path from "path";
 import ServeFavicon from "serve-favicon";
 import {v4} from "uuid";
-import Logger from "../../common/services/Logger";
 import Alias from "../classes/Alias";
-import APIKey from "../entities/APIKey";
-import User from "../entities/User";
-import PermissionLevel from "../enums/PermissionLevel";
-import EndpointParameterType from "../enums/server/EndpointParameterType";
-import HTTPMethod from "../enums/server/HTTPMethods";
-import HTTPStatusCode from "../enums/server/HTTPStatusCode";
-import ServerState from "../enums/server/ServerState";
-import EndpointParameterException from "../exceptions/EndpointParameterException";
-import ServerException from "../exceptions/ServerException";
+import Logger from "./Logger";
+import APIKey from "../../api.noxy.io/entities/APIKey";
+import User from "../../api.noxy.io/entities/User";
+import PermissionLevel from "../../api.noxy.io/enums/PermissionLevel";
+import EndpointParameterType from "../../api.noxy.io/enums/server/EndpointParameterType";
+import HTTPMethod from "../../api.noxy.io/enums/server/HTTPMethods";
+import HTTPStatusCode from "../../api.noxy.io/enums/server/HTTPStatusCode";
+import EndpointParameterException from "../../api.noxy.io/exceptions/EndpointParameterException";
+import ServerException from "../../api.noxy.io/exceptions/ServerException";
 import Validator from "./Validator";
 
 if (!process.env.PORT) throw new Error("PORT environmental value must be defined.");
@@ -124,7 +123,7 @@ module Server {
 
     if (authorization) {
       try {
-        request.locals.api_key = await (await import("../entities/APIKey")).default.performSelect(JSONWebToken.verify(authorization, process.env.JWT_SECRET!) as string);
+        request.locals.api_key = await (await import("../../api.noxy.io/entities/APIKey")).default.performSelect(JSONWebToken.verify(authorization, process.env.JWT_SECRET!) as string);
       }
       catch (error) {
         if (error instanceof JSONWebToken.TokenExpiredError) return request.locals.respond?.(new ServerException(401, {authorization}, "Authorization token has expired."));
@@ -144,7 +143,7 @@ module Server {
       }
 
       try {
-        request.locals.user = await (await import("../entities/User")).default.performSelect(masquerade);
+        request.locals.user = await (await import("../../api.noxy.io/entities/User")).default.performSelect(masquerade);
       }
       catch (error) {
         if (error instanceof ServerException && error.code === 404) return request.locals.respond?.(new ServerException(404, {authorization}, "Authorization failed - User doesn't exist."));
@@ -319,6 +318,19 @@ module Server {
   export type AliasCollection = {[path: string]: Alias}
   export type EndpointCollection = {[alias: string]: Endpoint};
   export type EndpointParameterCollection = {[name: string]: EndpointParameter}
+}
+
+declare global {
+  export interface FileHandle extends File {
+    fieldname: string
+    originalname: string
+    encoding: string
+    mimetype: string
+    destination: string
+    filename: string
+    path: string
+    size: number
+  }
 }
 
 declare module "express-serve-static-core" {
