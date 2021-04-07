@@ -54,7 +54,7 @@ module Server {
   }
 
 
-  export function bindRouteParameter(alias: Alias, name: string, type: EndpointParameterType, conditions: ParameterConditions, options: EndpointParameterOptions) {
+  export function bindRouteParameter(alias: Alias, name: string, type: EndpointParameterType, conditions: Validator.ParameterConditions, options: EndpointParameterOptions) {
     const key = alias.toString();
 
     if (type === EndpointParameterType.FILE) {
@@ -298,22 +298,6 @@ module Server {
     flag_array?: boolean
     flag_optional?: boolean
   }
-
-  export type ParameterConditions =
-    DateParameterConditions
-    | EnumParameterConditions
-    | FloatParameterConditions
-    | IntegerParameterConditions
-    | OrderParameterConditions
-    | StringParameterConditions
-    | {}
-
-  export type DateParameterConditions = {earliest?: Date; latest?: Date; timestamp?: boolean}
-  export type EnumParameterConditions = {[key: string]: string | number}
-  export type FloatParameterConditions = {min?: number; max?: number; min_decimals?: number; max_decimals?: number}
-  export type IntegerParameterConditions = {min?: number; max?: number}
-  export type OrderParameterConditions = string[]
-  export type StringParameterConditions = {min_length?: number; max_length?: number; validator?: RegExp}
 
   export type AliasCollection = {[path: string]: Alias}
   export type EndpointCollection = {[alias: string]: Endpoint};

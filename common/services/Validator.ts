@@ -4,7 +4,6 @@ import _ from "lodash";
 import Order from "../../api.noxy.io/enums/Order";
 import EndpointParameterType from "../../api.noxy.io/enums/server/EndpointParameterType";
 import EndpointParameterException from "../../api.noxy.io/exceptions/EndpointParameterException";
-import Server from "./Server";
 
 namespace Validator {
   
@@ -69,24 +68,22 @@ namespace Validator {
     if (!received.match(/^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i)) throw new EndpointParameterException("UUID could not be validated.", received);
     return received;
   }
-  
-  
-  function parseDate(received: string, {earliest, latest, timestamp}: Server.DateParameterConditions) {
+
+  function parseDate(received: string, {earliest, latest, timestamp}: DateParameterConditions) {
     const parsed = new Date(isNaN(+received) ? received : +received);
     if (isNaN(parsed.getTime())) throw new EndpointParameterException("Date could not be parsed.", received, parsed);
     if (earliest && parsed < earliest) throw new EndpointParameterException(`Date must be after ${earliest}.`, received, parsed);
     if (latest && parsed > latest) throw new EndpointParameterException(`Date must be before ${latest}.`, received, parsed);
     return parsed;
   }
-  
-  
-  function validateEnum(received: string, options: Server.EnumParameterConditions) {
+
+  function validateEnum(received: string, options: EnumParameterConditions) {
     const values = _.values(options);
     if (!_.includes(values, received)) throw new EndpointParameterException(`Enum could not be validated. Valid enum values: ['${_.join(values, "', '")}'].`, received);
     return received;
   }
   
-  function parseFloat(received: string, {min = -Infinity, max = Infinity, min_decimals = -Infinity, max_decimals = Infinity}: Server.FloatParameterConditions) {
+  function parseFloat(received: string, {min = -Infinity, max = Infinity, min_decimals = -Infinity, max_decimals = Infinity}: FloatParameterConditions) {
     const parsed = Number.parseFloat(received);
     if (isNaN(parsed)) throw new EndpointParameterException("Float could not be parsed.", received, parsed);
     if (!isFinite(parsed)) throw new EndpointParameterException("Float must be a finite number.", received, parsed);
@@ -100,7 +97,7 @@ namespace Validator {
     return parsed;
   }
   
-  function parseInteger(received: string, {min = -Infinity, max = Infinity}: Server.IntegerParameterConditions) {
+  function parseInteger(received: string, {min = -Infinity, max = Infinity}: IntegerParameterConditions) {
     const parsed = Number.parseInt(received);
     if (isNaN(parsed) || parsed !== Number.parseFloat(received)) throw new EndpointParameterException("Integer could not be parsed.", received, parsed);
     if (!isFinite(parsed)) throw new EndpointParameterException("Integer must be a finite number.", received, parsed);
@@ -111,29 +108,28 @@ namespace Validator {
     return parsed;
   }
   
-  function validateOrdering(received: string, columns: Server.OrderParameterConditions) {
+  function validateOrdering(received: string, columns: OrderParameterConditions) {
     const parsed = received[0] === "-" ? {[received.substr(1)]: Order.DESC} : {[received]: Order.ASC};
     if (_.difference(_.keys(parsed), columns).length) throw new EndpointParameterException(`Sort order contains an invalid column. Accepted column(s): ${_.join(columns, ", ")}.`, received, parsed);
     
     return parsed;
   }
   
-  function validateSortOrderList(received: string[], columns: Server.OrderParameterConditions) {
+  function validateSortOrderList(received: string[], columns: OrderParameterConditions) {
     const parsed = _.reduce(received, (result, value) => value[0] === "-" ? _.set(result, value.substring(1), Order.DESC) : _.set(result, value, Order.ASC), {});
     if (_.difference(_.keys(parsed), columns).length) throw new EndpointParameterException(`Sort order contains invalid column(s). Accepted column(s): ${_.join(columns, ", ")}.`, received, parsed);
     
     return parsed;
   }
   
-  function validateString(received: string, {min_length = -Infinity, max_length = Infinity, validator}: Server.StringParameterConditions) {
+  function validateString(received: string, {min_length = -Infinity, max_length = Infinity, validator}: StringParameterConditions) {
     if (received.length < min_length) throw new EndpointParameterException(`String length must be greater than or equal to ${min_length} characters.`, received);
     if (received.length > max_length) throw new EndpointParameterException(`String length must be less or equal to ${max_length} characters.`, received);
     if (validator && !received.match(validator)) throw new EndpointParameterException(`String does not match the validator: '${validator}'.`, received);
     
     return received;
   }
-  
-  
+
   function parseParameterList(type: EndpointParameterType, received: string[], conditions: any) {
     const error_list = [] as EndpointParameterException[];
     const parsed_list = [] as boolean[];
@@ -147,6 +143,22 @@ namespace Validator {
     }
     return parsed_list;
   }
+
+  export type ParameterConditions =
+    DateParameterConditions
+    | EnumParameterConditions
+    | FloatParameterConditions
+    | IntegerParameterConditions
+    | OrderParameterConditions
+    | StringParameterConditions
+    | {}
+
+  export type DateParameterConditions = {earliest?: Date; latest?: Date; timestamp?: boolean}
+  export type EnumParameterConditions = {[key: string]: string | number}
+  export type FloatParameterConditions = {min?: number; max?: number; min_decimals?: number; max_decimals?: number}
+  export type IntegerParameterConditions = {min?: number; max?: number}
+  export type OrderParameterConditions = string[]
+  export type StringParameterConditions = {min_length?: number; max_length?: number; validator?: RegExp}
   
 }
 
