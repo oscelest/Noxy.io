@@ -29,7 +29,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly isChecked = (permission: PermissionLevel) => {
-    return this.props.permission[permission]
+    return this.props.permission[permission];
   };
 
   private readonly isDisabled = (permission: PermissionLevel) => {
@@ -68,7 +68,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly renderUserSection = () => {
-    if (this.context.state.user?.getCurrentAPIKey().permission[PermissionLevel.USER]) return null;
+    if (!this.context.hasPermission(PermissionLevel.USER)) return null;
 
     return (
       <div className={Style.Section}>
@@ -96,7 +96,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly renderAPIKeySection = () => {
-    if (this.context.state.user?.getCurrentAPIKey().permission[PermissionLevel.API_KEY]) return null;
+    if (!this.context.hasPermission(PermissionLevel.API_KEY)) return null;
 
     return (
       <div className={Style.Section}>
@@ -136,7 +136,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly renderFileSection = () => {
-    if (this.context.state.user?.getCurrentAPIKey().permission[PermissionLevel.FILE]) return null;
+    if (!this.context.hasPermission(PermissionLevel.FILE)) return null;
 
     return (
       <div className={Style.Section}>
@@ -156,7 +156,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly renderFileTagSection = () => {
-    if (this.context.state.user?.getCurrentAPIKey().permission[PermissionLevel.FILE_TAG]) return null;
+    if (!this.context.hasPermission(PermissionLevel.FILE_TAG)) return null;
 
     return (
       <div className={Style.Section}>

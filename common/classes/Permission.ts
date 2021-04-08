@@ -91,8 +91,6 @@ export default class Permission {
     else if (typeof initializer === "object") {
       Object.assign(this, initializer);
     }
-
-    console.log(initializer, this)
   }
 
   public static getPermissionGroup(permission: PermissionLevel) {
