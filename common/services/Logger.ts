@@ -2,6 +2,9 @@ import Path from "path";
 import winston from "winston";
 import WinstonDailyRotateFile from "winston-daily-rotate-file";
 
+if (!process.env.SERVICE) throw new Error("SERVICE environmental value must be defined.");
+if (!process.env.LOG_PATH) throw new Error("LOG_PATH environmental value must be defined.");
+
 module Logger {
 
   const logger_collection: { [K in Level]?: winston.Logger } = {};

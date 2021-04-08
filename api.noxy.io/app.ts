@@ -4,9 +4,9 @@ import _ from "lodash";
 import Path from "path";
 import * as TypeORM from "typeorm";
 import Alias from "../common/classes/Alias";
+import HTTPMethod from "../common/enums/HTTPMethod";
 import Logger from "../common/services/Logger";
-import HTTPMethods from "./enums/server/HTTPMethods";
-import Server from "../common/services/Server";
+import Server from "./services/Server";
 
 (async () => {
   if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");
@@ -40,7 +40,7 @@ import Server from "../common/services/Server";
       ],
     });
 
-    Server.bindRoute(new Alias(), HTTPMethods.GET, "/", {}, async ({locals: {respond}}) => {
+    Server.bindRoute(new Alias(), HTTPMethod.GET, "/", {}, async ({locals: {respond}}) => {
       setTimeout(() => respond?.({}), Math.ceil(Math.random() * 95) + 5);
     });
 
@@ -49,6 +49,7 @@ import Server from "../common/services/Server";
     Logger.write(Logger.Level.INFO, "Server started!");
   }
   catch ({message, stack}) {
+    console.log(message, stack)
     Logger.write(Logger.Level.ERROR, {message, stack});
     process.exit(0);
   }

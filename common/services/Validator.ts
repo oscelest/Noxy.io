@@ -1,9 +1,9 @@
 import Crypto from "crypto";
 import IsEmail from "isemail";
 import _ from "lodash";
-import Order from "../../api.noxy.io/enums/Order";
-import EndpointParameterType from "../../api.noxy.io/enums/server/EndpointParameterType";
-import EndpointParameterException from "../../api.noxy.io/exceptions/EndpointParameterException";
+import EndpointParameterType from "../enums/EndpointParameterType";
+import EndpointParameterException from "../exceptions/EndpointParameterException";
+import Order from "../enums/Order";
 
 namespace Validator {
   

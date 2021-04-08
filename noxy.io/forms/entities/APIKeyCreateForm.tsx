@@ -1,7 +1,8 @@
 import {AxiosResponse} from "axios";
 import _ from "lodash";
 import React from "react";
-import PermissionData from "../../classes/PermissionData";
+import Permission from "../../../common/classes/Permission";
+import Order from "../../../common/enums/Order";
 import PermissionExplorer from "../../components/Application/PermissionExplorer";
 import Button from "../../components/Form/Button";
 import EntityInput from "../../components/Form/EntityInput";
@@ -10,9 +11,8 @@ import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
 import APIKeyEntity from "../../entities/APIKeyEntity";
 import UserEntity from "../../entities/UserEntity";
-import ButtonType from "../../enums/components/ButtonType";
-import InputType from "../../enums/components/InputType";
-import Order from "../../enums/Order";
+import ButtonType from "../../enums/ButtonType";
+import InputType from "../../enums/InputType";
 import Global from "../../Global";
 import Style from "./APIKeyCreateForm.module.scss";
 
@@ -100,7 +100,7 @@ export default class APIKeyCreateForm extends React.Component<APIKeyCreateFormPr
 
   private readonly eventUserSearch = async (email: string) => email ? await UserEntity.get({email}, {skip: 0, limit: 10, order: {email: Order.ASC}}) : [];
   private readonly eventUserChange = (user?: UserEntity) => this.setState({entity: new APIKeyEntity({...this.state.entity, user: user ? user : new UserEntity()})});
-  private readonly eventPermissionChange = (permission: PermissionData) => this.setState({entity: new APIKeyEntity({...this.state.entity, permission})});
+  private readonly eventPermissionChange = (permission: Permission) => this.setState({entity: new APIKeyEntity({...this.state.entity, permission})});
   private readonly eventInputLimitPerDecasecondChange = (limit_per_decasecond: number) => this.setState({entity: new APIKeyEntity({...this.state.entity, limit_per_decasecond})});
   private readonly eventInputLimitPerMinuteChange = (limit_per_minute: number) => this.setState({entity: new APIKeyEntity({...this.state.entity, limit_per_minute})});
 

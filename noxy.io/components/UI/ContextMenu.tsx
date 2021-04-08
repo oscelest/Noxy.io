@@ -2,7 +2,7 @@ import _ from "lodash";
 import React from "react";
 import Point from "../../classes/Point";
 import Rect from "../../classes/Rect";
-import IconType from "../../enums/components/IconType";
+import IconType from "../../enums/IconType";
 import FatalException from "../../exceptions/FatalException";
 import Util from "../../Util";
 import Icon from "../Base/Icon";

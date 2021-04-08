@@ -1,5 +1,5 @@
 import React from "react";
-import IconType from "../../enums/components/IconType";
+import IconType from "../../enums/IconType";
 import Icon from "../Base/Icon";
 import Style from "./DialogContainer.module.scss";
 

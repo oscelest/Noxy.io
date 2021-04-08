@@ -1,5 +1,5 @@
 import React from "react";
-import IconType from "../../enums/components/IconType";
+import IconType from "../../enums/IconType";
 import Button from "../Form/Button";
 import EllipsisText from "../Text/EllipsisText";
 import Style from "./Copy.module.scss";

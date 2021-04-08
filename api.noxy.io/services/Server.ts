@@ -9,17 +9,17 @@ import Multer from "multer";
 import Path from "path";
 import ServeFavicon from "serve-favicon";
 import {v4} from "uuid";
-import Alias from "../classes/Alias";
-import Logger from "./Logger";
-import APIKey from "../../api.noxy.io/entities/APIKey";
-import User from "../../api.noxy.io/entities/User";
-import PermissionLevel from "../../api.noxy.io/enums/PermissionLevel";
-import EndpointParameterType from "../../api.noxy.io/enums/server/EndpointParameterType";
-import HTTPMethod from "../../api.noxy.io/enums/server/HTTPMethods";
-import HTTPStatusCode from "../../api.noxy.io/enums/server/HTTPStatusCode";
-import EndpointParameterException from "../../api.noxy.io/exceptions/EndpointParameterException";
-import ServerException from "../../api.noxy.io/exceptions/ServerException";
-import Validator from "./Validator";
+import EndpointParameterType from "../../common/enums/EndpointParameterType";
+import Alias from "../../common/classes/Alias";
+import HTTPMethod from "../../common/enums/HTTPMethod";
+import HTTPStatusCode from "../../common/enums/HTTPStatusCode";
+import PermissionLevel from "../../common/enums/PermissionLevel";
+import Logger from "../../common/services/Logger";
+import APIKey from "../entities/APIKey";
+import User from "../entities/User";
+import EndpointParameterException from "../../common/exceptions/EndpointParameterException";
+import ServerException from "../exceptions/ServerException";
+import Validator from "../../common/services/Validator";
 
 if (!process.env.PORT) throw new Error("PORT environmental value must be defined.");
 if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");
@@ -123,7 +123,7 @@ module Server {
 
     if (authorization) {
       try {
-        request.locals.api_key = await (await import("../../api.noxy.io/entities/APIKey")).default.performSelect(JSONWebToken.verify(authorization, process.env.JWT_SECRET!) as string);
+        request.locals.api_key = await (await import("../entities/APIKey")).default.performSelect(JSONWebToken.verify(authorization, process.env.JWT_SECRET!) as string);
       }
       catch (error) {
         if (error instanceof JSONWebToken.TokenExpiredError) return request.locals.respond?.(new ServerException(401, {authorization}, "Authorization token has expired."));
@@ -133,17 +133,17 @@ module Server {
       }
     }
 
-    if (request.locals.endpoint?.options?.permission && !_.every(_.concat(request.locals.endpoint.options.permission), level => request.locals.api_key?.permission.hasPermission(level))) {
+    if (request.locals.endpoint?.options?.permission && !_.every(_.concat(request.locals.endpoint.options.permission), level => request.locals.api_key?.permission[level])) {
       return request.locals.respond?.(new ServerException(403, {authorization, permission: request.locals.endpoint.options.permission}));
     }
 
     if (masquerade) {
-      if (!request.locals.api_key?.permission.user.masquerade) {
+      if (!request.locals.api_key?.permission[PermissionLevel.USER_MASQUERADE]) {
         return request.locals.respond?.(new ServerException(403, {authorization, masquerade}));
       }
 
       try {
-        request.locals.user = await (await import("../../api.noxy.io/entities/User")).default.performSelect(masquerade);
+        request.locals.user = await (await import("../entities/User")).default.performSelect(masquerade);
       }
       catch (error) {
         if (error instanceof ServerException && error.code === 404) return request.locals.respond?.(new ServerException(404, {authorization}, "Authorization failed - User doesn't exist."));

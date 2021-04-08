@@ -1,17 +1,16 @@
 import Axios from "axios";
-import _ from "lodash";
+import Permission from "../../common/classes/Permission";
+import Order from "../../common/enums/Order";
+import PermissionLevel from "../../common/enums/PermissionLevel";
 import Entity from "../classes/Entity";
-import PermissionData from "../classes/PermissionData";
 import RequestData from "../classes/RequestData";
-import Order from "../enums/Order";
 import UserEntity from "./UserEntity";
-import PermissionLevel from "../enums/PermissionLevel";
 
 export default class APIKeyEntity extends Entity {
 
   public id: string;
   public token: string;
-  public permission: PermissionData;
+  public permission: Permission;
   public limit_per_decasecond: number;
   public limit_per_minute: number;
   public user?: UserEntity;
@@ -23,7 +22,7 @@ export default class APIKeyEntity extends Entity {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.token = entity?.token ?? "";
-    this.permission = new PermissionData(entity?.permission);
+    this.permission = new Permission(entity?.permission);
     this.limit_per_decasecond = entity?.limit_per_decasecond ?? 0;
     this.limit_per_minute = entity?.limit_per_minute ?? 0;
     this.user = new UserEntity(entity?.user);
@@ -34,13 +33,13 @@ export default class APIKeyEntity extends Entity {
     return this.id;
   }
 
-  public hasPermission(permission: PermissionLevel) {
-    return this.permission.hasPermission(permission);
+  public isAdmin() {
+    return this.permission[PermissionLevel.ADMIN];
   }
 
-  public isAdmin() {
-    return this.permission.isAdmin();
-  };
+  public hasPermission(permission: PermissionLevel) {
+    return this.permission[permission];
+  }
 
   public static async get(search: APIKeyEntitySearchParameters = {}, pagination: RequestPagination<APIKeyEntity> = {skip: 0, limit: 10, order: {time_created: Order.DESC}}) {
     const result = await Axios.get<APIRequest<APIKeyEntity[]>>(`${this.URL}?${new RequestData(search).paginate(pagination)}`);
@@ -80,13 +79,13 @@ export type APIKeyEntitySearchParameters = {
 
 export type APIKeyEntityCreateParameters = {
   user: UserEntity
-  permission: PermissionData
+  permission: Permission
   limit_per_decasecond: number
   limit_per_minute: number
 }
 
 export type APIKeyEntityUpdateParameters = {
-  permission: PermissionData
+  permission: Permission
   limit_per_decasecond: number
   limit_per_minute: number
 }

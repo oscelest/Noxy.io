@@ -1,8 +1,8 @@
 import _ from "lodash";
 import React from "react";
-import PermissionData from "../../classes/PermissionData";
+import Permission from "../../../common/classes/Permission";
+import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Tickable, {TickableCollection} from "../../components/Form/Tickable";
-import PermissionLevel from "../../enums/PermissionLevel";
 import Global from "../../Global";
 import Style from "./PermissionExplorer.module.scss";
 
@@ -21,20 +21,19 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   }
 
   public readonly setPermission = (permission: PermissionLevel, value: boolean) => {
-    this.props.onChange(new PermissionData(_.set({...this.props.permission}, permission, value)));
+    this.props.onChange(new Permission(_.set({...this.props.permission} as Permission, permission, value)));
   };
 
   private readonly getTickableItem = (text: string, value: PermissionLevel) => {
     return {text, value, checked: this.isChecked(value), disabled: this.isDisabled(value)};
   };
 
-  private readonly isChecked = (permission: PermissionLevel): boolean => {
-    const value = _.get(this.props.permission, permission);
-    return typeof value === "object" ? _.every(value) : value;
+  private readonly isChecked = (permission: PermissionLevel) => {
+    return this.props.permission[permission]
   };
 
   private readonly isDisabled = (permission: PermissionLevel) => {
-    return this.props.permission.isAdmin() || !this.context.hasPermission(PermissionLevel.API_KEY_UPDATE) || !this.context.hasPermission(permission);
+    return this.props.permission[PermissionLevel.ADMIN] || !this.context.hasPermission(PermissionLevel.API_KEY_UPDATE) || !this.context.hasPermission(permission);
   };
 
   public render() {
@@ -53,7 +52,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   }
 
   private readonly renderAdminSection = () => {
-    if (!this.props.permission.isAdmin()) return null;
+    if (!this.props.permission[PermissionLevel.ADMIN]) return null;
 
     return (
       <div className={Style.Admin}>
@@ -69,7 +68,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly renderUserSection = () => {
-    if (!_.some(_.get(this.context.state.user?.getCurrentAPIKey().permission, PermissionLevel.USER))) return null;
+    if (this.context.state.user?.getCurrentAPIKey().permission[PermissionLevel.USER]) return null;
 
     return (
       <div className={Style.Section}>
@@ -97,7 +96,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly renderAPIKeySection = () => {
-    if (!_.some(_.get(this.context.state.user?.getCurrentAPIKey().permission, PermissionLevel.API_KEY))) return null;
+    if (this.context.state.user?.getCurrentAPIKey().permission[PermissionLevel.API_KEY]) return null;
 
     return (
       <div className={Style.Section}>
@@ -137,7 +136,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly renderFileSection = () => {
-    if (!_.some(_.get(this.context.state.user?.getCurrentAPIKey().permission, PermissionLevel.FILE))) return null;
+    if (this.context.state.user?.getCurrentAPIKey().permission[PermissionLevel.FILE]) return null;
 
     return (
       <div className={Style.Section}>
@@ -157,7 +156,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly renderFileTagSection = () => {
-    if (!_.some(_.get(this.context.state.user?.getCurrentAPIKey().permission, PermissionLevel.FILE_TAG))) return null;
+    if (this.context.state.user?.getCurrentAPIKey().permission[PermissionLevel.FILE_TAG]) return null;
 
     return (
       <div className={Style.Section}>
@@ -177,22 +176,22 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly eventTickableChange = (tickable_collection: TickableCollection<PermissionLevel>) => {
-    const permission = {...this.props.permission};
+    const permission = {...this.props.permission} as Permission;
     for (let category in tickable_collection) {
       if (!tickable_collection.hasOwnProperty(category)) continue;
       const {value, checked} = tickable_collection[category];
       _.set(permission, value, checked);
     }
-    this.props.onChange(new PermissionData(permission));
+    this.props.onChange(new Permission(permission));
   };
 }
 
 export interface PermissionExplorerProps {
-  permission: PermissionData
+  permission: Permission
 
   className?: string
 
-  onChange: (permission: PermissionData) => void
+  onChange: (permission: Permission) => void
 }
 
 interface State {

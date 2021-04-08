@@ -1,162 +1,145 @@
+import _ from "lodash";
 import PermissionLevel from "../enums/PermissionLevel";
 
-export default class PermissionData {
+export default class Permission {
 
-  public user: {
-    elevated: boolean
-    masquerade: boolean
-  };
+  /* ----- ADMIN ----- */
 
-  public api_key: {
-    view: boolean
-    create: boolean
-    update: boolean
-    delete: boolean
-  };
-
-  public file: {
-    create: boolean
-    delete: boolean
-  };
-
-  public file_tag: {
-    create: boolean
-  };
-
-  constructor(permission: PermissionJSON = {}) {
-    if (!permission) permission = {};
-
-    this.user = {
-      elevated:   permission === true || permission.user === true || !!permission.user?.elevated,
-      masquerade: permission === true || permission.user === true || !!permission.user?.masquerade,
-    };
-
-    this.api_key = {
-      view:   permission === true || permission.api_key === true || !!permission.api_key?.view,
-      create: permission === true || permission.api_key === true || !!permission.api_key?.create,
-      update: permission === true || permission.api_key === true || !!permission.api_key?.update,
-      delete: permission === true || permission.api_key === true || !!permission.api_key?.delete,
-    };
-
-    this.file = {
-      create: permission === true || permission.file === true || !!permission.file?.create,
-      delete: permission === true || permission.file === true || !!permission.file?.delete,
-    };
-
-    this.file_tag = {
-      create: permission === true || permission.file_tag === true || !!permission.file_tag?.create,
-    };
+  public get [PermissionLevel.ADMIN]() {
+    return this[PermissionLevel.API_KEY] && this[PermissionLevel.FILE] && this[PermissionLevel.FILE_TAG] && this[PermissionLevel.USER];
   }
 
-  public hasPermission(permission: PermissionLevel) {
-    switch (permission) {
-      case PermissionLevel.API_KEY:
-        return this.hasAPIKeyPermission();
-      case PermissionLevel.API_KEY_VIEW:
-        return this.api_key.view;
-      case PermissionLevel.API_KEY_CREATE:
-        return this.api_key.create;
-      case PermissionLevel.API_KEY_UPDATE:
-        return this.api_key.update;
-      case PermissionLevel.API_KEY_DELETE:
-        return this.api_key.delete;
+  public set [PermissionLevel.ADMIN](value: boolean) {
+    this[PermissionLevel.API_KEY] = value;
+    this[PermissionLevel.FILE] = value;
+    this[PermissionLevel.FILE_TAG] = value;
+    this[PermissionLevel.USER] = value;
+  }
 
-      case PermissionLevel.FILE:
-        return this.hasFilePermission();
-      case PermissionLevel.FILE_CREATE:
-        return this.file.create;
-      case PermissionLevel.FILE_DELETE:
-        return this.file.delete;
+  /* ----- API KEY ----- */
 
-      case PermissionLevel.FILE_TAG:
-        return this.hasFileTagPermission();
-      case PermissionLevel.FILE_TAG_CREATE:
-        return this.file_tag.create;
+  public [PermissionLevel.API_KEY_VIEW]: boolean = false;
+  public [PermissionLevel.API_KEY_CREATE]: boolean = false;
+  public [PermissionLevel.API_KEY_UPDATE]: boolean = false;
+  public [PermissionLevel.API_KEY_DELETE]: boolean = false;
 
-      case PermissionLevel.USER:
-        return this.hasUserPermission();
-      case PermissionLevel.USER_ELEVATED:
-        return this.user.elevated;
-      case PermissionLevel.USER_MASQUERADE:
-        return this.user.masquerade;
+  public get [PermissionLevel.API_KEY]() {
+    return this[PermissionLevel.API_KEY_VIEW] && this[PermissionLevel.API_KEY_CREATE] && this[PermissionLevel.API_KEY_UPDATE] && this[PermissionLevel.API_KEY_DELETE];
+  }
+
+  public set [PermissionLevel.API_KEY](value: boolean) {
+    this[PermissionLevel.API_KEY_VIEW] = value;
+    this[PermissionLevel.API_KEY_CREATE] = value;
+    this[PermissionLevel.API_KEY_UPDATE] = value;
+    this[PermissionLevel.API_KEY_DELETE] = value;
+  }
+
+  /* ----- FILE ----- */
+
+  public [PermissionLevel.FILE_CREATE]: boolean = false;
+  public [PermissionLevel.FILE_UPDATE]: boolean = false;
+  public [PermissionLevel.FILE_DELETE]: boolean = false;
+
+  public get [PermissionLevel.FILE]() {
+    return this[PermissionLevel.FILE_CREATE] && this[PermissionLevel.FILE_UPDATE] && this[PermissionLevel.FILE_DELETE];
+  }
+
+  public set [PermissionLevel.FILE](value: boolean) {
+    this[PermissionLevel.FILE_CREATE] = value;
+    this[PermissionLevel.FILE_UPDATE] = value;
+    this[PermissionLevel.FILE_DELETE] = value;
+  }
+
+  /* ----- FILE TAG ----- */
+
+  public [PermissionLevel.FILE_TAG_CREATE]: boolean = false;
+
+  public get [PermissionLevel.FILE_TAG]() {
+    return this[PermissionLevel.FILE_TAG_CREATE];
+  }
+
+  public set [PermissionLevel.FILE_TAG](value: boolean) {
+    this[PermissionLevel.FILE_TAG_CREATE] = value;
+  }
+
+  /* ----- USER ----- */
+
+  public [PermissionLevel.USER_MASQUERADE]: boolean = false;
+  public [PermissionLevel.USER_ELEVATED]: boolean = false;
+
+  public get [PermissionLevel.USER]() {
+    return this[PermissionLevel.USER_MASQUERADE] && this[PermissionLevel.USER_ELEVATED];
+  }
+
+  public set [PermissionLevel.USER](value: boolean) {
+    this[PermissionLevel.USER_MASQUERADE] = value;
+    this[PermissionLevel.USER_ELEVATED] = value;
+  }
+
+  constructor(initializer?: boolean | PermissionLevel[] | { [K in PermissionLevel]: boolean } | Permission) {
+    Object.seal(this);
+
+    if (typeof initializer === "boolean") {
+      for (let key in this) _.set(this, key, initializer);
     }
+    else if (initializer instanceof Permission) {
+      for (let key in this) _.set(this, key, _.get(initializer, key, false));
+    }
+    else if (Array.isArray(initializer)) {
+      for (let permission of initializer) _.set(this, permission, true);
+    }
+    else if (typeof initializer === "object") {
+      Object.assign(this, initializer);
+    }
+
+    console.log(initializer, this)
   }
 
-  public hasAPIKeyPermission() {
-    return this.api_key.view && this.api_key.create && this.api_key.update && this.api_key.delete;
+  public static getPermissionGroup(permission: PermissionLevel) {
+    const split = permission.split(".");
+
+    return split.length === 1 ? PermissionLevel.ADMIN : _.initial(split).join(".");
   }
 
-  public hasFilePermission() {
-    return this.file.create && this.file.delete;
-  }
+  public toJSON(): PermissionLevel[] {
+    if (this[PermissionLevel.ADMIN]) return [PermissionLevel.ADMIN];
 
-  public hasFileTagPermission() {
-    return this.file_tag.create;
-  }
+    const permission_list = [];
+    if (this[PermissionLevel.API_KEY]) {
+      permission_list.push(PermissionLevel.API_KEY);
+    }
+    else {
+      if (this[PermissionLevel.API_KEY_VIEW]) permission_list.push(PermissionLevel.API_KEY_VIEW);
+      if (this[PermissionLevel.API_KEY_CREATE]) permission_list.push(PermissionLevel.API_KEY_CREATE);
+      if (this[PermissionLevel.API_KEY_UPDATE]) permission_list.push(PermissionLevel.API_KEY_UPDATE);
+      if (this[PermissionLevel.API_KEY_DELETE]) permission_list.push(PermissionLevel.API_KEY_DELETE);
+    }
 
-  public hasUserPermission() {
-    return this.user.elevated && this.user.masquerade;
-  }
+    if (this[PermissionLevel.FILE]) {
+      permission_list.push(PermissionLevel.FILE);
+    }
+    else {
+      if (this[PermissionLevel.FILE_CREATE]) permission_list.push(PermissionLevel.FILE_CREATE);
+      if (this[PermissionLevel.FILE_UPDATE]) permission_list.push(PermissionLevel.FILE_UPDATE);
+      if (this[PermissionLevel.FILE_DELETE]) permission_list.push(PermissionLevel.FILE_DELETE);
+    }
 
-  public isAdmin() {
-    return this.hasAPIKeyPermission() && this.hasFilePermission() && this.hasFileTagPermission() && this.hasUserPermission();
-  }
+    if (this[PermissionLevel.FILE_TAG]) {
+      permission_list.push(PermissionLevel.FILE_TAG);
+    }
+    else {
+      if (this[PermissionLevel.FILE_TAG_CREATE]) permission_list.push(PermissionLevel.FILE_TAG_CREATE);
+    }
 
-  public toJSON() {
-    if (this.isAdmin()) return true;
+    if (this[PermissionLevel.USER]) {
+      permission_list.push(PermissionLevel.USER);
+    }
+    else {
+      if (this[PermissionLevel.USER_ELEVATED]) permission_list.push(PermissionLevel.USER_ELEVATED);
+      if (this[PermissionLevel.USER_MASQUERADE]) permission_list.push(PermissionLevel.USER_MASQUERADE);
+    }
 
-    return {
-      ...this.toUserJSON(),
-      ...this.toAPIKeyJSON(),
-      ...this.toFileJSON(),
-      ...this.toFileTagJSON(),
-    };
-  }
-
-  private toUserJSON() {
-    if (this.hasUserPermission()) return {user: true};
-
-    const result = {} as PermissionObject<"user">;
-    if (this.user.elevated) result.user = {...result.user ?? {}, elevated: true};
-    if (this.user.masquerade) result.user = {...result.user ?? {}, masquerade: true};
-    return result;
-  }
-
-  private toAPIKeyJSON() {
-    if (this.hasAPIKeyPermission()) return {api_key: true};
-
-    const result = {} as PermissionObject<"api_key">;
-    if (this.api_key.view) result.api_key = {...result.api_key ?? {}, view: true};
-    if (this.api_key.create) result.api_key = {...result.api_key ?? {}, create: true};
-    if (this.api_key.update) result.api_key = {...result.api_key ?? {}, update: true};
-    if (this.api_key.delete) result.api_key = {...result.api_key ?? {}, delete: true};
-    return result;
-  }
-
-  private toFileJSON() {
-    if (this.hasFilePermission()) return {file: true};
-
-    const result = {} as PermissionObject<"file">
-    if (this.file.create) result.file = {...result.file ?? {}, create: true};
-    if (this.file.delete) result.file = {...result.file ?? {}, delete: true};
-    return result;
-  }
-
-  private toFileTagJSON() {
-    if (this.hasFileTagPermission()) return {file_tag: true};
-
-    const result = {} as PermissionObject<"file_tag">;
-    if (this.file_tag.create) result.file_tag = {...result.file_tag ?? {}, create: true};
-    return result;
+    return permission_list;
   }
 
 }
-
-type PermissionJSON = PermissionJSONValue<Properties<PermissionData>>
-type PermissionObject<K extends keyof PermissionObjectValue<Properties<PermissionData>>> = Pick<PermissionObjectValue<Properties<PermissionData>>, K>
-
-type PermissionJSONValue<T> = T extends object ? true | { [K in keyof T]?: PermissionObjectValue<T[K]> } : T;
-type PermissionObjectValue<T> = T extends object ? { [K in keyof T]?: PermissionObjectValue<T[K]> } : T;
-type Properties<O> = { [K in keyof Pick<O, { [K in keyof O]: O[K] extends Function ? never : K }[keyof O]>]: O[K] };
-
-

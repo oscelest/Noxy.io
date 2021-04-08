@@ -1,12 +1,12 @@
 import React from "react";
+import SetOperation from "../../../common/enums/SetOperation";
 import Button from "../../components/Form/Button";
 import EntityMultiSelect from "../../components/Form/EntityMultiSelect";
 import Switch from "../../components/Form/Switch";
 import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
 import FileTagEntity from "../../entities/FileTagEntity";
-import ButtonType from "../../enums/components/ButtonType";
-import SetOperation from "../../enums/SetOperation";
+import ButtonType from "../../enums/ButtonType";
 import Global from "../../Global";
 import Style from "./FileTagSelectForm.module.scss";
 

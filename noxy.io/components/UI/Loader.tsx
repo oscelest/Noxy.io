@@ -1,5 +1,5 @@
 import React from "react";
-import Size from "../../enums/components/Size";
+import Size from "../../enums/Size";
 import Style from "./Loader.module.scss";
 
 export default class Loader extends React.Component<LoaderProps, State> {

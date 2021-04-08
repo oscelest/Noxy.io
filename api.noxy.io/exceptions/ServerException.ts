@@ -1,5 +1,5 @@
 import Exception from "../../common/classes/Exception";
-import HTTPStatusCodes from "../enums/server/HTTPStatusCode";
+import HTTPStatusCodes from "../../common/enums/HTTPStatusCode";
 
 export default class ServerException extends Exception {
   

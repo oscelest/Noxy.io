@@ -1,6 +1,6 @@
 import _ from "lodash";
 import React from "react";
-import EventKey from "../../enums/components/EventKey";
+import EventKey from "../../enums/EventKey";
 import Util from "../../Util";
 import Style from "./Tickable.module.scss";
 

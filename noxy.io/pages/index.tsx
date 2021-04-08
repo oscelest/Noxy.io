@@ -5,8 +5,8 @@ import Input from "../components/Form/Input";
 import Tickable from "../components/Form/Tickable";
 import HeaderText from "../components/Text/HeaderText";
 import FileTypeEntity from "../entities/FileTypeEntity";
-import IconType from "../enums/components/IconType";
-import InputType from "../enums/components/InputType";
+import IconType from "../enums/IconType";
+import InputType from "../enums/InputType";
 import Global from "../Global";
 import Style from "./index.module.scss";
 

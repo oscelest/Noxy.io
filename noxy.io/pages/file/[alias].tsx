@@ -5,7 +5,7 @@ import PageHeader from "../../components/UI/PageHeader";
 import Placeholder from "../../components/UI/Placeholder";
 import Preview from "../../components/UI/Preview";
 import FileEntity from "../../entities/FileEntity";
-import Size from "../../enums/components/Size";
+import Size from "../../enums/Size";
 import Global from "../../Global";
 import Style from "./[alias].module.scss";
 

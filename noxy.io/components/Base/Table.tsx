@@ -1,6 +1,6 @@
 import _ from "lodash";
 import React from "react";
-import Size from "../../enums/components/Size";
+import Size from "../../enums/Size";
 import Loader from "../UI/Loader";
 import Placeholder from "../UI/Placeholder";
 import Style from "./Table.module.scss";

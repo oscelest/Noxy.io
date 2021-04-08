@@ -1,4 +1,4 @@
-export default {
+const HTTPStatusCode = {
   100: "Continue",
   101: "Switching Protocols",
   102: "Processing",
@@ -55,4 +55,6 @@ export default {
   509: "Bandwidth Limit Exceeded",
   510: "Not Extended",
   511: "Network Authentication Required",
-};
+}
+
+export default HTTPStatusCode;

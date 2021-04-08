@@ -1,4 +1,6 @@
 enum PermissionLevel {
+  ADMIN = "admin",
+
   USER = "user",
   USER_ELEVATED = "user.elevated",
   USER_MASQUERADE = "user.masquerade",
@@ -11,6 +13,7 @@ enum PermissionLevel {
 
   FILE = "file",
   FILE_CREATE = "file.create",
+  FILE_UPDATE = "file.update",
   FILE_DELETE = "file.delete",
 
   FILE_TAG = "file_tag",

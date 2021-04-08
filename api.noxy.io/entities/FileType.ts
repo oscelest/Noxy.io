@@ -1,10 +1,9 @@
 import Express from "express";
 import * as TypeORM from "typeorm";
 import Entity, {Pagination} from "../classes/Entity";
-import EndpointParameterType from "../enums/server/EndpointParameterType";
+import EndpointParameterType from "../../common/enums/EndpointParameterType";
 import ServerException from "../exceptions/ServerException";
 import FileExtension from "./FileExtension";
-import FileTag from "./FileTag";
 
 @TypeORM.Entity()
 @TypeORM.Unique("name", ["name"])
@@ -100,7 +99,7 @@ export type FileTypeJSON = {
 }
 
 namespace Request {
-  export type getFindMany = getCount  & Pagination
+  export type getFindMany = getCount & Pagination
   export type getCount = {name?: string; exclude?: string[]}
   export type postCreateOne = {name: string}
 }

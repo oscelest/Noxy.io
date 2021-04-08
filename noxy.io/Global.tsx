@@ -2,9 +2,9 @@ import Axios from "axios";
 import _ from "lodash";
 import Router from "next/router";
 import React from "react";
+import PermissionLevel from "../common/enums/PermissionLevel";
+import RequestHeader from "../common/enums/RequestHeader";
 import UserEntity from "./entities/UserEntity";
-import PermissionLevel from "./enums/PermissionLevel";
-import RequestHeader from "./enums/RequestHeader";
 import FatalException from "./exceptions/FatalException";
 
 namespace Global {

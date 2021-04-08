@@ -1,5 +1,5 @@
 import _ from "lodash";
-import Order from "../enums/Order";
+import Order from "../../common/enums/Order";
 import Entity from "./Entity";
 
 export default class RequestData {

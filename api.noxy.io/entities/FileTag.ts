@@ -1,9 +1,8 @@
 import Express from "express";
 import * as TypeORM from "typeorm";
 import Entity, {Pagination} from "../classes/Entity";
-import EndpointParameterType from "../enums/server/EndpointParameterType";
+import EndpointParameterType from "../../common/enums/EndpointParameterType";
 import ServerException from "../exceptions/ServerException";
-import APIKey from "./APIKey";
 import File from "./File";
 import User, {UserJSON} from "./User";
 
@@ -64,7 +63,7 @@ export default class FileTag extends Entity<FileTag>() {
 
   public static createSelect() {
     const query = TypeORM.createQueryBuilder(this);
-    this.countRelation(query, "size", "file_list")
+    this.countRelation(query, "size", "file_list");
     this.join(query, "user_created");
     return query;
   }
@@ -143,7 +142,7 @@ export type FileTagJSON = {
 }
 
 namespace Request {
-  export type getFindMany = getCount  & Pagination
+  export type getFindMany = getCount & Pagination
   export type getCount = {name?: string, user_created?: string, exclude?: string[]}
   export type postCreateOne = {name: string, user_created: string}
 }

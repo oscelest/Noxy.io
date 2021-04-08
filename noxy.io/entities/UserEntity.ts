@@ -1,10 +1,10 @@
 import Axios from "axios";
 import _ from "lodash";
+import Order from "../../common/enums/Order";
+import PermissionLevel from "../../common/enums/PermissionLevel";
+import RequestHeader from "../../common/enums/RequestHeader";
 import Entity from "../classes/Entity";
 import RequestData from "../classes/RequestData";
-import Order from "../enums/Order";
-import PermissionLevel from "../enums/PermissionLevel";
-import RequestHeader from "../enums/RequestHeader";
 import APIKeyEntity from "./APIKeyEntity";
 
 export default class UserEntity extends Entity {
@@ -38,6 +38,10 @@ export default class UserEntity extends Entity {
 
   public getCurrentAPIKey() {
     return _.find(this.api_key_list, key => key.token === localStorage[RequestHeader.AUTHORIZATION]) ?? _.first(this.api_key_list) ?? new APIKeyEntity();
+  }
+
+  public isAdmin() {
+    return this.getCurrentAPIKey().isAdmin();
   }
 
   public hasPermission(permission: PermissionLevel) {

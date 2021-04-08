@@ -3,10 +3,10 @@ import JWT from "jsonwebtoken";
 import _ from "lodash";
 import * as TypeORM from "typeorm";
 import {v4} from "uuid";
+import Permission from "../../common/classes/Permission";
+import EndpointParameterType from "../../common/enums/EndpointParameterType";
+import PermissionLevel from "../../common/enums/PermissionLevel";
 import Entity, {Pagination} from "../classes/Entity";
-import Permission, {PermissionJSON} from "../classes/Permission";
-import PermissionLevel from "../enums/PermissionLevel";
-import EndpointParameterType from "../enums/server/EndpointParameterType";
 import ServerException from "../exceptions/ServerException";
 import User, {UserJSON} from "./User";
 
@@ -24,7 +24,7 @@ export default class APIKey extends Entity<APIKey>() {
   @TypeORM.Column({type: "varchar", length: 190})
   public token: string;
 
-  @TypeORM.Column({type: "json", transformer: {to: (value: Permission) => value.toJSON(), from: (init: PermissionJSON) => new Permission(init)}})
+  @TypeORM.Column({type: "json", transformer: {to: (value: Permission) => value.toJSON(), from: (init: PermissionLevel[]) => new Permission(init)}})
   public permission: Permission;
 
   @TypeORM.Column({type: "int", default: 100})
@@ -59,10 +59,6 @@ export default class APIKey extends Entity<APIKey>() {
       time_created:         this.time_created,
       time_updated:         this.time_updated,
     };
-  }
-
-  public hasPermission(permission: PermissionLevel) {
-    return this.permission.hasPermission(permission);
   }
 
   public generateToken() {
@@ -182,7 +178,7 @@ export default class APIKey extends Entity<APIKey>() {
   @APIKey.delete("/:id", {permission: PermissionLevel.API_KEY_DELETE})
   private static async deleteOne({params: {id}, locals: {respond, api_key, user}}: Express.Request<{id: string}, Response.deleteDeleteOne, Request.deleteDeleteOne>) {
     const entity = await this.performSelect(id);
-    if (!api_key?.permission.api_key.delete || (entity.user.id !== user?.id)) {
+    if (!api_key?.permission[PermissionLevel.API_KEY_DELETE] || (entity.user.id !== user?.id)) {
       return respond?.(new ServerException(403, {}, "Forbidden from deleting an API Key with the same or higher access level as your own."));
     }
 
@@ -203,7 +199,7 @@ export default class APIKey extends Entity<APIKey>() {
 export type APIKeyJSON = {
   id: string
   token: string
-  permission: boolean | PermissionJSON
+  permission: PermissionLevel[]
   limit_per_decasecond: number
   limit_per_minute: number
   user?: UserJSON

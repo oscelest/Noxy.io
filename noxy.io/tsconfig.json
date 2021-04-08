@@ -5,7 +5,7 @@
     "baseUrl": ".",
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
-    "experimentalDecorators": false,
+    "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -19,6 +19,11 @@
     "strict": true,
     "strictPropertyInitialization": false,
     "target": "ESNext",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ]
   },
   "exclude": [
     "node_modules"

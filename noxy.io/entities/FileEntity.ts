@@ -1,8 +1,8 @@
 import Axios, {Canceler} from "axios";
+import Order from "../../common/enums/Order";
+import SetOperation from "../../common/enums/SetOperation";
 import Entity from "../classes/Entity";
 import RequestData from "../classes/RequestData";
-import Order from "../enums/Order";
-import SetOperation from "../enums/SetOperation";
 import FileExtensionEntity from "./FileExtensionEntity";
 import FileTagEntity from "./FileTagEntity";
 import FileTypeEntity from "./FileTypeEntity";

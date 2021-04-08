@@ -1,11 +1,12 @@
 import _ from "lodash";
 import * as TypeORM from "typeorm";
 import Alias from "../../common/classes/Alias";
-import EndpointParameterType from "../enums/server/EndpointParameterType";
-import HTTPMethods from "../enums/server/HTTPMethods";
-import SetOperation from "../enums/SetOperation";
+import HTTPMethod from "../../common/enums/HTTPMethod";
+import SetOperation from "../../common/enums/SetOperation";
+import Validator from "../../common/services/Validator";
+import EndpointParameterType from "../../common/enums/EndpointParameterType";
 import ServerException from "../exceptions/ServerException";
-import Server from "../../common/services/Server";
+import Server from "../services/Server";
 
 export default function Entity<E>() {
 
@@ -21,23 +22,23 @@ export default function Entity<E>() {
     // Decorators
     // ----------
 
-    public static [HTTPMethods.GET](path: string, options?: Server.EndpointOptions) {
-      return this.bindRoute(HTTPMethods.GET, path, options);
+    public static [HTTPMethod.GET](path: string, options?: Server.EndpointOptions) {
+      return this.bindRoute(HTTPMethod.GET, path, options);
     }
 
-    public static [HTTPMethods.POST](path: string, options?: Server.EndpointOptions) {
-      return this.bindRoute(HTTPMethods.POST, path, options);
+    public static [HTTPMethod.POST](path: string, options?: Server.EndpointOptions) {
+      return this.bindRoute(HTTPMethod.POST, path, options);
     }
 
-    public static [HTTPMethods.PUT](path: string, options?: Server.EndpointOptions) {
-      return this.bindRoute(HTTPMethods.PUT, path, options);
+    public static [HTTPMethod.PUT](path: string, options?: Server.EndpointOptions) {
+      return this.bindRoute(HTTPMethod.PUT, path, options);
     }
 
-    public static [HTTPMethods.DELETE](path: string, options?: Server.EndpointOptions) {
-      return this.bindRoute(HTTPMethods.DELETE, path, options);
+    public static [HTTPMethod.DELETE](path: string, options?: Server.EndpointOptions) {
+      return this.bindRoute(HTTPMethod.DELETE, path, options);
     }
 
-    private static bindRoute(http_method: HTTPMethods, path: string, options: Server.EndpointOptions = {}) {
+    private static bindRoute(http_method: HTTPMethod, path: string, options: Server.EndpointOptions = {}) {
       return function (constructor: Constructor, method: string, descriptor: PropertyDescriptor) {
         Server.bindRoute(new Alias(constructor, method), http_method, [_.kebabCase(constructor.name), path], options, descriptor.value.bind(constructor));
       };
@@ -48,12 +49,12 @@ export default function Entity<E>() {
     public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.FILE, options?: Server.EndpointParameterOptions): Decorator
     public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.PASSWORD, options?: Server.EndpointParameterOptions): Decorator
     public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.UUID, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.DATE, conditions?: Server.DateParameterConditions, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.ENUM, conditions?: Server.EnumParameterConditions, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.FLOAT, conditions?: Server.FloatParameterConditions, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.INTEGER, conditions?: Server.IntegerParameterConditions, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.ORDER, conditions?: Server.OrderParameterConditions, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.STRING, conditions?: Server.StringParameterConditions, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.DATE, conditions?: Validator.DateParameterConditions, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.ENUM, conditions?: Validator.EnumParameterConditions, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.FLOAT, conditions?: Validator.FloatParameterConditions, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.INTEGER, conditions?: Validator.IntegerParameterConditions, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.ORDER, conditions?: Validator.OrderParameterConditions, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.STRING, conditions?: Validator.StringParameterConditions, options?: Server.EndpointParameterOptions): Decorator
     public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType, conditions: any = {}, options: Server.EndpointParameterOptions = {}): Decorator {
       return (constructor: Constructor, method: string) => {
         switch (type) {

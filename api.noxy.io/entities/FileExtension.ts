@@ -1,7 +1,6 @@
-import _ from "lodash";
 import * as TypeORM from "typeorm";
 import Entity from "../classes/Entity";
-import File, {FileJSON} from "./File";
+import File from "./File";
 import FileType, {FileTypeJSON} from "./FileType";
 
 @TypeORM.Entity()

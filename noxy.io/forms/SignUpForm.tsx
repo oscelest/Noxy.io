@@ -6,8 +6,8 @@ import Button from "../components/Form/Button";
 import Input from "../components/Form/Input";
 import ErrorText from "../components/Text/ErrorText";
 import TitleText from "../components/Text/TitleText";
-import ButtonType from "../enums/components/ButtonType";
-import InputType from "../enums/components/InputType";
+import ButtonType from "../enums/ButtonType";
+import InputType from "../enums/InputType";
 import Global from "../Global";
 import Style from "./SignUpForm.module.scss";
 

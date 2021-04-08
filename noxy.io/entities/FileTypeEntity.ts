@@ -1,8 +1,8 @@
 import Axios from "axios";
 import _ from "lodash";
+import Order from "../../common/enums/Order";
 import Entity from "../classes/Entity";
 import RequestData from "../classes/RequestData";
-import Order from "../enums/Order";
 
 export default class FileTypeEntity extends Entity {
 

@@ -1,7 +1,7 @@
 import Axios from "axios";
+import Order from "../../common/enums/Order";
 import Entity from "../classes/Entity";
 import RequestData from "../classes/RequestData";
-import Order from "../enums/Order";
 import UserEntity from "./UserEntity";
 
 export default class FileTagEntity extends Entity {

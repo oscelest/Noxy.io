@@ -1,5 +1,5 @@
 import React from "react";
-import IconType from "../../enums/components/IconType";
+import IconType from "../../enums/IconType";
 import Style from "./Icon.module.scss";
 
 export default class Icon extends React.Component<IconProps, State> {

@@ -1,5 +1,5 @@
 import React from "react";
-import PermissionData from "../../classes/PermissionData";
+import Permission from "../../../common/classes/Permission";
 import PermissionExplorer from "../../components/Application/PermissionExplorer";
 import Button from "../../components/Form/Button";
 import APIKeyEntity from "../../entities/APIKeyEntity";
@@ -58,7 +58,7 @@ export default class APIKeyUpdateForm extends React.Component<APIKeyUpdateFormPr
     );
   }
 
-  private readonly eventPermissionChange = (permission: PermissionData) => {
+  private readonly eventPermissionChange = (permission: Permission) => {
     this.setState({entity: new APIKeyEntity({...this.state.entity, permission})});
   };
 }
