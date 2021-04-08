@@ -25,7 +25,7 @@ declare interface RequestPagination<O extends {}> {
   order: RequestPaginationOrder<O>
 }
 
-declare type Unwrap<V> = V extends (infer R)[] ? R : V;
+declare type Unwrap<V> = V extends (infer R)[] ? R : V extends {[key: string]: infer R} ? R : V;
 
 declare type Simplify<O> = (O extends object ? Properties<O> : O)
 

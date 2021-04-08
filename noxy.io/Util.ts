@@ -6,7 +6,7 @@ namespace Util {
 
   export const Canvas = process.browser ? document.createElement("canvas") : null;
 
-  export function getReactChildObject<O extends {} | [], V extends Unwrap<O>>(element: HTMLElement, object: O): V {
+  export function getReactChildObject<O extends {} | [], V extends Unwrap<O>>(element: HTMLElement, object: O): V | undefined {
     return object[getChildKey(element, object)] as V;
   }
 

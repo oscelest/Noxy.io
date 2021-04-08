@@ -103,7 +103,7 @@ export default class ContextMenu extends React.Component<ContextMenuProps, State
 
   private readonly renderChildren = (item: ContextMenuItem, key: string) => {
     return (
-      <div className={Style.Item} key={key} onMouseEnter={this.eventMouseEnter} onMouseLeave={this.eventMouseLeave}>
+      <div className={Style.Item} key={key} onClick={this.eventClick} onMouseEnter={this.eventMouseEnter} onMouseLeave={this.eventMouseLeave}>
         {this.renderItemIcon(item.icon)}
         <span className={Style.Text}>{item.text}</span>
         {this.renderItemList(key, item.items)}
@@ -147,6 +147,10 @@ export default class ContextMenu extends React.Component<ContextMenuProps, State
     event.stopPropagation();
   };
 
+  private readonly eventClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    this.props.onCommit?.()
+    Util.getReactChildObject(event.currentTarget, this.props.children as ContextMenuCollection)?.action?.();
+  }
 
   private readonly parseChildren = (collection: ContextMenuCollection, key: string): any => {
     return _.reduce(collection, (result, item, sub_key) => {

@@ -270,14 +270,16 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   private readonly eventTagAdd = (event: React.MouseEvent<HTMLDivElement>) => {
     const tag = Util.getReactChildObject(event.currentTarget, this.state.tag_available_list);
-    const tag_selected_list = this.sortTagList([...this.state.tag_selected_list, tag]);
+    const list = [...this.state.tag_selected_list];
+    if (tag) list.push(tag);
+    const tag_selected_list = this.sortTagList(list);
     this.searchTag({tag_selected_list});
     this.searchFile({tag_selected_list});
   };
 
   private readonly eventTagRemove = (event: React.MouseEvent<HTMLDivElement>) => {
     const tag = Util.getReactChildObject(event.currentTarget, this.state.tag_selected_list);
-    const tag_selected_list = _.filter(this.state.tag_selected_list, v => v.getPrimaryKey() !== tag.getPrimaryKey());
+    const tag_selected_list = _.filter(this.state.tag_selected_list, v => v.getPrimaryKey() !== tag?.getPrimaryKey());
     this.searchTag({tag_selected_list});
     this.searchFile({tag_selected_list});
   };
@@ -303,48 +305,21 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   private readonly eventElementBrowserContextMenu = (selected: boolean[]): {[key: string]: ContextMenuItem} => {
     return {
+      "open":     {text: "Edit", action: this.eventElementBrowserContextMenuOpen},
       "share":    {icon: IconType.SHARE, text: "Share", action: () => {}},
       "delete":   {icon: IconType.BIN, text: "Delete", action: () => {}},
-      "edit":     {text: "Edit", action: () => {}},
-      "level2":   {
-        text: "level1", action: () => {}, items: {
-          "item1": {icon: IconType.SHARE, text: "Item1", action: () => {}},
-          "item2": {icon: IconType.BIN, text: "Item2", action: () => {}},
-          "item3": {text: "Item3", action: () => {}},
-        },
-      },
-      "level3":   {
-        text: "Level2", action: () => {}, items: {
-          "item2.1":  {icon: IconType.SHARE, text: "Item2.1", action: () => {}},
-          "item2.2": {
-            icon: IconType.BIN, text: "Item2.2", action: () => {}, items: {
-              "item1": {text: "Item1.1", action: () => {}},
-              "item2": {text: "Item1.2", action: () => {}},
-              "item3": {text: "Item1.3", action: () => {}},
-              "item4": {text: "Item1.3", action: () => {}},
-              "item5": {text: "Item1.3", action: () => {}},
-            },
-          },
-          "item2.3":   {text: "Item2.3", action: () => {}},
-        },
-      },
       "download": {icon: IconType.DOWNLOAD, text: "Download", action: () => {}},
     };
-
-    // console.log(selected)
-    // return (
-    //   <div className={Style.ContextMenu} ref={this.state.ref_context_menu}>
-    //     <div className={Style.ContextItem}>Share</div>
-    //     <div className={Style.ContextItem}>Delete</div>
-    //     <div className={Style.ContextItem}>Edit</div>
-    //     <div className={Style.ContextItem} onClick={this.eventContextItemDownloadClick}>Download</div>
-    //   </div>
-    // );
   };
-  //
-  // private readonly eventContextItemDownloadClick = () => {
-  //   console.log("test", this.state.file_selected);
-  // };
+
+  private readonly eventElementBrowserContextMenuOpen = () => {
+    for (let index in this.state.file_selected) {
+      if (!this.state.file_selected[index]) continue;
+      console.log(this.state.file_list[index])
+    }
+    // window.open('https://www.codexworld.com', '_blank');
+  }
+
 }
 
 type SortOrder = Pick<FileEntity, "name" | "size" | "time_created">
