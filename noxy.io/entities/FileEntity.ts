@@ -65,6 +65,10 @@ export default class FileEntity extends Entity {
     return new this(result.data.content);
   }
 
+  public static async download(id: (string | FileEntity)[]) {
+    await Axios.get<APIRequest<FileEntity>>(`${this.URL}/download?${new RequestData({id})}`);
+  }
+
   public static async removeByID(id: string | FileEntity) {
     id = typeof id === "string" ? id : id.getPrimaryKey();
     const result = await Axios.put<APIRequest<FileEntity>>(`${this.URL}/${id}`, {file_tag_list: []});

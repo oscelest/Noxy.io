@@ -1,3 +1,5 @@
+import ADMZip from "adm-zip";
+import Crypto from "crypto";
 import Express from "express";
 import * as FS from "fs";
 import _ from "lodash";
@@ -5,10 +7,10 @@ import {customAlphabet} from "nanoid";
 import Path from "path";
 import * as TypeORM from "typeorm";
 import {v4} from "uuid";
+import EndpointParameterType from "../../common/enums/EndpointParameterType";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import SetOperation from "../../common/enums/SetOperation";
 import Entity, {Pagination} from "../classes/Entity";
-import EndpointParameterType from "../../common/enums/EndpointParameterType";
 import ServerException from "../exceptions/ServerException";
 import FileExtension, {FileExtensionJSON} from "./FileExtension";
 import FileTag, {FileTagJSON} from "./FileTag";
@@ -65,6 +67,10 @@ export default class File extends Entity<File>() {
   /**
    * Instance methods
    */
+
+  public getFilePath() {
+    return Path.resolve(process.env.FILE_PATH!, this.alias);
+  }
 
   public toJSON(): FileJSON {
     return {
@@ -155,6 +161,31 @@ export default class File extends Entity<File>() {
     }
   }
 
+
+  @File.get("/download", {user: false})
+  @File.bindParameter<Request.postDownload>("id", EndpointParameterType.UUID, {flag_array: true})
+  private static async download({locals: {respond, user, parameters}}: Express.Request<{}, Response.postDownload, Request.postDownload>, response: Express.Response) {
+    const {id} = parameters!;
+
+    const files = await this.performSelect(id);
+    const hash = Crypto.createHash("sha256");
+
+    const archive = new ADMZip();
+    for (let file of files) {
+      const name = file.name.match(new RegExp(`${file.file_extension.name}$`)) ? file.name : `${file.name}.${file.file_extension.name}`;
+      hash.update(file.alias);
+      archive.addLocalFile(file.getFilePath(), "", name);
+    }
+
+    const path = Path.resolve(process.env.TEMP!, hash.digest("base64"));
+    archive.writeZip(path, error => {
+      if (error) return respond?.(new ServerException(500, error, error.message));
+      response.download(path, "files.zip", {}, () => {
+        console.log("files sent");
+      });
+    });
+  }
+
   @File.get("/:id")
   public static async findOne({params: {id}, locals: {respond, user}}: Express.Request<{id: string}, Response.getFindOne, Request.getFindOne>) {
     const query = this.createSelect();
@@ -219,8 +250,8 @@ export default class File extends Entity<File>() {
       return respond?.(new ServerException(400, {mime_type: file.mimetype}, "File MIME type is not accepted"));
     }
 
-    FS.rename(Path.resolve(file.path), Path.resolve(process.env.FILE_PATH!, entity.alias), async error => {
-      if (error) return respond?.(new ServerException(500, {from: Path.resolve(file.path), to: Path.resolve(process.env.FILE_PATH!, entity.alias)}, "Error while moving file"));
+    FS.rename(file.path, entity.getFilePath(), async error => {
+      if (error) return respond?.(new ServerException(500, {from: file.path, to: entity.getFilePath()}, "Error while moving file"));
 
       try {
         _.merge(entity, await this.performInsert(entity));
@@ -237,6 +268,30 @@ export default class File extends Entity<File>() {
       catch (error) {
         return respond?.(error);
       }
+    });
+  }
+
+  @File.post("/download", {user: false})
+  @File.bindParameter<Request.postDownload>("id", EndpointParameterType.UUID, {flag_array: true})
+  private static async downloadPost({locals: {respond, user, parameters}}: Express.Request<{}, Response.postDownload, Request.postDownload>, response: Express.Response) {
+    const {id} = parameters!;
+
+    const files = await this.performSelect(id);
+    const hash = Crypto.createHash("sha256");
+
+    const archive = new ADMZip();
+    for (let file of files) {
+      const name = file.name.match(new RegExp(`${file.file_extension.name}$`)) ? file.name : `${file.name}.${file.file_extension.name}`;
+      hash.update(file.alias);
+      archive.addLocalFile(file.getFilePath(), "", name);
+    }
+
+    const path = Path.resolve(process.env.TEMP!, hash.digest("base64"));
+    archive.writeZip(path, error => {
+      if (error) return respond?.(new ServerException(500, error, error.message));
+      response.download(path, "files.zip", {}, () => {
+        console.log("files sent");
+      });
     });
   }
 
@@ -268,7 +323,6 @@ export default class File extends Entity<File>() {
       respond?.(await this.performUpdate(id, file));
     }
     catch (error) {
-      console.log(error);
       respond?.(new ServerException(500, error));
     }
   }
@@ -318,6 +372,7 @@ namespace Request {
   export type getFindOne = never
   export type getReadOne = never
   export type postCreateOne = {file: FileHandle; file_tag_list?: string[]}
+  export type postDownload = {id: string[]}
   export type putUpdateOne = {name?: string; file_extension?: string; file_tag_list?: string[]}
   export type deleteDeleteOne = never
 }
@@ -328,6 +383,7 @@ namespace Response {
   export type getFindOne = File | ServerException
   export type getReadOne = ServerException
   export type postCreateOne = File | ServerException
+  export type postDownload = ServerException | {}
   export type putUpdateOne = File | ServerException
   export type deleteDeleteOne = File | ServerException
 }

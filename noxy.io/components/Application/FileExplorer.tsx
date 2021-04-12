@@ -308,17 +308,44 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
       "open":     {text: "Edit", action: this.eventElementBrowserContextMenuOpen},
       "share":    {icon: IconType.SHARE, text: "Share", action: () => {}},
       "delete":   {icon: IconType.BIN, text: "Delete", action: () => {}},
-      "download": {icon: IconType.DOWNLOAD, text: "Download", action: () => {}},
+      "download": {icon: IconType.DOWNLOAD, text: "Download", action: this.eventElementBrowserContextMenuDownload},
     };
   };
 
   private readonly eventElementBrowserContextMenuOpen = () => {
     for (let index in this.state.file_selected) {
       if (!this.state.file_selected[index]) continue;
-      console.log(this.state.file_list[index])
+      const delay = 500;
+      setTimeout(() => {
+        console.log("Opening:", `${location.href}/${this.state.file_list[index].id}`, "after a", (+index - 1) * delay, "delay");
+        window.open(`${location.href}/${this.state.file_list[index].id}`, "_self");
+      }, (+index - 1) * delay);
     }
-    // window.open('https://www.codexworld.com', '_blank');
-  }
+  };
+
+  private readonly eventElementBrowserContextMenuDownload = async () => {
+    // window.open(`${FileEntity.URL}/download?${new RequestData({id: _.filter(this.state.file_list, (entity, key) => this.state.file_selected[key])})}`, "_blank");
+    const form = document.createElement("form");
+    form.setAttribute("action", `${FileEntity.URL}/download`);
+    form.setAttribute("method", "post");
+    form.setAttribute("target", "_blank");
+
+    for (let key in this.state.file_list) {
+      if (this.state.file_selected[key]) {
+        const input = document.createElement("input");
+        input.setAttribute("type", "hidden");
+        input.setAttribute("name", "id");
+        input.setAttribute("value", this.state.file_list[key].id);
+        form.append(input);
+      }
+    }
+
+    console.log(form);
+
+    document.getElementById("__next")?.append(form);
+    form.submit();
+    form.remove();
+  };
 
 }
 
