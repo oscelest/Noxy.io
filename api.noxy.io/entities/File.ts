@@ -10,6 +10,7 @@ import {v4} from "uuid";
 import EndpointParameterType from "../../common/enums/EndpointParameterType";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import SetOperation from "../../common/enums/SetOperation";
+import Logger from "../../common/services/Logger";
 import Entity, {Pagination} from "../classes/Entity";
 import ServerException from "../exceptions/ServerException";
 import FileExtension, {FileExtensionJSON} from "./FileExtension";
@@ -161,31 +162,6 @@ export default class File extends Entity<File>() {
     }
   }
 
-
-  @File.get("/download", {user: false})
-  @File.bindParameter<Request.postDownload>("id", EndpointParameterType.UUID, {flag_array: true})
-  private static async download({locals: {respond, user, parameters}}: Express.Request<{}, Response.postDownload, Request.postDownload>, response: Express.Response) {
-    const {id} = parameters!;
-
-    const files = await this.performSelect(id);
-    const hash = Crypto.createHash("sha256");
-
-    const archive = new ADMZip();
-    for (let file of files) {
-      const name = file.name.match(new RegExp(`${file.file_extension.name}$`)) ? file.name : `${file.name}.${file.file_extension.name}`;
-      hash.update(file.alias);
-      archive.addLocalFile(file.getFilePath(), "", name);
-    }
-
-    const path = Path.resolve(process.env.TEMP!, hash.digest("base64"));
-    archive.writeZip(path, error => {
-      if (error) return respond?.(new ServerException(500, error, error.message));
-      response.download(path, "files.zip", {}, () => {
-        console.log("files sent");
-      });
-    });
-  }
-
   @File.get("/:id")
   public static async findOne({params: {id}, locals: {respond, user}}: Express.Request<{id: string}, Response.getFindOne, Request.getFindOne>) {
     const query = this.createSelect();
@@ -271,9 +247,9 @@ export default class File extends Entity<File>() {
     });
   }
 
-  @File.post("/download", {user: false})
-  @File.bindParameter<Request.postDownload>("id", EndpointParameterType.UUID, {flag_array: true})
-  private static async downloadPost({locals: {respond, user, parameters}}: Express.Request<{}, Response.postDownload, Request.postDownload>, response: Express.Response) {
+  @File.post("/request-download")
+  @File.bindParameter<Request.postRequestDownload>("id", EndpointParameterType.UUID, {flag_array: true})
+  private static async requestDownload({locals: {respond, user, parameters}}: Express.Request<{}, Response.postRequestDownload, Request.postRequestDownload>, response: Express.Response) {
     const {id} = parameters!;
 
     const files = await this.performSelect(id);
@@ -286,13 +262,20 @@ export default class File extends Entity<File>() {
       archive.addLocalFile(file.getFilePath(), "", name);
     }
 
-    const path = Path.resolve(process.env.TEMP!, hash.digest("base64"));
+    const token = hash.digest("hex");
+    const path = Path.resolve(process.env.TEMP!, token);
     archive.writeZip(path, error => {
       if (error) return respond?.(new ServerException(500, error, error.message));
-      response.download(path, "files.zip", {}, () => {
-        console.log("files sent");
-      });
+      respond?.(token);
     });
+  }
+
+  @File.post("/confirm-download", {user: false})
+  @File.bindParameter<Request.postConfirmDownload>("token", EndpointParameterType.STRING)
+  private static async confirmDownload({locals: {respond, user, parameters}}: Express.Request<{}, Response.postConfirmDownload, Request.postConfirmDownload>, response: Express.Response) {
+    const {token} = parameters!;
+    const path = Path.resolve(process.env.TEMP!, token);
+    response.download(path, "files.zip", {}, () => FS.unlink(path, (error) => (error && error.code !== "ENOENT") && Logger.write(Logger.Level.ERROR, error)));
   }
 
   @File.put("/:id", {permission: PermissionLevel.FILE_UPDATE})
@@ -372,7 +355,8 @@ namespace Request {
   export type getFindOne = never
   export type getReadOne = never
   export type postCreateOne = {file: FileHandle; file_tag_list?: string[]}
-  export type postDownload = {id: string[]}
+  export type postRequestDownload = {id: string[]}
+  export type postConfirmDownload = {token: string}
   export type putUpdateOne = {name?: string; file_extension?: string; file_tag_list?: string[]}
   export type deleteDeleteOne = never
 }
@@ -383,7 +367,8 @@ namespace Response {
   export type getFindOne = File | ServerException
   export type getReadOne = ServerException
   export type postCreateOne = File | ServerException
-  export type postDownload = ServerException | {}
+  export type postRequestDownload = string | ServerException
+  export type postConfirmDownload = string | ServerException
   export type putUpdateOne = File | ServerException
   export type deleteDeleteOne = File | ServerException
 }

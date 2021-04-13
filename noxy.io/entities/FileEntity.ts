@@ -65,8 +65,26 @@ export default class FileEntity extends Entity {
     return new this(result.data.content);
   }
 
-  public static async download(id: (string | FileEntity)[]) {
-    await Axios.get<APIRequest<FileEntity>>(`${this.URL}/download?${new RequestData({id})}`);
+  public static async requestDownload(id: (string | FileEntity)[]) {
+    const result =  await Axios.post<APIRequest<string>>(`${this.URL}/request-download`, new RequestData({id}).toObject());
+    return result.data.content;
+  }
+
+  public static async confirmDownload(token: string) {
+    const form = document.createElement("form");
+    form.setAttribute("action", `${FileEntity.URL}/confirm-download`);
+    form.setAttribute("method", "post");
+    form.setAttribute("target", "_blank");
+
+    const input = document.createElement("input");
+    input.setAttribute("type", "hidden");
+    input.setAttribute("name", "token");
+    input.setAttribute("value", token);
+    form.append(input);
+
+    document.getElementById("__next")?.append(form);
+    form.submit();
+    form.remove();
   }
 
   public static async removeByID(id: string | FileEntity) {

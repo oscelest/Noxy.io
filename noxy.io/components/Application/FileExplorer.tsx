@@ -324,27 +324,8 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private readonly eventElementBrowserContextMenuDownload = async () => {
-    // window.open(`${FileEntity.URL}/download?${new RequestData({id: _.filter(this.state.file_list, (entity, key) => this.state.file_selected[key])})}`, "_blank");
-    const form = document.createElement("form");
-    form.setAttribute("action", `${FileEntity.URL}/download`);
-    form.setAttribute("method", "post");
-    form.setAttribute("target", "_blank");
-
-    for (let key in this.state.file_list) {
-      if (this.state.file_selected[key]) {
-        const input = document.createElement("input");
-        input.setAttribute("type", "hidden");
-        input.setAttribute("name", "id");
-        input.setAttribute("value", this.state.file_list[key].id);
-        form.append(input);
-      }
-    }
-
-    console.log(form);
-
-    document.getElementById("__next")?.append(form);
-    form.submit();
-    form.remove();
+    const token = await FileEntity.requestDownload(_.filter(this.state.file_list, (entity, key) => this.state.file_selected[key]));
+    await FileEntity.confirmDownload(token);
   };
 
 }

@@ -88,6 +88,7 @@ module Server {
 
 
   function attachHeaders(request: Express.Request, response: Express.Response, next: Express.NextFunction) {
+    request.locals = {};
     response.header("Access-Control-Allow-Origin", "*");
     response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, JSONP");
     response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Masquerade");
@@ -99,7 +100,6 @@ module Server {
 
 
   function attachLocals(request: Express.Request, response: Express.Response, next: Express.NextFunction) {
-    request.locals = {};
     request.locals.id = v4();
     request.locals.method = request.method.toLowerCase() as HTTPMethod;
     request.locals.path = request.route.path as string;
@@ -234,7 +234,7 @@ module Server {
 
 
   function respond(this: Express.Request<{[key: string]: string}, Server.Response>, value: any) {
-    const time_started = this.locals?.time_created?.toISOString() ?? new Date().toISOString();
+    const time_started = this.locals.time_created?.toISOString() ?? new Date().toISOString();
     const time_completed = new Date().toISOString();
 
     if (value instanceof ServerException && value.code !== 500) {
