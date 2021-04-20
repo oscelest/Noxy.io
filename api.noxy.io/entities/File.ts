@@ -1,29 +1,30 @@
 import ADMZip from "adm-zip";
 import Crypto from "crypto";
-import Express from "express";
 import * as FS from "fs";
 import _ from "lodash";
 import {customAlphabet} from "nanoid";
 import Path from "path";
 import * as TypeORM from "typeorm";
 import {v4} from "uuid";
-import EndpointParameterType from "../../common/enums/EndpointParameterType";
+import Entity, {Pagination} from "../../common/classes/Entity";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import SetOperation from "../../common/enums/SetOperation";
+import ValidatorType from "../../common/enums/ValidatorType";
+import ServerException from "../../common/exceptions/ServerException";
 import Logger from "../../common/services/Logger";
-import Entity, {Pagination} from "../classes/Entity";
-import ServerException from "../exceptions/ServerException";
+import Server from "../../common/services/Server";
 import FileExtension, {FileExtensionJSON} from "./FileExtension";
 import FileTag, {FileTagJSON} from "./FileTag";
 import FileType from "./FileType";
 import User, {UserJSON} from "./User";
+
 
 const NanoID = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 16);
 
 @TypeORM.Entity()
 @TypeORM.Index("time_created", ["time_created"])
 @TypeORM.Index("time_updated", ["time_updated"])
-export default class File extends Entity<File>() {
+export default class File extends Entity<File>(TypeORM) {
 
   /**
    * Properties
@@ -118,12 +119,12 @@ export default class File extends Entity<File>() {
    */
 
   @File.get("/")
-  @File.bindParameter<Request.getFindMany>("name", EndpointParameterType.STRING, {max_length: 128})
-  @File.bindParameter<Request.getFindMany>("file_type_list", EndpointParameterType.UUID, {flag_array: true})
-  @File.bindParameter<Request.getFindMany>("file_tag_list", EndpointParameterType.UUID, {flag_array: true})
-  @File.bindParameter<Request.getFindMany>("file_tag_set_operation", EndpointParameterType.ENUM, SetOperation)
+  @File.bindParameter<Request.getFindMany>("name", ValidatorType.STRING, {max_length: 128})
+  @File.bindParameter<Request.getFindMany>("file_type_list", ValidatorType.UUID, {flag_array: true})
+  @File.bindParameter<Request.getFindMany>("file_tag_list", ValidatorType.UUID, {flag_array: true})
+  @File.bindParameter<Request.getFindMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
   @File.bindPagination(100, ["id", "name", "size", "time_created"])
-  public static async findMany({locals: {respond, user, parameters}}: Express.Request<{}, Response.getFindMany, Request.getFindMany>) {
+  public static async findMany({locals: {respond, user, parameters}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
     const {skip, limit, order, name, file_type_list, file_tag_list, file_tag_set_operation} = parameters!;
     const query = this.createPaginated({skip, limit, order});
 
@@ -141,11 +142,11 @@ export default class File extends Entity<File>() {
   }
 
   @File.get("/count")
-  @File.bindParameter<Request.getFindMany>("name", EndpointParameterType.STRING, {max_length: 128})
-  @File.bindParameter<Request.getFindMany>("file_type_list", EndpointParameterType.UUID, {flag_array: true})
-  @File.bindParameter<Request.getFindMany>("file_tag_list", EndpointParameterType.UUID, {flag_array: true})
-  @File.bindParameter<Request.getFindMany>("file_tag_set_operation", EndpointParameterType.ENUM, SetOperation)
-  public static async count({locals: {respond, user, parameters}}: Express.Request<{}, Response.getCount, Request.getCount>) {
+  @File.bindParameter<Request.getFindMany>("name", ValidatorType.STRING, {max_length: 128})
+  @File.bindParameter<Request.getFindMany>("file_type_list", ValidatorType.UUID, {flag_array: true})
+  @File.bindParameter<Request.getFindMany>("file_tag_list", ValidatorType.UUID, {flag_array: true})
+  @File.bindParameter<Request.getFindMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
+  public static async count({locals: {respond, user, parameters}}: Server.Request<{}, Response.getCount, Request.getCount>) {
     const {name, file_type_list, file_tag_list, file_tag_set_operation} = parameters!;
     const query = this.createSelect();
 
@@ -163,7 +164,7 @@ export default class File extends Entity<File>() {
   }
 
   @File.get("/:id")
-  public static async findOne({params: {id}, locals: {respond, user}}: Express.Request<{id: string}, Response.getFindOne, Request.getFindOne>) {
+  public static async findOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.getFindOne, Request.getFindOne>) {
     const query = this.createSelect();
 
     this.addWhereID(query, id);
@@ -178,7 +179,7 @@ export default class File extends Entity<File>() {
   }
 
   @File.get("/data/:id", {user: false})
-  public static async readOne({params: {id}, locals: {respond}}: Express.Request<{id: string}, Response.getReadOne, Request.getReadOne>, response: Express.Response) {
+  public static async readOne({params: {id}, locals: {respond}}: Server.Request<{id: string}, Response.getReadOne, Request.getReadOne>, response: Server.Response) {
     const where = {} as TypeORM.ObjectLiteral;
 
     if (id.match(/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i)) {
@@ -202,9 +203,9 @@ export default class File extends Entity<File>() {
   }
 
   @File.post("/")
-  @File.bindParameter<Request.postCreateOne>("file", EndpointParameterType.FILE)
-  @File.bindParameter<Request.postCreateOne>("file_tag_list", EndpointParameterType.UUID, {flag_array: true, flag_optional: true})
-  private static async createOne({locals: {respond, user, parameters}}: Express.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
+  @File.bindParameter<Request.postCreateOne>("file", ValidatorType.FILE)
+  @File.bindParameter<Request.postCreateOne>("file_tag_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
+  private static async createOne({locals: {respond, user, parameters}}: Server.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
     const {file, file_tag_list} = parameters!;
 
     if (file.originalname.length > 128) {
@@ -248,8 +249,8 @@ export default class File extends Entity<File>() {
   }
 
   @File.post("/request-download")
-  @File.bindParameter<Request.postRequestDownload>("id", EndpointParameterType.UUID, {flag_array: true})
-  private static async requestDownload({locals: {respond, user, parameters}}: Express.Request<{}, Response.postRequestDownload, Request.postRequestDownload>, response: Express.Response) {
+  @File.bindParameter<Request.postRequestDownload>("id", ValidatorType.UUID, {flag_array: true})
+  private static async requestDownload({locals: {respond, user, parameters}}: Server.Request<{}, Response.postRequestDownload, Request.postRequestDownload>, response: Server.Response) {
     const {id} = parameters!;
 
     const files = await this.performSelect(id);
@@ -271,18 +272,18 @@ export default class File extends Entity<File>() {
   }
 
   @File.post("/confirm-download", {user: false})
-  @File.bindParameter<Request.postConfirmDownload>("token", EndpointParameterType.STRING)
-  private static async confirmDownload({locals: {respond, user, parameters}}: Express.Request<{}, Response.postConfirmDownload, Request.postConfirmDownload>, response: Express.Response) {
+  @File.bindParameter<Request.postConfirmDownload>("token", ValidatorType.STRING)
+  private static async confirmDownload({locals: {respond, user, parameters}}: Server.Request<{}, Response.postConfirmDownload, Request.postConfirmDownload>, response: Server.Response) {
     const {token} = parameters!;
     const path = Path.resolve(process.env.TEMP!, token);
     response.download(path, "files.zip", {}, () => FS.unlink(path, (error) => (error && error.code !== "ENOENT") && Logger.write(Logger.Level.ERROR, error)));
   }
 
   @File.put("/:id", {permission: PermissionLevel.FILE_UPDATE})
-  @File.bindParameter<Request.putUpdateOne>("name", EndpointParameterType.UUID, {flag_optional: true})
-  @File.bindParameter<Request.putUpdateOne>("file_extension", EndpointParameterType.UUID, {flag_optional: true})
-  @File.bindParameter<Request.putUpdateOne>("file_tag_list", EndpointParameterType.UUID, {flag_array: true, flag_optional: true})
-  private static async updateOne({params: {id}, locals: {respond, user, parameters}}: Express.Request<{id: string}, Response.putUpdateOne, Request.putUpdateOne>) {
+  @File.bindParameter<Request.putUpdateOne>("name", ValidatorType.UUID, {flag_optional: true})
+  @File.bindParameter<Request.putUpdateOne>("file_extension", ValidatorType.UUID, {flag_optional: true})
+  @File.bindParameter<Request.putUpdateOne>("file_tag_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
+  private static async updateOne({params: {id}, locals: {respond, user, parameters}}: Server.Request<{id: string}, Response.putUpdateOne, Request.putUpdateOne>) {
     const {name, file_extension, file_tag_list} = parameters!;
     const query = this.createSelect();
     this.addValueClause(query, "id", id);
@@ -311,7 +312,7 @@ export default class File extends Entity<File>() {
   }
 
   @File.delete("/:id", {permission: PermissionLevel.FILE_DELETE})
-  private static async deleteOne({params: {id}, locals: {respond, user}}: Express.Request<{id: string}, Response.deleteDeleteOne, Request.deleteDeleteOne>) {
+  private static async deleteOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.deleteDeleteOne, Request.deleteDeleteOne>) {
     const query = this.createSelect();
     this.addValueClause(query, "id", id);
 

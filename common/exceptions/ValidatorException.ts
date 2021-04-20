@@ -1,12 +1,12 @@
 import Exception from "../classes/Exception";
 
-export default class EndpointParameterException extends Exception {
+export default class ValidatorException extends Exception {
 
   public received?: string;
   public parsed?: string;
   
   constructor(message: string, received?: any, parsed?: any) {
-    super("EndpointParameterException", message);
+    super("ValidatorException", message);
     this.received = received;
     this.parsed = parsed;
   }

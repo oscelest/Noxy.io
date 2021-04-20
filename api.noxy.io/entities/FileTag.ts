@@ -1,8 +1,8 @@
-import Express from "express";
 import * as TypeORM from "typeorm";
-import Entity, {Pagination} from "../classes/Entity";
-import EndpointParameterType from "../../common/enums/EndpointParameterType";
-import ServerException from "../exceptions/ServerException";
+import Entity, {Pagination} from "../../common/classes/Entity";
+import ValidatorType from "../../common/enums/ValidatorType";
+import ServerException from "../../common/exceptions/ServerException";
+import Server from "../../common/services/Server";
 import File from "./File";
 import User, {UserJSON} from "./User";
 
@@ -10,7 +10,7 @@ import User, {UserJSON} from "./User";
 @TypeORM.Unique("file_tag", ["name", "user_created"] as (keyof FileTag)[])
 @TypeORM.Index("time_created", ["time_created"] as (keyof FileTag)[])
 @TypeORM.Index("time_updated", ["time_updated"] as (keyof FileTag)[])
-export default class FileTag extends Entity<FileTag>() {
+export default class FileTag extends Entity<FileTag>(TypeORM) {
 
   /**
    * Properties
@@ -69,10 +69,10 @@ export default class FileTag extends Entity<FileTag>() {
   }
 
   @FileTag.get("/")
-  @FileTag.bindParameter<Request.getFindMany>("name", EndpointParameterType.STRING, {max_length: 64})
-  @FileTag.bindParameter<Request.getFindMany>("exclude", EndpointParameterType.UUID, {flag_array: true})
+  @FileTag.bindParameter<Request.getFindMany>("name", ValidatorType.STRING, {max_length: 64})
+  @FileTag.bindParameter<Request.getFindMany>("exclude", ValidatorType.UUID, {flag_array: true})
   @FileTag.bindPagination(100, ["id", "name", "time_created"])
-  public static async findMany({locals: {respond, parameters}}: Express.Request<{}, Response.getFindMany, Request.getFindMany>) {
+  public static async findMany({locals: {respond, parameters}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
     const {skip, limit, order, name, user_created, exclude} = parameters!;
     const query = this.createPaginated({skip, limit, order});
 
@@ -90,10 +90,10 @@ export default class FileTag extends Entity<FileTag>() {
 
 
   @FileTag.get("/count")
-  @FileTag.bindParameter<Request.getCount>("name", EndpointParameterType.STRING, {max_length: 64})
-  @FileTag.bindParameter<Request.getCount>("exclude", EndpointParameterType.UUID, {flag_array: true})
+  @FileTag.bindParameter<Request.getCount>("name", ValidatorType.STRING, {max_length: 64})
+  @FileTag.bindParameter<Request.getCount>("exclude", ValidatorType.UUID, {flag_array: true})
   @FileTag.bindPagination(100, ["id", "name", "time_created"])
-  public static async count({locals: {respond, parameters}}: Express.Request<{}, Response.getCount, Request.getCount>) {
+  public static async count({locals: {respond, parameters}}: Server.Request<{}, Response.getCount, Request.getCount>) {
     const {name, user_created, exclude} = parameters!;
     const query = this.createSelect();
 
@@ -110,8 +110,8 @@ export default class FileTag extends Entity<FileTag>() {
   }
 
   @FileTag.post("/")
-  @FileTag.bindParameter<Request.postCreateOne>("name", EndpointParameterType.STRING, {min_length: 3, max_length: 64})
-  private static async createOne({locals: {respond, user, parameters}}: Express.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
+  @FileTag.bindParameter<Request.postCreateOne>("name", ValidatorType.STRING, {min_length: 3, max_length: 64})
+  private static async createOne({locals: {respond, user, parameters}}: Server.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
     const {name} = parameters!;
     const entity = TypeORM.getRepository(FileTag).create();
 

@@ -1,21 +1,21 @@
 import crypto from "crypto";
-import Express from "express";
 import JSONWebToken from "jsonwebtoken";
 import JWT from "jsonwebtoken";
 import _ from "lodash";
 import * as TypeORM from "typeorm";
+import Entity, {Pagination} from "../../common/classes/Entity";
 import Permission from "../../common/classes/Permission";
+import ValidatorType from "../../common/enums/ValidatorType";
+import ServerException from "../../common/exceptions/ServerException";
 import Email from "../../common/services/Email";
-import Entity, {Pagination} from "../classes/Entity";
-import EndpointParameterType from "../../common/enums/EndpointParameterType";
-import ServerException from "../exceptions/ServerException";
+import Server from "../../common/services/Server";
 import APIKey, {APIKeyJSON} from "./APIKey";
 import File from "./File";
 import FileTag from "./FileTag";
 
 @TypeORM.Entity()
 @TypeORM.Unique("email", ["email"])
-export default class User extends Entity<User>() {
+export default class User extends Entity<User>(TypeORM) {
 
   //region    Properties
 
@@ -87,9 +87,9 @@ export default class User extends Entity<User>() {
   //region    Endpoint methods
 
   @User.get("/")
-  @User.bindParameter<Request.getFindMany>("email", EndpointParameterType.STRING, {min_length: 1})
+  @User.bindParameter<Request.getFindMany>("email", ValidatorType.STRING, {min_length: 1})
   @User.bindPagination(100, ["id", "email", "time_created"])
-  public static async findMany({locals: {respond, user, api_key, parameters}}: Express.Request<{}, Response.getFindMany, Request.getFindMany>) {
+  public static async findMany({locals: {respond, user, api_key, parameters}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
     const {skip, limit, order, email} = parameters!;
     const query = this.createPaginated({skip, limit, order});
     this.addWildcardClause(query, "email", email);
@@ -106,10 +106,10 @@ export default class User extends Entity<User>() {
 
 
   @User.post("/", {user: false})
-  @User.bindParameter<Request.postCreateOne>("email", EndpointParameterType.EMAIL)
-  @User.bindParameter<Request.postCreateOne>("username", EndpointParameterType.STRING, {min_length: 3, max_length: 64})
-  @User.bindParameter<Request.postCreateOne>("password", EndpointParameterType.PASSWORD)
-  public static async createOne({locals: {respond, parameters}}: Express.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
+  @User.bindParameter<Request.postCreateOne>("email", ValidatorType.EMAIL)
+  @User.bindParameter<Request.postCreateOne>("username", ValidatorType.STRING, {min_length: 3, max_length: 64})
+  @User.bindParameter<Request.postCreateOne>("password", ValidatorType.PASSWORD)
+  public static async createOne({locals: {respond, parameters}}: Server.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
     const {username, email, password} = parameters!;
     const {salt, hash} = password ?? {};
 
@@ -128,9 +128,10 @@ export default class User extends Entity<User>() {
 
 
   @User.post("/login", {user: false})
-  @User.bindParameter<Request.postLogin>("email", EndpointParameterType.EMAIL, {flag_optional: true})
-  @User.bindParameter<Request.postLogin>("password", EndpointParameterType.STRING, {min_length: 12}, {flag_optional: true})
-  public static async login({locals: {respond, user, parameters}}: Express.Request<{}, Response.postLogin, Request.postLogin>) {
+  @User.bindParameter<Request.postLogin>("email", ValidatorType.EMAIL, {flag_optional: true})
+  @User.bindParameter<Request.postLogin>("password", ValidatorType.STRING, {min_length: 12}, {flag_optional: true})
+  public static async login({locals: {respond, user, parameters}}: Server.Request<{}, Response.postLogin, Request.postLogin>) {
+
     const {email, password} = parameters!;
 
     try {
@@ -155,8 +156,8 @@ export default class User extends Entity<User>() {
 
 
   @User.post("/request-reset", {user: false})
-  @User.bindParameter<Request.postRequestReset>("email", EndpointParameterType.EMAIL)
-  public static async requestReset({locals: {respond, parameters}}: Express.Request<{}, Response.postRequestReset, Request.postRequestReset>) {
+  @User.bindParameter<Request.postRequestReset>("email", ValidatorType.EMAIL)
+  public static async requestReset({locals: {respond, parameters}}: Server.Request<{}, Response.postRequestReset, Request.postRequestReset>) {
     const {email} = parameters!;
 
     try {
@@ -196,9 +197,9 @@ export default class User extends Entity<User>() {
   }
 
   @User.post("/confirm-reset", {user: false})
-  @User.bindParameter<Request.postConfirmReset>("password", EndpointParameterType.PASSWORD)
-  @User.bindParameter<Request.postConfirmReset>("token", EndpointParameterType.STRING)
-  public static async confirmReset({locals: {respond, parameters}}: Express.Request<{}, Response.postConfirmReset, Request.postConfirmReset>) {
+  @User.bindParameter<Request.postConfirmReset>("password", ValidatorType.PASSWORD)
+  @User.bindParameter<Request.postConfirmReset>("token", ValidatorType.STRING)
+  public static async confirmReset({locals: {respond, parameters}}: Server.Request<{}, Response.postConfirmReset, Request.postConfirmReset>) {
     const {password: {salt, hash}, token} = parameters!;
 
     try {
@@ -217,10 +218,10 @@ export default class User extends Entity<User>() {
   }
 
   @User.put("/:id")
-  @User.bindParameter<Request.putUpdateOne>("email", EndpointParameterType.EMAIL, {flag_optional: true})
-  @User.bindParameter<Request.putUpdateOne>("username", EndpointParameterType.STRING, {min_length: 3, max_length: 64}, {flag_optional: true})
-  @User.bindParameter<Request.putUpdateOne>("password", EndpointParameterType.PASSWORD, {flag_optional: true})
-  public static async updateOne({params: {id}, locals: {respond, user, parameters}}: Express.Request<{id: string}, Response.putUpdateOne, Request.putUpdateOne>) {
+  @User.bindParameter<Request.putUpdateOne>("email", ValidatorType.EMAIL, {flag_optional: true})
+  @User.bindParameter<Request.putUpdateOne>("username", ValidatorType.STRING, {min_length: 3, max_length: 64}, {flag_optional: true})
+  @User.bindParameter<Request.putUpdateOne>("password", ValidatorType.PASSWORD, {flag_optional: true})
+  public static async updateOne({params: {id}, locals: {respond, user, parameters}}: Server.Request<{id: string}, Response.putUpdateOne, Request.putUpdateOne>) {
     const {email, username, password} = parameters!;
 
     const user_entity = await User.performSelect(id);

@@ -1,15 +1,15 @@
-import Express from "express";
 import * as TypeORM from "typeorm";
-import Entity, {Pagination} from "../classes/Entity";
-import EndpointParameterType from "../../common/enums/EndpointParameterType";
-import ServerException from "../exceptions/ServerException";
+import Entity, {Pagination} from "../../common/classes/Entity";
+import ValidatorType from "../../common/enums/ValidatorType";
+import ServerException from "../../common/exceptions/ServerException";
+import Server from "../../common/services/Server";
 import FileExtension from "./FileExtension";
 
 @TypeORM.Entity()
 @TypeORM.Unique("name", ["name"])
 @TypeORM.Index("time_created", ["time_created"])
 @TypeORM.Index("time_updated", ["time_updated"])
-export default class FileType extends Entity<FileType>() {
+export default class FileType extends Entity<FileType>(TypeORM) {
 
   /**
    * Properties
@@ -57,10 +57,10 @@ export default class FileType extends Entity<FileType>() {
 
 
   @FileType.get("/")
-  @FileType.bindParameter<Request.getFindMany>("name", EndpointParameterType.STRING, {max_length: 16})
-  @FileType.bindParameter<Request.getFindMany>("exclude", EndpointParameterType.UUID, {flag_array: true})
+  @FileType.bindParameter<Request.getFindMany>("name", ValidatorType.STRING, {max_length: 16})
+  @FileType.bindParameter<Request.getFindMany>("exclude", ValidatorType.UUID, {flag_array: true})
   @FileType.bindPagination(100, ["id", "name", "time_created"])
-  private static async findMany({locals: {respond, parameters}}: Express.Request<{}, Response.getFindMany, Request.getFindMany>) {
+  private static async findMany({locals: {respond, parameters}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
     const {skip, limit, order, name, exclude} = parameters!;
     const query = this.createPaginated({skip, limit, order});
 
@@ -72,9 +72,9 @@ export default class FileType extends Entity<FileType>() {
 
 
   @FileType.get("/count")
-  @FileType.bindParameter<Request.getCount>("name", EndpointParameterType.STRING, {max_length: 16})
-  @FileType.bindParameter<Request.getCount>("exclude", EndpointParameterType.UUID, {flag_array: true})
-  private static async count({locals: {respond, parameters}}: Express.Request<{}, Response.getCount, Request.getCount>) {
+  @FileType.bindParameter<Request.getCount>("name", ValidatorType.STRING, {max_length: 16})
+  @FileType.bindParameter<Request.getCount>("exclude", ValidatorType.UUID, {flag_array: true})
+  private static async count({locals: {respond, parameters}}: Server.Request<{}, Response.getCount, Request.getCount>) {
     const {name, exclude} = parameters!;
     const query = this.createSelect();
 
@@ -85,8 +85,8 @@ export default class FileType extends Entity<FileType>() {
   }
 
   @FileType.post("/")
-  @FileType.bindParameter<Request.postCreateOne>("name", EndpointParameterType.STRING, {min_length: 3, max_length: 128})
-  private static async createOne({locals: {respond, parameters}}: Express.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
+  @FileType.bindParameter<Request.postCreateOne>("name", ValidatorType.STRING, {min_length: 3, max_length: 128})
+  private static async createOne({locals: {respond, parameters}}: Server.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
     return respond?.(await this.performInsert(parameters!));
   }
 }

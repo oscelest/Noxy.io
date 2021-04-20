@@ -1,4 +1,4 @@
-enum EndpointParameterType {
+enum ValidatorType {
   INTEGER = "integer",
   FLOAT = "float",
   STRING = "string",
@@ -14,5 +14,5 @@ enum EndpointParameterType {
   ORDER = "sort-order",
 }
 
-export default EndpointParameterType;
+export default ValidatorType;
 

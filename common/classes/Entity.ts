@@ -1,14 +1,14 @@
 import _ from "lodash";
-import * as TypeORM from "typeorm";
-import Alias from "../../common/classes/Alias";
-import HTTPMethod from "../../common/enums/HTTPMethod";
-import SetOperation from "../../common/enums/SetOperation";
-import Validator from "../../common/services/Validator";
-import EndpointParameterType from "../../common/enums/EndpointParameterType";
+import TypeORM from "typeorm";
+import Alias from "./Alias";
+import HTTPMethod from "../enums/HTTPMethod";
+import SetOperation from "../enums/SetOperation";
+import Validator from "../services/Validator";
+import ValidatorType from "../enums/ValidatorType";
 import ServerException from "../exceptions/ServerException";
 import Server from "../services/Server";
 
-export default function Entity<E>() {
+export default function Entity<E>(service: typeof TypeORM) {
 
   abstract class Entity {
 
@@ -44,24 +44,24 @@ export default function Entity<E>() {
       };
     }
 
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.BOOLEAN, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.EMAIL, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.FILE, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.PASSWORD, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.UUID, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.DATE, conditions?: Validator.DateParameterConditions, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.ENUM, conditions?: Validator.EnumParameterConditions, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.FLOAT, conditions?: Validator.FloatParameterConditions, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.INTEGER, conditions?: Validator.IntegerParameterConditions, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.ORDER, conditions?: Validator.OrderParameterConditions, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType.STRING, conditions?: Validator.StringParameterConditions, options?: Server.EndpointParameterOptions): Decorator
-    public static bindParameter<R extends {}>(key: Key<R>, type: EndpointParameterType, conditions: any = {}, options: Server.EndpointParameterOptions = {}): Decorator {
+    public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.BOOLEAN, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.EMAIL, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.FILE, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.PASSWORD, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.UUID, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.DATE, conditions?: Validator.DateParameterConditions, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.ENUM, conditions?: Validator.EnumParameterConditions, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.FLOAT, conditions?: Validator.FloatParameterConditions, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.INTEGER, conditions?: Validator.IntegerParameterConditions, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.ORDER, conditions?: Validator.OrderParameterConditions, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.STRING, conditions?: Validator.StringParameterConditions, options?: Server.EndpointParameterOptions): Decorator
+    public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType, conditions: any = {}, options: Server.EndpointParameterOptions = {}): Decorator {
       return (constructor: Constructor, method: string) => {
         switch (type) {
-          case EndpointParameterType.BOOLEAN:
-          case EndpointParameterType.EMAIL:
-          case EndpointParameterType.PASSWORD:
-          case EndpointParameterType.UUID:
+          case ValidatorType.BOOLEAN:
+          case ValidatorType.EMAIL:
+          case ValidatorType.PASSWORD:
+          case ValidatorType.UUID:
             return Server.bindRouteParameter(new Alias(constructor, method), key as string, type, {}, conditions);
           default:
             return Server.bindRouteParameter(new Alias(constructor, method), key as string, type, conditions, options);
@@ -72,9 +72,9 @@ export default function Entity<E>() {
     public static bindPagination<K extends Key<E>>(limit: number, columns: K[]) {
       return function (constructor: Constructor, method: string) {
         const alias = new Alias(constructor, method);
-        Server.bindRouteParameter(alias, "skip", EndpointParameterType.INTEGER, {min: 0}, {});
-        Server.bindRouteParameter(alias, "limit", EndpointParameterType.INTEGER, {min: 1, max: limit}, {});
-        Server.bindRouteParameter(alias, "order", EndpointParameterType.ORDER, columns as string[], {flag_array: true});
+        Server.bindRouteParameter(alias, "skip", ValidatorType.INTEGER, {min: 0}, {});
+        Server.bindRouteParameter(alias, "limit", ValidatorType.INTEGER, {min: 1, max: limit}, {});
+        Server.bindRouteParameter(alias, "order", ValidatorType.ORDER, columns as string[], {flag_array: true});
       };
     }
 
@@ -95,7 +95,7 @@ export default function Entity<E>() {
     }
 
     public static merge(entity: Entity & E, values: TypeORM.DeepPartial<Entity & E>): E {
-      return TypeORM.getRepository(this).merge(entity, values) as unknown as E;
+      return service.getRepository(this).merge(entity, values) as unknown as E;
     }
 
     public static join<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, key: K): TypeORM.SelectQueryBuilder<E>
@@ -155,7 +155,7 @@ export default function Entity<E>() {
     }
 
     public static createRelation(relation: typeof Entity, path: Key<E> & string): TypeORM.RelationQueryBuilder<Entity & E> {
-      return TypeORM.getRepository(this).createQueryBuilder().relation(relation, path) as TypeORM.RelationQueryBuilder<Entity & E>;
+      return service.getRepository(this).createQueryBuilder().relation(relation, path) as TypeORM.RelationQueryBuilder<Entity & E>;
     }
 
     // --------------
@@ -163,7 +163,7 @@ export default function Entity<E>() {
     // --------------
 
     public static createSelect(): TypeORM.SelectQueryBuilder<Entity & E> {
-      return TypeORM.getRepository(this).createQueryBuilder().select() as TypeORM.SelectQueryBuilder<Entity & E>;
+      return service.getRepository(this).createQueryBuilder().select() as TypeORM.SelectQueryBuilder<Entity & E>;
     }
 
     public static createPaginated({skip, limit, order}: Pagination): TypeORM.SelectQueryBuilder<E> {
@@ -175,15 +175,15 @@ export default function Entity<E>() {
     }
 
     public static createInsert(): TypeORM.InsertQueryBuilder<Entity & E> {
-      return TypeORM.getRepository(this).createQueryBuilder().insert() as TypeORM.InsertQueryBuilder<Entity & E>;
+      return service.getRepository(this).createQueryBuilder().insert() as TypeORM.InsertQueryBuilder<Entity & E>;
     }
 
     public static createUpdate(): TypeORM.UpdateQueryBuilder<Entity & E> {
-      return TypeORM.getRepository(this).createQueryBuilder().update() as TypeORM.UpdateQueryBuilder<Entity & E>;
+      return service.getRepository(this).createQueryBuilder().update() as TypeORM.UpdateQueryBuilder<Entity & E>;
     }
 
     public static createDelete(): TypeORM.DeleteQueryBuilder<Entity & E> {
-      return TypeORM.getRepository(this).createQueryBuilder().delete() as TypeORM.DeleteQueryBuilder<Entity & E>;
+      return service.getRepository(this).createQueryBuilder().delete() as TypeORM.DeleteQueryBuilder<Entity & E>;
     }
 
     public static async performSelect(id: string): Promise<Entity & E>
@@ -209,7 +209,7 @@ export default function Entity<E>() {
 
     public static async performUpdate(id: string, values: TypeORM.DeepPartial<E>) {
       try {
-        const result = await TypeORM.getRepository(this).update(id, values);
+        const result = await service.getRepository(this).update(id, values);
         if (result.affected === 1) return await this.createSelect().whereInIds(id).getOneOrFail();
       }
       catch (error) {

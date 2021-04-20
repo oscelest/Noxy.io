@@ -1,5 +1,5 @@
 import * as TypeORM from "typeorm";
-import Entity from "../classes/Entity";
+import Entity from "../../common/classes/Entity";
 import File from "./File";
 import FileType, {FileTypeJSON} from "./FileType";
 
@@ -8,7 +8,7 @@ import FileType, {FileTypeJSON} from "./FileType";
 @TypeORM.Unique("mime_type", ["mime_type"])
 @TypeORM.Index("time_created", ["time_created"])
 @TypeORM.Index("time_updated", ["time_updated"])
-export default class FileExtension extends Entity<FileExtension>() {
+export default class FileExtension extends Entity<FileExtension>(TypeORM) {
 
   /**
    * Properties

@@ -1,9 +1,13 @@
+import FS from "fs";
+import _ from "lodash";
 import Path from "path";
 import winston from "winston";
 import WinstonDailyRotateFile from "winston-daily-rotate-file";
 
 if (!process.env.SERVICE) throw new Error("SERVICE environmental value must be defined.");
 if (!process.env.LOG_PATH) throw new Error("LOG_PATH environmental value must be defined.");
+
+FS.mkdir(process.env.LOG_PATH, _.noop);
 
 module Logger {
 

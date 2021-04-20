@@ -1,25 +1,25 @@
 import BodyParser from "body-parser";
 import Express from "express";
+import * as core from "express-serve-static-core";
 import * as FS from "fs";
 import HTTP from "http";
-import JSONWebToken from "jsonwebtoken";
 import _ from "lodash";
 import MethodOverride from "method-override";
 import Multer from "multer";
 import Path from "path";
 import ServeFavicon from "serve-favicon";
 import {v4} from "uuid";
-import EndpointParameterType from "../../common/enums/EndpointParameterType";
-import Alias from "../../common/classes/Alias";
-import HTTPMethod from "../../common/enums/HTTPMethod";
-import HTTPStatusCode from "../../common/enums/HTTPStatusCode";
-import PermissionLevel from "../../common/enums/PermissionLevel";
-import Logger from "../../common/services/Logger";
-import APIKey from "../entities/APIKey";
-import User from "../entities/User";
-import EndpointParameterException from "../../common/exceptions/EndpointParameterException";
+import APIKey from "../../api.noxy.io/entities/APIKey";
+import User from "../../api.noxy.io/entities/User";
+import Alias from "../classes/Alias";
+import HTTPMethod from "../enums/HTTPMethod";
+import HTTPStatusCode from "../enums/HTTPStatusCode";
+import PermissionLevel from "../enums/PermissionLevel";
+import ValidatorType from "../enums/ValidatorType";
 import ServerException from "../exceptions/ServerException";
-import Validator from "../../common/services/Validator";
+import ValidatorException from "../exceptions/ValidatorException";
+import Logger from "./Logger";
+import Validator from "./Validator";
 
 if (!process.env.PORT) throw new Error("PORT environmental value must be defined.");
 if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");
@@ -29,6 +29,7 @@ module Server {
   const port = process.env.PORT || 80;
   const alias_collection: AliasCollection = {};
   const route_collection: EndpointCollection = {};
+  const middleware_collection: Express.RequestHandler[] = [];
 
   export function bindRoute(alias: Alias, method: HTTPMethod, path: string | string[], options: EndpointOptions, cb: Express.RequestHandler) {
     path = _.concat(options.prefix ?? [], path);
@@ -54,14 +55,19 @@ module Server {
   }
 
 
-  export function bindRouteParameter(alias: Alias, name: string, type: EndpointParameterType, conditions: Validator.ParameterConditions, options: EndpointParameterOptions) {
+  export function bindRouteParameter(alias: Alias, name: string, type: ValidatorType, conditions: Validator.ParameterConditions, options: EndpointParameterOptions) {
     const key = alias.toString();
 
-    if (type === EndpointParameterType.FILE) {
+    if (type === ValidatorType.FILE) {
       route_collection[key] = {...route_collection[key], upload: [...route_collection[key]?.upload ?? [], {name, maxCount: 1}]};
     }
 
     route_collection[key] = {...route_collection[key], parameter_list: {...route_collection[key]?.parameter_list, [name]: {type, conditions, options}}};
+  }
+
+
+  export function bindMiddleware(middleware: Express.RequestHandler) {
+    middleware_collection.push(middleware);
   }
 
 
@@ -78,7 +84,7 @@ module Server {
 
     _.map(route_collection, ({path, method, callback}) => {
       if (!path || !method || !callback) return;
-      application[method](path, attachLocals, attachAuthorization, attachFiles, attachParameters, callback);
+      application[method](path, attachLocals, attachFiles, attachParameters, ...middleware_collection, callback);
     });
 
     application.use(attachNotFound);
@@ -98,6 +104,12 @@ module Server {
     next();
   }
 
+  function attachNotFound(request: Express.Request, response: Express.Response, next: Express.NextFunction) {
+    if (_.includes(["GET", "POST", "PUT", "PATCH", "DELETE", "JSONP"], request.method)) {
+      return respond.bind(request, new ServerException(404))();
+    }
+    next();
+  }
 
   function attachLocals(request: Express.Request, response: Express.Response, next: Express.NextFunction) {
     request.locals.id = v4();
@@ -108,51 +120,6 @@ module Server {
     request.locals.parameters = {};
     request.locals.time_created = new Date();
     request.locals.respond = respond.bind(request);
-
-    next();
-  }
-
-
-  async function attachAuthorization(request: Express.Request, response: Express.Response, next: Express.NextFunction) {
-    const authorization = request.get("Authorization");
-    const masquerade = request.get("Masquerade");
-
-    if (request.locals.endpoint?.options?.user !== false && !authorization) {
-      return request.locals.respond?.(new ServerException(401, {authorization}, "Authorization header is required."));
-    }
-
-    if (authorization) {
-      try {
-        request.locals.api_key = await (await import("../entities/APIKey")).default.performSelect(JSONWebToken.verify(authorization, process.env.JWT_SECRET!) as string);
-      }
-      catch (error) {
-        if (error instanceof JSONWebToken.TokenExpiredError) return request.locals.respond?.(new ServerException(401, {authorization}, "Authorization token has expired."));
-        if (error instanceof JSONWebToken.JsonWebTokenError) return request.locals.respond?.(new ServerException(401, {authorization}, "Authorization token was malformed."));
-        if (error instanceof ServerException && error.code === 404) return request.locals.respond?.(new ServerException(404, {authorization}, "Authorization failed - User doesn't exist."));
-        return request.locals.respond?.(new ServerException(500, error));
-      }
-    }
-
-    if (request.locals.endpoint?.options?.permission && !_.every(_.concat(request.locals.endpoint.options.permission), level => request.locals.api_key?.permission[level])) {
-      return request.locals.respond?.(new ServerException(403, {authorization, permission: request.locals.endpoint.options.permission}));
-    }
-
-    if (masquerade) {
-      if (!request.locals.api_key?.permission[PermissionLevel.USER_MASQUERADE]) {
-        return request.locals.respond?.(new ServerException(403, {authorization, masquerade}));
-      }
-
-      try {
-        request.locals.user = await (await import("../entities/User")).default.performSelect(masquerade);
-      }
-      catch (error) {
-        if (error instanceof ServerException && error.code === 404) return request.locals.respond?.(new ServerException(404, {authorization}, "Authorization failed - User doesn't exist."));
-        return request.locals.respond?.(new ServerException(500, error));
-      }
-    }
-    else {
-      request.locals.user = request.locals.api_key?.user;
-    }
 
     next();
   }
@@ -183,7 +150,7 @@ module Server {
   function attachParameters({files, query, body, locals: {respond, method, parameters, endpoint}}: Express.Request, response: Express.Response, next: Express.NextFunction) {
     if (!endpoint) return respond?.(new ServerException(404)) ?? response.send(404);
 
-    const error_collection = {} as {[key: string]: EndpointParameterException};
+    const error_collection = {} as {[key: string]: ValidatorException};
     const received_parameter_list = method === HTTPMethod.GET ? query : body;
 
     for (let name in endpoint.parameter_list) {
@@ -191,9 +158,9 @@ module Server {
         if (!endpoint.parameter_list.hasOwnProperty(name)) continue;
         const {type, conditions, options: {flag_array, flag_optional}} = endpoint.parameter_list[name];
 
-        if (type === EndpointParameterType.FILE) {
+        if (type === ValidatorType.FILE) {
           if (!files?.[name].length && !flag_optional) {
-            error_collection[name] = new EndpointParameterException(`'${name}' is a mandatory field.`);
+            error_collection[name] = new ValidatorException(`'${name}' is a mandatory field.`);
           }
           else {
             parameters[name] = flag_array ? files?.[name] : _.first(files?.[name]);
@@ -205,11 +172,11 @@ module Server {
           if (received === undefined) {
             // Intentional split "if" statement - If received value is undefined, it should not go through the validator
             if (method === HTTPMethod.GET && flag_optional === false || method !== HTTPMethod.GET && flag_optional !== true) {
-              error_collection[name] = new EndpointParameterException(`'${name}' is a mandatory field.`);
+              error_collection[name] = new ValidatorException(`'${name}' is a mandatory field.`);
             }
           }
           else if (!flag_array && Array.isArray(received)) {
-            error_collection[name] = new EndpointParameterException(`Field '${name}' does not accept multiple values.`, received);
+            error_collection[name] = new ValidatorException(`Field '${name}' does not accept multiple values.`, received);
           }
           else {
             parameters[name] = Validator.parseParameter(type, !flag_array || Array.isArray(received) ? received : [received], conditions);
@@ -224,16 +191,7 @@ module Server {
     _.size(error_collection) ? respond?.(new ServerException(400, error_collection)) : next();
   }
 
-
-  function attachNotFound(request: Express.Request, response: Express.Response, next: Express.NextFunction) {
-    if (_.includes(["GET", "POST", "PUT", "PATCH", "DELETE", "JSONP"], request.method)) {
-      return respond.bind(request, new ServerException(404))();
-    }
-    next();
-  }
-
-
-  function respond(this: Express.Request<{[key: string]: string}, Server.Response>, value: any) {
+  function respond(this: Express.Request<{[key: string]: string}, Server.ResponseBody>, value: any) {
     const time_started = this.locals.time_created?.toISOString() ?? new Date().toISOString();
     const time_completed = new Date().toISOString();
 
@@ -241,6 +199,7 @@ module Server {
       this.res?.status(value.code).json({success: false, message: value.message, content: value.content, time_started, time_completed});
     }
     else if (value instanceof Error) {
+      console.log(value);
       this.res?.status(500).json({success: false, message: HTTPStatusCode[500], content: {}, time_started, time_completed});
       Logger.write(Logger.Level.ERROR, value);
     }
@@ -264,7 +223,11 @@ module Server {
     }
   }
 
-  export interface Response {
+  export interface Request<P = core.ParamsDictionary, Res = any, ReqB = any, ReqQ = core.Query, L extends Record<string, any> = Record<string, any>> extends Express.Request<P, Res, ReqB, ReqQ, L> {}
+
+  export interface Response<ResBody = any, Locals extends Record<string, any> = Record<string, any>> extends Express.Response<ResBody, Locals> {}
+
+  export interface ResponseBody {
     success: boolean
     message: string
     content: {}
@@ -283,7 +246,7 @@ module Server {
   }
 
   export interface EndpointParameter {
-    type: EndpointParameterType
+    type: ValidatorType
     options: EndpointParameterOptions
     conditions: any
   }
@@ -322,20 +285,22 @@ declare module "express-serve-static-core" {
   interface Request<P, ResBody = any, ReqBody = any> {
     files?: {[key: string]: FileHandle[]}
 
-    locals: {
-      id?: string
-      path?: string
-      method?: HTTPMethod
-      alias?: Alias
-      endpoint?: Server.Endpoint
-      user?: User
-      api_key?: APIKey
-      parameters?: ReqBody
-      time_created?: Date
-      respond?: (response: ResBody) => void | Promise<void>
-    }
+    locals: Locals<ResBody, ReqBody>
   }
 
+  interface Locals<ResBody = any, ReqBody = any> {
+    id?: string
+    path?: string
+    method?: HTTPMethod
+    alias?: Alias
+    endpoint?: Server.Endpoint
+    api_key?: APIKey
+    user?: User
+    parameters?: ReqBody
+    time_created?: Date
+    respond?: (response: ResBody) => void | Promise<void>
+  }
 }
+
 
 export default Server;
