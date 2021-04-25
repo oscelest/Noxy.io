@@ -17,7 +17,7 @@ import FileExtension, {FileExtensionJSON} from "./FileExtension";
 import FileTag, {FileTagJSON} from "./FileTag";
 import FileType from "./FileType";
 import User, {UserJSON} from "./User";
-
+import Moment from 'moment';
 
 const NanoID = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 16);
 
@@ -276,7 +276,8 @@ export default class File extends Entity<File>(TypeORM) {
   private static async confirmDownload({locals: {respond, user, parameters}}: Server.Request<{}, Response.postConfirmDownload, Request.postConfirmDownload>, response: Server.Response) {
     const {token} = parameters!;
     const path = Path.resolve(process.env.TEMP!, token);
-    response.download(path, "files.zip", {}, () => FS.unlink(path, (error) => (error && error.code !== "ENOENT") && Logger.write(Logger.Level.ERROR, error)));
+    const name = `files_${Moment().format("YYYY_MM_DD_H_m_s")}.zip`;
+    response.download(path, name, {}, () => FS.unlink(path, (error) => (error && error.code !== "ENOENT") && Logger.write(Logger.Level.ERROR, error)));
   }
 
   @File.put("/:id", {permission: PermissionLevel.FILE_UPDATE})

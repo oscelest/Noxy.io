@@ -58,7 +58,7 @@
 
           flex-flow:           column;
           width:               calc(100% / var(--parts) - (var(--grid-gap) * (var(--parts) - 1) / var(--parts)));
-          border-bottom:       $border-width solid transparent;
+
 
           user-drag:           none;
           user-select:         none;
@@ -72,7 +72,7 @@
             border: $border-width solid $focus-color;
           }
 
-          &[data-focused] {
+          &[data-focused] .Redirect .FileName {
             border-bottom: $border-width solid $border-color;
           }
 
@@ -104,8 +104,10 @@
             .FileName {
               align-items:     center;
               justify-content: center;
-              width:           100%;
+              align-self:      center;
               height:          20px;
+              padding:         0 2px;
+              border-bottom:   $border-width solid transparent;
             }
           }
         }

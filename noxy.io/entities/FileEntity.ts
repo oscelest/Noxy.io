@@ -14,6 +14,7 @@ export default class FileEntity extends Entity {
   public name: string;
   public alias: string;
   public size: number;
+  public file_tag_list: FileTagEntity[];
   public file_extension: FileExtensionEntity;
   public user_created: UserEntity;
   public time_created: Date;
@@ -26,6 +27,7 @@ export default class FileEntity extends Entity {
     this.name = entity?.name ?? "";
     this.alias = entity?.alias ?? "";
     this.size = entity?.size ?? 0;
+    this.file_tag_list = FileTagEntity.instantiate(entity?.file_tag_list);
     this.file_extension = new FileExtensionEntity(entity?.file_extension);
     this.user_created = new UserEntity(entity?.user_created);
     this.time_created = entity?.time_created ?? new Date();
@@ -39,8 +41,12 @@ export default class FileEntity extends Entity {
     return this.id;
   }
 
-  public getPath() {
+  public getAPIPath() {
     return `${FileEntity.URL}/data/${this.alias}`;
+  }
+
+  public getPath() {
+    return `${location.host}/file/${this.alias}`;
   }
 
   public static async count(search: FileEntitySearchParameters = {}) {

@@ -1,6 +1,7 @@
 import _ from "lodash";
 import React from "react";
 import Order from "../common/enums/Order";
+import FatalException from "./exceptions/FatalException";
 
 namespace Util {
 
@@ -58,6 +59,34 @@ namespace Util {
     context.font = font;
     if (!Array.isArray(texts)) return context.measureText(texts).width;
     return _.reduce(texts, (result, text) => Math.ceil(Math.max(result, context.measureText(text).width)), 0);
+  }
+
+  export async function setClipboard(text: string) {
+    if (navigator.permissions) {
+      const permission = await navigator.permissions.query({name: "clipboard-write"});
+      if (permission.state == "granted" || permission.state == "prompt") {
+        await navigator.clipboard.writeText(text);
+      }
+      else {
+        throw new FatalException(
+          "Could not copy to clipboard",
+          "Your browser does not permit this website to copy to the clipboard. Please enable this functionality if you wish to copy this text to the clipboard."
+        );
+      }
+    }
+    else if (navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+    }
+    else {
+      const textarea = document.createElement("textarea");
+      document.getElementById("__next")?.append(textarea);
+      textarea.value = text;
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+      document.execCommand("copy");
+      console.log(textarea.value);
+      textarea.remove();
+    }
   }
 
 }

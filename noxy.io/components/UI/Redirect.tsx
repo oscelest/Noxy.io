@@ -29,7 +29,7 @@ export default class Redirect extends React.Component<RedirectProps, State> {
   }
 
   private readonly eventDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    Router.router?.push(this.props.href);
+    event.ctrlKey ? window.open(this.props.href.toString(), "_blank") : Router.router?.push(this.props.href);
   }
   
 }

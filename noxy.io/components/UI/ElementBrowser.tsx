@@ -16,11 +16,13 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
   constructor(props: ElementBrowserProps) {
     super(props);
     this.state = {
-      ref_container:    React.createRef(),
-      ref_context_menu: React.createRef(),
-      ref_drag_select:  React.createRef(),
-      flag_shift:       false,
-      flag_ctrl:        false,
+      focus:             -1,
+      ref_container:     React.createRef(),
+      ref_context_menu:  React.createRef(),
+      ref_drag_select:   React.createRef(),
+      flag_ctrl:         false,
+      flag_shift:        false,
+      flag_context_menu: false,
     };
   }
 
@@ -75,14 +77,10 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
 
   private readonly moveSelection = (event: MouseEvent) => {
     const {point_origin, selection_rect} = this.state;
+    if (!point_origin) return this.removeSelectionListener();
 
-    if (!point_origin) {
-      window.removeEventListener("mousemove", this.moveSelection);
-      window.removeEventListener("mouseup", this.endSelection);
-      return;
-    }
-
-    const next_state = {flag_context_menu: false} as State;
+    const next_state = {} as State;
+    next_state.flag_context_menu = false;
     next_state.point_cursor = new Point(event.pageX, event.pageY);
     next_state.point_target = this.getMouseEventPoint(event).confine(this.getContainerViewRect());
 
@@ -97,10 +95,10 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
 
 
   private readonly endSelection = () => {
-    const {point_origin, point_target, selection_rect, interval} = this.state;
+    const {point_origin, point_target, selection_rect} = this.state;
     if (!point_origin || !point_target) return;
 
-    const next_state = {flag_context_menu: false} as State;
+    const next_state = {} as State;
     const selected = [];
 
     if (selection_rect) {
@@ -113,6 +111,7 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
       next_state.focus = _.findIndex(element_rect_list, rect => selection_rect.overlapsRect(rect));
     }
 
+    next_state.flag_context_menu = false;
     next_state.interval = undefined;
     next_state.point_origin = undefined;
     next_state.point_target = undefined;
@@ -123,10 +122,6 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
 
     this.setState(next_state);
     this.props.onSelect(selected);
-
-    window.clearInterval(interval);
-    window.removeEventListener("mousemove", this.moveSelection);
-    window.removeEventListener("mouseup", this.endSelection);
   };
 
   private readonly getCurrentSelection = (selection_rect: Rect, rect_list = _.map(this.getChildren(), (element, index) => this.getElementRect(index))) => {
@@ -145,6 +140,11 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
     }
 
     return selected;
+  };
+
+  private readonly removeSelectionListener = () => {
+    window.removeEventListener("mousemove", this.moveSelection);
+    window.removeEventListener("mouseup", this.endSelection);
   };
 
   //endregion -- Drag select methods --
@@ -241,7 +241,7 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
   //region    -- Utility methods --
 
   private readonly getFocus = () => {
-    return this.state.focus ?? 0;
+    return this.state.focus === -1 ? 0 : this.state.focus;
   };
 
   private readonly getChildren = () => {
@@ -338,7 +338,7 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
     if (!this.state.context_menu) return null;
 
     return (
-      <ContextMenu origin={this.state.point_context_menu} show={this.state.flag_context_menu}>{this.state.context_menu}</ContextMenu>
+      <ContextMenu origin={this.state.point_context_menu} show={this.state.flag_context_menu} onCommit={this.eventContextMenuCommit}>{this.state.context_menu}</ContextMenu>
     );
   };
 
@@ -347,13 +347,53 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
   //region    -- Event handlers --
 
   private readonly eventContainerFocus = () => this.setState({});
-  private readonly eventContainerBlur = () => this.setState({});
+  private readonly eventContainerBlur = () => {
+    window.clearInterval(this.state.interval);
+    this.removeSelectionListener();
+    this.props.onSelect(Array(this.props.selection.length).fill(false));
+    this.setState({
+      focus:              -1,
+      interval:           undefined,
+      flag_ctrl:          false,
+      flag_shift:         false,
+      flag_context_menu:  false,
+      context_menu:       undefined,
+      point_context_menu: undefined,
+      point_target:       undefined,
+      point_origin:       undefined,
+      point_cursor:       undefined,
+      selection_rect:     undefined,
+      selection_prev:     undefined,
+      selection_next:     undefined,
+    });
+  };
 
   private readonly eventContainerContextMenu = (event: React.MouseEvent) => {
     if (!this.props.onContextMenu) return;
-    event.preventDefault();
 
-    this.setState({context_menu: this.props.onContextMenu(this.props.selection), point_context_menu: this.getMouseEventPoint(event), flag_context_menu: true});
+    const next_state = {} as State;
+    next_state.point_context_menu = this.getMouseEventPoint(event);
+    next_state.flag_context_menu = true;
+
+    const element_rect_list = _.map(this.getChildren(), (element, index) => this.getElementRect(index));
+    const selection_rect = new Rect(next_state.point_context_menu.x, next_state.point_context_menu.y, 0, 0);
+    const selection = this.getCurrentSelection(selection_rect, element_rect_list);
+
+    if (_.some(this.props.selection, (selected, index) => selected && selection[index])) {
+      next_state.context_menu = this.props.onContextMenu(this.props.selection);
+    }
+    else {
+      this.props.onSelect(selection);
+      next_state.focus = _.findIndex(selection);
+      next_state.context_menu = this.props.onContextMenu(selection);
+    }
+
+    event.preventDefault();
+    this.setState(next_state);
+  };
+
+  private readonly eventContextMenuCommit = () => {
+    this.setState({flag_context_menu: false, point_context_menu: undefined, context_menu: undefined});
   };
 
   private readonly eventContainerKeyDown = (event: React.KeyboardEvent) => {
@@ -405,10 +445,10 @@ interface State {
   ref_drag_select: React.RefObject<HTMLDivElement>
 
   context_menu?: ContextMenuCollection
-  flag_context_menu?: boolean
+  flag_context_menu: boolean
   point_context_menu?: Point
 
-  focus?: number
+  focus: number
   interval?: number
 
   flag_ctrl: boolean

@@ -1,4 +1,5 @@
 import _ from "lodash";
+import Router from "next/router";
 import React from "react";
 import Order from "../../../common/enums/Order";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
@@ -181,7 +182,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
             <div className={Style.TagSearch}>
               <Input className={Style.Input} label={"Search for tags"} value={tag_search} onChange={this.eventTagSearchChange}/>
-              <Button className={Style.Button} icon={IconType.ADD} value={tag_search} disabled={!this.context.hasPermission(PermissionLevel.FILE_TAG_CREATE)} onClick={this.eventTagCreateClick}/>
+              <Button className={Style.Button} icon={IconType.UI_ADD} value={tag_search} disabled={!this.context.hasPermission(PermissionLevel.FILE_TAG_CREATE)} onClick={this.eventTagCreateClick}/>
             </div>
 
             <Switch className={Style.Switch} value={tag_set_operation} onChange={this.eventTagSetOperationChange}>
@@ -215,7 +216,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     return (
       <div key={index} className={Style.File}>
         <Redirect className={Style.Redirect} href={`/file/${file.alias}`} isDoubleClick={true}>
-          <Preview className={Style.FilePreview} path={file.getPath()} type={file.file_extension.file_type.name}/>
+          <Preview className={Style.FilePreview} path={file.getAPIPath()} type={file.file_extension.file_type.name}/>
           <EllipsisText className={Style.FileName}>{file.name}</EllipsisText>
         </Redirect>
       </div>
@@ -249,7 +250,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
     return (
       <div key={index} className={Style.Tag} onClick={current ? this.eventTagRemove : this.eventTagAdd}>
-        <Icon className={Style.Icon} type={current ? IconType.REMOVE : IconType.ADD}/>
+        <Icon className={Style.Icon} type={current ? IconType.UI_REMOVE : IconType.UI_ADD}/>
         <span className={Style.Text}>{file_tag.name} ({file_tag.size})</span>
       </div>
     );
@@ -304,23 +305,59 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private readonly eventElementBrowserContextMenu = (selected: boolean[]): {[key: string]: ContextMenuItem} => {
+    const count = _.reduce(selected, (result, value) => value ? result + 1 : result, 0);
+
+    if (count === 0) {
+      return {
+        "upload":  {icon: IconType.UPLOAD, text: "Upload file", action: this.eventFileCreateClick},
+        "tags":    {icon: IconType.UI_SETTINGS, text: "Manage tags", action: this.eventContextMenuOpen},
+        "refresh": {icon: IconType.REFRESH, text: "Refresh", action: this.eventElementBrowserContextMenuRefresh},
+        "filter":  {icon: IconType.NOT_ALLOWED, text: "Reset filters", action: this.eventContextMenuOpen},
+      };
+    }
+
+    if (count === 1) {
+      return {
+        "open":      {text: "Open", action: this.eventContextMenuOpen},
+        "open_tab":  {text: "Open in a new tab", action: this.eventContextMenuOpenTab},
+        "copy_link": {icon: IconType.LINK, text: "Copy link", action: this.eventContextMenuCopyLink},
+        "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.eventContextMenuRename},
+        "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.eventContextMenuSetTag},
+        "download":  {icon: IconType.DOWNLOAD, text: "Download", action: this.eventElementBrowserContextMenuDownload},
+        "share":     {icon: IconType.SHARE, text: "Share", action: () => {}},
+        "delete":    {icon: IconType.BIN, text: "Delete", action: () => {}},
+      };
+    }
+
     return {
-      "open":     {text: "Edit", action: this.eventElementBrowserContextMenuOpen},
-      "share":    {icon: IconType.SHARE, text: "Share", action: () => {}},
-      "delete":   {icon: IconType.BIN, text: "Delete", action: () => {}},
-      "download": {icon: IconType.DOWNLOAD, text: "Download", action: this.eventElementBrowserContextMenuDownload},
+      "copy_link": {icon: IconType.LINK, text: "Copy links", action: this.eventContextMenuCopyLink},
+      "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.eventContextMenuRename},
+      "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.eventContextMenuSetTag},
+      "share":     {icon: IconType.SHARE, text: "Share", action: () => {}},
+      "delete":    {icon: IconType.BIN, text: "Delete", action: () => {}},
+      "download":  {icon: IconType.DOWNLOAD, text: "Download", action: this.eventElementBrowserContextMenuDownload},
     };
   };
 
-  private readonly eventElementBrowserContextMenuOpen = () => {
-    for (let index in this.state.file_selected) {
-      if (!this.state.file_selected[index]) continue;
-      const delay = 500;
-      setTimeout(() => {
-        console.log("Opening:", `${location.href}/${this.state.file_list[index].id}`, "after a", (+index - 1) * delay, "delay");
-        window.open(`${location.href}/${this.state.file_list[index].id}`, "_self");
-      }, (+index - 1) * delay);
-    }
+  private readonly eventContextMenuOpen = () => Router.push(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`);
+  private readonly eventContextMenuOpenTab = () => window.open(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`, "_blank");
+
+  private readonly eventContextMenuCopyLink = () => Util.setClipboard(this.state.file_selected.reduce((r, v, i) => v ? [...r, this.state.file_list[i].getPath()] : r, [] as string[]).join("\n"));
+
+  private readonly eventContextMenuRename = () => {
+    Dialog.show(
+      DialogListenerType.GLOBAL,
+      DialogPriority.NEXT,
+      (
+        <ElementDialog>
+          <Input label={"hello"} onChange={() => {}}/>
+        </ElementDialog>
+      ),
+    );
+  };
+
+  private readonly eventContextMenuSetTag = () => {
+    console.log(this.state.file_list);
   };
 
   private readonly eventElementBrowserContextMenuDownload = async () => {
@@ -328,6 +365,9 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     await FileEntity.confirmDownload(token);
   };
 
+  private readonly eventElementBrowserContextMenuRefresh = () => {
+    this.searchFile();
+  };
 }
 
 type SortOrder = Pick<FileEntity, "name" | "size" | "time_created">

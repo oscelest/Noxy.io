@@ -49,7 +49,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
             <PageHeader title={this.state.entity.name}/>
             <div className={Style.Content}>
               <div className={Style.File}>
-                <Preview className={Style.Preview} path={this.state.entity.getPath()} type={this.state.entity.file_extension.file_type.name}/>
+                <Preview className={Style.Preview} path={this.state.entity.getAPIPath()} type={this.state.entity.file_extension.file_type.name}/>
               </div>
               <div className={Style.Sidebar}>
                 <p>ID: {this.state.entity.id}</p>
