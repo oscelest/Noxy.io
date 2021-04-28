@@ -9,6 +9,8 @@ import FileTagEntity from "../../entities/FileTagEntity";
 import FileTypeEntity from "../../entities/FileTypeEntity";
 import IconType from "../../enums/IconType";
 import Size from "../../enums/Size";
+import FileRenameForm from "../../forms/entities/FileRenameForm";
+import FileSetTagListForm from "../../forms/entities/FileSetTagListForm";
 import FileUploadForm from "../../forms/entities/FileUploadForm";
 import Global from "../../Global";
 import Util from "../../Util";
@@ -43,7 +45,8 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
     this.state = {
       ref_context_menu: React.createRef(),
-      context_menu:     true,
+
+      context_menu: true,
 
       file_loading:  true,
       file_search:   "",
@@ -311,7 +314,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
       return {
         "upload":  {icon: IconType.UPLOAD, text: "Upload file", action: this.eventFileCreateClick},
         "tags":    {icon: IconType.UI_SETTINGS, text: "Manage tags", action: this.eventContextMenuOpen},
-        "refresh": {icon: IconType.REFRESH, text: "Refresh", action: this.eventElementBrowserContextMenuRefresh},
+        "refresh": {icon: IconType.REFRESH, text: "Refresh", action: this.searchFile},
         "filter":  {icon: IconType.NOT_ALLOWED, text: "Reset filters", action: this.eventContextMenuOpen},
       };
     }
@@ -322,8 +325,8 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
         "open_tab":  {text: "Open in a new tab", action: this.eventContextMenuOpenTab},
         "copy_link": {icon: IconType.LINK, text: "Copy link", action: this.eventContextMenuCopyLink},
         "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.eventContextMenuRename},
-        "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.eventContextMenuSetTag},
-        "download":  {icon: IconType.DOWNLOAD, text: "Download", action: this.eventElementBrowserContextMenuDownload},
+        "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.eventContextMenuSetTagList},
+        "download":  {icon: IconType.DOWNLOAD, text: "Download", action: this.eventContextMenuDownload},
         "share":     {icon: IconType.SHARE, text: "Share", action: () => {}},
         "delete":    {icon: IconType.BIN, text: "Delete", action: () => {}},
       };
@@ -332,10 +335,10 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     return {
       "copy_link": {icon: IconType.LINK, text: "Copy links", action: this.eventContextMenuCopyLink},
       "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.eventContextMenuRename},
-      "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.eventContextMenuSetTag},
+      "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.eventContextMenuSetTagList},
       "share":     {icon: IconType.SHARE, text: "Share", action: () => {}},
       "delete":    {icon: IconType.BIN, text: "Delete", action: () => {}},
-      "download":  {icon: IconType.DOWNLOAD, text: "Download", action: this.eventElementBrowserContextMenuDownload},
+      "download":  {icon: IconType.DOWNLOAD, text: "Download", action: this.eventContextMenuDownload},
     };
   };
 
@@ -344,30 +347,39 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   private readonly eventContextMenuCopyLink = () => Util.setClipboard(this.state.file_selected.reduce((r, v, i) => v ? [...r, this.state.file_list[i].getPath()] : r, [] as string[]).join("\n"));
 
+
   private readonly eventContextMenuRename = () => {
+    const file_list = this.state.file_selected.reduce((result, value, i) => value ? [...result, this.state.file_list[i]] : result, [] as FileEntity[]);
     Dialog.show(
       DialogListenerType.GLOBAL,
       DialogPriority.NEXT,
       (
         <ElementDialog>
-          <Input label={"hello"} onChange={() => {}}/>
+          <FileRenameForm file_list={file_list} onSubmit={this.eventContextMenuRenameSubmit}/>
         </ElementDialog>
       ),
     );
   };
 
-  private readonly eventContextMenuSetTag = () => {
-    console.log(this.state.file_list);
+  private readonly eventContextMenuSetTagList = () => {
+    const file_tag_list = this.state.tag_selected_list;
+    Dialog.show(
+      DialogListenerType.GLOBAL,
+      DialogPriority.NEXT,
+      (
+        <ElementDialog>
+          <FileSetTagListForm file_tag_list={file_tag_list} onSubmit={this.eventContextMenuSetTagListSubmit}/>
+        </ElementDialog>
+      ),
+    );
   };
 
-  private readonly eventElementBrowserContextMenuDownload = async () => {
-    const token = await FileEntity.requestDownload(_.filter(this.state.file_list, (entity, key) => this.state.file_selected[key]));
-    await FileEntity.confirmDownload(token);
-  };
+  private readonly eventContextMenuRenameSubmit = (file_list: FileEntity[]) => console.log(file_list);
 
-  private readonly eventElementBrowserContextMenuRefresh = () => {
-    this.searchFile();
-  };
+  private readonly eventContextMenuSetTagListSubmit = (list: FileTagEntity[]) => console.log(list);
+
+  private readonly eventContextMenuDownload = async () => await FileEntity.confirmDownload(await FileEntity.requestDownload(_.filter(this.state.file_list, (e, key) => this.state.file_selected[key])));
+
 }
 
 type SortOrder = Pick<FileEntity, "name" | "size" | "time_created">

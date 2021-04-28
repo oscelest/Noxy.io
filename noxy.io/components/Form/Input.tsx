@@ -8,7 +8,7 @@ import Select from "../Base/Select";
 import Style from "./Input.module.scss";
 
 
-export default class Input<T extends string | number> extends React.Component<InputProps<T>, State> {
+export default class Input<T extends string | number = string> extends React.Component<InputProps<T>, State> {
 
   constructor(props: InputProps<T>) {
     super(props);
@@ -170,7 +170,7 @@ export default class Input<T extends string | number> extends React.Component<In
   };
 }
 
-export interface InputProps<T extends string | number> {
+export interface InputProps<T extends string | number = string> {
   type?: InputType
   label: string
   error?: Error

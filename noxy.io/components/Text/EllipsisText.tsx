@@ -14,9 +14,9 @@ export default class EllipsisText extends React.Component<EllipsisTextProps, Sta
     
     return (
       <div className={classes.join(" ")}>
-        <span className={Style.Wrapper}>
+        <abbr className={Style.Wrapper} title={this.props.children}>
           {this.props.children}
-        </span>
+        </abbr>
       </div>
     );
   }
@@ -24,6 +24,7 @@ export default class EllipsisText extends React.Component<EllipsisTextProps, Sta
 
 export interface EllipsisTextProps {
   className?: string
+  children: string
 }
 
 interface State {

@@ -1,31 +1,29 @@
 import React from "react";
-import SetOperation from "../../../common/enums/SetOperation";
 import Button from "../../components/Form/Button";
 import EntityMultiSelect from "../../components/Form/EntityMultiSelect";
-import Switch from "../../components/Form/Switch";
 import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
 import FileTagEntity from "../../entities/FileTagEntity";
 import ButtonType from "../../enums/ButtonType";
 import Global from "../../Global";
-import Style from "./FileTagSelectForm.module.scss";
+import Util from "../../Util";
+import Style from "./FileSetTagListForm.module.scss";
 
-export default class FileTagSelectForm extends React.Component<FileTagSelectFormProps, State> {
+export default class FileSetTagListForm extends React.Component<FileSetTagListFormProps, State> {
 
   public static contextType = Global?.Context ?? React.createContext({});
   public context: Global.Context;
 
-  constructor(props: FileTagSelectFormProps) {
+  constructor(props: FileSetTagListFormProps) {
     super(props);
 
     this.state = {
-      list:              props.file_tag_list ?? [],
-      set_operation:     props.file_tag_set_operation ?? SetOperation.UNION,
+      list: props.file_tag_list ?? [],
     };
   }
 
   public readonly submit = async () => {
-    setTimeout(() => this.props.onSubmit(this.state.list, this.state.set_operation));
+    Util.schedule(() => this.props.onSubmit(this.state.list));
   };
 
   public render() {
@@ -37,12 +35,6 @@ export default class FileTagSelectForm extends React.Component<FileTagSelectForm
       <div className={classes.join(" ")}>
         <TitleText>Select File Tag(s)</TitleText>
         {this.renderError()}
-        <Switch className={Style.Switch} value={this.state.set_operation} onChange={this.eventSwitchSetOperationChange}>
-          {{
-            "Match All": SetOperation.INTERSECTION,
-            "Match Any": SetOperation.UNION,
-          }}
-        </Switch>
         <EntityMultiSelect className={Style.Select} label={"Search for tags"} method={this.eventFileTagSearch} property={"name"} onChange={this.eventFileTagChange}>
           {this.state.list}
         </EntityMultiSelect>
@@ -59,10 +51,6 @@ export default class FileTagSelectForm extends React.Component<FileTagSelectForm
     );
   };
 
-  private readonly eventSwitchSetOperationChange = (set_operation: SetOperation) => {
-    this.setState({set_operation});
-  };
-
   private readonly eventFileTagSearch = async (name: string) => {
     return name ? await FileTagEntity.findMany({name, exclude: this.state.list}) : [];
   };
@@ -73,17 +61,15 @@ export default class FileTagSelectForm extends React.Component<FileTagSelectForm
 
 }
 
-export interface FileTagSelectFormProps {
+export interface FileSetTagListFormProps {
   className?: string
 
   file_tag_list?: FileTagEntity[]
-  file_tag_set_operation?: SetOperation
 
-  onSubmit: (file_tag_list: FileTagEntity[], set_operation: SetOperation) => void
+  onSubmit: (file_tag_list: FileTagEntity[]) => void
 }
 
 interface State {
   error?: Error
   list: FileTagEntity[]
-  set_operation: SetOperation
 }

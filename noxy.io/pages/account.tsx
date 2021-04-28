@@ -1,6 +1,6 @@
 import {AxiosResponse} from "axios";
 import _ from "lodash";
-import moment from "moment";
+import Moment from "moment";
 import {NextPageContext} from "next";
 import React from "react";
 import Order from "../../common/enums/Order";
@@ -162,7 +162,7 @@ export default class AccountPage extends React.Component<AccountPageProps, State
               </div>
               <div className={Style.BubbleTableText}>
                 <span>{user?.id}</span>
-                <span>{moment(user?.time_created).format("DD-MM-YYYY HH:mm:ss")}</span>
+                <span>{Moment(user?.time_created).format("DD-MM-YYYY HH:mm:ss")}</span>
               </div>
             </div>
           </div>
@@ -215,7 +215,7 @@ export default class AccountPage extends React.Component<AccountPageProps, State
 
     return (
       <div className={Style.Header}>
-        <Button key={0} type={ButtonType.SUCCESS} icon={IconType.ADD} onClick={this.create}>Create</Button>
+        <Button key={0} type={ButtonType.SUCCESS} icon={IconType.UI_ADD} onClick={this.create}>Create</Button>
       </div>
     );
   };
@@ -235,7 +235,7 @@ export default class AccountPage extends React.Component<AccountPageProps, State
         <ColumnText className={Style.LimitDecasecond} title={"Rate limit per 10 seconds"}>{entity.limit_per_decasecond}</ColumnText>
         <ColumnText className={Style.LimitMinute} title={"Rate limit per 60 seconds"}>{entity.limit_per_minute}</ColumnText>
         <Copy className={Style.Token} title={"Token"}>{entity.token}</Copy>
-        <ColumnText className={Style.TimeCreated} title={"Created at"}>{moment(entity.time_created).format("DD-MM-YYYY HH:mm:ss")}</ColumnText>
+        <ColumnText className={Style.TimeCreated} title={"Created at"}>{Moment(entity.time_created).format("DD-MM-YYYY HH:mm:ss")}</ColumnText>
         <div className={Style.ActionList}>
           <Redirect href={`/api-key/${entity.id}`}>
             <Button icon={IconType.EDIT}/>
