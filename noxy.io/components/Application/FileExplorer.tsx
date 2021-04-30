@@ -376,7 +376,10 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   private readonly eventContextMenuRenameSubmit = (file_list: FileEntity[]) => console.log(file_list);
 
-  private readonly eventContextMenuSetTagListSubmit = (list: FileTagEntity[]) => console.log(list);
+  private readonly eventContextMenuSetTagListSubmit = (list: FileTagEntity[]) => {
+
+    console.log(list);
+  }
 
   private readonly eventContextMenuDownload = async () => await FileEntity.confirmDownload(await FileEntity.requestDownload(_.filter(this.state.file_list, (e, key) => this.state.file_selected[key])));
 

@@ -6,3 +6,4 @@ _tmp
 */.next
 */.env
 */node_modules
+*/package-lock.json

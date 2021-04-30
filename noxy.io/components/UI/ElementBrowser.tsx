@@ -317,7 +317,7 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
 
   private readonly renderItem = (child: React.ReactElement, index: number = 0) => {
     const active = this.state.ref_container.current === Util.getActiveElement();
-    const selected = active && (!this.state.selection_next && this.props.selection[index] || this.state.selection_next?.[index]) ? "" : undefined;
+    const selected = (!this.state.selection_next && this.props.selection[index] || this.state.selection_next?.[index]) ? "" : undefined;
     const focused = active && index === this.state.focus ? "" : undefined;
 
     const classes = [Style.Element];
@@ -350,9 +350,7 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
   private readonly eventContainerBlur = () => {
     window.clearInterval(this.state.interval);
     this.removeSelectionListener();
-    this.props.onSelect(Array(this.props.selection.length).fill(false));
     this.setState({
-      focus:              -1,
       interval:           undefined,
       flag_ctrl:          false,
       flag_shift:         false,
