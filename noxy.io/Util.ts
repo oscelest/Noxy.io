@@ -8,7 +8,7 @@ namespace Util {
   export const Canvas = process.browser ? document.createElement("canvas") : null;
 
   export function schedule (fn: Function, ...args: any[]) {
-    return setTimeout(fn(...args));
+    return setTimeout(fn, 0, ...args);
   }
 
   export function getReactChildObject<O extends {} | [], V extends Unwrap<O>>(element: HTMLElement, object: O): V | undefined {
@@ -64,6 +64,7 @@ namespace Util {
     if (!Array.isArray(texts)) return context.measureText(texts).width;
     return _.reduce(texts, (result, text) => Math.ceil(Math.max(result, context.measureText(text).width)), 0);
   }
+
 
   export async function setClipboard(text: string) {
     if (navigator.permissions) {

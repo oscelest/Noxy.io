@@ -1,5 +1,7 @@
 import {NextPageContext} from "next";
 import React from "react";
+import FileTypeName from "../../../common/enums/FileTypeName";
+import EllipsisText from "../../components/Text/EllipsisText";
 import Loader from "../../components/UI/Loader";
 import PageHeader from "../../components/UI/PageHeader";
 import Placeholder from "../../components/UI/Placeholder";
@@ -8,6 +10,7 @@ import FileEntity from "../../entities/FileEntity";
 import Size from "../../enums/Size";
 import Global from "../../Global";
 import Style from "./[alias].module.scss";
+import PrettyBytes from "pretty-bytes";
 
 // noinspection JSUnusedGlobalSymbols
 export default class FileAliasPage extends React.Component<FileAliasPageProps, State> {
@@ -52,16 +55,36 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
                 <Preview className={Style.Preview} path={this.state.entity.getAPIPath()} type={this.state.entity.file_extension.file_type.name}/>
               </div>
               <div className={Style.Sidebar}>
-                <p>ID: {this.state.entity.id}</p>
-                <p>Size: {this.state.entity.size}</p>
-                <p>Uploader: {this.state.entity.user_created.email}</p>
-                <p>Extension: {this.state.entity.file_extension.name}</p>
+                <div className={Style.Info}>
+                  <span className={Style.Header}>File size</span>
+                  <EllipsisText className={Style.Body}>{PrettyBytes(this.state.entity.size)}</EllipsisText>
+                </div>
+                <div className={Style.Info}>
+                  <span className={Style.Header}>File type</span>
+                  <EllipsisText className={Style.Body}>{this.state.entity.file_extension.mime_type}</EllipsisText>
+                </div>
               </div>
             </div>
           </Placeholder>
         </div>
       </Loader>
     );
+  }
+
+  private readonly renderImageDetails = () => {
+    if (this.state.entity.file_extension.file_type.name !== FileTypeName.IMAGE) return null;
+
+    const image = document.createElement("img");
+    image.src = this.state.entity.getPath();
+    console.log(image);
+
+
+    return [
+      <div key={"dimensions"} className={Style.Info}>
+        <span className={Style.Header}>Image dimensions</span>
+        <EllipsisText className={Style.Body}>{this.state.entity.file_extension.mime_type}</EllipsisText>
+      </div>
+    ];
   }
 }
 

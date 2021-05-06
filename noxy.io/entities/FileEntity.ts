@@ -72,7 +72,7 @@ export default class FileEntity extends Entity {
   }
 
   public static async requestDownload(id: (string | FileEntity)[]) {
-    const result =  await Axios.post<APIRequest<string>>(`${this.URL}/request-download`, new RequestData({id}).toObject());
+    const result = await Axios.post<APIRequest<string>>(`${this.URL}/request-download`, new RequestData({id}).toObject());
     return result.data.content;
   }
 
@@ -93,9 +93,15 @@ export default class FileEntity extends Entity {
     form.remove();
   }
 
+  public static async updateByID(id: string | FileEntity, data: Properties<FileEntity>) {
+    id = typeof id === "string" ? id : id.getPrimaryKey();
+    const result = await Axios.put<APIRequest<FileEntity>>(`${this.URL}/${id}`, new RequestData(data).toObject());
+    return new this(result.data.content);
+  }
+
   public static async removeByID(id: string | FileEntity) {
     id = typeof id === "string" ? id : id.getPrimaryKey();
-    const result = await Axios.put<APIRequest<FileEntity>>(`${this.URL}/${id}`, {file_tag_list: []});
+    const result = await Axios.delete<APIRequest<FileEntity>>(`${this.URL}/${id}`);
     return new this(result.data.content);
   }
 

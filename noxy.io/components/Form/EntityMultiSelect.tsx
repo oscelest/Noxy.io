@@ -90,7 +90,7 @@ export default class EntityMultiSelect<E extends Entity, K extends EntityStringP
     if (!this.props.onCreate) return null;
 
     return (
-      <Button icon={IconType.ADD} value={this.state.input} disabled={this.state.input.length < 3} onClick={this.eventCreate}/>
+      <Button icon={IconType.UI_ADD} value={this.state.input} disabled={this.state.input.length < 3} onClick={this.eventCreate}/>
     );
   };
 

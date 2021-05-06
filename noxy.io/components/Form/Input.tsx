@@ -3,6 +3,7 @@ import React from "react";
 import Direction from "../../enums/Direction";
 import EventKey from "../../enums/EventKey";
 import InputType from "../../enums/InputType";
+import FatalException from "../../exceptions/FatalException";
 import Dropdown from "../Base/Dropdown";
 import Select from "../Base/Select";
 import Style from "./Input.module.scss";
@@ -22,6 +23,16 @@ export default class Input<T extends string | number = string> extends React.Com
     };
   }
 
+  public getSelection = () => {
+    if (!this.state.ref_input.current) throw new FatalException("Could not get selection", "Input field has not yet been initialized.");
+    const {selectionStart, selectionEnd, selectionDirection} = this.state.ref_input.current;
+    return {start: selectionStart ?? 0, end: selectionEnd ?? 0, direction: selectionDirection ?? "none"};
+  };
+
+  public setSelection = (start: number, end: number, direction?: "forward" | "backward" | "none") => {
+    if (!this.state.ref_input.current) throw new FatalException("Could not get selection", "Input field has not yet been initialized.");
+    this.state.ref_input.current.setSelectionRange(start, end, direction);
+  };
 
   public moveCursor = (direction: Direction.UP | Direction.DOWN) => {
     const index = this.props.index ?? this.state.index;
@@ -89,7 +100,7 @@ export default class Input<T extends string | number = string> extends React.Com
         {this.renderDropdown()}
       </div>
     );
-  }
+  };
 
   private readonly renderDropdown = () => {
     if (!this.props.loading && (!this.props.children || (Array.isArray(this.props.children) && !this.props.children.length) || !this.state.focus || !this.props.value)) return null;
@@ -121,7 +132,7 @@ export default class Input<T extends string | number = string> extends React.Com
     const next_state = {dropdown: str !== ""} as State;
 
     if (this.props.index !== undefined) {
-      next_state.index =  _.findIndex(_.concat(this.props.children), (element, index) => {
+      next_state.index = _.findIndex(_.concat(this.props.children), (element, index) => {
         if (this.props.onCompare) {
           return this.props.onCompare(value, index);
         }

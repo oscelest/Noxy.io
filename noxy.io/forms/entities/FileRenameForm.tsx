@@ -1,4 +1,5 @@
 import _ from "lodash";
+import Moment from "moment";
 import React from "react";
 import Button from "../../components/Form/Button";
 import Input from "../../components/Form/Input";
@@ -8,8 +9,7 @@ import FileEntity from "../../entities/FileEntity";
 import ButtonType from "../../enums/ButtonType";
 import Global from "../../Global";
 import Util from "../../Util";
-import Style from "./FileSetTagListForm.module.scss";
-import Moment from "moment";
+import Style from "./FileRenameForm.module.scss";
 
 export default class FileRenameForm extends React.Component<FileRenameFormProps, State> {
 
@@ -67,7 +67,22 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
         <TitleText>{this.props.file_list.length > 1 ? `Rename ${this.props.file_list.length} files` : "Rename file"}</TitleText>
         {this.renderError()}
         <Input ref={this.state.ref} label={"Name"} value={this.state.name} onChange={this.eventInputChange}/>
-        <Button type={ButtonType.SUCCESS} onClick={this.submit}>Rename</Button>
+        <div className={Style.Help}>
+          <div className={Style.Line}>
+            <Button onClick={this.eventExtensionClick}>Extension</Button>
+            <span>Placeholder will be replaced by the file's extension.</span>
+          </div>
+          <div className={Style.Line}>
+            <Button onClick={this.eventExtensionClick}>Number</Button>
+            <span>Placeholder will be replaced by the file's extension.</span>
+          </div>
+          <div className={Style.Line}>
+            <Button onClick={this.eventExtensionClick}>Upload date</Button>
+            <span>Placeholder will be replaced by the file's extension.</span>
+          </div>
+
+        </div>
+        <Button className={Style.Submit} type={ButtonType.SUCCESS} onClick={this.submit}>Rename</Button>
       </div>
     );
   }
@@ -83,6 +98,12 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
 
   private readonly eventInputChange = (name: string) => {
     this.setState({name});
+  };
+
+  private readonly eventExtensionClick = () => {
+    console.log(this.state.ref.current?.getSelection())
+    const {start = 0, end = 0} = this.state.ref.current?.getSelection() ?? {};
+    this.setState({name: `${this.state.name.substring(0, start)}{extension}${this.state.name.substring(end)}`});
   };
 
 }

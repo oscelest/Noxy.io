@@ -1,5 +1,6 @@
 import _ from "lodash";
 import React from "react";
+import FileTransfer from "../../../common/classes/FileTransfer";
 import Preview from "../UI/Preview";
 import Button from "./Button";
 import Style from "./FileUpload.module.scss";
@@ -17,28 +18,29 @@ export default class FileUpload extends React.Component<FileUploadProps, State> 
   }
 
   private readonly getPath = () => {
-    return URL.createObjectURL(this.props.file);
+    return URL.createObjectURL(this.props.transfer.file);
   };
 
   private readonly getType = () => {
-    return this.props.file.type.split("/")[0];
+    return this.props.transfer.file.type.split("/")[0];
   };
 
   private readonly getUploadText = () => {
-    if (this.props.error) return "Retry";
+    if (this.props.transfer.error) return "Retry";
     return "Upload";
   };
 
   private readonly getCancelText = () => {
-    if (this.props.progress === Number.POSITIVE_INFINITY) return "Clear";
+    if (this.props.transfer.progress === Number.POSITIVE_INFINITY) return "Clear";
+    if (this.props.transfer.progress === Number.NEGATIVE_INFINITY) return "Remove";
     return "Cancel";
   };
 
   private readonly getProgressBarText = () => {
-    if (this.props.error) return this.props.error.message;
-    if (this.props.progress === Number.POSITIVE_INFINITY) return "Upload successful";
-    if (this.props.progress === 100) return "Validating...";
-    return `${this.props.progress}%`;
+    if (this.props.transfer.error) return this.props.transfer.error.message;
+    if (this.props.transfer.progress === Number.POSITIVE_INFINITY) return "Upload successful";
+    if (this.props.transfer.progress === 100) return "Validating...";
+    return `${this.props.transfer.progress}%`;
   };
 
   public componentDidMount() {
@@ -48,7 +50,7 @@ export default class FileUpload extends React.Component<FileUploadProps, State> 
   public componentDidUpdate(prevProps: Readonly<FileUploadProps>) {
     const next_state = {} as State;
 
-    if (prevProps.file !== this.props.file) {
+    if (prevProps.transfer.file !== this.props.transfer.file) {
       next_state.path = this.getPath();
       next_state.type = this.getType();
     }
@@ -78,52 +80,45 @@ export default class FileUpload extends React.Component<FileUploadProps, State> 
     );
   }
 
-  private readonly eventCancelClick = () => this.props.onCancel?.(this.props.file);
-
-
   private readonly renderInput = () => {
-    if (this.props.progress) return null;
+    if (this.props.transfer.progress) return null;
 
     return (
-      <Input label={"Name"} error={this.props.error} value={this.props.name} onChange={this.eventNameChange}/>
+      <Input label={"Name"} error={this.props.transfer.error} value={this.props.transfer.name} onChange={this.eventNameChange}/>
     );
   };
-
-  private readonly eventNameChange = (name: string) => this.props.onChange?.(name, this.props.file);
 
   private readonly renderProgressBar = () => {
-    if (!this.props.progress) return null;
+    if (!this.props.transfer.progress) return null;
 
     return (
-      <ProgressBar progress={this.props.progress ?? 0}>{this.getProgressBarText()}</ProgressBar>
+      <ProgressBar progress={this.props.transfer.progress ?? 0}>{this.getProgressBarText()}</ProgressBar>
     );
   };
 
-
   private readonly renderActionUpload = () => {
-    if (!this.props.error && this.props.progress) return;
+    if (this.props.transfer.progress) return;
 
     return (
       <Button className={Style.FileAction} onClick={this.eventUploadClick}>{this.getUploadText()}</Button>
-    )
-  }
+    );
+  };
 
-  private readonly eventUploadClick = () => this.props.onUpload?.(this.props.file);
+  private readonly eventNameChange = (name: string) => this.props.onChange?.(name, this.props.transfer);
+  private readonly eventCancelClick = () => this.props.onCancel?.(this.props.transfer);
+  private readonly eventUploadClick = () => this.props.onUpload?.(this.props.transfer);
 
 }
 
 export interface FileUploadProps {
-  name: string
-  file: File
-  error?: Error
-  progress?: number
+  transfer: FileTransfer
 
   children?: never
   className?: string
 
-  onChange?: (name: string, file: File) => void
-  onUpload?: (file: File) => void
-  onCancel?: (file: File) => void
+  onChange?: (name: string, file: FileTransfer) => void
+  onUpload?: (file: FileTransfer) => void
+  onCancel?: (file: FileTransfer) => void
 }
 
 interface State {

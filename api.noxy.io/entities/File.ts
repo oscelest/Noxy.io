@@ -195,6 +195,7 @@ export default class File extends Entity<File>(TypeORM) {
     try {
       const file = await this.createSelect().where(where).getOneOrFail();
       response.setHeader("Content-Type", file.file_extension.mime_type);
+      response.setHeader("Content-Disposition", `attachment; filename="filename.jpg"`);
       response.sendFile(Path.resolve(process.env.FILE_PATH!, file.alias));
     }
     catch (error) {
@@ -281,20 +282,18 @@ export default class File extends Entity<File>(TypeORM) {
   }
 
   @File.put("/:id", {permission: PermissionLevel.FILE_UPDATE})
-  @File.bindParameter<Request.putUpdateOne>("name", ValidatorType.UUID, {flag_optional: true})
+  @File.bindParameter<Request.putUpdateOne>("name", ValidatorType.STRING, {min_length: 3}, {flag_optional: true})
   @File.bindParameter<Request.putUpdateOne>("file_extension", ValidatorType.UUID, {flag_optional: true})
   @File.bindParameter<Request.putUpdateOne>("file_tag_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
   private static async updateOne({params: {id}, locals: {respond, user, parameters}}: Server.Request<{id: string}, Response.putUpdateOne, Request.putUpdateOne>) {
     const {name, file_extension, file_tag_list} = parameters!;
-    const query = this.createSelect();
-    this.addValueClause(query, "id", id);
 
     try {
-      const file = await query.getOneOrFail();
+      const {file_tag_list: current_file_tag_list, ...file} = await File.performSelect(id);
       if (file.user_created.id !== user?.id) return respond?.(new ServerException(403));
 
       if (file_tag_list) {
-        const file_tag_id_list = _.map(file.file_tag_list, file_tag => file_tag.id);
+        const file_tag_id_list = _.map(current_file_tag_list, file_tag => file_tag.id);
         const file_tag_add_list = _.differenceWith(file_tag_list, file_tag_id_list, (a, b) => a === b);
         const file_tag_remove_list = _.differenceWith(file_tag_id_list, file_tag_list, (a, b) => a === b);
 

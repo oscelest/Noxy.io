@@ -1,5 +1,6 @@
 import * as TypeORM from "typeorm";
 import Entity, {Pagination} from "../../common/classes/Entity";
+import FileTypeName from "../../common/enums/FileTypeName";
 import ValidatorType from "../../common/enums/ValidatorType";
 import ServerException from "../../common/exceptions/ServerException";
 import Server from "../../common/services/Server";
@@ -18,8 +19,8 @@ export default class FileType extends Entity<FileType>(TypeORM) {
   @TypeORM.PrimaryGeneratedColumn("uuid")
   public id: string;
 
-  @TypeORM.Column({type: "varchar", length: 16})
-  public name: string;
+  @TypeORM.Column({type: "enum", enum: FileTypeName, nullable: false})
+  public name: FileTypeName;
 
   @TypeORM.OneToMany(() => FileExtension, file => file.file_type)
   public file_extensions: FileExtension[];
@@ -57,7 +58,7 @@ export default class FileType extends Entity<FileType>(TypeORM) {
 
 
   @FileType.get("/")
-  @FileType.bindParameter<Request.getFindMany>("name", ValidatorType.STRING, {max_length: 16})
+  @FileType.bindParameter<Request.getFindMany>("name", ValidatorType.ENUM, FileTypeName)
   @FileType.bindParameter<Request.getFindMany>("exclude", ValidatorType.UUID, {flag_array: true})
   @FileType.bindPagination(100, ["id", "name", "time_created"])
   private static async findMany({locals: {respond, parameters}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
@@ -72,7 +73,7 @@ export default class FileType extends Entity<FileType>(TypeORM) {
 
 
   @FileType.get("/count")
-  @FileType.bindParameter<Request.getCount>("name", ValidatorType.STRING, {max_length: 16})
+  @FileType.bindParameter<Request.getCount>("name", ValidatorType.ENUM, FileTypeName)
   @FileType.bindParameter<Request.getCount>("exclude", ValidatorType.UUID, {flag_array: true})
   private static async count({locals: {respond, parameters}}: Server.Request<{}, Response.getCount, Request.getCount>) {
     const {name, exclude} = parameters!;
@@ -84,8 +85,21 @@ export default class FileType extends Entity<FileType>(TypeORM) {
     return respond?.(await query.getCount());
   }
 
+
+  @FileType.get("/by-unique")
+  @FileType.bindParameter<Request.getFindManyByUnique>("name", ValidatorType.ENUM, FileTypeName, {flag_array: true})
+  private static async findManyByUnique({locals: {respond, parameters}}: Server.Request<{}, Response.getFindManyByUnique, Request.getFindManyByUnique>) {
+    const {name} = parameters!;
+    const query = this.createSelect();
+
+    this.addListClause(query, "name", name);
+
+    return respond?.(await query.getMany());
+  }
+
+
   @FileType.post("/")
-  @FileType.bindParameter<Request.postCreateOne>("name", ValidatorType.STRING, {min_length: 3, max_length: 128})
+  @FileType.bindParameter<Request.postCreateOne>("name", ValidatorType.ENUM, FileTypeName)
   private static async createOne({locals: {respond, parameters}}: Server.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
     return respond?.(await this.performInsert(parameters!));
   }
@@ -99,13 +113,15 @@ export type FileTypeJSON = {
 }
 
 namespace Request {
-  export type getFindMany = getCount & Pagination
   export type getCount = {name?: string; exclude?: string[]}
-  export type postCreateOne = {name: string}
+  export type getFindMany = getCount & Pagination
+  export type getFindManyByUnique = {name?: string[]}
+  export type postCreateOne = {name: FileTypeName}
 }
 
 namespace Response {
-  export type getFindMany = FileType[] | ServerException
   export type getCount = number
+  export type getFindMany = FileType[] | ServerException
+  export type getFindManyByUnique = FileType[] | ServerException
   export type postCreateOne = FileType | ServerException
 }

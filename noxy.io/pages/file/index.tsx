@@ -1,5 +1,6 @@
 import {NextPageContext} from "next";
 import React from "react";
+import SetOperation from "../../../common/enums/SetOperation";
 import Authorized from "../../components/Application/Authorized";
 import FileExplorer from "../../components/Application/FileExplorer";
 import {Masquerade} from "../../components/Application/Masquerade";
@@ -15,10 +16,25 @@ export default class FilePage extends React.Component<FilePageProps, State> {
 
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): FilePageProps {
-    const name = (context.query[FilePageQuery.NAME] ?? "");
+    const search = context.query[FilePageQuery.SEARCH] ?? "";
+    const tag = context.query[FilePageQuery.TAG] ?? [];
+    const type = context.query[FilePageQuery.TYPE] ?? [];
+    const page = context.query[FilePageQuery.PAGE] ?? "";
+    const size = context.query[FilePageQuery.SIZE] ?? "";
+
+    const set_operation = context.query[FilePageQuery.SET_OPERATION] ?? "";
+    const parsed_set_operation = Array.isArray(set_operation) ? set_operation[0] : set_operation;
+
+    const order = context.query[FilePageQuery.ORDER] ?? "";
 
     return {
-      [FilePageQuery.NAME]: Array.isArray(name) ? name[0] : name,
+      [FilePageQuery.SEARCH]:        Array.isArray(search) ? search[0] : search,
+      [FilePageQuery.TAG]:           Array.isArray(tag) ? tag : [tag],
+      [FilePageQuery.PAGE]:          +(Array.isArray(page) ? page[0] : page),
+      [FilePageQuery.SIZE]:          +(Array.isArray(size) ? size[0] : size),
+      [FilePageQuery.ORDER]:         Array.isArray(order) ? order : [order],
+      [FilePageQuery.SET_OPERATION]: parsed_set_operation === SetOperation.UNION ? SetOperation.UNION : SetOperation.INTERSECTION,
+      [FilePageQuery.TYPE]:          Array.isArray(type) ? type : [type],
     };
   }
 
@@ -30,22 +46,24 @@ export default class FilePage extends React.Component<FilePageProps, State> {
     };
   }
 
+  public async componentDidMount() {
+    console.log(this.props);
+  }
+
   public render() {
     const {ref_file_browser} = this.state;
 
-    return (
-      <Authorized form={true}>
-        <div className={Style.Component}>
+    return <Authorized form={true}>
+      <div className={Style.Component}>
 
-          <PageHeader className={Style.PageHeader} title={"My files"}>
-            <Masquerade className={Style.Masquerade} onChange={this.eventMasqueradeChange}/>
-          </PageHeader>
+        <PageHeader className={Style.PageHeader} title={"My files"}>
+          <Masquerade className={Style.Masquerade} onChange={this.eventMasqueradeChange}/>
+        </PageHeader>
 
-          <FileExplorer className={Style.FileBrowser} ref={ref_file_browser}/>
+        <FileExplorer className={Style.FileBrowser} ref={ref_file_browser}/>
 
-        </div>
-      </Authorized>
-    );
+      </div>
+    </Authorized>;
   }
 
   private readonly eventMasqueradeChange = async () => {
@@ -55,11 +73,23 @@ export default class FilePage extends React.Component<FilePageProps, State> {
 }
 
 enum FilePageQuery {
-  NAME = "name",
+  SEARCH = "search",
+  ORDER = "order",
+  PAGE = "page",
+  SET_OPERATION = "set_operation",
+  TAG = "tag",
+  TYPE = "type",
+  SIZE = "size",
 }
 
 export interface FilePageProps {
-  [FilePageQuery.NAME]: string
+  [FilePageQuery.SEARCH]: string
+  [FilePageQuery.ORDER]: string[]
+  [FilePageQuery.PAGE]: number
+  [FilePageQuery.SIZE]: number
+  [FilePageQuery.SET_OPERATION]: SetOperation
+  [FilePageQuery.TAG]: string[]
+  [FilePageQuery.TYPE]: string[]
 }
 
 interface State {

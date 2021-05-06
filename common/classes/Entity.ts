@@ -130,6 +130,11 @@ export default function Entity<E>(service: typeof TypeORM) {
       return value ? qb.andWhere(`${this.name}.${key} LIKE :${key}`, {[key]: `%${value}%`}) : qb;
     }
 
+    public static addListClause(qb: TypeORM.SelectQueryBuilder<E>, key: Key<E>, value?: string[]) {
+      const list = _.reduce(value, (result, value, index) => ({...result, [`:${key}.${index}`]: value}), {} as {[key: string]: string});
+      return value ? qb.andWhere(`${this.name}.${key} IN (${_.keys(list)})`, list) : qb;
+    }
+
     public static addRelationClause<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, key: K, relation_key: Key<E[K]>, value?: EntityID) {
       return value?.length ? qb.andWhere(`${key}.${relation_key} IN (:${relation_key}_${key})`, {[`${relation_key}_${key}`]: value}) : qb;
     }
@@ -210,7 +215,9 @@ export default function Entity<E>(service: typeof TypeORM) {
     public static async performUpdate(id: string, values: TypeORM.DeepPartial<E>) {
       try {
         const result = await service.getRepository(this).update(id, values);
-        if (result.affected === 1) return await this.createSelect().whereInIds(id).getOneOrFail();
+        if (result.affected === 1) {
+          return await this.createSelect().whereInIds(id).getOneOrFail();
+        }
       }
       catch (error) {
         throw error;

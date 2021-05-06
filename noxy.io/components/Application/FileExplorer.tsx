@@ -36,7 +36,6 @@ import Style from "./FileExplorer.module.scss";
 // noinspection JSUnusedGlobalSymbols
 export default class FileExplorer extends React.Component<FileBrowserProps, State> {
 
-  public static pageSize = 48;
   public static contextType = Global?.Context ?? React.createContext({});
   public context: Global.Context;
 
@@ -44,18 +43,19 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     super(props);
 
     this.state = {
+      ref_dialog:       React.createRef(),
       ref_context_menu: React.createRef(),
 
-      context_menu: true,
+      context_menu: false,
 
       file_loading:  true,
       file_search:   "",
       file_list:     [],
       file_selected: [],
       file_order:    {
-        name:         {order: Order.ASC, text: "File name", icon: IconType.TEXT_HEIGHT},
+        name:         {order: undefined, text: "File name", icon: IconType.TEXT_HEIGHT},
         size:         {order: undefined, text: "File size", icon: IconType.CUBE},
-        time_created: {order: undefined, text: "Upload date", icon: IconType.CLOCK},
+        time_created: {order: Order.DESC, text: "Upload date", icon: IconType.CLOCK},
       },
 
       tag_loading:        true,
@@ -69,6 +69,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
       pagination_current: 1,
       pagination_total:   1,
+      pagination_size:    this.props.size || 50,
     };
   }
 
@@ -90,11 +91,11 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
       try {
         const count = await FileEntity.count(params);
-        next_state.pagination_total = Util.getPageTotal(count, FileExplorer.pageSize);
+        next_state.pagination_total = Util.getPageTotal(count, this.state.pagination_size);
         next_state.pagination_current = _.clamp(this.state.pagination_current, 1, next_state.pagination_total);
 
-        const skip = (next_state.pagination_current - 1) * FileExplorer.pageSize;
-        const limit = next_state.pagination_current * FileExplorer.pageSize;
+        const skip = (next_state.pagination_current - 1) * this.state.pagination_size;
+        const limit = next_state.pagination_current * this.state.pagination_size;
         const order = _.mapValues(this.state.file_order, value => value.order);
 
         next_state.file_list = await FileEntity.findMany(params, {skip, limit, order});
@@ -130,6 +131,10 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   private readonly sortTagList = (list: FileTagEntity[]) => {
     return list.sort((a, b) => a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1);
+  };
+
+  private readonly getSelectedFileEntityList = () => {
+    return _.reduce(this.state.file_selected, (result, value, index) => value ? [...result, this.state.file_list[index]] : result, [] as FileEntity[]);
   };
 
   public async componentDidMount() {
@@ -315,7 +320,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
         "upload":  {icon: IconType.UPLOAD, text: "Upload file", action: this.eventFileCreateClick},
         "tags":    {icon: IconType.UI_SETTINGS, text: "Manage tags", action: this.eventContextMenuOpen},
         "refresh": {icon: IconType.REFRESH, text: "Refresh", action: this.searchFile},
-        "filter":  {icon: IconType.NOT_ALLOWED, text: "Reset filters", action: this.eventContextMenuOpen},
+        "reset":   {icon: IconType.NOT_ALLOWED, text: "Reset filters", action: this.eventContextMenuReset},
       };
     }
 
@@ -344,17 +349,20 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   private readonly eventContextMenuOpen = () => Router.push(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`);
   private readonly eventContextMenuOpenTab = () => window.open(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`, "_blank");
-
   private readonly eventContextMenuCopyLink = () => Util.setClipboard(this.state.file_selected.reduce((r, v, i) => v ? [...r, this.state.file_list[i].getPath()] : r, [] as string[]).join("\n"));
 
+  private readonly eventContextMenuReset = () => {
+    this.searchFile({});
+    this.searchTag();
+  };
 
   private readonly eventContextMenuRename = () => {
-    const file_list = this.state.file_selected.reduce((result, value, i) => value ? [...result, this.state.file_list[i]] : result, [] as FileEntity[]);
+    const file_list = this.getSelectedFileEntityList();
     Dialog.show(
       DialogListenerType.GLOBAL,
       DialogPriority.NEXT,
       (
-        <ElementDialog>
+        <ElementDialog ref={this.state.ref_dialog}>
           <FileRenameForm file_list={file_list} onSubmit={this.eventContextMenuRenameSubmit}/>
         </ElementDialog>
       ),
@@ -367,19 +375,25 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
       DialogListenerType.GLOBAL,
       DialogPriority.NEXT,
       (
-        <ElementDialog>
+        <ElementDialog ref={this.state.ref_dialog}>
           <FileSetTagListForm file_tag_list={file_tag_list} onSubmit={this.eventContextMenuSetTagListSubmit}/>
         </ElementDialog>
       ),
     );
   };
 
-  private readonly eventContextMenuRenameSubmit = (file_list: FileEntity[]) => console.log(file_list);
+  private readonly eventContextMenuRenameSubmit = async (file_list: FileEntity[]) => {
+    this.state.ref_dialog.current?.close();
+    await Promise.all(_.map(file_list, async (value, i) => value ? await FileEntity.updateByID(file_list[i], file_list[i]) : false));
+    this.searchFile();
+  };
 
-  private readonly eventContextMenuSetTagListSubmit = (list: FileTagEntity[]) => {
-
-    console.log(list);
-  }
+  private readonly eventContextMenuSetTagListSubmit = async (file_tag_list: FileTagEntity[]) => {
+    this.state.ref_dialog.current?.close();
+    await Promise.all(_.map(this.state.file_selected, async (value, i) => value ? await FileEntity.updateByID(this.state.file_list[i], {...this.state.file_list[i], file_tag_list}) : false));
+    this.searchFile();
+    this.searchTag();
+  };
 
   private readonly eventContextMenuDownload = async () => await FileEntity.confirmDownload(await FileEntity.requestDownload(_.filter(this.state.file_list, (e, key) => this.state.file_selected[key])));
 
@@ -389,9 +403,22 @@ type SortOrder = Pick<FileEntity, "name" | "size" | "time_created">
 
 export interface FileBrowserProps {
   className?: string
+
+  search?: string
+  order?: SortableCollection<SortOrder>
+
+  set_operation?: SetOperation
+  tags?: FileTagEntity[]
+  types?: FileTypeEntity[]
+
+  size?: number
+  page?: number
+
+  onSearch?(filter: Partial<State>): void
 }
 
 interface State {
+  ref_dialog: React.RefObject<ElementDialog>
   ref_context_menu: React.RefObject<HTMLDivElement>
 
   context_menu: boolean
@@ -411,6 +438,7 @@ interface State {
   type_selected_list: FileTypeEntity[]
   type_tickable_collection: TickableCollection<FileTypeEntity>
 
-  pagination_current: number
+  pagination_size: number
   pagination_total: number
+  pagination_current: number
 }

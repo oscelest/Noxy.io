@@ -1,6 +1,7 @@
-import {Canceler} from "axios";
+import {AxiosError, Canceler} from "axios";
 import _ from "lodash";
 import React from "react";
+import FileTransfer from "../../../common/classes/FileTransfer";
 import Button from "../../components/Form/Button";
 import EntityMultiSelect from "../../components/Form/EntityMultiSelect";
 import FilePicker from "../../components/Form/FilePicker";
@@ -21,36 +22,45 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
     super(props);
 
     this.state = {
-      loading:        false,
-      file_tag_list:  this.props.file_tag_list ?? [],
-      file_list:      _.map(this.props.file_list, file => ({file, name: file.name})),
+      loading:       false,
+      file_tag_list: this.props.file_tag_list ?? [],
+      file_list:     _.map(this.props.file_list, file => new FileTransfer(file)),
     };
   }
 
-  private readonly getFileIndex = (file: File) => {
-    return _.findIndex(this.state.file_list, handle => handle.file === file);
+  private readonly advanceFileTransfer = (transfer: FileTransfer, next: Partial<FileTransfer>) => {
+    this.setState({file_list: _.map(this.state.file_list, value => value === transfer ? transfer.advance(next) : value)});
   };
 
-  private readonly updateFileHandle = (index: number, handle: Partial<FileHandle>) => {
-    if (index < 0 || index > this.state.file_list.length) return;
-    this.setState({file_list: [...this.state.file_list.slice(0, index), {...this.state.file_list[index], ...handle}, ...this.state.file_list.slice(index + 1)]});
+  private readonly failFileTransfer = (transfer: FileTransfer, next: string | Error, fatal = false) => {
+    this.setState({file_list: _.map(this.state.file_list, value => value === transfer ? transfer.fail(next, fatal) : value)});
   };
 
-  private readonly upload = async (file: File) => {
-    const name = this.state.file_list[this.getFileIndex(file)].name;
-    if (!name) return this.updateFileHandle(this.getFileIndex(file), {error: new Error("Field cannot be empty")});
+
+  private readonly upload = async (transfer: FileTransfer) => {
+    if (!transfer.name) return transfer.fail("Field cannot be empty");
 
     try {
       await FileEntity.create(
-        new File([file.slice(0, file.size, file.type)], name, {type: file.type}),
+        new File([transfer.file.slice(0, transfer.file.size, transfer.file.type)], transfer.name, {type: transfer.file.type}),
         {file_tag_list: this.state.file_tag_list},
-        (event: ProgressEvent) => this.updateFileHandle(this.getFileIndex(file), {progress: +(event.loaded / event.total * 100).toFixed(2)}),
-        (cancel: Canceler) => this.updateFileHandle(this.getFileIndex(file), {cancel}),
+        (event: ProgressEvent) => this.advanceFileTransfer(transfer, {progress: +(event.loaded / event.total * 100).toFixed(2)}),
+        (cancel: Canceler) => this.advanceFileTransfer(transfer, {canceler: cancel}),
       );
-      this.updateFileHandle(this.getFileIndex(file), {progress: Number.POSITIVE_INFINITY});
+      this.advanceFileTransfer(transfer, {progress: Number.POSITIVE_INFINITY});
     }
-    catch (error) {
-      this.updateFileHandle(this.getFileIndex(file), {error});
+    catch (exception) {
+      const error = exception as AxiosError<APIRequest<{mime_type: string}>>;
+
+      if (error.isAxiosError) {
+        if (error.response?.status === 400) {
+          if (error.response?.data.content.mime_type) {
+            return this.failFileTransfer(transfer, `"${error.response.data.content.mime_type}" is not supported.`, true);
+          }
+        }
+      }
+
+      this.failFileTransfer(transfer, error);
     }
   };
 
@@ -59,7 +69,7 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
 
     const upload_disabled = !_.some(file_list, handle => handle.progress === undefined);
     const clear_disabled = !file_list.length;
-    const label = "Search for available file tags "
+    const label = "Search for available file tags ";
 
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
@@ -95,9 +105,9 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
     );
   };
 
-  private readonly renderFileUpload = ({file, name, progress, error}: FileHandle, key: number = 0) => {
+  private readonly renderFileUpload = (transfer: FileTransfer, key: number = 0) => {
     return (
-      <FileUpload key={key} file={file} name={name} progress={progress} error={error} onChange={this.eventFileChange} onUpload={this.upload} onCancel={this.eventFileCancel}/>
+      <FileUpload key={key} transfer={transfer} onChange={this.eventFileChange} onUpload={this.upload} onCancel={this.eventFileCancel}/>
     );
   };
 
@@ -108,31 +118,15 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
   private readonly eventFileTagChange = (file_tag_list: FileTagEntity[]) => this.setState({file_tag_list});
   private readonly eventFileTagCreate = async (name: string) => await FileTagEntity.create({name});
 
-  private readonly eventFileUploadAll = () => {
-    _.map(this.state.file_list, handle => handle.progress === undefined && this.upload(handle.file));
-  };
+  private readonly eventFileUploadAll = () => _.each(this.state.file_list, handle => !handle.progress && this.upload(handle));
 
-  private readonly eventFileClear = () => {
-    _.each(this.state.file_list, handle => handle.cancel?.());
-    this.setState({file_list: []});
-  };
+  private readonly eventFileClear = () => this.setState({file_list: _.filter(this.state.file_list, handle => !!handle.cancel?.())});
 
-  private readonly eventBrowseChange = (file_list: FileList) => this.setState({file_list: [...this.state.file_list, ..._.map(file_list, file => ({file, name: file.name}))]});
+  private readonly eventBrowseChange = (file_list: FileList) => this.setState({file_list: _.concat(this.state.file_list, _.map(file_list, file => new FileTransfer(file)))});
 
-  private readonly eventFileChange = (name: string, file: File) => this.updateFileHandle(this.getFileIndex(file), {name});
-  private readonly eventFileCancel = (file: File) => {
-    this.state.file_list[this.getFileIndex(file)].cancel?.();
-    this.setState({file_list: _.filter(this.state.file_list, handle => handle.file !== file)});
-  };
+  private readonly eventFileChange = (name: string, transfer: FileTransfer) => this.advanceFileTransfer(transfer, {name});
+  private readonly eventFileCancel = (transfer: FileTransfer) => transfer.cancel() && this.setState({file_list: _.filter(this.state.file_list, value => value !== transfer)});
 
-}
-
-interface FileHandle {
-  name: string
-  file: File
-  error?: Error
-  cancel?: Canceler
-  progress?: number
 }
 
 export interface FileUploadFormProps {
@@ -148,6 +142,6 @@ interface State {
   file_tag_error?: Error
   loading: boolean
 
-  file_list: FileHandle[]
+  file_list: FileTransfer[]
   file_tag_list: FileTagEntity[]
 }

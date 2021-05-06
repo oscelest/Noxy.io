@@ -27,7 +27,16 @@ export default class FileTypeEntity extends Entity {
     return this.id;
   }
 
-  public static async findMany(search: FileTypeEntityGetParameters = {}, pagination: RequestPagination<FileTypeEntity> = {skip: 0, limit: 10, order: {time_created: Order.ASC}}) {
+  public static async count(search: FileTypeEntityFindMany = {}) {
+    try {
+      return await Axios.get<APIRequest<number>>(`${this.URL}/count?${new RequestData(search)}`);
+    }
+    catch (error) {
+      throw error;
+    }
+  }
+
+  public static async findMany(search: FileTypeEntityFindMany = {}, pagination: RequestPagination<FileTypeEntity> = {skip: 0, limit: 10, order: {time_created: Order.ASC}}) {
     try {
       const result = await Axios.get<APIRequest<FileTypeEntity[]>>(`${this.URL}?${new RequestData(search).paginate(pagination)}`);
       return this.instantiate(result.data.content);
@@ -37,9 +46,10 @@ export default class FileTypeEntity extends Entity {
     }
   }
 
-  public static async count(search: FileTypeEntityGetParameters = {}) {
+  public static async findManyByUnique(search: string | string[]) {
     try {
-      return await Axios.get<APIRequest<number>>(`${this.URL}/count?${new RequestData(search)}`);
+      const result = await Axios.get<APIRequest<FileTypeEntity[]>>(`${this.URL}/by-unique?${new RequestData({search})}`);
+      return this.instantiate(result.data.content);
     }
     catch (error) {
       throw error;
@@ -48,7 +58,7 @@ export default class FileTypeEntity extends Entity {
 
 }
 
-type FileTypeEntityGetParameters = {
+type FileTypeEntityFindMany = {
   name?: string
 
   exclude?: FileTypeEntity | FileTypeEntity[]
