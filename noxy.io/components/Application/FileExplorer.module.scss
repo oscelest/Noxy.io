@@ -207,5 +207,13 @@
       }
     }
   }
+}
 
+.DialogButtonContainer {
+  align-items: center;
+  justify-content: space-evenly;
+
+  .DialogButton {
+    width: 120px;
+  }
 }

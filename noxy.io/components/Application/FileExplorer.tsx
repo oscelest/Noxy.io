@@ -137,6 +137,10 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     return _.reduce(this.state.file_selected, (result, value, index) => value ? [...result, this.state.file_list[index]] : result, [] as FileEntity[]);
   };
 
+  private readonly closeDialog = () => {
+    return this.state.ref_dialog.current?.close();
+  };
+
   public async componentDidMount() {
     const file_type_list = await FileTypeEntity.findMany();
     const type_tickable_collection = _.reduce(file_type_list, (result, value) => _.set(result, value.id, Tickable.createElement(value, value.toString())), {} as TickableCollection<FileTypeEntity>);
@@ -167,10 +171,10 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
         <div className={classes.join(" ")}>
 
           <div className={Style.Content}>
-            <DragDrop className={Style.DragDrop} title={drag_drop_title} message={drag_drop_text} listener={DialogListenerType.FILE_BROWSER} onDrop={this.eventFileCreateClick}>
+            <DragDrop className={Style.DragDrop} title={drag_drop_title} message={drag_drop_text} listener={DialogListenerType.FILE_BROWSER} onDrop={this.openUploadDialog}>
               <Loader className={Style.Loader} show={file_loading} size={Size.LARGE}>
                 <ElementBrowser className={Style.Browser} selection={file_selected}
-                                onSelect={this.eventElementBrowserSelect} onDelete={this.eventElementBrowserDelete} onContextMenu={this.eventElementBrowserContextMenu}>
+                                onSelect={this.eventElementBrowserSelect} onDelete={this.openDeleteDialog} onContextMenu={this.eventElementBrowserContextMenu}>
                   {_.map(file_list, this.renderFile)}
                 </ElementBrowser>
               </Loader>
@@ -182,7 +186,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
           <div className={Style.Sidebar}>
             <div className={Style.FileSearch}>
               <Input className={Style.Input} label={"Search"} onChange={this.eventFileSearchChange}/>
-              <Button icon={IconType.UPLOAD} value={[]} disabled={!this.context.hasPermission(PermissionLevel.FILE_CREATE)} onClick={this.eventFileCreateClick}/>
+              <Button icon={IconType.UPLOAD} value={[]} disabled={!this.context.hasPermission(PermissionLevel.FILE_CREATE)} onClick={this.openUploadDialog}/>
             </div>
             <Sortable onChange={this.eventOrderChange}>{file_order}</Sortable>
 
@@ -220,7 +224,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     );
   };
 
-  private renderFile = (file: FileEntity, index: number = 0) => {
+  private readonly renderFile = (file: FileEntity, index: number = 0) => {
     return (
       <div key={index} className={Style.File}>
         <Redirect className={Style.Redirect} href={`/file/${file.alias}`} isDoubleClick={true}>
@@ -231,7 +235,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     );
   };
 
-  private renderFileTagSelectedList = () => {
+  private readonly renderFileTagSelectedList = () => {
     if (!this.state.tag_selected_list.length) return null;
 
     return (
@@ -241,7 +245,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     );
   };
 
-  private renderFileTagAvailableList = () => {
+  private readonly renderFileTagAvailableList = () => {
     if (!this.state.tag_available_list.length) return null;
 
     return (
@@ -253,7 +257,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     );
   };
 
-  private renderFileTag = (file_tag: FileTagEntity, index: number = 0) => {
+  private readonly renderFileTag = (file_tag: FileTagEntity, index: number = 0) => {
     const current = _.find(this.state.tag_selected_list, entity => entity.getPrimaryKey() === file_tag.getPrimaryKey());
 
     return (
@@ -264,7 +268,48 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     );
   };
 
-  private readonly eventElementBrowserDelete = async () => {
+  private readonly openDeleteDialog = async () => {
+    const count = _.filter(this.state.file_selected).length;
+    const title = count === 1 ? "Permanently delete this file?" : `Permanently delete ${_.filter(this.state.file_selected).length} file(s)?`;
+
+    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT,
+      <ElementDialog ref={this.state.ref_dialog} title={title}>
+        <div className={Style.DialogButtonContainer}>
+          <Button className={Style.DialogButton} onClick={this.closeDialog}>Cancel</Button>
+          <Button className={Style.DialogButton} onClick={this.eventDialog}>Delete</Button>
+        </div>
+      </ElementDialog>,
+    );
+  };
+
+  private readonly openUploadDialog = (file_list: FileList | File[] = []) => {
+    if (!this.context.hasPermission(PermissionLevel.FILE_CREATE)) return;
+
+    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT,
+      <ElementDialog onClose={this.searchFile}>
+        <FileUploadForm file_list={_.values(file_list)} file_tag_list={this.state.tag_selected_list}/>
+      </ElementDialog>,
+    );
+  };
+
+  private readonly openRenameDialog = () => {
+    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT,
+      <ElementDialog ref={this.state.ref_dialog}>
+        <FileRenameForm file_list={this.getSelectedFileEntityList()} onSubmit={this.eventContextMenuRenameSubmit}/>
+      </ElementDialog>,
+    );
+  };
+
+  private readonly openTagDialog = () => {
+    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT,
+      <ElementDialog ref={this.state.ref_dialog}>
+        <FileSetTagListForm file_tag_list={this.state.tag_selected_list} onSubmit={this.eventContextMenuSetTagListSubmit}/>
+      </ElementDialog>,
+    );
+  };
+
+  private readonly eventDialog = async () => {
+    this.closeDialog();
     await Promise.all(_.map(this.state.file_selected, async (value, index) => value ? await FileEntity.removeByID(this.state.file_list[index]) : false));
     this.searchFile();
   };
@@ -298,27 +343,15 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     this.searchFile({type_tickable_collection, type_selected_list});
   };
 
-  private readonly eventFileCreateClick = (file_list: FileList | File[] = []) => {
-    if (!this.context.hasPermission(PermissionLevel.FILE_CREATE)) return;
 
-    Dialog.show(
-      DialogListenerType.GLOBAL,
-      DialogPriority.NEXT,
-      (
-        <ElementDialog onClose={this.searchFile}>
-          <FileUploadForm file_list={_.values(file_list)} file_tag_list={this.state.tag_selected_list}/>
-        </ElementDialog>
-      ),
-    );
-  };
 
   private readonly eventElementBrowserContextMenu = (selected: boolean[]): {[key: string]: ContextMenuItem} => {
     const count = _.reduce(selected, (result, value) => value ? result + 1 : result, 0);
 
     if (count === 0) {
       return {
-        "upload":  {icon: IconType.UPLOAD, text: "Upload file", action: this.eventFileCreateClick},
-        "tags":    {icon: IconType.UI_SETTINGS, text: "Manage tags", action: this.eventContextMenuOpen},
+        "upload": {icon: IconType.UPLOAD, text: "Upload file", action: this.openUploadDialog},
+        // "tags":    {icon: IconType.UI_SETTINGS, text: "Manage tags", action: this.eventContextMenuOpen},
         "refresh": {icon: IconType.REFRESH, text: "Refresh", action: this.searchFile},
         "reset":   {icon: IconType.NOT_ALLOWED, text: "Reset filters", action: this.eventContextMenuReset},
       };
@@ -329,21 +362,21 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
         "open":      {text: "Open", action: this.eventContextMenuOpen},
         "open_tab":  {text: "Open in a new tab", action: this.eventContextMenuOpenTab},
         "copy_link": {icon: IconType.LINK, text: "Copy link", action: this.eventContextMenuCopyLink},
-        "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.eventContextMenuRename},
-        "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.eventContextMenuSetTagList},
+        "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.openRenameDialog},
+        "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.openTagDialog},
         "download":  {icon: IconType.DOWNLOAD, text: "Download", action: this.eventContextMenuDownload},
-        "share":     {icon: IconType.SHARE, text: "Share", action: () => {}},
-        "delete":    {icon: IconType.BIN, text: "Delete", action: () => {}},
+        // "share":     {icon: IconType.SHARE, text: "Share", action: () => {}},
+        "delete": {icon: IconType.BIN, text: "Delete", action: this.openDeleteDialog},
       };
     }
 
     return {
       "copy_link": {icon: IconType.LINK, text: "Copy links", action: this.eventContextMenuCopyLink},
-      "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.eventContextMenuRename},
-      "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.eventContextMenuSetTagList},
-      "share":     {icon: IconType.SHARE, text: "Share", action: () => {}},
-      "delete":    {icon: IconType.BIN, text: "Delete", action: () => {}},
-      "download":  {icon: IconType.DOWNLOAD, text: "Download", action: this.eventContextMenuDownload},
+      "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.openRenameDialog},
+      "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.openTagDialog},
+      // "share":     {icon: IconType.SHARE, text: "Share", action: () => {}},
+      "delete":   {icon: IconType.BIN, text: "Delete", action: this.openDeleteDialog},
+      "download": {icon: IconType.DOWNLOAD, text: "Download", action: this.eventContextMenuDownload},
     };
   };
 
@@ -356,40 +389,15 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     this.searchTag();
   };
 
-  private readonly eventContextMenuRename = () => {
-    const file_list = this.getSelectedFileEntityList();
-    Dialog.show(
-      DialogListenerType.GLOBAL,
-      DialogPriority.NEXT,
-      (
-        <ElementDialog ref={this.state.ref_dialog}>
-          <FileRenameForm file_list={file_list} onSubmit={this.eventContextMenuRenameSubmit}/>
-        </ElementDialog>
-      ),
-    );
-  };
-
-  private readonly eventContextMenuSetTagList = () => {
-    const file_tag_list = this.state.tag_selected_list;
-    Dialog.show(
-      DialogListenerType.GLOBAL,
-      DialogPriority.NEXT,
-      (
-        <ElementDialog ref={this.state.ref_dialog}>
-          <FileSetTagListForm file_tag_list={file_tag_list} onSubmit={this.eventContextMenuSetTagListSubmit}/>
-        </ElementDialog>
-      ),
-    );
-  };
 
   private readonly eventContextMenuRenameSubmit = async (file_list: FileEntity[]) => {
-    this.state.ref_dialog.current?.close();
+    this.closeDialog();
     await Promise.all(_.map(file_list, async (value, i) => value ? await FileEntity.updateByID(file_list[i], file_list[i]) : false));
     this.searchFile();
   };
 
   private readonly eventContextMenuSetTagListSubmit = async (file_tag_list: FileTagEntity[]) => {
-    this.state.ref_dialog.current?.close();
+    this.closeDialog();
     await Promise.all(_.map(this.state.file_selected, async (value, i) => value ? await FileEntity.updateByID(this.state.file_list[i], {...this.state.file_list[i], file_tag_list}) : false));
     this.searchFile();
     this.searchTag();
