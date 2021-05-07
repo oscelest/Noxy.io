@@ -1,7 +1,7 @@
 import _ from "lodash";
 import React from "react";
 import EventKey from "../../enums/EventKey";
-import Util from "../../Util";
+import Helper from "../../Helper";
 import Style from "./Tickable.module.scss";
 
 export default class Tickable<V, C extends TickableCollection<V>> extends React.Component<TickableProps<V, C>, State> {
@@ -65,7 +65,7 @@ export default class Tickable<V, C extends TickableCollection<V>> extends React.
   private readonly eventTickableClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    this.change(Util.getChildKey(event.currentTarget, this.props.children));
+    this.change(Helper.getChildKey(event.currentTarget, this.props.children));
   };
 
   private readonly eventTickableKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -74,7 +74,7 @@ export default class Tickable<V, C extends TickableCollection<V>> extends React.
       case EventKey.SPACE:
         event.preventDefault();
         event.stopPropagation();
-        return this.change(Util.getChildKey(event.currentTarget, this.props.children));
+        return this.change(Helper.getChildKey(event.currentTarget, this.props.children));
     }
   };
 

@@ -4,7 +4,7 @@ import ButtonType from "../../enums/ButtonType";
 import EventKey from "../../enums/EventKey";
 import IconType from "../../enums/IconType";
 import Size from "../../enums/Size";
-import Util from "../../Util";
+import Helper from "../../Helper";
 import Icon from "../Base/Icon";
 import Loader from "../UI/Loader";
 import Style from "./Button.module.scss";
@@ -77,7 +77,7 @@ export default class Button<V> extends React.Component<EventProps | ValueProps<V
   };
 
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    const element = Util.getActiveElement() as HTMLDivElement;
+    const element = Helper.getActiveElement() as HTMLDivElement;
 
     if (event.target === element) {
 

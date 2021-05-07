@@ -6,7 +6,7 @@ import TitleText from "../../components/Text/TitleText";
 import FileTagEntity from "../../entities/FileTagEntity";
 import ButtonType from "../../enums/ButtonType";
 import Global from "../../Global";
-import Util from "../../Util";
+import Helper from "../../Helper";
 import Style from "./FileSetTagListForm.module.scss";
 
 export default class FileSetTagListForm extends React.Component<FileSetTagListFormProps, State> {
@@ -23,7 +23,7 @@ export default class FileSetTagListForm extends React.Component<FileSetTagListFo
   }
 
   public readonly submit = async () => {
-    Util.schedule(() => this.props.onSubmit(this.state.list));
+    Helper.schedule(() => this.props.onSubmit(this.state.list));
   };
 
   public render() {

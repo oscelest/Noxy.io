@@ -23,15 +23,19 @@ export default class Input<T extends string | number = string> extends React.Com
     };
   }
 
+  public get element() {
+    return this.state.ref_input.current;
+  }
+
   public getSelection = () => {
     if (!this.state.ref_input.current) throw new FatalException("Could not get selection", "Input field has not yet been initialized.");
     const {selectionStart, selectionEnd, selectionDirection} = this.state.ref_input.current;
     return {start: selectionStart ?? 0, end: selectionEnd ?? 0, direction: selectionDirection ?? "none"};
   };
 
-  public setSelection = (start: number, end: number, direction?: "forward" | "backward" | "none") => {
+  public setSelection = (start?: number, end?: number, direction: "forward" | "backward" | "none" = "forward") => {
     if (!this.state.ref_input.current) throw new FatalException("Could not get selection", "Input field has not yet been initialized.");
-    this.state.ref_input.current.setSelectionRange(start, end, direction);
+    this.state.ref_input.current.setSelectionRange(start ?? 0, end ?? start ?? 0, direction);
   };
 
   public moveCursor = (direction: Direction.UP | Direction.DOWN) => {

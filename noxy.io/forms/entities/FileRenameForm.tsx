@@ -7,8 +7,9 @@ import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
 import FileEntity from "../../entities/FileEntity";
 import ButtonType from "../../enums/ButtonType";
+import FatalException from "../../exceptions/FatalException";
 import Global from "../../Global";
-import Util from "../../Util";
+import Helper from "../../Helper";
 import Style from "./FileRenameForm.module.scss";
 
 export default class FileRenameForm extends React.Component<FileRenameFormProps, State> {
@@ -33,17 +34,10 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
           tags,
           (result, value) => {
             switch (value) {
-              case "i":
-              case "count":
               case "number":
                 return result.replace(`{${value}}`, (index + 1).toString());
-              case "e":
-              case "ext":
               case "extension":
                 return result.replace(`{${value}}`, file.file_extension.name);
-              case "d":
-              case "date":
-              case "upload":
               case "upload_date":
                 return result.replace(`{${value}}`, Moment(file.time_created).format("DD-MM-YYYY"));
               default:
@@ -54,7 +48,15 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
       });
     });
 
-    Util.schedule(this.props.onSubmit, files);
+    Helper.schedule(this.props.onSubmit, files);
+  };
+
+  private readonly updateSelection = (text: string) => {
+    if (!this.state.ref.current) throw new FatalException("Fatal Exception", "Input field has not yet been instantiated.");
+    const {start = 0, end = 0} = this.state.ref.current.getSelection() ?? {};
+    this.state.ref.current.element?.focus();
+    Helper.schedule(this.state.ref.current.setSelection, start + text.length + 2);
+    return `${this.state.name.substring(0, start)}{${text}}${this.state.name.substring(end)}`;
   };
 
   public render() {
@@ -68,25 +70,14 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
         {this.renderError()}
         <Input ref={this.state.ref} label={"Name"} value={this.state.name} onChange={this.eventInputChange}/>
         <div className={Style.Help}>
-          <div className={Style.Line}>
-            <Button onClick={this.eventExtensionClick}>Extension</Button>
-            <span>Placeholder will be replaced by the file's extension.</span>
-          </div>
-          <div className={Style.Line}>
-            <Button onClick={this.eventExtensionClick}>Number</Button>
-            <span>Placeholder will be replaced by the file's extension.</span>
-          </div>
-          <div className={Style.Line}>
-            <Button onClick={this.eventExtensionClick}>Upload date</Button>
-            <span>Placeholder will be replaced by the file's extension.</span>
-          </div>
-
+          <Button className={Style.Button} onClick={this.eventExtensionClick}>Extension</Button>
+          <Button className={Style.Button} onClick={this.eventNumberClick}>Number</Button>
+          <Button className={Style.Button} onClick={this.eventUploadDateClick}>Upload date</Button>
         </div>
         <Button className={Style.Submit} type={ButtonType.SUCCESS} onClick={this.submit}>Rename</Button>
       </div>
     );
   }
-
 
   private readonly renderError = () => {
     if (!this.state.error) return;
@@ -96,16 +87,10 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
     );
   };
 
-  private readonly eventInputChange = (name: string) => {
-    this.setState({name});
-  };
-
-  private readonly eventExtensionClick = () => {
-    console.log(this.state.ref.current?.getSelection())
-    const {start = 0, end = 0} = this.state.ref.current?.getSelection() ?? {};
-    this.setState({name: `${this.state.name.substring(0, start)}{extension}${this.state.name.substring(end)}`});
-  };
-
+  private readonly eventInputChange = (name: string) => this.setState({name});
+  private readonly eventExtensionClick = () => this.setState({name: this.updateSelection("extension")});
+  private readonly eventNumberClick = () => this.setState({name: this.updateSelection("number")});
+  private readonly eventUploadDateClick = () => this.setState({name: this.updateSelection("upload_date")});
 }
 
 export interface FileRenameFormProps {

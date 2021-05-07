@@ -2,7 +2,7 @@ import _ from "lodash";
 import React from "react";
 import Order from "../../../common/enums/Order";
 import IconType from "../../enums/IconType";
-import Util from "../../Util";
+import Helper from "../../Helper";
 import Icon from "../Base/Icon";
 import Button from "./Button";
 import Style from "./Sortable.module.scss";
@@ -64,7 +64,7 @@ export default class Sortable<V extends {} = {}> extends React.Component<Sortabl
 
     return (
       <div className={Style.Value}>
-        <span className={Style.Name} style={{width: Util.getWidestText(_.map(this.getData(), item => item.text ?? ""))}}>{active.text}</span>
+        <span className={Style.Name} style={{width: Helper.getWidestText(_.map(this.getData(), item => item.text ?? ""))}}>{active.text}</span>
         {this.renderSortIcon()}
       </div>
     );

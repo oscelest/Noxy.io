@@ -13,7 +13,7 @@ import FileRenameForm from "../../forms/entities/FileRenameForm";
 import FileSetTagListForm from "../../forms/entities/FileSetTagListForm";
 import FileUploadForm from "../../forms/entities/FileUploadForm";
 import Global from "../../Global";
-import Util from "../../Util";
+import Helper from "../../Helper";
 import Icon from "../Base/Icon";
 import ElementDialog from "../Dialog/ElementDialog";
 import Button from "../Form/Button";
@@ -91,7 +91,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
       try {
         const count = await FileEntity.count(params);
-        next_state.pagination_total = Util.getPageTotal(count, this.state.pagination_size);
+        next_state.pagination_total = Helper.getPageTotal(count, this.state.pagination_size);
         next_state.pagination_current = _.clamp(this.state.pagination_current, 1, next_state.pagination_total);
 
         const skip = (next_state.pagination_current - 1) * this.state.pagination_size;
@@ -323,7 +323,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   private readonly eventTagCreateClick = async (name: string) => this.searchFile({tag_selected_list: this.sortTagList([...this.state.tag_selected_list, await FileTagEntity.create({name})])});
 
   private readonly eventTagAdd = (event: React.MouseEvent<HTMLDivElement>) => {
-    const tag = Util.getReactChildObject(event.currentTarget, this.state.tag_available_list);
+    const tag = Helper.getReactChildObject(event.currentTarget, this.state.tag_available_list);
     const list = [...this.state.tag_selected_list];
     if (tag) list.push(tag);
     const tag_selected_list = this.sortTagList(list);
@@ -332,7 +332,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private readonly eventTagRemove = (event: React.MouseEvent<HTMLDivElement>) => {
-    const tag = Util.getReactChildObject(event.currentTarget, this.state.tag_selected_list);
+    const tag = Helper.getReactChildObject(event.currentTarget, this.state.tag_selected_list);
     const tag_selected_list = _.filter(this.state.tag_selected_list, v => v.getPrimaryKey() !== tag?.getPrimaryKey());
     this.searchTag({tag_selected_list});
     this.searchFile({tag_selected_list});
@@ -351,7 +351,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     if (count === 0) {
       return {
         "upload": {icon: IconType.UPLOAD, text: "Upload file", action: this.openUploadDialog},
-        // "tags":    {icon: IconType.UI_SETTINGS, text: "Manage tags", action: this.eventContextMenuOpen},
+        // "tags":    {icon: IconType.TAGS, text: "Manage tags", action: this.eventContextMenuOpen},
         "refresh": {icon: IconType.REFRESH, text: "Refresh", action: this.searchFile},
         "reset":   {icon: IconType.NOT_ALLOWED, text: "Reset filters", action: this.eventContextMenuReset},
       };
@@ -382,7 +382,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   private readonly eventContextMenuOpen = () => Router.push(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`);
   private readonly eventContextMenuOpenTab = () => window.open(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`, "_blank");
-  private readonly eventContextMenuCopyLink = () => Util.setClipboard(this.state.file_selected.reduce((r, v, i) => v ? [...r, this.state.file_list[i].getPath()] : r, [] as string[]).join("\n"));
+  private readonly eventContextMenuCopyLink = () => Helper.setClipboard(this.state.file_selected.reduce((r, v, i) => v ? [...r, this.state.file_list[i].getPath()] : r, [] as string[]).join("\n"));
 
   private readonly eventContextMenuReset = () => {
     this.searchFile({});

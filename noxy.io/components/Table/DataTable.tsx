@@ -2,7 +2,7 @@ import _ from "lodash";
 import React from "react";
 import IconType from "../../enums/IconType";
 import InputType from "../../enums/InputType";
-import Util from "../../Util";
+import Helper from "../../Helper";
 import Dropdown from "../Base/Dropdown";
 import Table from "../Base/Table";
 import Button from "../Form/Button";
@@ -91,7 +91,7 @@ export default class DataTable<O extends {}> extends React.Component<DataTablePr
           {this.props.children}
         </Table>
         <div className={Style.Footer}>
-          <Pagination className={Style.Pagination} current={this.props.page} total={Util.getPageTotal(this.props.count, this.props.size)} onChange={this.eventPaginationChange}/>
+          <Pagination className={Style.Pagination} current={this.props.page} total={Helper.getPageTotal(this.props.count, this.props.size)} onChange={this.eventPaginationChange}/>
         </div>
       </div>
     );

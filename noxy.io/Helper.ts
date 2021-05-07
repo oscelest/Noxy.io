@@ -3,7 +3,7 @@ import React from "react";
 import Order from "../common/enums/Order";
 import FatalException from "./exceptions/FatalException";
 
-namespace Util {
+namespace Helper {
 
   export const Canvas = process.browser ? document.createElement("canvas") : null;
 
@@ -96,4 +96,4 @@ namespace Util {
 
 }
 
-export default Util;
+export default Helper;

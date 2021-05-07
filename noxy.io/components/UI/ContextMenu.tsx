@@ -4,7 +4,7 @@ import Point from "../../classes/Point";
 import Rect from "../../classes/Rect";
 import IconType from "../../enums/IconType";
 import FatalException from "../../exceptions/FatalException";
-import Util from "../../Util";
+import Helper from "../../Helper";
 import Icon from "../Base/Icon";
 import Style from "./ContextMenu.module.scss";
 
@@ -130,7 +130,7 @@ export default class ContextMenu extends React.Component<ContextMenuProps, State
   };
 
   private readonly eventMouseEnter = (event: React.MouseEvent<HTMLDivElement>) => {
-    this.setState({key: Util.getChildKey(event.currentTarget, this.props.children) as string});
+    this.setState({key: Helper.getChildKey(event.currentTarget, this.props.children) as string});
   };
 
   private readonly eventMouseLeave = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -149,7 +149,7 @@ export default class ContextMenu extends React.Component<ContextMenuProps, State
 
   private readonly eventClick = (event: React.MouseEvent<HTMLDivElement>) => {
     this.props.onCommit?.()
-    Util.getReactChildObject(event.currentTarget, this.props.children as ContextMenuCollection)?.action?.();
+    Helper.getReactChildObject(event.currentTarget, this.props.children as ContextMenuCollection)?.action?.();
   }
 
   private readonly parseChildren = (collection: ContextMenuCollection, key: string): any => {

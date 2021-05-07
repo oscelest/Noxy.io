@@ -5,7 +5,7 @@ import Rect from "../../classes/Rect";
 import Direction from "../../enums/Direction";
 import EventKey from "../../enums/EventKey";
 import FatalException from "../../exceptions/FatalException";
-import Util from "../../Util";
+import Helper from "../../Helper";
 import ContextMenu, {ContextMenuCollection} from "./ContextMenu";
 import Style from "./ElementBrowser.module.scss";
 
@@ -316,7 +316,7 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
   }
 
   private readonly renderItem = (child: React.ReactElement, index: number = 0) => {
-    const active = this.state.ref_container.current === Util.getActiveElement();
+    const active = this.state.ref_container.current === Helper.getActiveElement();
     const selected = (!this.state.selection_next && this.props.selection[index] || this.state.selection_next?.[index]) ? "" : undefined;
     const focused = active && index === this.state.focus ? "" : undefined;
 
