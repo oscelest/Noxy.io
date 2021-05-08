@@ -237,7 +237,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     return (
       <div key={index} className={Style.File}>
         <Redirect className={Style.Redirect} href={`/file/${file.alias}`} isDoubleClick={true}>
-          <Preview className={Style.FilePreview} path={file.getDataPath()} type={file.file_extension.file_type.name}/>
+          <Preview className={Style.FilePreview} file={file}/>
           <EllipsisText className={Style.FileName}>{file.name}</EllipsisText>
         </Redirect>
       </div>

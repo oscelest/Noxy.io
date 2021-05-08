@@ -9,6 +9,13 @@ enum IconType {
   NEXT = "\ueaa0",
   CERTIFICATE = "\uead4",
 
+  FILE_AUDIO = "\ueb09",
+  FILE_DOCUMENT = "\ueb0e",
+  FILE_EXE = "\ueb11",
+  FILE_IMAGE = "\ueb16",
+  FILE_TEXT = "\ueb2a",
+  FILE_VIDEO = "\ueb2c",
+
   UI_ADD = "\uec3e",
   UI_CLOSE = "\uec4f",
   UI_EDIT = "\uec55",

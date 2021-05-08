@@ -8,7 +8,7 @@ export default class Placeholder extends React.Component<PlaceholderProps, State
   }
   
   public render() {
-    if (!this.props.show) return this.props.children;
+    if (this.props.show !== true && this.props.children) return this.props.children;
     
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);

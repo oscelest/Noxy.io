@@ -7,7 +7,23 @@ namespace Helper {
 
   export const Canvas = process.browser ? document.createElement("canvas") : null;
 
-  export function schedule (fn: Function, ...args: any[]) {
+  export function getDuration(seconds: number) {
+    const s = Math.floor(seconds % 3600 % 60);
+    const m = Math.floor(seconds % 3600 / 60);
+
+    if (seconds > 3600) {
+      const h = Math.floor(seconds / 3600);
+      return `${h}:${m < 10 ? `0${m}` : m}:${s < 10 ? `0${s}` : s}`
+    }
+    if (seconds > 60) {
+      return `${m}:${s < 10 ? `0${s}` : s}`
+    }
+
+    return `0:${s < 10 ? `0${s}` : s}`;
+
+  }
+
+  export function schedule(fn: Function, ...args: any[]) {
     return setTimeout(fn, 0, ...args);
   }
 
@@ -75,7 +91,7 @@ namespace Helper {
       else {
         throw new FatalException(
           "Could not copy to clipboard",
-          "Your browser does not permit this website to copy to the clipboard. Please enable this functionality if you wish to copy this text to the clipboard."
+          "Your browser does not permit this website to copy to the clipboard. Please enable this functionality if you wish to copy this text to the clipboard.",
         );
       }
     }
@@ -89,7 +105,6 @@ namespace Helper {
       textarea.select();
       textarea.setSelectionRange(0, textarea.value.length);
       document.execCommand("copy");
-      console.log(textarea.value);
       textarea.remove();
     }
   }

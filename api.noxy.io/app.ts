@@ -100,7 +100,6 @@ import ServerException from "../common/exceptions/ServerException";
     Logger.write(Logger.Level.INFO, "Server started!");
   }
   catch ({message, stack}) {
-    console.log(message, stack);
     Logger.write(Logger.Level.ERROR, {message, stack});
     process.exit(0);
   }

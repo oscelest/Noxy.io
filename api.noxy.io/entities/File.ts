@@ -195,7 +195,7 @@ export default class File extends Entity<File>(TypeORM) {
     try {
       const file = await this.createSelect().where(where).getOneOrFail();
       response.setHeader("Content-Type", file.file_extension.mime_type);
-      response.setHeader("Content-Disposition", `attachment; filename="filename.jpg"`);
+      // response.setHeader("Content-Disposition", `attachment; filename="filename.jpg"`);
       response.sendFile(Path.resolve(process.env.FILE_PATH!, file.alias));
     }
     catch (error) {

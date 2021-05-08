@@ -97,7 +97,6 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
 
 
   private readonly renderExample = (file: FileEntity, index: number = 0) => {
-    console.log("rendering", file);
     return (
       <div className={Style.Example} key={index}>
         <Preview className={Style.Preview} file={file}/>

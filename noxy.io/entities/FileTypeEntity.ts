@@ -1,5 +1,6 @@
 import Axios from "axios";
 import _ from "lodash";
+import FileTypeName from "../../common/enums/FileTypeName";
 import Order from "../../common/enums/Order";
 import Entity from "../classes/Entity";
 import RequestData from "../classes/RequestData";
@@ -7,7 +8,7 @@ import RequestData from "../classes/RequestData";
 export default class FileTypeEntity extends Entity {
 
   public id: string;
-  public name: string;
+  public name: FileTypeName;
   public time_created: Date;
 
   public static URL = `${Entity.domainAPI}/file-type`;
@@ -15,7 +16,7 @@ export default class FileTypeEntity extends Entity {
   constructor(entity?: Partial<Properties<FileTypeEntity>>) {
     super();
     this.id = entity?.id ?? Entity.defaultID;
-    this.name = entity?.name ?? "";
+    this.name = entity?.name ?? FileTypeName.APPLICATION;
     this.time_created = entity?.time_created ?? new Date();
   }
 

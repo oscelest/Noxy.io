@@ -49,6 +49,10 @@ export default class FileEntity extends Entity {
     return `${location.host}/file/${this.alias}`;
   }
 
+  public getFileType() {
+    return this.file_extension.file_type.name;
+  }
+
   public static async count(search: FileEntitySearchParameters = {}) {
     const result = await Axios.get<APIRequest<number>>(`${this.URL}/count?${new RequestData(search)}`);
     return result.data.content;
@@ -63,6 +67,12 @@ export default class FileEntity extends Entity {
     id = typeof id === "string" ? id : id.getPrimaryKey();
     const result = await Axios.get<APIRequest<FileEntity>>(`${this.URL}/${id}`);
     return new this(result.data.content);
+  }
+
+  public static async getDataByID(id: string | FileEntity) {
+    id = typeof id === "string" ? id : id.getPrimaryKey();
+    const result = await Axios.get<string>(`${this.URL}/data/${id}`);
+    return result.data;
   }
 
   public static async create(file: File, parameters: FileEntityCreateParameters, onUploadProgress?: (progress: ProgressEvent) => void, cancel?: (cancel: Canceler) => void) {

@@ -51,7 +51,7 @@ export default class IndexPage extends React.Component<PageProps, State> {
           <p>Button design</p>
           <Button className={Style.Button}>Button</Button>
           <Button className={Style.Button} icon={IconType.FILTER}/>
-          <Button className={Style.Button} icon={IconType.ADD}>Button</Button>
+          <Button className={Style.Button} icon={IconType.UI_ADD}>Button</Button>
           <Button className={Style.Button} disabled={true}>Button</Button>
         </div>
         <div className={Style.Segment}>

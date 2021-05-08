@@ -46,10 +46,6 @@ export default class FilePage extends React.Component<FilePageProps, State> {
     };
   }
 
-  public async componentDidMount() {
-    console.log(this.props);
-  }
-
   public render() {
     const {ref_file_browser} = this.state;
 
