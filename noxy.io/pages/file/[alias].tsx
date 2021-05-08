@@ -52,7 +52,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
             <PageHeader title={this.state.entity.name}/>
             <div className={Style.Content}>
               <div className={Style.File}>
-                <Preview className={Style.Preview} path={this.state.entity.getAPIPath()} type={this.state.entity.file_extension.file_type.name}/>
+                <Preview className={Style.Preview} path={this.state.entity.getDataPath()} type={this.state.entity.file_extension.file_type.name}/>
               </div>
               <div className={Style.Sidebar}>
                 <div className={Style.Info}>
@@ -75,7 +75,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     if (this.state.entity.file_extension.file_type.name !== FileTypeName.IMAGE) return null;
 
     const image = document.createElement("img");
-    image.src = this.state.entity.getPath();
+    image.src = this.state.entity.getFilePath();
     console.log(image);
 
 

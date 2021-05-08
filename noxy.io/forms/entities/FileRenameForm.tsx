@@ -5,6 +5,7 @@ import Button from "../../components/Form/Button";
 import Input from "../../components/Form/Input";
 import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
+import Preview from "../../components/UI/Preview";
 import FileEntity from "../../entities/FileEntity";
 import ButtonType from "../../enums/ButtonType";
 import FatalException from "../../exceptions/FatalException";
@@ -27,8 +28,12 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
   }
 
   public readonly submit = async () => {
+    Helper.schedule(this.props.onSubmit, this.parseNames());
+  };
+
+  private readonly parseNames = () => {
     const tags = this.state.name.match(/(?<={)([a-z_]+)(?=})/gi);
-    const files = _.map(this.props.file_list, (file, index) => {
+    return _.map(this.props.file_list, (file, index) => {
       return new FileEntity({
         ...file, name: _.reduce(
           tags,
@@ -44,11 +49,9 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
                 return result;
             }
           },
-          this.state.name),
+          this.state.name || file.name),
       });
     });
-
-    Helper.schedule(this.props.onSubmit, files);
   };
 
   private readonly updateSelection = (text: string) => {
@@ -74,16 +77,35 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
           <Button className={Style.Button} onClick={this.eventNumberClick}>Number</Button>
           <Button className={Style.Button} onClick={this.eventUploadDateClick}>Upload date</Button>
         </div>
+        <TitleText>Rename result</TitleText>
+        <div className={Style.ExampleList}>
+          {_.map(this.parseNames(), this.renderExample)}
+        </div>
         <Button className={Style.Submit} type={ButtonType.SUCCESS} onClick={this.submit}>Rename</Button>
       </div>
     );
   }
+
 
   private readonly renderError = () => {
     if (!this.state.error) return;
 
     return (
       <ErrorText className={Style.Error}>{this.state.error?.message}</ErrorText>
+    );
+  };
+
+
+  private readonly renderExample = (file: FileEntity, index: number = 0) => {
+    console.log("rendering", file);
+    return (
+      <div className={Style.Example} key={index}>
+        <Preview className={Style.Preview} file={file}/>
+        <div className={Style.NameList}>
+          <span className={Style.OldName}>{this.props.file_list[index].name}</span>
+          <span className={Style.NewName}>{file.name}</span>
+        </div>
+      </div>
     );
   };
 

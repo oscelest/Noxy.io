@@ -1,5 +1,6 @@
 import React from "react";
 import Permission from "../../../common/classes/Permission";
+import PermissionLevel from "../../../common/enums/PermissionLevel";
 import PermissionExplorer from "../../components/Application/PermissionExplorer";
 import Button from "../../components/Form/Button";
 import APIKeyEntity from "../../entities/APIKeyEntity";
@@ -51,11 +52,19 @@ export default class APIKeyUpdateForm extends React.Component<APIKeyUpdateFormPr
       <div className={classes.join(" ")}>
 
         <PermissionExplorer permission={this.state.entity.permission} onChange={this.eventPermissionChange}/>
+        {this.renderUpdateButton()}
 
-        <Button className={Style.Submit} onClick={this.submit}>Update</Button>
 
       </div>
     );
+  }
+
+  private readonly renderUpdateButton = () => {
+    if (!this.state.entity.hasPermission(PermissionLevel.API_KEY_UPDATE)) return null;
+
+    return (
+      <Button className={Style.Submit} onClick={this.submit}>Update</Button>
+    )
   }
 
   private readonly eventPermissionChange = (permission: Permission) => {

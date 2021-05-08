@@ -4,8 +4,8 @@
   grid-row-gap: 10px;
 
   .Help {
-    flex:            1 1 auto;
-    flex-flow:       row;
+    flex:            0 0 auto;
+    flex-flow:       row wrap;
     grid-row-gap:    10px;
     grid-column-gap: 10px;
 
@@ -13,11 +13,42 @@
       width: calc((100% - 20px) / 3);
       flex:  0 0 auto;
     }
+  }
 
-    .Line {
-      align-items:     center;
-      justify-content: center;
-      grid-column-gap: 5px;
+  .ExampleList {
+    flex:           1 1 auto;
+    flex-flow:      column;
+    grid-row-gap:   8px;
+    overflow-y:     auto;
+    max-height:     320px;
+    padding-bottom: 2px;
+
+    .Example {
+      grid-column-gap: 10px;
+      grid-row-gap:    4px;
+
+      .Preview {
+        width:  32px;
+        height: 32px;
+      }
+
+      .NameList {
+        flex-flow:    column;
+        grid-row-gap: 5px;
+
+        .OldName {
+          text-decoration: line-through;
+        }
+
+        .NewName {
+          grid-column-gap: 5px;
+
+          &:before {
+            content:   "↵";
+            transform: scaleX(-1);
+          }
+        }
+      }
     }
   }
 

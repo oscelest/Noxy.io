@@ -68,6 +68,10 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
     return query;
   }
 
+  /**
+   * Endpoint methods
+   */
+
   @FileTag.get("/")
   @FileTag.bindParameter<Request.getFindMany>("name", ValidatorType.STRING, {max_length: 64})
   @FileTag.bindParameter<Request.getFindMany>("exclude", ValidatorType.UUID, {flag_array: true})
@@ -126,10 +130,22 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
     }
   }
 
-  /**
-   * Endpoint methods
-   */
+  @FileTag.delete("/:id")
+  private static async deleteOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.postCreateOne, Request.postCreateOne>) {
+    const query = this.createSelect();
+    this.addValueClause(query, "id", id);
 
+    try {
+      const entity = await query.getOneOrFail();
+      if (entity.user_created.id !== user?.id) return respond?.(new ServerException(403));
+
+      respond?.(await this.performDelete(entity.id));
+    }
+    catch (error) {
+      if (error instanceof TypeORM.EntityNotFoundError) return respond?.(new ServerException(404));
+      respond?.(new ServerException(500, error));
+    }
+  }
 }
 
 export type FileTagJSON = {
@@ -145,10 +161,12 @@ namespace Request {
   export type getFindMany = getCount & Pagination
   export type getCount = {name?: string, user_created?: string, exclude?: string[]}
   export type postCreateOne = {name: string, user_created: string}
+  export type deleteDeleteOne = {}
 }
 
 namespace Response {
   export type getFindMany = FileTag[] | ServerException
   export type getCount = number
   export type postCreateOne = FileTag | ServerException
+  export type deleteDeleteOne = FileTag | ServerException
 }

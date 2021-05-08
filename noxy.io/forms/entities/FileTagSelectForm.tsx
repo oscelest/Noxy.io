@@ -9,7 +9,7 @@ import Global from "../../Global";
 import Helper from "../../Helper";
 import Style from "./FileSetTagListForm.module.scss";
 
-export default class FileSetTagListForm extends React.Component<FileSetTagListFormProps, State> {
+export default class FileTagSelectForm extends React.Component<FileSetTagListFormProps, State> {
 
   public static contextType = Global?.Context ?? React.createContext({});
   public context: Global.Context;
@@ -35,9 +35,11 @@ export default class FileSetTagListForm extends React.Component<FileSetTagListFo
       <div className={classes.join(" ")}>
         <TitleText>Select File Tag(s)</TitleText>
         {this.renderError()}
-        <EntityMultiSelect className={Style.Select} label={"Search for tags"} method={this.eventFileTagSearch} property={"name"} onChange={this.eventFileTagChange}>
-          {this.state.list}
-        </EntityMultiSelect>
+        <div>
+          <EntityMultiSelect className={Style.Select} label={"Search for tags"} method={this.eventFileTagSearch} property={"name"} onCreate={this.eventFileTagCreate} onChange={this.eventFileTagChange}>
+            {this.state.list}
+          </EntityMultiSelect>
+        </div>
         <Button type={ButtonType.SUCCESS} onClick={this.submit}>Choose tag(s)</Button>
       </div>
     );
@@ -49,6 +51,11 @@ export default class FileSetTagListForm extends React.Component<FileSetTagListFo
     return (
       <ErrorText className={Style.Error}>{this.state.error?.message}</ErrorText>
     );
+  };
+
+  private readonly eventFileTagCreate = async (name: string) => {
+    if (!name) throw new Error("");
+    return await FileTagEntity.createOne({name});
   };
 
   private readonly eventFileTagSearch = async (name: string) => {

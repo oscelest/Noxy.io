@@ -409,7 +409,7 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
         this.moveCursor(Direction.RIGHT, event.ctrlKey, event.shiftKey);
         break;
       case EventKey.DELETE:
-        this.props.onDelete?.();
+        this.props.onDelete?.(this.props.selection);
         break;
       default:
         return;
@@ -433,7 +433,7 @@ export interface ElementBrowserProps {
   multiSelect?: boolean
 
   onSelect(selected: boolean[]): void
-  onDelete?(): void
+  onDelete?(selected: boolean[]): void
   onContextMenu?(selected: boolean[]): ContextMenuCollection
 }
 

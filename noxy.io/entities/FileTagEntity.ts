@@ -31,6 +31,15 @@ export default class FileTagEntity extends Entity {
     return this.id;
   }
 
+  public static async count(search: TagEntitySearchParameter = {}) {
+    try {
+      return await Axios.get<APIRequest<number>>(`${this.URL}/count?${new RequestData(search)}`);
+    }
+    catch (error) {
+      throw error;
+    }
+  }
+
   public static async findMany(search: TagEntitySearchParameter = {}, pagination: RequestPagination<FileTagEntity> = {skip: 0, limit: 10, order: {name: Order.ASC}}) {
     try {
       const result = await Axios.get<APIRequest<FileTagEntity[]>>(`${this.URL}?${new RequestData(search).paginate(pagination)}`);
@@ -41,16 +50,7 @@ export default class FileTagEntity extends Entity {
     }
   }
 
-  public static async count(search: TagEntitySearchParameter = {}) {
-    try {
-      return await Axios.get<APIRequest<number>>(`${this.URL}/count?${new RequestData(search)}`);
-    }
-    catch (error) {
-      throw error;
-    }
-  }
-
-  public static async create(parameters: FileTagEntityCreateParameters) {
+  public static async createOne(parameters: FileTagEntityCreateParameters) {
     try {
       const result = await Axios.post<APIRequest<FileTagEntity>>(this.URL, new RequestData(parameters).toObject());
       return new this(result.data.content);
@@ -60,7 +60,7 @@ export default class FileTagEntity extends Entity {
     }
   }
 
-  public static async delete(id: string) {
+  public static async deleteByID(id: string) {
     try {
       const result = await Axios.delete<APIRequest<FileTagEntity>>(`${this.URL}/${id}`);
       return new this(result.data.content);

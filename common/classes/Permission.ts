@@ -53,13 +53,15 @@ export default class Permission {
   /* ----- FILE TAG ----- */
 
   public [PermissionLevel.FILE_TAG_CREATE]: boolean = false;
+  public [PermissionLevel.FILE_TAG_DELETE]: boolean = false;
 
   public get [PermissionLevel.FILE_TAG]() {
-    return this[PermissionLevel.FILE_TAG_CREATE];
+    return this[PermissionLevel.FILE_TAG_CREATE] && this[PermissionLevel.FILE_TAG_DELETE];
   }
 
   public set [PermissionLevel.FILE_TAG](value: boolean) {
     this[PermissionLevel.FILE_TAG_CREATE] = value;
+    this[PermissionLevel.FILE_TAG_DELETE] = value;
   }
 
   /* ----- USER ----- */
@@ -102,6 +104,8 @@ export default class Permission {
   public toJSON(): PermissionLevel[] {
     if (this[PermissionLevel.ADMIN]) return [PermissionLevel.ADMIN];
 
+    /* ----- API KEY ----- */
+
     const permission_list = [];
     if (this[PermissionLevel.API_KEY]) {
       permission_list.push(PermissionLevel.API_KEY);
@@ -113,6 +117,8 @@ export default class Permission {
       if (this[PermissionLevel.API_KEY_DELETE]) permission_list.push(PermissionLevel.API_KEY_DELETE);
     }
 
+    /* ----- FILE ----- */
+
     if (this[PermissionLevel.FILE]) {
       permission_list.push(PermissionLevel.FILE);
     }
@@ -122,12 +128,17 @@ export default class Permission {
       if (this[PermissionLevel.FILE_DELETE]) permission_list.push(PermissionLevel.FILE_DELETE);
     }
 
+    /* ----- FILE TAG ----- */
+
     if (this[PermissionLevel.FILE_TAG]) {
       permission_list.push(PermissionLevel.FILE_TAG);
     }
     else {
       if (this[PermissionLevel.FILE_TAG_CREATE]) permission_list.push(PermissionLevel.FILE_TAG_CREATE);
+      if (this[PermissionLevel.FILE_TAG_DELETE]) permission_list.push(PermissionLevel.FILE_TAG_DELETE);
     }
+
+    /* ----- USER ----- */
 
     if (this[PermissionLevel.USER]) {
       permission_list.push(PermissionLevel.USER);

@@ -31,8 +31,12 @@ namespace Global {
       }
     };
 
-    public hasPermission = (permission: PermissionLevel) => {
-      return this.state.user?.hasPermission(permission) ?? false
+    public hasAnyPermission = (...permission_list: PermissionLevel[]) => {
+      return this.state.user?.hasAnyPermission(...permission_list) ?? false
+    }
+
+    public hasPermission = (...permission_list: PermissionLevel[]) => {
+      return this.state.user?.hasPermission(...permission_list) ?? false
     }
 
     public performSignUp = async (email: string, username: string, password: string) => {

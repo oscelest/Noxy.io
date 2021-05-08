@@ -189,20 +189,48 @@
           .Text {
             text-decoration: underline;
           }
+
+          .DeleteIcon {
+            visibility: visible;
+          }
         }
 
-        .Icon {
+        .TagContainer {
+          flex: 1 1 auto;
+          grid-column-gap: 5px;
+
+          &:hover {
+            .Text {
+              text-decoration: underline;
+            }
+
+            .DeleteIcon {
+              visibility: visible;
+            }
+          }
+
+          .ManageIcon {
+            flex:            0 0 auto;
+            width:           18px;
+            height:          18px;
+            align-items:     center;
+            justify-content: center;
+          }
+
+          .Text {
+            flex:        1 1 auto;
+            height:      18px;
+            align-items: center;
+          }
+        }
+
+        .DeleteIcon {
           flex:            0 0 auto;
           width:           18px;
           height:          18px;
           align-items:     center;
           justify-content: center;
-        }
-
-        .Text {
-          flex:        1 1 auto;
-          height:      18px;
-          align-items: center;
+          visibility:      hidden;
         }
       }
     }
@@ -210,7 +238,7 @@
 }
 
 .DialogButtonContainer {
-  align-items: center;
+  align-items:     center;
   justify-content: space-evenly;
 
   .DialogButton {

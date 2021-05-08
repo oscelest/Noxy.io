@@ -18,6 +18,7 @@ enum PermissionLevel {
 
   FILE_TAG = "file_tag",
   FILE_TAG_CREATE = "file_tag.create",
+  FILE_TAG_DELETE = "file_tag.delete",
 }
 
 export default PermissionLevel;

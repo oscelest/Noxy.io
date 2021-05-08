@@ -147,10 +147,10 @@ export default class AccountPage extends React.Component<AccountPageProps, State
             <HeaderText>Update your password</HeaderText>
             {this.renderBubblePasswordError()}
             <Input className={Style.BubbleInput} type={InputType.PASSWORD} value={this.state.password} label={"New password"} autoComplete={"new-password"}
-                   onChange={this.eventBubbleInputPasswordChange}/>
+                   onChange={this.eventPasswordChange}/>
             <Input className={Style.BubbleInput} type={InputType.PASSWORD} value={this.state.confirm} label={"Confirm password"} autoComplete={"new-password"}
-                   onChange={this.eventBubbleInputConfirmChange}/>
-            <Button disabled={password_disabled} onClick={this.eventBubblePasswordSubmit}>Change Password</Button>
+                   onChange={this.eventConfirmChange}/>
+            <Button disabled={password_disabled} onClick={this.eventPasswordSubmit}>Change Password</Button>
           </div>
 
           <div className={Style.Bubble}>
@@ -278,11 +278,13 @@ export default class AccountPage extends React.Component<AccountPageProps, State
     }
   };
 
-  private readonly eventBubbleInputPasswordChange = (password: string) => this.setState({password});
-  private readonly eventBubbleInputConfirmChange = (confirm: string) => this.setState({confirm});
-  private readonly eventBubblePasswordSubmit = async () => {
+  private readonly eventPasswordChange = (password: string) => this.setState({password});
+  private readonly eventConfirmChange = (confirm: string) => this.setState({confirm});
+  private readonly eventPasswordSubmit = async () => {
     try {
+      // Raise notification
       await this.context.updateLogIn(this.context.state.masquerade?.id ?? this.context.state.user?.id!, {password: this.state.password});
+      this.setState({password: "", confirm: ""});
     }
     catch (error) {
       const response = error.response as AxiosResponse<APIRequest<unknown>>;

@@ -52,7 +52,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   }
 
   private readonly renderAdminSection = () => {
-    if (!this.props.permission[PermissionLevel.ADMIN]) return null;
+    if (!this.context.hasPermission(PermissionLevel.ADMIN)) return null;
 
     return (
       <div className={Style.Admin}>
@@ -68,7 +68,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly renderUserSection = () => {
-    if (!this.context.hasPermission(PermissionLevel.USER)) return null;
+    if (!this.context.hasAnyPermission(PermissionLevel.USER_ELEVATED, PermissionLevel.USER_MASQUERADE)) return null;
 
     return (
       <div className={Style.Section}>
@@ -96,7 +96,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly renderAPIKeySection = () => {
-    if (!this.context.hasPermission(PermissionLevel.API_KEY)) return null;
+    if (!this.context.hasAnyPermission(PermissionLevel.API_KEY_VIEW, PermissionLevel.API_KEY_CREATE, PermissionLevel.API_KEY_UPDATE, PermissionLevel.API_KEY_DELETE)) return null;
 
     return (
       <div className={Style.Section}>
@@ -136,7 +136,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly renderFileSection = () => {
-    if (!this.context.hasPermission(PermissionLevel.FILE)) return null;
+    if (!this.context.hasAnyPermission(PermissionLevel.FILE_CREATE, PermissionLevel.FILE_UPDATE, PermissionLevel.FILE_DELETE)) return null;
 
     return (
       <div className={Style.Section}>
@@ -151,12 +151,24 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
           </Tickable>
           <p>Allows a user to upload files to their account.</p>
         </div>
+        <div className={Style.Item}>
+          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
+            {{[PermissionLevel.FILE]: this.getTickableItem("Update file(s) in My Files", PermissionLevel.FILE_UPDATE)}}
+          </Tickable>
+          <p>Allows a user to update files on their account.</p>
+        </div>
+        <div className={Style.Item}>
+          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
+            {{[PermissionLevel.FILE]: this.getTickableItem("Delete file(s) from My Files", PermissionLevel.FILE_DELETE)}}
+          </Tickable>
+          <p>Allows a user to delete files from their account.</p>
+        </div>
       </div>
     );
   };
 
   private readonly renderFileTagSection = () => {
-    if (!this.context.hasPermission(PermissionLevel.FILE_TAG)) return null;
+    if (!this.context.hasAnyPermission(PermissionLevel.FILE_TAG_CREATE, PermissionLevel.FILE_TAG_DELETE)) return null;
 
     return (
       <div className={Style.Section}>
@@ -169,7 +181,13 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
           <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
             {{[PermissionLevel.FILE]: this.getTickableItem("Create file tag(s)", PermissionLevel.FILE_TAG_CREATE)}}
           </Tickable>
-          <p>Allows a user to create new file tags, attached to their account.</p>
+          <p>Allows a user to create new file tags attached to their account.</p>
+        </div>
+        <div className={Style.Item}>
+          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
+            {{[PermissionLevel.FILE]: this.getTickableItem("Delete file tag(s)", PermissionLevel.FILE_TAG_DELETE)}}
+          </Tickable>
+          <p>Allows a user to delete previously created file tags attached to their account.</p>
         </div>
       </div>
     );

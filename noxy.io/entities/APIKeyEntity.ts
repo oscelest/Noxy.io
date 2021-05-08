@@ -1,4 +1,5 @@
 import Axios from "axios";
+import _ from "lodash";
 import Permission from "../../common/classes/Permission";
 import Order from "../../common/enums/Order";
 import PermissionLevel from "../../common/enums/PermissionLevel";
@@ -37,8 +38,12 @@ export default class APIKeyEntity extends Entity {
     return this.permission[PermissionLevel.ADMIN];
   }
 
-  public hasPermission(permission: PermissionLevel) {
-    return this.permission[permission];
+  public hasAnyPermission(...permission_list: PermissionLevel[]) {
+    return _.some(permission_list, permission => this.permission[permission]);
+  }
+
+  public hasPermission(...permission_list: PermissionLevel[]) {
+    return _.every(permission_list, permission => this.permission[permission]);
   }
 
   public static async get(search: APIKeyEntitySearchParameters = {}, pagination: RequestPagination<APIKeyEntity> = {skip: 0, limit: 10, order: {time_created: Order.DESC}}) {

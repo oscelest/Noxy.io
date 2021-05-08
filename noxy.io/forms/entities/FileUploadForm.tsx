@@ -41,13 +41,14 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
     if (!transfer.name) return transfer.fail("Field cannot be empty");
 
     try {
-      await FileEntity.create(
+      const entity = await FileEntity.create(
         new File([transfer.file.slice(0, transfer.file.size, transfer.file.type)], transfer.name, {type: transfer.file.type}),
         {file_tag_list: this.state.file_tag_list},
         (event: ProgressEvent) => this.advanceFileTransfer(transfer, {progress: +(event.loaded / event.total * 100).toFixed(2)}),
         (cancel: Canceler) => this.advanceFileTransfer(transfer, {canceler: cancel}),
       );
       this.advanceFileTransfer(transfer, {progress: Number.POSITIVE_INFINITY});
+      this.props.onFileUpload?.(entity);
     }
     catch (exception) {
       const error = exception as AxiosError<APIRequest<{mime_type: string}>>;
@@ -111,9 +112,14 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
     );
   };
 
+  private readonly eventFileTagCreate = async (name: string) => {
+    const entity = await FileTagEntity.createOne({name});
+    this.props.onTagCreate?.(entity);
+    return entity;
+  }
+
   private readonly eventBrowseChange = (file_list: FileList) => this.setState({file_list: _.concat(this.state.file_list, _.map(file_list, file => new FileTransfer(file)))});
   private readonly eventFileTagChange = (file_tag_list: FileTagEntity[]) => this.setState({file_tag_list});
-  private readonly eventFileTagCreate = async (name: string) => await FileTagEntity.create({name});
   private readonly eventFileTagSearch = async (name: string) => name ? await FileTagEntity.findMany({name, exclude: this.state.file_tag_list}) : [];
   private readonly eventFileChange = (name: string, transfer: FileTransfer) => this.advanceFileTransfer(transfer, {name});
   private readonly eventFileCancel = (transfer: FileTransfer) => transfer.cancel() && this.setState({file_list: _.filter(this.state.file_list, value => value !== transfer)});
@@ -128,7 +134,8 @@ export interface FileUploadFormProps {
 
   className?: string
 
-  onSubmit?: () => void
+  onTagCreate?(tag: FileTagEntity): void
+  onFileUpload?(file: FileEntity): void
 }
 
 interface State {

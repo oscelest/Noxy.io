@@ -96,14 +96,22 @@ export default class EntityMultiSelect<E extends Entity, K extends EntityStringP
 
   private readonly eventCreate = async (search: string) => {
     if (!this.props.onCreate) return;
-
-    this.setState({input: "", index: -1, list: []});
-    this.props.onChange([...this.props.children as E[], await this.props.onCreate(search)]);
+    try {
+      this.setState({input: "", index: -1, list: []});
+      this.props.onChange([...this.props.children as E[], await this.props.onCreate(search)]);
+    }
+    catch (error) {
+      // TODO: Missing error handling.
+      console.error(error);
+    }
   };
+
   private readonly eventClick = (value: E) => this.props.onChange(_.filter(this.props.children as E[], entity => entity.getPrimaryKey() !== value.getPrimaryKey()));
 
   private readonly eventChange = (input: string) => this.search(input);
+
   private readonly eventIndexChange = (index: number) => this.setState({index});
+
   private readonly eventIndexCommit = (index: number) => {
     this.setState({input: "", index: -1, list: []});
     this.props.onChange([...this.props.children as E[], this.state.list[index]]);

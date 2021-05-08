@@ -44,8 +44,12 @@ export default class UserEntity extends Entity {
     return this.getCurrentAPIKey().isAdmin();
   }
 
-  public hasPermission(permission: PermissionLevel) {
-    return this.getCurrentAPIKey().hasPermission(permission);
+  public hasAnyPermission(...permission_list: PermissionLevel[]) {
+    return this.getCurrentAPIKey().hasAnyPermission(...permission_list);
+  }
+
+  public hasPermission(...permission_list: PermissionLevel[]) {
+    return this.getCurrentAPIKey().hasPermission(...permission_list);
   }
 
   public static async get(search: UserEntityGetParameters = {}, pagination: RequestPagination<UserEntity> = {skip: 0, limit: 10, order: {email: Order.ASC}}) {

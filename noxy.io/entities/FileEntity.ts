@@ -41,11 +41,11 @@ export default class FileEntity extends Entity {
     return this.id;
   }
 
-  public getAPIPath() {
+  public getDataPath() {
     return `${FileEntity.URL}/data/${this.alias}`;
   }
 
-  public getPath() {
+  public getFilePath() {
     return `${location.host}/file/${this.alias}`;
   }
 
@@ -99,7 +99,7 @@ export default class FileEntity extends Entity {
     return new this(result.data.content);
   }
 
-  public static async removeByID(id: string | FileEntity) {
+  public static async deleteByID(id: string | FileEntity) {
     id = typeof id === "string" ? id : id.getPrimaryKey();
     const result = await Axios.delete<APIRequest<FileEntity>>(`${this.URL}/${id}`);
     return new this(result.data.content);

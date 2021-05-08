@@ -332,6 +332,7 @@ export default class File extends Entity<File>(TypeORM) {
       });
     }
     catch (error) {
+      if (error instanceof TypeORM.EntityNotFoundError) return respond?.(new ServerException(404));
       respond?.(new ServerException(500, error));
     }
   }

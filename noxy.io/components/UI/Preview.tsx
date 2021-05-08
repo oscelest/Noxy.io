@@ -1,4 +1,5 @@
 import React from "react";
+import FileEntity from "../../entities/FileEntity";
 import FileTypeEntity from "../../entities/FileTypeEntity";
 import Style from "./Preview.module.scss";
 
@@ -21,8 +22,20 @@ export default class Preview extends React.Component<PreviewProps, State> {
     );
   }
 
+  private readonly getFileType = () => {
+    if (this.props.file) return this.props.file.file_extension.file_type.name;
+    if (this.props.type instanceof FileTypeEntity) return this.props.type.name;
+    return this.props.type;
+  }
+
+  private readonly getPath = () => {
+    if (this.props.file) return this.props.file.getDataPath();
+    return this.props.path;
+  }
+
+
   private readonly renderPreview = () => {
-    switch (typeof this.props.type === "object" ? this.props.type.name : this.props.type) {
+    switch (this.getFileType()) {
       case "image":
         return this.renderPreviewImage();
       default:
@@ -33,7 +46,7 @@ export default class Preview extends React.Component<PreviewProps, State> {
 
   private readonly renderPreviewImage = () => {
     return (
-      <img className={Style.Image} src={this.props.path} alt={""}/>
+      <img className={Style.Image} src={this.getPath()} alt={""}/>
     );
   };
 
@@ -45,10 +58,21 @@ export default class Preview extends React.Component<PreviewProps, State> {
 
 }
 
-export interface PreviewProps {
+export type PreviewProps = PreviewFileEntityProps | PreviewLooseProps;
+
+interface PreviewFileEntityProps extends PreviewDefaultProps {
+  file: FileEntity
+  path?: never
+  type?: never
+}
+
+interface PreviewLooseProps extends PreviewDefaultProps {
+  file?: never
   path: string
   type: FileTypeEntity | string
+}
 
+export interface PreviewDefaultProps {
   children?: never
   className?: string
 }
