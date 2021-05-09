@@ -115,7 +115,7 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
   };
 
   private readonly openTagDeleteDialog = async (tag: FileTagEntity) => {
-    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog title={"Permanently delete tag?"} value={tag} onAccept={this.eventTagDelete}/>);
+    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.FIRST, <ConfirmDialog title={"Permanently delete tag?"} value={tag} onAccept={this.eventTagDelete}/>);
   };
 
   private readonly eventTagDelete = async (tag: FileTagEntity) => {
@@ -135,9 +135,10 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
   };
 
   private readonly eventTagCreate = async (name: string) => {
-    return FileTagEntity.createOne({name});
+    const file_tag = await FileTagEntity.createOne({name});
+    this.props.onTagCreate?.(file_tag);
+    return file_tag;
   };
-
 
   private readonly eventBrowseChange = (file_list: FileList) => {
     this.setState({file_list: _.concat(this.state.file_list, _.map(file_list, file => new FileTransfer(file)))});

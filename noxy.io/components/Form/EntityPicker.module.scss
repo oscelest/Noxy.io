@@ -1,7 +1,6 @@
 $row-gap: 7px;
 $col-gap: 10px;
 
-
 .Component {
   flex:         1 1 auto;
   flex-flow:    column;
@@ -28,7 +27,6 @@ $col-gap: 10px;
     }
   }
 
-
   .Search {
     grid-column-gap: $col-gap;
 
@@ -38,13 +36,16 @@ $col-gap: 10px;
   }
 
   .List {
+    flex:      1 1 auto;
     grid-row-gap:    $row-gap;;
     grid-column-gap: $col-gap;
+    overflow:        auto;
 
     .Available, .Selected {
       flex:         0 0 auto;
       flex-flow:    column;
       grid-row-gap: $row-gap;
+      overflow:     auto;
     }
   }
 

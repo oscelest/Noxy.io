@@ -21,22 +21,10 @@ export default class EntityPicker<V extends {toString(): string}> extends React.
     };
   }
 
-  private readonly getItemFromEvent = (event: React.MouseEvent<HTMLElement>, list: V[]) => {
-    const element = event.currentTarget.parentElement;
-    if (!element) throw new FatalException("Could not load file tag list", "The file tag list either hasn't been loaded properly or is unavailable at this time. Please reload the browser window.");
 
-    const item = Helper.getReactChildObject(element, list);
-    if (!item) throw new FatalException("Could not load file tag", "The file tag either no longer exists or cannot be updated at this time. Please reload the browser window.");
-
-    return item;
-  };
-
-  private readonly getItemName = (item: V) => {
-    return this.props.onRender ? this.props.onRender(item) : item.toString();
-  };
-
-  private readonly getSortedList = (list: V[]) => {
-    return this.props.onSort ? list.sort(this.props.onSort) : list.sort((a, b) => this.getItemName(a).toLowerCase() > this.getItemName(b).toLowerCase() ? 1 : -1);
+  public readonly search = (search: string = this.state.search) => {
+    this.setState({loading: true, search});
+    this.searchInternal();
   };
 
   private readonly searchInternal = _.debounce(
@@ -55,6 +43,41 @@ export default class EntityPicker<V extends {toString(): string}> extends React.
     500,
   );
 
+  public readonly create = async (search: string = this.state.search) => {
+    const entity = await this.props.onCreate?.(search, this.props.selected);
+    if (!entity) throw new FatalException("", "");
+
+    this.setState({search: ""});
+    if (this.props.onCompare) {
+      const selected = _.uniqBy([...this.props.selected, entity], value => this.props.onCompare!(value));
+      const available = _.filter(this.props.available, value => this.props.onCompare!(value) !== this.props.onCompare!(entity));
+      this.props.onChange(selected, available);
+    }
+    else {
+      const selected = _.uniqBy([...this.props.selected, entity], value => value.toString());
+      const available = _.filter(this.props.available, value => value.toString() !== entity.toString());
+      this.props.onChange(selected, available);
+    }
+  };
+
+  private readonly getItemFromEvent = (event: React.MouseEvent<HTMLElement>, list: V[]) => {
+    const element = event.currentTarget.parentElement;
+    if (!element) throw new FatalException("Could not load file tag list", "The file tag list either hasn't been loaded properly or is unavailable at this time. Please reload the browser window.");
+
+    const item = Helper.getReactChildObject(element, list);
+    if (!item) throw new FatalException("Could not load file tag", "The file tag either no longer exists or cannot be updated at this time. Please reload the browser window.");
+
+    return item;
+  };
+
+  private readonly getItemName = (item: V) => {
+    return this.props.onRender ? this.props.onRender(item) : item.toString();
+  };
+
+  private readonly getSortedList = (list: V[]) => {
+    return this.props.onSort ? list.sort(this.props.onSort) : list.sort((a, b) => this.getItemName(a).toLowerCase() > this.getItemName(b).toLowerCase() ? 1 : -1);
+  };
+
   public componentDidMount(): void {
     this.props.onSearch?.(this.state.search);
   }
@@ -72,9 +95,9 @@ export default class EntityPicker<V extends {toString(): string}> extends React.
       <div className={classes.join(" ")}>
         <Conditional condition={this.props.onSearch}>
           <div className={Style.Search}>
-            <Input className={Style.Input} label={"Search for tags"} value={search} onChange={this.eventSearch}/>
+            <Input className={Style.Input} label={"Search for tags"} value={search} onChange={this.search}/>
             <Conditional condition={this.props.onCreate}>
-              <Button className={Style.Button} icon={IconType.UI_ADD} value={search} disabled={search.length < 3} onClick={this.eventCreate}/>
+              <Button className={Style.Button} icon={IconType.UI_ADD} value={search} disabled={search.length < 3} onClick={this.create}/>
             </Conditional>
           </div>
         </Conditional>
@@ -121,28 +144,6 @@ export default class EntityPicker<V extends {toString(): string}> extends React.
         </Conditional>
       </div>
     );
-  };
-
-  private readonly eventSearch = (search: string) => {
-    this.setState({loading: true, search});
-    this.searchInternal();
-  };
-
-  private readonly eventCreate = async (search: string) => {
-    const entity = await this.props.onCreate?.(search, this.props.selected);
-    if (!entity) throw new FatalException("", "");
-
-    this.setState({search: ""});
-    if (this.props.onCompare) {
-      const selected = _.uniqBy([...this.props.selected, entity], value => this.props.onCompare!(value));
-      const available = _.filter(this.props.available, value => this.props.onCompare!(value) !== this.props.onCompare!(entity));
-      this.props.onChange(selected, available);
-    }
-    else {
-      const selected = _.uniqBy([...this.props.selected, entity], value => value.toString());
-      const available = _.filter(this.props.available, value => value.toString() !== entity.toString());
-      this.props.onChange(selected, available);
-    }
   };
 
   private readonly eventItemDeleteSelected = (event: React.MouseEvent<HTMLElement>) => {

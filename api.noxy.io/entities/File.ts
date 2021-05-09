@@ -91,6 +91,7 @@ export default class File extends Entity<File>(TypeORM) {
       name:            this.name,
       size:            this.size,
       alias:           this.alias,
+      privacy:         this.privacy,
       share_code:      this.share_code,
       flag_public_tag: this.flag_public_tag,
       file_extension:  this.file_extension.toJSON(),
@@ -366,7 +367,8 @@ export type FileJSON = {
   alias: string
   name: string
   size: number
-  share_code: string | null
+  privacy: string
+  share_code: string
   flag_public_tag: boolean
   file_extension: FileExtensionJSON
   file_tag_list: FileTagJSON[]

@@ -5,6 +5,7 @@ import Router from "next/router";
 import PrettyBytes from "pretty-bytes";
 import React from "react";
 import FileTypeName from "../../../common/enums/FileTypeName";
+import Privacy from "../../../common/enums/Privacy";
 import Conditional from "../../components/Application/Conditional";
 import Dialog, {DialogListenerType, DialogPriority} from "../../components/Application/Dialog";
 import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
@@ -48,9 +49,9 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
 
       file_loading: true,
       file_privacy: {
-        "private": RadioButton.createElement(true, "Private", false, false),
-        "link":    RadioButton.createElement(true, "Only with link", false, false),
-        "public":  RadioButton.createElement(true, "Public", false, false),
+        "private": RadioButton.createElement(Privacy.PRIVATE, "Private", false, false),
+        "link":    RadioButton.createElement(Privacy.LINK, "Only with link", false, false),
+        "public":  RadioButton.createElement(Privacy.PUBLIC, "Public", false, false),
       },
 
       tag_search:         "",
@@ -72,7 +73,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
       next_state.file_loading = false;
       next_state.file = await FileEntity.getByID(this.props[FileAliasPageQuery.ALIAS]);
 
-      if (next_state.file.share_code === null) {
+      if (next_state.file.privacy === Privacy.PRIVATE) {
         next_state.file_privacy = {...this.state.file_privacy, private: {...this.state.file_privacy.private, checked: true}} as FilePrivacyRadioButton;
       }
       else if (next_state.file.share_code === "") {
@@ -260,24 +261,16 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     }
 
     this.setState({file_privacy});
-    if (file_privacy.private.checked) {
-      this.state.file.share_code = null;
-    }
-    else if (file_privacy.public.checked) {
-      this.state.file.share_code = "";
-    }
-    else {
-      this.state.file.share_code = this.state.file.id;
-    }
+    this.state.file.privacy = _.find(file_privacy, item => !!item.checked)?.value ?? this.state.file.privacy;
 
     const file = await FileEntity.updateOne(this.props[FileAliasPageQuery.ALIAS], this.state.file);
     this.setState({file});
 
     if (file_privacy.link.checked) {
-      await Router.push({pathname: location.origin + location.pathname, query: {share: file.share_code}});
+      await Router.replace({pathname: location.origin + location.pathname, query: {share: file.share_code}});
     }
     else {
-      await Router.push({pathname: location.origin + location.pathname});
+      await Router.replace({pathname: location.origin + location.pathname});
     }
   };
 
@@ -292,7 +285,7 @@ enum FileAliasPageQuery {
 }
 
 type TagPrivacyCheckbox = CheckboxCollection<{public: boolean}>
-type FilePrivacyRadioButton = RadioButtonCollection<"private" | "link" | "public", boolean>
+type FilePrivacyRadioButton = RadioButtonCollection<"private" | "link" | "public", Privacy>
 
 interface FileAliasPageProps extends PageProps {
   [FileAliasPageQuery.ALIAS]: string

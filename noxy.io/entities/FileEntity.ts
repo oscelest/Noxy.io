@@ -1,5 +1,6 @@
 import Axios, {Canceler} from "axios";
 import Order from "../../common/enums/Order";
+import Privacy from "../../common/enums/Privacy";
 import SetOperation from "../../common/enums/SetOperation";
 import Entity from "../classes/Entity";
 import RequestData from "../classes/RequestData";
@@ -14,7 +15,8 @@ export default class FileEntity extends Entity {
   public name: string;
   public alias: string;
   public size: number;
-  public share_code: string | null;
+  public privacy: Privacy;
+  public share_code: string;
   public flag_public_tag: boolean;
   public file_tag_list: FileTagEntity[];
   public file_extension: FileExtensionEntity;
@@ -29,7 +31,8 @@ export default class FileEntity extends Entity {
     this.name = entity?.name ?? "";
     this.alias = entity?.alias ?? "";
     this.size = entity?.size ?? 0;
-    this.share_code = entity?.share_code ?? null;
+    this.privacy = entity?.privacy ?? Privacy.PRIVATE;
+    this.share_code = entity?.share_code ?? "";
     this.flag_public_tag = entity?.flag_public_tag ?? false;
     this.file_tag_list = FileTagEntity.instantiate(entity?.file_tag_list);
     this.file_extension = new FileExtensionEntity(entity?.file_extension);
