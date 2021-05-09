@@ -9,8 +9,6 @@ import Multer from "multer";
 import Path from "path";
 import ServeFavicon from "serve-favicon";
 import {v4} from "uuid";
-import APIKey from "../../api.noxy.io/entities/APIKey";
-import User from "../../api.noxy.io/entities/User";
 import Alias from "../classes/Alias";
 import HTTPMethod from "../enums/HTTPMethod";
 import HTTPStatusCode from "../enums/HTTPStatusCode";
@@ -150,6 +148,7 @@ module Server {
   function attachParameters({files, query, body, locals: {respond, method, parameters, endpoint}}: Express.Request, response: Express.Response, next: Express.NextFunction) {
     if (!endpoint) return respond?.(new ServerException(404)) ?? response.send(404);
 
+    const file_collection = _.reduce(files, (result, file, key) => _.set(result, key, file), {} as {[key: string]: File[]});
     const error_collection = {} as {[key: string]: ValidatorException};
     const received_parameter_list = method === HTTPMethod.GET ? query : body;
 
@@ -159,11 +158,11 @@ module Server {
         const {type, conditions, options: {flag_array, flag_optional}} = endpoint.parameter_list[name];
 
         if (type === ValidatorType.FILE) {
-          if (!files?.[name].length && !flag_optional) {
+          if (!file_collection?.[name].length && !flag_optional) {
             error_collection[name] = new ValidatorException(`'${name}' is a mandatory field.`);
           }
           else {
-            parameters[name] = flag_array ? files?.[name] : _.first(files?.[name]);
+            parameters[name] = flag_array ? file_collection?.[name] : _.first(file_collection?.[name]);
           }
         }
         else {
@@ -264,41 +263,6 @@ module Server {
   export type AliasCollection = {[path: string]: Alias}
   export type EndpointCollection = {[alias: string]: Endpoint};
   export type EndpointParameterCollection = {[name: string]: EndpointParameter}
-}
-
-declare global {
-  export interface FileHandle extends File {
-    fieldname: string
-    originalname: string
-    encoding: string
-    mimetype: string
-    destination: string
-    filename: string
-    path: string
-    size: number
-  }
-}
-
-declare module "express-serve-static-core" {
-  // noinspection JSUnusedGlobalSymbols
-  interface Request<P, ResBody = any, ReqBody = any> {
-    files?: {[key: string]: FileHandle[]}
-
-    locals: Locals<ResBody, ReqBody>
-  }
-
-  interface Locals<ResBody = any, ReqBody = any> {
-    id?: string
-    path?: string
-    method?: HTTPMethod
-    alias?: Alias
-    endpoint?: Server.Endpoint
-    api_key?: APIKey
-    user?: User
-    parameters?: ReqBody
-    time_created?: Date
-    respond?: (response: ResBody) => void | Promise<void>
-  }
 }
 
 

@@ -45,13 +45,11 @@ export default class EntityPicker<V extends {toString(): string}> extends React.
             {_.map(selected, this.renderSelected)}
           </div>
         </Conditional>
-        <Conditional condition={available.length}>
-          <Loader show={this.props.loading}>
-            <div className={Style.Available}>
-              {_.map(available, this.renderAvailable)}
-            </div>
-          </Loader>
-        </Conditional>
+        <Loader show={this.props.loading}>
+          <div className={Style.Available}>
+            {_.map(available, this.renderAvailable)}
+          </div>
+        </Loader>
       </div>
     );
   }

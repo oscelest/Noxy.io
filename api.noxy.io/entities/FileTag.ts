@@ -22,8 +22,6 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
   @TypeORM.Column({type: "varchar", length: 64})
   public name: string;
 
-  public size: number;
-
   @TypeORM.ManyToOne(() => User, user => user.file_tag_created_list, {nullable: false})
   @TypeORM.JoinColumn({name: "user_created_id"})
   public user_created: User;
@@ -50,7 +48,6 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
     return {
       id:           this.id,
       name:         this.name,
-      size:         this.size,
       user_created: this.user_created.toJSON(),
       time_created: this.time_created,
       time_updated: this.time_updated,
@@ -63,7 +60,6 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
 
   public static createSelect() {
     const query = TypeORM.createQueryBuilder(this);
-    this.countRelation(query, "size", "file_list");
     this.join(query, "user_created");
     return query;
   }
@@ -198,7 +194,6 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
 export type FileTagJSON = {
   id: string
   name: string
-  size: number
   user_created: UserJSON
   time_created: Date
   time_updated: Date

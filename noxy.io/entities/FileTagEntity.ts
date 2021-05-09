@@ -8,7 +8,6 @@ export default class FileTagEntity extends Entity {
 
   public id: string;
   public name: string;
-  public size: number;
   public user_created: UserEntity;
   public time_created: Date;
 
@@ -18,7 +17,6 @@ export default class FileTagEntity extends Entity {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? "";
-    this.size = entity?.size ?? 0;
     this.user_created = new UserEntity(entity?.user_created);
     this.time_created = entity?.time_created ?? new Date();
   }

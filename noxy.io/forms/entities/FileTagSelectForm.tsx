@@ -7,7 +7,7 @@ import FileTagEntity from "../../entities/FileTagEntity";
 import ButtonType from "../../enums/ButtonType";
 import Global from "../../Global";
 import Helper from "../../Helper";
-import Style from "./FileSetTagListForm.module.scss";
+import Style from "./FileTagSelectForm.module.scss";
 
 export default class FileTagSelectForm extends React.Component<FileSetTagListFormProps, State> {
 

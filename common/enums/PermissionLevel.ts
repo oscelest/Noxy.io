@@ -1,10 +1,6 @@
 enum PermissionLevel {
   ADMIN = "admin",
 
-  USER = "user",
-  USER_ELEVATED = "user.elevated",
-  USER_MASQUERADE = "user.masquerade",
-
   API_KEY = "api_key",
   API_KEY_VIEW = "api_key.view",
   API_KEY_CREATE = "api_key.create",
@@ -19,6 +15,10 @@ enum PermissionLevel {
   FILE_TAG = "file_tag",
   FILE_TAG_CREATE = "file_tag.create",
   FILE_TAG_DELETE = "file_tag.delete",
+
+  USER = "user",
+  USER_ELEVATED = "user.elevated",
+  USER_MASQUERADE = "user.masquerade",
 }
 
 export default PermissionLevel;

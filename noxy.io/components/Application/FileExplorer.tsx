@@ -436,8 +436,6 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
 
-
-
   private readonly eventContextMenuDownload = async () => {
     await FileEntity.confirmDownload(await FileEntity.requestDownload(_.filter(this.state.file_list, (file, key) => this.state.file_selected[key])));
   }
