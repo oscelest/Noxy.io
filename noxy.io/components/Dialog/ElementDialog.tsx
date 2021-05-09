@@ -4,9 +4,9 @@ import DialogContainer from "./DialogContainer";
 import DialogOverlay from "./DialogOverlay";
 import Style from "./ElementDialog.module.scss";
 
-export default class ElementDialog extends React.Component<FormDialogProps, State> {
+export default class ElementDialog extends React.Component<ElementDialogProps, State> {
 
-  constructor(props: FormDialogProps) {
+  constructor(props: ElementDialogProps) {
     super(props);
   }
 
@@ -34,7 +34,7 @@ export default class ElementDialog extends React.Component<FormDialogProps, Stat
   }
 }
 
-export interface FormDialogProps {
+export interface ElementDialogProps {
   title?: string
   close?: boolean
   fullscreen?: boolean

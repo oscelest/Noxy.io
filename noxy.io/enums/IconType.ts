@@ -10,6 +10,7 @@ enum IconType {
   CERTIFICATE = "\uead4",
 
   FILE_AUDIO = "\ueb09",
+  FILE_FILE = "\ueb12",
   FILE_DOCUMENT = "\ueb0e",
   FILE_EXE = "\ueb11",
   FILE_IMAGE = "\ueb16",

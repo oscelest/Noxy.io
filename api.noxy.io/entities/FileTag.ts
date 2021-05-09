@@ -72,17 +72,37 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
    * Endpoint methods
    */
 
+  @FileTag.get("/count")
+  @FileTag.bindParameter<Request.getCount>("name", ValidatorType.STRING, {max_length: 64})
+  @FileTag.bindParameter<Request.getCount>("exclude", ValidatorType.UUID, {flag_array: true})
+  @FileTag.bindPagination(100, ["id", "name", "time_created"])
+  public static async count({locals: {respond, parameters, user}}: Server.Request<{}, Response.getCount, Request.getCount>) {
+    const {name, exclude} = parameters!;
+    const query = this.createSelect();
+
+    this.addExclusionClause(query, "id", exclude);
+    this.addWildcardClause(query, "name", name);
+    this.addValueClause(query, "user_created", user!.id);
+
+    try {
+      return respond?.(await query.getCount());
+    }
+    catch (error) {
+      return respond?.(error);
+    }
+  }
+
   @FileTag.get("/")
   @FileTag.bindParameter<Request.getFindMany>("name", ValidatorType.STRING, {max_length: 64})
   @FileTag.bindParameter<Request.getFindMany>("exclude", ValidatorType.UUID, {flag_array: true})
   @FileTag.bindPagination(100, ["id", "name", "time_created"])
-  public static async findMany({locals: {respond, parameters}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
-    const {skip, limit, order, name, user_created, exclude} = parameters!;
+  public static async findMany({locals: {respond, parameters, user}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
+    const {skip, limit, order, name, exclude} = parameters!;
     const query = this.createPaginated({skip, limit, order});
 
     this.addExclusionClause(query, "id", exclude);
     this.addWildcardClause(query, "name", name);
-    this.addValueClause(query, "user_created", user_created);
+    this.addValueClause(query, "user_created", user!.id);
 
     try {
       return respond?.(await query.getMany());
@@ -92,21 +112,47 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
     }
   }
 
-
-  @FileTag.get("/count")
-  @FileTag.bindParameter<Request.getCount>("name", ValidatorType.STRING, {max_length: 64})
-  @FileTag.bindParameter<Request.getCount>("exclude", ValidatorType.UUID, {flag_array: true})
-  @FileTag.bindPagination(100, ["id", "name", "time_created"])
-  public static async count({locals: {respond, parameters}}: Server.Request<{}, Response.getCount, Request.getCount>) {
-    const {name, user_created, exclude} = parameters!;
+  @FileTag.get("/by-unique")
+  @FileTag.bindParameter<Request.getFindMany>("name", ValidatorType.STRING, {max_length: 64}, {flag_array: true})
+  public static async findManyByUnique({locals: {respond, parameters, user}}: Server.Request<{}, Response.getFindManyByUnique, Request.getFindManyByUnique>) {
+    const {name} = parameters!;
     const query = this.createSelect();
 
-    this.addExclusionClause(query, "id", exclude);
-    this.addWildcardClause(query, "name", name);
-    this.addValueClause(query, "user_created", user_created);
+    this.addListClause(query, "name", name);
+    this.addValueClause(query, "user_created", user!.id);
 
     try {
-      return respond?.(await query.getCount());
+      return respond?.(await query.getMany());
+    }
+    catch (error) {
+      return respond?.(error);
+    }
+  }
+
+  @FileTag.get("/:id")
+  public static async findOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.getFindOne, Request.getFindOne>) {
+    const query = this.createSelect();
+
+    this.addExclusionClause(query, "id", id);
+    this.addValueClause(query, "user_created", user!.id);
+
+    try {
+      return respond?.(await query.getOneOrFail());
+    }
+    catch (error) {
+      return respond?.(error);
+    }
+  }
+
+  @FileTag.get("/by-name/:name")
+  public static async findOneByUnique({params: {name}, locals: {respond, user}}: Server.Request<{name: string}, Response.getFindOneByName, Request.getFindOneByName>) {
+    const query = this.createSelect();
+
+    this.addValueClause(query, "name", name);
+    this.addValueClause(query, "user_created", user!.id);
+
+    try {
+      return respond?.(await query.getOneOrFail());
     }
     catch (error) {
       return respond?.(error);
@@ -126,6 +172,7 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
       return respond?.(await this.performInsert(entity));
     }
     catch (error) {
+      if (error.code === "ER_DUP_ENTRY") return respond?.(new ServerException(409, {name}));
       return respond?.(error);
     }
   }
@@ -158,15 +205,21 @@ export type FileTagJSON = {
 }
 
 namespace Request {
+  export type getCount = {name?: string, exclude?: string[]}
   export type getFindMany = getCount & Pagination
-  export type getCount = {name?: string, user_created?: string, exclude?: string[]}
+  export type getFindManyByUnique = {name: string[]}
+  export type getFindOne = {}
+  export type getFindOneByName = {name: string}
   export type postCreateOne = {name: string, user_created: string}
   export type deleteDeleteOne = {}
 }
 
 namespace Response {
-  export type getFindMany = FileTag[] | ServerException
   export type getCount = number
+  export type getFindMany = FileTag[] | ServerException
+  export type getFindManyByUnique = FileTag[] | ServerException
+  export type getFindOne = FileTag | ServerException
+  export type getFindOneByName = FileTag | ServerException
   export type postCreateOne = FileTag | ServerException
   export type deleteDeleteOne = FileTag | ServerException
 }

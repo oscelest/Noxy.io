@@ -32,22 +32,24 @@ export default class FileTagEntity extends Entity {
   }
 
   public static async count(search: TagEntitySearchParameter = {}) {
-    try {
-      return await Axios.get<APIRequest<number>>(`${this.URL}/count?${new RequestData(search)}`);
-    }
-    catch (error) {
-      throw error;
-    }
+    return await Axios.get<APIRequest<number>>(`${this.URL}/count?${new RequestData(search)}`);
   }
 
   public static async findMany(search: TagEntitySearchParameter = {}, pagination: RequestPagination<FileTagEntity> = {skip: 0, limit: 10, order: {name: Order.ASC}}) {
-    try {
-      const result = await Axios.get<APIRequest<FileTagEntity[]>>(`${this.URL}?${new RequestData(search).paginate(pagination)}`);
-      return this.instantiate(result.data.content);
-    }
-    catch (error) {
-      throw error;
-    }
+    const result = await Axios.get<APIRequest<FileTagEntity[]>>(`${this.URL}?${new RequestData(search).paginate(pagination)}`);
+    return this.instantiate(result.data.content);
+  }
+
+  public static async findOne(id: string | FileTagEntity) {
+    id = typeof id === "string" ? id : id.getPrimaryKey();
+    const result = await Axios.get<APIRequest<FileTagEntity>>(`${this.URL}/${id}`);
+    return new this(result.data.content);
+  }
+
+  public static async findOneByName(name: string | FileTagEntity) {
+    name = typeof name === "string" ? name : name.name;
+    const result = await Axios.get<APIRequest<FileTagEntity>>(`${this.URL}/by-name/${name}`);
+    return new this(result.data.content);
   }
 
   public static async createOne(parameters: FileTagEntityCreateParameters) {
@@ -60,14 +62,10 @@ export default class FileTagEntity extends Entity {
     }
   }
 
-  public static async deleteByID(id: string) {
-    try {
-      const result = await Axios.delete<APIRequest<FileTagEntity>>(`${this.URL}/${id}`);
-      return new this(result.data.content);
-    }
-    catch (error) {
-      throw error;
-    }
+  public static async deleteOne(id: string | FileTagEntity) {
+    id = typeof id === "string" ? id : id.getPrimaryKey();
+    const result = await Axios.delete<APIRequest<FileTagEntity>>(`${this.URL}/${id}`);
+    return new this(result.data.content);
   }
 
 }

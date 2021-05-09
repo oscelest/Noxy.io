@@ -209,7 +209,7 @@
             }
           }
 
-          .ManageIcon {
+          .Icon {
             flex:            0 0 auto;
             width:           18px;
             height:          18px;
@@ -237,11 +237,4 @@
   }
 }
 
-.DialogButtonContainer {
-  align-items:     center;
-  justify-content: space-evenly;
 
-  .DialogButton {
-    width: 120px;
-  }
-}

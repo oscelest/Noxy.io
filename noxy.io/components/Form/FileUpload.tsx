@@ -1,6 +1,7 @@
 import _ from "lodash";
 import React from "react";
 import FileTransfer from "../../../common/classes/FileTransfer";
+import FileTypeName from "../../../common/enums/FileTypeName";
 import Preview from "../UI/Preview";
 import Button from "./Button";
 import Style from "./FileUpload.module.scss";
@@ -13,7 +14,7 @@ export default class FileUpload extends React.Component<FileUploadProps, State> 
     super(props);
     this.state = {
       path: "",
-      type: "",
+      type: FileTypeName.UNKNOWN,
     };
   }
 
@@ -22,7 +23,7 @@ export default class FileUpload extends React.Component<FileUploadProps, State> 
   };
 
   private readonly getType = () => {
-    return this.props.transfer.file.type.split("/")[0];
+    return this.props.transfer.file.type.split("/")[0] as FileTypeName;
   };
 
   private readonly getUploadText = () => {
@@ -123,5 +124,5 @@ export interface FileUploadProps {
 
 interface State {
   path: string
-  type: string
+  type: FileTypeName
 }

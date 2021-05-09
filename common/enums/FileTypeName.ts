@@ -4,7 +4,8 @@ enum FileTypeName {
   FONT = "font",
   IMAGE = "image",
   TEXT = "text",
-  VIDEO = "video"
+  VIDEO = "video",
+  UNKNOWN = "unknown"
 }
 
 export default FileTypeName;

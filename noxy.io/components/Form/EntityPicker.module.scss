@@ -1,0 +1,66 @@
+.Component {
+  flex:         1 1 auto;
+  flex-flow:    column;
+  padding:      0 5px;
+  grid-row-gap: 7px;
+  overflow:     auto;
+
+  .Selected {
+    flex: 0 0 auto;
+  }
+
+  .Available {
+    flex: 1 1 auto;
+  }
+
+  .Available, .Selected {
+    flex-flow:    column;
+    grid-row-gap: 7px;
+  }
+
+  .Item {
+    flex:            0 0 auto;
+    grid-column-gap: 5px;
+    cursor:          pointer;
+
+    &:hover {
+      .Container .Text {
+        text-decoration: underline;
+      }
+
+      .Delete {
+        visibility: visible;
+      }
+    }
+
+    .Container {
+      flex:            1 1 auto;
+      grid-column-gap: 5px;
+
+      .Icon {
+        font-size: 12px;
+        line-height: 12px;
+      }
+
+      .Text {
+        flex:        1 1 auto;
+        height:      18px;
+        align-items: center;
+      }
+    }
+
+    .Icon, .Delete {
+      flex:            0 0 auto;
+      width:           18px;
+      height:          18px;
+      align-items:     center;
+      justify-content: center;
+    }
+
+    .Delete {
+      visibility: hidden;
+      font-size: 16px;
+      line-height: 16px;
+    }
+  }
+}

@@ -1,0 +1,15 @@
+.Component {
+  width: auto;
+  height: auto;
+  max-width: calc(100% - 30px);
+  max-height: calc(100% - 30px);
+
+  .ActionList {
+    align-items:     center;
+    justify-content: space-evenly;
+
+    .Action {
+      min-width: 120px;
+    }
+  }
+}

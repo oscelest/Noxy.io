@@ -10,9 +10,9 @@ import Dialog, {DialogListenerType, DialogPriority} from "../components/Applicat
 import {Masquerade} from "../components/Application/Masquerade";
 import ElementDialog from "../components/Dialog/ElementDialog";
 import Button from "../components/Form/Button";
+import Checkbox, {CheckboxCollection} from "../components/Form/Checkbox";
 import Input from "../components/Form/Input";
 import {SortableCollection} from "../components/Form/Sortable";
-import Tickable, {TickableCollection} from "../components/Form/Tickable";
 import Copy from "../components/Table/Copy";
 import DataTable, {DataTableFilter} from "../components/Table/DataTable";
 import ColumnText from "../components/Text/ColumnText";
@@ -231,7 +231,7 @@ export default class AccountPage extends React.Component<AccountPageProps, State
 
     return (
       <div key={index} className={Style.Content}>
-        <Tickable className={Style.APIKey} radio={true} onChange={this.eventCheckboxChange}>{select}</Tickable>
+        <Checkbox className={Style.APIKey} onChange={this.eventCheckboxChange}>{select}</Checkbox>
         <ColumnText className={Style.LimitDecasecond} title={"Rate limit per 10 seconds"}>{entity.limit_per_decasecond}</ColumnText>
         <ColumnText className={Style.LimitMinute} title={"Rate limit per 60 seconds"}>{entity.limit_per_minute}</ColumnText>
         <Copy className={Style.Token} title={"Token"}>{entity.token}</Copy>
@@ -302,7 +302,7 @@ export default class AccountPage extends React.Component<AccountPageProps, State
     return value.user?.getPrimaryKey() === this.context.state.user?.getPrimaryKey() ? this.context.refreshLogIn() : this.search();
   };
 
-  private readonly eventCheckboxChange = (value: TickableCollection<string>) => this.select(_.values(value)[0].value);
+  private readonly eventCheckboxChange = (value: CheckboxCollection<{[key: string]: string}>) => this.select(_.values(value)[0].value);
 
   private readonly eventMasqueradeCommit = ({email, username}: UserEntity) => {
     this.search();

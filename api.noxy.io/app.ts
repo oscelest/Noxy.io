@@ -6,14 +6,14 @@ import JSONWebToken from "jsonwebtoken";
 import _ from "lodash";
 import Path from "path";
 import * as TypeORM from "typeorm";
-import PermissionLevel from "../common/enums/PermissionLevel";
-import Logger from "../common/services/Logger";
 import Alias from "../common/classes/Alias";
 import HTTPMethod from "../common/enums/HTTPMethod";
+import PermissionLevel from "../common/enums/PermissionLevel";
+import ServerException from "../common/exceptions/ServerException";
+import Logger from "../common/services/Logger";
 import Server from "../common/services/Server";
 import APIKey from "./entities/APIKey";
 import User from "./entities/User";
-import ServerException from "../common/exceptions/ServerException";
 
 (async () => {
   if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");
@@ -100,6 +100,7 @@ import ServerException from "../common/exceptions/ServerException";
     Logger.write(Logger.Level.INFO, "Server started!");
   }
   catch ({message, stack}) {
+    console.log(message, stack);
     Logger.write(Logger.Level.ERROR, {message, stack});
     process.exit(0);
   }

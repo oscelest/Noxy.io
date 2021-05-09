@@ -36,67 +36,23 @@ export default class Preview extends React.Component<PreviewProps, State> {
     return this.props.path;
   };
 
-
   private readonly renderPreview = () => {
     switch (this.getFileType()) {
       case FileTypeName.AUDIO:
-        return this.renderPreviewAudio();
+        return <Icon className={Style.Icon} type={IconType.FILE_AUDIO}/>;
       case FileTypeName.APPLICATION:
-        return this.renderPreviewApplication();
+        return  <Icon className={Style.Icon} type={IconType.FILE_EXE}/>
       case FileTypeName.FONT:
-        return this.renderPreviewFont();
+        return  <Icon className={Style.Icon} type={IconType.FILE_DOCUMENT}/>
       case FileTypeName.IMAGE:
-        return this.renderPreviewImage();
+        return <img className={Style.Image} src={this.getPath()} alt={""}/>
       case FileTypeName.TEXT:
-        return this.renderPreviewText();
+        return <Icon className={Style.Icon} type={IconType.FILE_TEXT}/>
       case FileTypeName.VIDEO:
-        return this.renderPreviewVideo();
+        return <Icon className={Style.Icon} type={IconType.FILE_VIDEO}/>
       default:
-        return this.renderPreviewUnavailable();
+        return <Icon className={Style.Icon} type={IconType.FILE_FILE}/>
     }
-  };
-
-
-  private readonly renderPreviewAudio = () => {
-    return (
-      <Icon className={Style.Icon} type={IconType.FILE_AUDIO}/>
-    );
-  };
-
-  private readonly renderPreviewApplication = () => {
-    return (
-      <Icon className={Style.Icon} type={IconType.FILE_EXE}/>
-    );
-  };
-
-  private readonly renderPreviewFont = () => {
-    return (
-      <Icon className={Style.Icon} type={IconType.FILE_DOCUMENT}/>
-    );
-  };
-
-  private readonly renderPreviewImage = () => {
-    return (
-      <img className={Style.Image} src={this.getPath()} alt={""}/>
-    );
-  };
-
-  private readonly renderPreviewText = () => {
-    return (
-      <Icon className={Style.Icon} type={IconType.FILE_TEXT}/>
-    );
-  };
-
-  private readonly renderPreviewVideo = () => {
-    return (
-      <Icon className={Style.Icon} type={IconType.FILE_VIDEO}/>
-    );
-  };
-
-  private readonly renderPreviewUnavailable = () => {
-    return (
-      <span className={Style.Unavailable}>Preview unavailable</span>
-    );
   };
 
 }

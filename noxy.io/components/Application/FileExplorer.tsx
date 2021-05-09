@@ -1,6 +1,7 @@
 import _ from "lodash";
 import Router from "next/router";
 import React from "react";
+import FileTypeName from "../../../common/enums/FileTypeName";
 import Order from "../../../common/enums/Order";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import SetOperation from "../../../common/enums/SetOperation";
@@ -9,19 +10,19 @@ import FileTagEntity from "../../entities/FileTagEntity";
 import FileTypeEntity from "../../entities/FileTypeEntity";
 import IconType from "../../enums/IconType";
 import Size from "../../enums/Size";
-import FatalException from "../../exceptions/FatalException";
 import FileRenameForm from "../../forms/entities/FileRenameForm";
 import FileTagSelectForm from "../../forms/entities/FileTagSelectForm";
 import FileUploadForm from "../../forms/entities/FileUploadForm";
 import Global from "../../Global";
 import Helper from "../../Helper";
-import Icon from "../Base/Icon";
+import ConfirmDialog from "../Dialog/ConfirmDialog";
 import ElementDialog from "../Dialog/ElementDialog";
 import Button from "../Form/Button";
+import Checkbox, {CheckboxCollection} from "../Form/Checkbox";
+import EntityPicker from "../Form/EntityPicker";
 import Input from "../Form/Input";
 import Sortable, {SortableCollection} from "../Form/Sortable";
 import Switch from "../Form/Switch";
-import Tickable, {TickableCollection} from "../Form/Tickable";
 import Pagination from "../Table/Pagination";
 import EllipsisText from "../Text/EllipsisText";
 import {ContextMenuItem} from "../UI/ContextMenu";
@@ -143,25 +144,13 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     return _.reduce(this.state.file_selected, (result, value, index) => value ? [...result, this.state.file_list[index]] : result, [] as FileEntity[]);
   };
 
-  private readonly getTagFromEvent = (event: React.MouseEvent<HTMLElement>, list?: FileTagEntity[]) => {
-    const {tag_available_list: available, tag_selected_list: selected} = this.state;
-
-    const element = event.currentTarget.parentElement;
-    if (!element) throw new FatalException("Could not load file tag list", "The file tag list either hasn't been loaded properly or is unavailable at this time. Please reload the browser window.");
-
-    const tag = list ? Helper.getReactChildObject(element, list) : Helper.getReactChildObject(element, selected) ?? Helper.getReactChildObject(element, available);
-    if (!tag) throw new FatalException("Could not load file tag", "The file tag either no longer exists or cannot be updated at this time. Please reload the browser window.");
-
-    return tag;
-  };
-
   private readonly closeDialog = () => {
     return this.state.ref_dialog.current?.close();
   };
 
   public async componentDidMount() {
     const file_type_list = await FileTypeEntity.findMany();
-    const type_tickable_collection = _.reduce(file_type_list, (result, value) => _.set(result, value.id, Tickable.createElement(value, value.toString())), {} as TickableCollection<FileTypeEntity>);
+    const type_tickable_collection = _.reduce(file_type_list, (r, v) => v.name !== FileTypeName.UNKNOWN ? _.set(r, v.id, Checkbox.createElement(v, v.toString())) : r, {} as TypeCheckbox);
 
     this.setState({type_tickable_collection});
     this.searchTag();
@@ -170,7 +159,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   public render() {
     const {type_tickable_collection} = this.state;
-    const {tag_search, tag_set_operation} = this.state;
+    const {tag_search, tag_set_operation, tag_loading, tag_selected_list, tag_available_list} = this.state;
     const {file_loading, file_selected, file_list, file_order} = this.state;
 
     const classes = [Style.Component];
@@ -191,7 +180,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
           <div className={Style.Content}>
             <DragDrop className={Style.DragDrop} title={drag_drop_title} message={drag_drop_text} listener={DialogListenerType.FILE_BROWSER} onDrop={this.openUploadDialog}>
               <Loader className={Style.Loader} show={file_loading} size={Size.LARGE}>
-                <ElementBrowser className={Style.Browser} selection={file_selected} onSelect={this.eventSelect} onDelete={this.openDeleteFileDialog} onContextMenu={this.eventContextMenu}>
+                <ElementBrowser className={Style.Browser} selection={file_selected} onSelect={this.eventSelect} onDelete={this.openFileDeleteDialog} onContextMenu={this.eventContextMenu}>
                   {_.map(file_list, this.renderFile)}
                 </ElementBrowser>
               </Loader>
@@ -207,7 +196,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
             </div>
             <Sortable onChange={this.eventOrderChange}>{file_order}</Sortable>
 
-            <Tickable className={Style.FileTypeList} onChange={this.eventTypeChange}>{type_tickable_collection}</Tickable>
+            <Checkbox className={Style.FileTypeList} onChange={this.eventTypeChange}>{type_tickable_collection}</Checkbox>
 
             <div className={Style.TagSearch}>
               <Input className={Style.Input} label={"Search for tags"} value={tag_search} onChange={this.eventTagSearchChange}/>
@@ -221,10 +210,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
               }}
             </Switch>
 
-            <div className={Style.TagList}>
-              {this.renderFileTagSelectedList()}
-              {this.renderFileTagAvailableList()}
-            </div>
+            <EntityPicker loading={tag_loading} selected={tag_selected_list} available={tag_available_list} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
           </div>
 
         </div>
@@ -269,50 +255,6 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     );
   };
 
-  private readonly renderFileTagSelectedList = () => {
-    if (!this.state.tag_selected_list.length) return null;
-
-    return (
-      <div className={Style.Selected}>
-        {_.map(this.state.tag_selected_list, this.renderFileTag)}
-      </div>
-    );
-  };
-
-  private readonly renderFileTagAvailableList = () => {
-    if (!this.state.tag_available_list.length) return null;
-
-    return (
-      <div className={Style.Available}>
-        <Loader show={this.state.tag_loading}>
-          {_.map(this.state.tag_available_list, this.renderFileTag)}
-        </Loader>
-      </div>
-    );
-  };
-
-  private readonly renderFileTag = (file_tag: FileTagEntity, index: number = 0) => {
-    const selected = _.some(this.state.tag_selected_list, entity => entity.getPrimaryKey() === file_tag.getPrimaryKey());
-
-    return (
-      <div key={index} className={Style.Tag}>
-        <div className={Style.TagContainer} onClick={selected ? this.eventTagRemove : this.eventTagAdd}>
-          <Icon className={Style.ManageIcon} type={selected ? IconType.UI_REMOVE : IconType.UI_ADD}/>
-          <EllipsisText className={Style.Text}>{`${file_tag.name} (${file_tag.size})`}</EllipsisText>
-        </div>
-        {this.renderDeleteFileTag()}
-      </div>
-    );
-  };
-
-  private readonly renderDeleteFileTag = () => {
-    if (!this.context.hasPermission(PermissionLevel.FILE_TAG_DELETE)) return null;
-
-    return (
-      <Icon className={Style.DeleteIcon} type={IconType.BIN} onClick={this.openDeleteTagDialog}/>
-    );
-  };
-
   // region    ----- Dialogs -----    region //
 
   private readonly openUploadDialog = (file_list: FileList | File[] = []) => {
@@ -325,101 +267,111 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     );
   };
 
-  private readonly openFileRenameDialog = () => {
+  private readonly eventUploadTagCreate = () => {
+    this.setState({dialog_change_tag: true});
+  }
+
+  private readonly eventUploadFileCreate = () => {
+    this.setState({dialog_change_tag: true, dialog_change_file: true});
+  }
+
+  private readonly openFileNameChangeDialog = () => {
     Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT,
       <ElementDialog ref={this.state.ref_dialog}>
-        <FileRenameForm file_list={this.getSelectedFileList()} onSubmit={this.eventContextMenuRenameSubmit}/>
+        <FileRenameForm file_list={this.getSelectedFileList()} onSubmit={this.eventFileNameChange}/>
       </ElementDialog>,
     );
   };
 
-  private readonly openFileTagDialog = () => {
+  private readonly eventFileNameChange = async (file_list: FileEntity[]) => {
+    this.closeDialog();
+    await Promise.all(_.map(file_list, async (value, i) => value ? await FileEntity.updateOne(file_list[i], file_list[i]) : false));
+    this.searchFile();
+  };
+
+  private readonly openFileTagChangeDialog = () => {
     Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT,
       <ElementDialog ref={this.state.ref_dialog}>
-        <FileTagSelectForm file_tag_list={this.state.tag_selected_list} onSubmit={this.eventContextMenuSetTagListSubmit}/>
+        <FileTagSelectForm file_tag_list={this.state.tag_selected_list} onSubmit={this.eventFileTagChange}/>
       </ElementDialog>,
     );
   };
 
-  private readonly openDeleteFileDialog = async () => {
+  private readonly eventFileTagChange = async (file_tag_list: FileTagEntity[]) => {
+    this.closeDialog();
+    await Promise.all(_.map(this.state.file_selected, async (value, i) => value ? await FileEntity.updateOne(this.state.file_list[i], {...this.state.file_list[i], file_tag_list}) : false));
+    this.searchFile();
+    this.searchTag();
+  };
+
+  private readonly openFileDeleteDialog = async () => {
     const count = _.filter(this.state.file_selected).length;
-    const title = count === 1 ? "Permanently delete this file?" : `Permanently delete ${_.filter(this.state.file_selected).length} file(s)?`;
-
-    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT,
-      <ElementDialog ref={this.state.ref_dialog} title={title}>
-        <div className={Style.DialogButtonContainer}>
-          <Button className={Style.DialogButton} onClick={this.closeDialog}>Cancel</Button>
-          <Button className={Style.DialogButton} value={this.getSelectedFileList()} onClick={this.eventFileDelete}>Delete</Button>
-        </div>
-      </ElementDialog>,
-    );
+    const title = count === 1 ? "Permanently delete file?" : `Permanently delete ${_.filter(this.state.file_selected).length} file(s)?`;
+    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog title={title} value={this.getSelectedFileList()} onAccept={this.eventFileDelete}/>);
   };
 
-  private readonly openDeleteTagDialog = async (event: React.MouseEvent<HTMLElement>) => {
-    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT,
-      <ElementDialog ref={this.state.ref_dialog} title={"Permanently delete this tag?"}>
-        <div className={Style.DialogButtonContainer}>
-          <Button className={Style.DialogButton} onClick={this.closeDialog}>Cancel</Button>
-          <Button className={Style.DialogButton} value={this.getTagFromEvent(event)} onClick={this.eventTagDelete}>Delete</Button>
-        </div>
-      </ElementDialog>,
-    );
+  private readonly eventFileDelete = async (file_list: FileEntity[]) => {
+    this.closeDialog();
+    await Promise.all(_.map(file_list, async file => FileEntity.deleteOne(file)));
+    this.searchFile();
   };
 
-  // endregion ----- Dialogs ----- endregion //
-
-  private readonly eventUploadTagCreate = () => this.setState({dialog_change_tag: true});
-
-  private readonly eventUploadFileCreate = () => this.setState({dialog_change_tag: true, dialog_change_file: true});
-
-  private readonly eventUploadDialogClose = () => {
-    if (this.state.dialog_change_file) this.searchFile();
-    if (this.state.dialog_change_tag) this.searchTag();
+  private readonly openTagDeleteDialog = async (tag: FileTagEntity) => {
+    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog title={"Permanently delete tag?"} value={tag} onAccept={this.eventTagDelete}/>);
   };
 
   private eventTagDelete = async (tag: FileTagEntity) => {
     this.closeDialog();
-    await FileTagEntity.deleteByID(tag.id);
-    this.searchFile()
+    await FileTagEntity.deleteOne(tag.id);
+    this.searchFile();
     this.searchTag({
       tag_selected_list:  _.filter(this.state.tag_selected_list, value => value.getPrimaryKey() !== tag.getPrimaryKey()),
       tag_available_list: _.filter(this.state.tag_available_list, value => value.getPrimaryKey() !== tag.getPrimaryKey()),
     });
   };
 
-  private readonly eventFileDelete = async (file_list: FileEntity[]) => {
-    this.closeDialog();
-    await Promise.all(_.map(file_list, async file => FileEntity.deleteByID(file)));
-    this.searchFile();
+  // endregion ----- Dialogs ----- endregion //
+
+  // region    ----- Event handlers -----    region //
+
+  private readonly eventTagChange = async (tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]) => {
+    this.searchFile({tag_selected_list, tag_available_list});
   };
 
-  private readonly eventSetOperationChange = (tag_set_operation: SetOperation) => this.searchFile({tag_set_operation});
-  private readonly eventSelect = (file_selected: boolean[]) => this.setState({file_selected});
-  private readonly eventOrderChange = (file_order: SortableCollection<SortOrder>) => this.searchFile({file_order});
-  private readonly eventFileSearchChange = (file_search: string) => this.searchFile({file_search});
-  private readonly eventTagSearchChange = (tag_search: string) => this.searchTag({tag_search});
-  private readonly eventPaginationChange = (pagination_current: number) => this.searchFile({pagination_current});
-  private readonly eventTagCreateClick = async (name: string) => this.searchFile({tag_selected_list: this.sortTagList([...this.state.tag_selected_list, await FileTagEntity.createOne({name})])});
-
-  private readonly eventTagAdd = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!event.currentTarget.parentElement) throw new FatalException("Fuck", "Shit");
-    const tag = Helper.getReactChildObject(event.currentTarget.parentElement, this.state.tag_available_list);
-    const list = [...this.state.tag_selected_list];
-    if (tag) list.push(tag);
-    const tag_selected_list = this.sortTagList(list);
-    this.searchTag({tag_selected_list});
-    this.searchFile({tag_selected_list});
+  private readonly eventUploadDialogClose = () => {
+    if (this.state.dialog_change_file) this.searchFile();
+    if (this.state.dialog_change_tag) this.searchTag();
   };
 
-  private readonly eventTagRemove = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!event.currentTarget.parentElement) throw new FatalException("Fuck", "Shit");
-    const tag = Helper.getReactChildObject(event.currentTarget.parentElement, this.state.tag_selected_list);
-    const tag_selected_list = _.filter(this.state.tag_selected_list, v => v.getPrimaryKey() !== tag?.getPrimaryKey());
-    this.searchTag({tag_selected_list});
-    this.searchFile({tag_selected_list});
+  private readonly eventSetOperationChange = (tag_set_operation: SetOperation) => {
+    this.searchFile({tag_set_operation});
   };
 
-  private readonly eventTypeChange = (type_tickable_collection: TickableCollection<FileTypeEntity>) => {
+  private readonly eventSelect = (file_selected: boolean[]) => {
+    this.setState({file_selected});
+  };
+
+  private readonly eventOrderChange = (file_order: SortableCollection<SortOrder>) => {
+    this.searchFile({file_order});
+  };
+
+  private readonly eventFileSearchChange = (file_search: string) => {
+    this.searchFile({file_search});
+  };
+
+  private readonly eventTagSearchChange = (tag_search: string) => {
+    this.searchTag({tag_search});
+  };
+
+  private readonly eventPaginationChange = (pagination_current: number) => {
+    this.searchFile({pagination_current});
+  };
+
+  private readonly eventTagCreateClick = async (name: string) => {
+    this.searchFile({tag_selected_list: this.sortTagList([...this.state.tag_selected_list, await FileTagEntity.createOne({name})])});
+  };
+
+  private readonly eventTypeChange = (type_tickable_collection: TypeCheckbox) => {
     const type_selected_list = _.reduce(type_tickable_collection, (result, tick) => (tick.checked ? [...result, tick.value] : result), [] as FileTypeEntity[]);
     this.searchFile({type_tickable_collection, type_selected_list});
   };
@@ -441,27 +393,35 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
         "open":      {text: "Open", action: this.eventContextMenuOpen},
         "open_tab":  {text: "Open in a new tab", action: this.eventContextMenuOpenTab},
         "copy_link": {icon: IconType.LINK, text: "Copy link", action: this.eventContextMenuCopyLink},
-        "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.openFileRenameDialog},
-        "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.openFileTagDialog},
+        "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.openFileNameChangeDialog},
+        "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.openFileTagChangeDialog},
         "download":  {icon: IconType.DOWNLOAD, text: "Download", action: this.eventContextMenuDownload},
         // "share":     {icon: IconType.SHARE, text: "Share", action: () => {}},
-        "delete": {icon: IconType.BIN, text: "Delete", action: this.openDeleteFileDialog},
+        "delete": {icon: IconType.BIN, text: "Delete", action: this.openFileDeleteDialog},
       };
     }
 
     return {
       "copy_link": {icon: IconType.LINK, text: "Copy links", action: this.eventContextMenuCopyLink},
-      "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.openFileRenameDialog},
-      "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.openFileTagDialog},
+      "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.openFileNameChangeDialog},
+      "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.openFileTagChangeDialog},
       // "share":     {icon: IconType.SHARE, text: "Share", action: () => {}},
-      "delete":   {icon: IconType.BIN, text: "Delete", action: this.openDeleteFileDialog},
+      "delete":   {icon: IconType.BIN, text: "Delete", action: this.openFileDeleteDialog},
       "download": {icon: IconType.DOWNLOAD, text: "Download", action: this.eventContextMenuDownload},
     };
   };
 
-  private readonly eventContextMenuOpen = () => Router.push(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`);
-  private readonly eventContextMenuOpenTab = () => window.open(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`, "_blank");
-  private readonly eventContextMenuCopyLink = () => Helper.setClipboard(this.state.file_selected.reduce((r, v, i) => v ? [...r, this.state.file_list[i].getFilePath()] : r, [] as string[]).join("\n"));
+  private readonly eventContextMenuOpen = () => {
+    Router.push(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`);
+  }
+
+  private readonly eventContextMenuOpenTab = () => {
+    window.open(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`, "_blank");
+  }
+
+  private readonly eventContextMenuCopyLink = () => {
+    Helper.setClipboard(this.state.file_selected.reduce((r, v, i) => v ? [...r, this.state.file_list[i].getFilePath()] : r, [] as string[]).join("\n"));
+  }
 
   private readonly eventContextMenuReset = () => {
     this.searchFile({
@@ -475,24 +435,19 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     this.searchTag();
   };
 
-  private readonly eventContextMenuRenameSubmit = async (file_list: FileEntity[]) => {
-    this.closeDialog();
-    await Promise.all(_.map(file_list, async (value, i) => value ? await FileEntity.updateByID(file_list[i], file_list[i]) : false));
-    this.searchFile();
-  };
 
-  private readonly eventContextMenuSetTagListSubmit = async (file_tag_list: FileTagEntity[]) => {
-    this.closeDialog();
-    await Promise.all(_.map(this.state.file_selected, async (value, i) => value ? await FileEntity.updateByID(this.state.file_list[i], {...this.state.file_list[i], file_tag_list}) : false));
-    this.searchFile();
-    this.searchTag();
-  };
 
-  private readonly eventContextMenuDownload = async () => await FileEntity.confirmDownload(await FileEntity.requestDownload(_.filter(this.state.file_list, (e, key) => this.state.file_selected[key])));
+
+  private readonly eventContextMenuDownload = async () => {
+    await FileEntity.confirmDownload(await FileEntity.requestDownload(_.filter(this.state.file_list, (file, key) => this.state.file_selected[key])));
+  }
+
+  // endregion ----- Event handlers ----- endregion //
 
 }
 
 type SortOrder = Pick<FileEntity, "name" | "size" | "time_created">
+type TypeCheckbox = CheckboxCollection<{[key: string]: FileTypeEntity}>
 
 export interface FileBrowserProps {
   className?: string
@@ -532,7 +487,7 @@ interface State {
   tag_available_list: FileTagEntity[]
 
   type_selected_list: FileTypeEntity[]
-  type_tickable_collection: TickableCollection<FileTypeEntity>
+  type_tickable_collection: TypeCheckbox
 
   pagination_size: number
   pagination_total: number

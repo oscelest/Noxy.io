@@ -2,7 +2,7 @@ import _ from "lodash";
 import React from "react";
 import Permission from "../../../common/classes/Permission";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
-import Tickable, {TickableCollection} from "../../components/Form/Tickable";
+import Checkbox, {CheckboxCollection} from "../../components/Form/Checkbox";
 import Global from "../../Global";
 import Style from "./PermissionExplorer.module.scss";
 
@@ -24,7 +24,7 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
     this.props.onChange(new Permission(_.set({...this.props.permission} as Permission, permission, value)));
   };
 
-  private readonly getTickableItem = (text: string, value: PermissionLevel) => {
+  private readonly getCheckboxItem = (text: string, value: PermissionLevel) => {
     return {text, value, checked: this.isChecked(value), disabled: this.isDisabled(value)};
   };
 
@@ -57,9 +57,9 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
     return (
       <div className={Style.Admin}>
         <div className={Style.Header}>
-          <Tickable className={Style.Checkbox} onChange={_.noop}>
+          <Checkbox className={Style.Checkbox} onChange={_.noop}>
             {{admin: {text: "Administrator", value: null, checked: true, disabled: true}}}
-          </Tickable>
+          </Checkbox>
         </div>
         <p>Grants full permission to any and all API functionalities. Having administrator level permission overrules all other permission levels.</p>
         <p><b>Administrator rights can never be granted or removed outside of accessing the database.</b></p>
@@ -73,21 +73,21 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
     return (
       <div className={Style.Section}>
         <div className={Style.Header}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.USER]: this.getTickableItem("User management", PermissionLevel.USER)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.USER]: this.getCheckboxItem("User management", PermissionLevel.USER)}}
+          </Checkbox>
         </div>
         <div className={Style.Item}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.USER]: this.getTickableItem("Masquerade", PermissionLevel.USER_MASQUERADE)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.USER]: this.getCheckboxItem("Masquerade", PermissionLevel.USER_MASQUERADE)}}
+          </Checkbox>
           <p>Allows a user to access the data of another user. however any actions performed as that user will be logged as if performed by the masquerading user.</p>
           <b>Any action performed while masquerading will be logged as if having been performed by your own user.</b>
         </div>
         <div className={Style.Item}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.USER]: this.getTickableItem("Elevated access", PermissionLevel.USER_ELEVATED)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.USER]: this.getCheckboxItem("Elevated access", PermissionLevel.USER_ELEVATED)}}
+          </Checkbox>
           <p>Allows a user to access high risk data and to change other users data without masquerading as them.</p>
           <b>Performing changes as an elevated user is both logged and performed as coming from your user.</b>
         </div>
@@ -101,33 +101,33 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
     return (
       <div className={Style.Section}>
         <div className={Style.Header}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.API_KEY]: this.getTickableItem("API Key management", PermissionLevel.API_KEY)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.API_KEY]: this.getCheckboxItem("API Key management", PermissionLevel.API_KEY)}}
+          </Checkbox>
         </div>
         <div className={Style.Item}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.API_KEY]: this.getTickableItem("View API key permissions", PermissionLevel.API_KEY_VIEW)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.API_KEY]: this.getCheckboxItem("View API key permissions", PermissionLevel.API_KEY_VIEW)}}
+          </Checkbox>
           <p>Allows a user to see the API Key management page for API Keys attached to their account.</p>
         </div>
         <div className={Style.Item}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.API_KEY]: this.getTickableItem("Create new API keys", PermissionLevel.API_KEY_CREATE)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.API_KEY]: this.getCheckboxItem("Create new API keys", PermissionLevel.API_KEY_CREATE)}}
+          </Checkbox>
           <p>Allows creation of new API Keys to be attached to the account.</p>
         </div>
         <div className={Style.Item}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.API_KEY]: this.getTickableItem("Update existing API keys", PermissionLevel.API_KEY_UPDATE)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.API_KEY]: this.getCheckboxItem("Update existing API keys", PermissionLevel.API_KEY_UPDATE)}}
+          </Checkbox>
           <p>Allows updating of the rate limits and permissions for an API Key.</p>
           <b>It is impossible to grant a permission you don't have yourself.</b>
         </div>
         <div className={Style.Item}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.API_KEY]: this.getTickableItem("Delete existing API keys", PermissionLevel.API_KEY_DELETE)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.API_KEY]: this.getCheckboxItem("Delete existing API keys", PermissionLevel.API_KEY_DELETE)}}
+          </Checkbox>
           <p>Allows deletion of existing API keys.</p>
           <b>It is impossible to delete the last API Key of an account.</b>
         </div>
@@ -141,26 +141,26 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
     return (
       <div className={Style.Section}>
         <div className={Style.Header}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.FILE]: this.getTickableItem("File management", PermissionLevel.FILE)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.FILE]: this.getCheckboxItem("File management", PermissionLevel.FILE)}}
+          </Checkbox>
         </div>
         <div className={Style.Item}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.FILE]: this.getTickableItem("Upload file(s) to My Files", PermissionLevel.FILE_CREATE)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.FILE]: this.getCheckboxItem("Upload file(s) to My Files", PermissionLevel.FILE_CREATE)}}
+          </Checkbox>
           <p>Allows a user to upload files to their account.</p>
         </div>
         <div className={Style.Item}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.FILE]: this.getTickableItem("Update file(s) in My Files", PermissionLevel.FILE_UPDATE)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.FILE]: this.getCheckboxItem("Update file(s) in My Files", PermissionLevel.FILE_UPDATE)}}
+          </Checkbox>
           <p>Allows a user to update files on their account.</p>
         </div>
         <div className={Style.Item}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.FILE]: this.getTickableItem("Delete file(s) from My Files", PermissionLevel.FILE_DELETE)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.FILE]: this.getCheckboxItem("Delete file(s) from My Files", PermissionLevel.FILE_DELETE)}}
+          </Checkbox>
           <p>Allows a user to delete files from their account.</p>
         </div>
       </div>
@@ -173,31 +173,31 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
     return (
       <div className={Style.Section}>
         <div className={Style.Header}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.FILE]: this.getTickableItem("File tag management", PermissionLevel.FILE_TAG)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.FILE]: this.getCheckboxItem("File tag management", PermissionLevel.FILE_TAG)}}
+          </Checkbox>
         </div>
         <div className={Style.Item}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.FILE]: this.getTickableItem("Create file tag(s)", PermissionLevel.FILE_TAG_CREATE)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.FILE]: this.getCheckboxItem("Create file tag(s)", PermissionLevel.FILE_TAG_CREATE)}}
+          </Checkbox>
           <p>Allows a user to create new file tags attached to their account.</p>
         </div>
         <div className={Style.Item}>
-          <Tickable className={Style.Checkbox} onChange={this.eventTickableChange}>
-            {{[PermissionLevel.FILE]: this.getTickableItem("Delete file tag(s)", PermissionLevel.FILE_TAG_DELETE)}}
-          </Tickable>
+          <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+            {{[PermissionLevel.FILE]: this.getCheckboxItem("Delete file tag(s)", PermissionLevel.FILE_TAG_DELETE)}}
+          </Checkbox>
           <p>Allows a user to delete previously created file tags attached to their account.</p>
         </div>
       </div>
     );
   };
 
-  private readonly eventTickableChange = (tickable_collection: TickableCollection<PermissionLevel>) => {
+  private readonly eventCheckboxChange = (checkbox_collection: CheckboxCollection<{[key: string]: PermissionLevel}>) => {
     const permission = {...this.props.permission} as Permission;
-    for (let category in tickable_collection) {
-      if (!tickable_collection.hasOwnProperty(category)) continue;
-      const {value, checked} = tickable_collection[category];
+    for (let category in checkbox_collection) {
+      if (!checkbox_collection.hasOwnProperty(category)) continue;
+      const {value, checked} = checkbox_collection[category];
       _.set(permission, value, checked);
     }
     this.props.onChange(new Permission(permission));

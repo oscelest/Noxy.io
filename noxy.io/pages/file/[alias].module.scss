@@ -3,7 +3,7 @@
 .Component {
   flex:         1 1 auto;
   flex-flow:    column;
-  grid-row-gap: 10px;
+  grid-row-gap: 15px;
 
   .Content {
     flex:            1 1 auto;
@@ -79,5 +79,20 @@
 
       }
     }
+
+    .Privacy {
+      flex-flow:    column;
+      grid-row-gap: 10px;
+    }
+
+    .TagSearch {
+      grid-column-gap: 10px;
+
+      .Input {
+        flex: 1 1 auto;
+      }
+    }
+
+
   }
 }

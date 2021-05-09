@@ -103,15 +103,15 @@ export default class FileEntity extends Entity {
     form.remove();
   }
 
-  public static async updateByID(id: string | FileEntity, data: Properties<FileEntity>) {
+  public static async updateOne(id: string | FileEntity, data: Properties<FileEntity>) {
     id = typeof id === "string" ? id : id.getPrimaryKey();
     const result = await Axios.put<APIRequest<FileEntity>>(`${this.URL}/${id}`, new RequestData(data).toObject());
     return new this(result.data.content);
   }
 
-  public static async deleteByID(id: string | FileEntity) {
-    id = typeof id === "string" ? id : id.getPrimaryKey();
-    const result = await Axios.delete<APIRequest<FileEntity>>(`${this.URL}/${id}`);
+  public static async deleteOne(id_or_alias: string | FileEntity) {
+    id_or_alias = typeof id_or_alias === "string" ? id_or_alias : id_or_alias.getPrimaryKey();
+    const result = await Axios.delete<APIRequest<FileEntity>>(`${this.URL}/${id_or_alias}`);
     return new this(result.data.content);
   }
 
