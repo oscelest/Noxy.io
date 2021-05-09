@@ -5,15 +5,12 @@ import Router from "next/router";
 import PrettyBytes from "pretty-bytes";
 import React from "react";
 import FileTypeName from "../../../common/enums/FileTypeName";
-import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Conditional from "../../components/Application/Conditional";
 import Dialog, {DialogListenerType, DialogPriority} from "../../components/Application/Dialog";
 import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
-import ElementDialog from "../../components/Dialog/ElementDialog";
 import Button from "../../components/Form/Button";
 import Checkbox, {CheckboxCollection} from "../../components/Form/Checkbox";
 import EntityPicker from "../../components/Form/EntityPicker";
-import Input from "../../components/Form/Input";
 import RadioButton, {RadioButtonCollection} from "../../components/Form/RadioButton";
 import EllipsisText from "../../components/Text/EllipsisText";
 import Loader from "../../components/UI/Loader";
@@ -21,7 +18,6 @@ import PageHeader from "../../components/UI/PageHeader";
 import Placeholder from "../../components/UI/Placeholder";
 import FileEntity from "../../entities/FileEntity";
 import FileTagEntity from "../../entities/FileTagEntity";
-import IconType from "../../enums/IconType";
 import Size from "../../enums/Size";
 import FatalException from "../../exceptions/FatalException";
 import Global from "../../Global";
@@ -58,7 +54,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
       },
 
       tag_search:         "",
-      tag_loading:        true,
+      loading:            true,
       tag_selected_list:  [],
       tag_available_list: [],
       tag_privacy:        {
@@ -66,41 +62,6 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
       },
     };
   }
-
-  private readonly closeDialog = () => this.state.ref_dialog.current?.close();
-
-  private readonly searchTag = (filter: Partial<State> = {}) => {
-    this.setState({tag_loading: true, ...filter} as State);
-    this.searchTagInternal();
-  };
-
-  private readonly searchTagInternal = _.debounce(
-    async () => {
-      const next_state = {} as State;
-
-      try {
-        next_state.tag_loading = false;
-        next_state.tag_available_list = await FileTagEntity.findMany({name: this.state.tag_search, exclude: this.state.tag_selected_list});
-      }
-      catch (error) {
-        console.error(error);
-      }
-      this.setState(next_state);
-    },
-    500,
-  );
-
-  private readonly createTag = async (name: string) => {
-    try {
-      return _.find(this.state.tag_selected_list, tag => tag.name.toLowerCase() === name.toLowerCase())
-        ?? _.find(this.state.tag_available_list, tag => tag.name.toLowerCase() === name.toLowerCase())
-        ?? await FileTagEntity.createOne({name});
-    }
-    catch (error) {
-      if (error?.response?.status === 409) return await FileTagEntity.findOneByName(name);
-      throw error;
-    }
-  };
 
   public async componentDidMount() {
     if (!this.context.state.user) return this.setState({file_loading: false});
@@ -124,7 +85,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
       this.setState(next_state);
 
       if (next_state.file.user_created.getPrimaryKey() === this.context.state.user.getPrimaryKey()) {
-        next_state.tag_loading = false;
+        next_state.loading = false;
         next_state.tag_available_list = await FileTagEntity.findMany({name: this.state.tag_search, exclude: next_state.file.file_tag_list});
       }
 
@@ -144,14 +105,14 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     }
     catch (error) {
       const exception = error as AxiosError;
-      if (exception.response?.status === 404) return this.setState({tag_loading: false, file_loading: false, data_loading: false})
+      if (exception.response?.status === 404) return this.setState({loading: false, file_loading: false, data_loading: false});
       throw new FatalException("Unexpected error occurred", "A server error has caused this file to be unable to load. Please try again later. This error has already been reported.");
     }
   }
 
   public render() {
     const {file, file_element, file_loading, file_privacy} = this.state;
-    const {tag_search, tag_loading, tag_privacy, tag_selected_list, tag_available_list} = this.state;
+    const {tag_privacy, tag_selected_list, tag_available_list} = this.state;
     const loading_sidebar = _.includes([FileTypeName.AUDIO, FileTypeName.IMAGE, FileTypeName.VIDEO], file?.getFileType()) && !file_element;
 
     return (
@@ -216,13 +177,8 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
                   </Conditional>
 
                   <Conditional condition={true}>
-                    <div className={Style.TagSearch}>
-                      <Input className={Style.Input} label={"Search for tags"} value={tag_search} onChange={this.eventTagSearchChange}/>
-                      <Conditional condition={this.context.hasPermission(PermissionLevel.FILE_TAG_CREATE)}>
-                        <Button className={Style.Button} icon={IconType.UI_ADD} value={tag_search} disabled={tag_search.length < 3} onClick={this.eventTagCreateClick}/>
-                      </Conditional>
-                    </div>
-                    <EntityPicker loading={tag_loading} selected={tag_selected_list} available={tag_available_list} onChange={this.eventTagChange} onDelete={this.openDeleteTagDialog}/>
+                    <EntityPicker selected={tag_selected_list} available={tag_available_list}
+                                  onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openDeleteTagDialog}/>
                   </Conditional>
 
                 </Loader>
@@ -252,31 +208,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
   };
 
   private readonly openDeleteTagDialog = async (tag: FileTagEntity) => {
-    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog title={"Permanently delete tag?"} value={tag} onAccept={this.eventTagDelete}/>);
-  };
-
-  private readonly openDeleteFileDialog = async () => {
-    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog title={"Permanently delete file?"} value={this.props[FileAliasPageQuery.ALIAS]} onAccept={this.eventFileDelete}/>);
-  };
-
-  private readonly eventLoad = (event: React.SyntheticEvent<HTMLElement>) => this.setState({data_loading: false, file_element: event.currentTarget});
-  private readonly eventTagSearchChange = (tag_search: string) => this.searchTag({tag_search});
-
-  private readonly eventTagCreateClick = async (name: string) => {
-    if (!this.state.file) throw new FatalException("Could not create tag", "The file you're trying to create a new tag for could not be loaded or updated. Please reload the page and try again.");
-    const file_tag = await this.createTag(name);
-
-    const tag_selected_list = _.uniqBy([...this.state.tag_selected_list, file_tag], tag => tag.name);
-    const tag_available_list = _.filter(this.state.tag_available_list, tag => tag.name !== file_tag.name);
-
-    const file = await FileEntity.updateOne(this.state.file, {...this.state.file, file_tag_list: tag_selected_list});
-    this.setState({file, tag_selected_list, tag_available_list, tag_search: ""});
-  };
-
-  private readonly eventFileDelete = async (alias: string) => {
-    await FileEntity.deleteOne(this.props[FileAliasPageQuery.ALIAS]);
-    this.closeDialog();
-    return Router.push(`${location.origin}/file`);
+    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog ref={this.state.ref_dialog} title={"Permanently delete tag?"} value={tag} onAccept={this.eventTagDelete}/>);
   };
 
   private readonly eventTagDelete = async (tag: FileTagEntity) => {
@@ -289,8 +221,20 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
       tag_selected_list:  this.state.file.file_tag_list,
       tag_available_list: _.filter(this.state.tag_available_list, value => value.getPrimaryKey() !== tag.getPrimaryKey()),
     });
+  };
 
-    this.closeDialog();
+  private readonly openDeleteFileDialog = async () => {
+    const value = this.props[FileAliasPageQuery.ALIAS];
+    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog ref={this.state.ref_dialog} title={"Permanently delete file?"} value={value} onAccept={this.eventFileDelete}/>);
+  };
+
+  private readonly eventFileDelete = async (alias: string) => {
+    await FileEntity.deleteOne(alias);
+    return Router.push(`${location.origin}/file`);
+  };
+
+  private readonly eventLoad = (event: React.SyntheticEvent<HTMLElement>) => {
+    this.setState({data_loading: false, file_element: event.currentTarget});
   };
 
   private readonly eventTagChange = async (tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]) => {
@@ -302,6 +246,13 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     return FileEntity.updateOne(this.state.file, {...this.state.file, file_tag_list: tag_selected_list});
   };
 
+  private readonly eventTagSearch = async (name: string) => {
+    this.setState({tag_available_list: await FileTagEntity.findMany({name, exclude: this.state.tag_selected_list})});
+  };
+
+  private readonly eventTagCreate = async (name: string) => {
+    return FileTagEntity.createOne({name});
+  };
 
   private readonly eventFilePrivacyChange = async (file_privacy: FilePrivacyRadioButton) => {
     if (!this.state.file) {
@@ -330,7 +281,6 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     }
   };
 
-
   private readonly eventTagPrivacyChange = async (tag_privacy: TagPrivacyCheckbox) => {
     this.setState({tag_privacy});
   };
@@ -349,7 +299,7 @@ interface FileAliasPageProps extends PageProps {
 }
 
 interface State {
-  ref_dialog: React.RefObject<ElementDialog>
+  ref_dialog: React.RefObject<ConfirmDialog<any>>
 
   data?: any
   data_loading: boolean
@@ -360,7 +310,7 @@ interface State {
   file_privacy: FilePrivacyRadioButton
 
   tag_search: string
-  tag_loading: boolean
+  loading: boolean
   tag_selected_list: FileTagEntity[]
   tag_available_list: FileTagEntity[]
   tag_privacy: TagPrivacyCheckbox

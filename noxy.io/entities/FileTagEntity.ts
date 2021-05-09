@@ -1,4 +1,5 @@
-import Axios from "axios";
+import Axios, {AxiosError} from "axios";
+import _ from "lodash";
 import Order from "../../common/enums/Order";
 import Entity from "../classes/Entity";
 import RequestData from "../classes/RequestData";
@@ -50,13 +51,33 @@ export default class FileTagEntity extends Entity {
     return new this(result.data.content);
   }
 
-  public static async createOne(parameters: FileTagEntityCreateParameters) {
+  public static async createOne(parameters: FileTagEntityCreateParameters, ... caches: FileTagEntity[][]) {
+    let result: FileTagEntity | undefined = undefined;
+
     try {
-      const result = await Axios.post<APIRequest<FileTagEntity>>(this.URL, new RequestData(parameters).toObject());
-      return new this(result.data.content);
+      if (caches.length) {
+        for (let cache of caches) {
+          for (let tag of cache) {
+            if (tag.name.toLowerCase() === parameters.name.toLowerCase()) {
+              result = tag;
+              break;
+            }
+          }
+          if (result !== undefined) break;
+        }
+      }
+
+      if (result === undefined) {
+        const response = await Axios.post<APIRequest<FileTagEntity>>(this.URL, new RequestData(parameters).toObject());
+        result = new this(response.data.content)
+      }
+
+      return result;
     }
     catch (error) {
-      throw error;
+      const exception = error as AxiosError;
+      if (exception.response?.status === 409) return await FileTagEntity.findOneByName(parameters.name);
+      throw exception;
     }
   }
 

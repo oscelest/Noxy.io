@@ -65,7 +65,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
       file_selected: [],
       file_order:    FileExplorer.defaultOrder,
 
-      tag_loading:        true,
+      loading:            true,
       tag_search:         "",
       tag_set_operation:  SetOperation.UNION,
       tag_selected_list:  [],
@@ -117,13 +117,13 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   );
 
   public readonly searchTag = (filter: Partial<State> = {}) => {
-    this.setState({tag_loading: true, ...filter} as State);
+    this.setState({loading: true, ...filter} as State);
     this.searchTagInternal();
   };
 
   private readonly searchTagInternal = _.debounce(
     async () => {
-      const next_state = {tag_loading: false} as State;
+      const next_state = {loading: false} as State;
 
       try {
         next_state.tag_available_list = this.sortTagList(await FileTagEntity.findMany({name: this.state.tag_search, exclude: this.state.tag_selected_list}));
@@ -159,7 +159,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   public render() {
     const {type_tickable_collection} = this.state;
-    const {tag_search, tag_set_operation, tag_loading, tag_selected_list, tag_available_list} = this.state;
+    const {tag_search, tag_set_operation, tag_selected_list, tag_available_list} = this.state;
     const {file_loading, file_selected, file_list, file_order} = this.state;
 
     const classes = [Style.Component];
@@ -210,7 +210,8 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
               }}
             </Switch>
 
-            <EntityPicker loading={tag_loading} selected={tag_selected_list} available={tag_available_list} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
+            <EntityPicker selected={tag_selected_list} available={tag_available_list}
+                          onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
           </div>
 
         </div>
@@ -275,6 +276,11 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     this.setState({dialog_change_tag: true, dialog_change_file: true});
   }
 
+  private readonly eventUploadDialogClose = () => {
+    if (this.state.dialog_change_file) this.searchFile();
+    if (this.state.dialog_change_tag) this.searchTag();
+  };
+
   private readonly openFileNameChangeDialog = () => {
     Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT,
       <ElementDialog ref={this.state.ref_dialog}>
@@ -311,7 +317,6 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private readonly eventFileDelete = async (file_list: FileEntity[]) => {
-    this.closeDialog();
     await Promise.all(_.map(file_list, async file => FileEntity.deleteOne(file)));
     this.searchFile();
   };
@@ -321,7 +326,6 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private eventTagDelete = async (tag: FileTagEntity) => {
-    this.closeDialog();
     await FileTagEntity.deleteOne(tag.id);
     this.searchFile();
     this.searchTag({
@@ -334,13 +338,17 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   // region    ----- Event handlers -----    region //
 
-  private readonly eventTagChange = async (tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]) => {
-    this.searchFile({tag_selected_list, tag_available_list});
+
+  private readonly eventTagSearch = async (name: string) => {
+    this.setState({tag_available_list: await FileTagEntity.findMany({name, exclude: this.state.tag_selected_list})});
   };
 
-  private readonly eventUploadDialogClose = () => {
-    if (this.state.dialog_change_file) this.searchFile();
-    if (this.state.dialog_change_tag) this.searchTag();
+  private readonly eventTagCreate = async (name: string) => {
+    return FileTagEntity.createOne({name});
+  };
+
+  private readonly eventTagChange = async (tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]) => {
+    this.searchFile({tag_selected_list, tag_available_list});
   };
 
   private readonly eventSetOperationChange = (tag_set_operation: SetOperation) => {
@@ -412,15 +420,15 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private readonly eventContextMenuOpen = () => {
-    Router.push(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`);
+    return Router.push(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`);
   }
 
   private readonly eventContextMenuOpenTab = () => {
-    window.open(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`, "_blank");
+    return window.open(`${location.href}/${this.state.file_list[_.findIndex(this.state.file_selected)].id}`, "_blank");
   }
 
   private readonly eventContextMenuCopyLink = () => {
-    Helper.setClipboard(this.state.file_selected.reduce((r, v, i) => v ? [...r, this.state.file_list[i].getFilePath()] : r, [] as string[]).join("\n"));
+    return Helper.setClipboard(this.state.file_selected.reduce((r, v, i) => v ? [...r, this.state.file_list[i].getFilePath()] : r, [] as string[]).join("\n"));
   }
 
   private readonly eventContextMenuReset = () => {
@@ -478,7 +486,7 @@ interface State {
   file_selected: boolean[]
   file_order: SortableCollection<SortOrder>
 
-  tag_loading: boolean
+  loading: boolean
   tag_search: string
   tag_set_operation: SetOperation
   tag_selected_list: FileTagEntity[]

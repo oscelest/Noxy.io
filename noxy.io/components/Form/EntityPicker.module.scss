@@ -1,21 +1,51 @@
+$row-gap: 7px;
+$col-gap: 10px;
+
+
 .Component {
   flex:         1 1 auto;
   flex-flow:    column;
-  padding:      0 5px;
-  grid-row-gap: 7px;
   overflow:     auto;
+  grid-row-gap: $row-gap;
 
-  .Selected {
-    flex: 0 0 auto;
+  &:not(.Horizontal) {
+    .List {
+      flex-flow: column;
+
+      .Available {
+        flex: 1 1 auto;
+      }
+    }
   }
 
-  .Available {
-    flex: 1 1 auto;
+  &.Horizontal {
+    .List {
+      flex-flow: row;
+
+      .Available, .Selected {
+        width: calc(50% - 5px);
+      }
+    }
   }
 
-  .Available, .Selected {
-    flex-flow:    column;
-    grid-row-gap: 7px;
+
+  .Search {
+    grid-column-gap: $col-gap;
+
+    .Input {
+      flex: 1 1 auto;
+    }
+  }
+
+  .List {
+    grid-row-gap:    $row-gap;;
+    grid-column-gap: $col-gap;
+
+    .Available, .Selected {
+      flex:         0 0 auto;
+      flex-flow:    column;
+      grid-row-gap: $row-gap;
+    }
   }
 
   .Item {
@@ -38,7 +68,7 @@
       grid-column-gap: 5px;
 
       .Icon {
-        font-size: 12px;
+        font-size:   12px;
         line-height: 12px;
       }
 
@@ -58,8 +88,8 @@
     }
 
     .Delete {
-      visibility: hidden;
-      font-size: 16px;
+      visibility:  hidden;
+      font-size:   16px;
       line-height: 16px;
     }
   }

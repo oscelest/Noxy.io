@@ -5,27 +5,16 @@
   grid-row-gap: 20px;
   overflow-y:   auto;
 
-  .FileTagContainer {
-    flex:            0 0 auto;
-    flex-flow:       row;
+  .TagSearch {
     grid-column-gap: 10px;
 
-    .FileTagButton {
-      flex: 0 0 auto;
-    }
-
-    .FileTagInput {
+    .Input {
       flex: 1 1 auto;
     }
   }
 
-  .FileTagList {
-    grid-row-gap:    10px;
-    grid-column-gap: 10px;
-    min-height:      38px;
-    padding:         0 10px;
-    border-left:     2px solid $background-secondary-color;
-    border-right:    2px solid $background-secondary-color;
+  .TagList {
+    height: 200px;
   }
 
   .FileList {
