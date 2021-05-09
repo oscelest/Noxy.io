@@ -270,7 +270,7 @@ export default class File extends Entity<File>(TypeORM) {
 
   @File.post("/request-download")
   @File.bindParameter<Request.postRequestDownload>("id", ValidatorType.UUID, {flag_array: true})
-  private static async requestDownload({locals: {respond, user, parameters}}: Server.Request<{}, Response.postRequestDownload, Request.postRequestDownload>, response: Server.Response) {
+  private static async requestDownload({locals: {respond, parameters}}: Server.Request<{}, Response.postRequestDownload, Request.postRequestDownload>) {
     const {id} = parameters!;
 
     const files = await this.performSelect(id);
@@ -293,7 +293,7 @@ export default class File extends Entity<File>(TypeORM) {
 
   @File.post("/confirm-download", {user: false})
   @File.bindParameter<Request.postConfirmDownload>("token", ValidatorType.STRING)
-  private static async confirmDownload({locals: {respond, user, parameters}}: Server.Request<{}, Response.postConfirmDownload, Request.postConfirmDownload>, response: Server.Response) {
+  private static async confirmDownload({locals: {parameters}}: Server.Request<{}, Response.postConfirmDownload, Request.postConfirmDownload>, response: Server.Response) {
     const {token} = parameters!;
     const path = Path.resolve(process.env.TEMP!, token);
     const name = `files_${Moment().format("YYYY_MM_DD_H_m_s")}.zip`;
