@@ -1,9 +1,9 @@
+import {AxiosError} from "axios";
 import _ from "lodash";
 import {NextPageContext} from "next";
 import Router from "next/router";
 import PrettyBytes from "pretty-bytes";
 import React from "react";
-import {v4} from "uuid";
 import FileTypeName from "../../../common/enums/FileTypeName";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Conditional from "../../components/Application/Conditional";
@@ -14,6 +14,7 @@ import Button from "../../components/Form/Button";
 import Checkbox, {CheckboxCollection} from "../../components/Form/Checkbox";
 import EntityPicker from "../../components/Form/EntityPicker";
 import Input from "../../components/Form/Input";
+import RadioButton, {RadioButtonCollection} from "../../components/Form/RadioButton";
 import EllipsisText from "../../components/Text/EllipsisText";
 import Loader from "../../components/UI/Loader";
 import PageHeader from "../../components/UI/PageHeader";
@@ -51,15 +52,18 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
 
       file_loading: true,
       file_privacy: {
-        "visibility": Checkbox.createElement(true, "Private", true, false),
-        "link":       Checkbox.createElement(true, "Shareable link", false, true),
-        "tags":       Checkbox.createElement(true, "Public tags", false, true),
+        "private": RadioButton.createElement(true, "Private", false, false),
+        "link":    RadioButton.createElement(true, "Only with link", false, false),
+        "public":  RadioButton.createElement(true, "Public", false, false),
       },
 
       tag_search:         "",
       tag_loading:        true,
       tag_selected_list:  [],
       tag_available_list: [],
+      tag_privacy:        {
+        "public": Checkbox.createElement(true, "Public tags", false, false),
+      },
     };
   }
 
@@ -101,36 +105,54 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
   public async componentDidMount() {
     if (!this.context.state.user) return this.setState({file_loading: false});
 
-    const next_state = {} as State;
-    next_state.file_loading = false;
-    next_state.file = await FileEntity.getByID(this.props[FileAliasPageQuery.ALIAS]);
+    try {
+      const next_state = {} as State;
 
-    this.setState(next_state);
+      next_state.file_loading = false;
+      next_state.file = await FileEntity.getByID(this.props[FileAliasPageQuery.ALIAS]);
 
-    if (next_state.file.user_created.getPrimaryKey() === this.context.state.user.getPrimaryKey()) {
-      next_state.tag_loading = false;
-      next_state.tag_available_list = await FileTagEntity.findMany({name: this.state.tag_search, exclude: next_state.file.file_tag_list});
+      if (next_state.file.share_code === null) {
+        next_state.file_privacy = {...this.state.file_privacy, private: {...this.state.file_privacy.private, checked: true}} as FilePrivacyRadioButton;
+      }
+      else if (next_state.file.share_code === "") {
+        next_state.file_privacy = {...this.state.file_privacy, public: {...this.state.file_privacy.public, checked: true}} as FilePrivacyRadioButton;
+      }
+      else {
+        next_state.file_privacy = {...this.state.file_privacy, link: {...this.state.file_privacy.link, checked: true}} as FilePrivacyRadioButton;
+      }
+
+      this.setState(next_state);
+
+      if (next_state.file.user_created.getPrimaryKey() === this.context.state.user.getPrimaryKey()) {
+        next_state.tag_loading = false;
+        next_state.tag_available_list = await FileTagEntity.findMany({name: this.state.tag_search, exclude: next_state.file.file_tag_list});
+      }
+
+      if (next_state.file.user_created.getPrimaryKey() === this.context.state.user.getPrimaryKey() || next_state.file.flag_public_tag) {
+        next_state.tag_selected_list = next_state.file.file_tag_list;
+      }
+
+      switch (next_state.file.getFileType()) {
+        case FileTypeName.TEXT:
+          return this.setState({...next_state, data_loading: false, data: await FileEntity.getDataByID(next_state.file.id)});
+        case FileTypeName.AUDIO:
+        case FileTypeName.VIDEO:
+          return this.setState({...next_state, data_loading: false, data: next_state.file.getDataPath()});
+        default:
+          return this.setState(next_state);
+      }
     }
-
-    // TODO: Replace with privacy check
-    if (next_state.file.file_tag_list.length) {
-      next_state.tag_selected_list = next_state.file.file_tag_list;
-    }
-
-    switch (next_state.file.getFileType()) {
-      case FileTypeName.TEXT:
-        return this.setState({...next_state, data_loading: false, data: await FileEntity.getDataByID(next_state.file.id)});
-      case FileTypeName.AUDIO:
-      case FileTypeName.VIDEO:
-        return this.setState({...next_state, data_loading: false, data: next_state.file.getDataPath()});
-      default:
-        return this.setState(next_state);
+    catch (error) {
+      const exception = error as AxiosError;
+      if (exception.response?.status === 404) return this.setState({tag_loading: false, file_loading: false, data_loading: false})
+      throw new FatalException("Unexpected error occurred", "A server error has caused this file to be unable to load. Please try again later. This error has already been reported.");
     }
   }
 
   public render() {
     const {file, file_element, file_loading, file_privacy} = this.state;
-    const {tag_search, tag_loading, tag_selected_list, tag_available_list} = this.state;
+    const {tag_search, tag_loading, tag_privacy, tag_selected_list, tag_available_list} = this.state;
+    const loading_sidebar = _.includes([FileTypeName.AUDIO, FileTypeName.IMAGE, FileTypeName.VIDEO], file?.getFileType()) && !file_element;
 
     return (
       <Loader size={Size.LARGE} show={file_loading}>
@@ -142,7 +164,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
                 {this.renderFile()}
               </div>
               <div className={Style.Sidebar}>
-                <Loader size={Size.NORMAL} show={!file_element}>
+                <Loader size={Size.NORMAL} show={loading_sidebar}>
 
                   <div className={Style.Info}>
                     <span className={Style.Header}>File size</span>
@@ -180,8 +202,11 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
                   </Conditional>
 
                   <Conditional condition={file && this.context.state.user?.getPrimaryKey() === file?.user_created.getPrimaryKey()}>
-                    <Checkbox className={Style.Privacy} onChange={this.eventPrivacyChange}>
+                    <RadioButton className={Style.Privacy} onChange={this.eventFilePrivacyChange}>
                       {file_privacy}
+                    </RadioButton>
+                    <Checkbox className={Style.Privacy} onChange={this.eventTagPrivacyChange}>
+                      {tag_privacy}
                     </Checkbox>
                   </Conditional>
 
@@ -216,7 +241,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
       case FileTypeName.IMAGE:
         return <img className={Style.Image} src={this.state.file.getDataPath()} alt={""} onLoad={this.eventLoad}/>;
       case FileTypeName.TEXT:
-        return <textarea className={Style.Textarea} value={this.state.data} readOnly={true} onLoad={this.eventLoad}/>;
+        return <textarea className={Style.Textarea} value={this.state.data} readOnly={true}/>;
       case FileTypeName.AUDIO:
         return <audio controls={true} src={this.state.data} onLoadedMetadata={this.eventLoad}/>;
       case FileTypeName.VIDEO:
@@ -269,26 +294,45 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
   };
 
   private readonly eventTagChange = async (tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]) => {
-    if (!this.state.file) throw new FatalException("Could not manage tags", "The file you're trying to mange the tags for could not be loaded or updated. Please reload the page and try again.");
+    if (!this.state.file) {
+      throw new FatalException("Could not manage tags", "The system encountered an unexpected error while managing the tags for this file. Please reload the page and try again.");
+    }
+
     this.setState({tag_selected_list, tag_available_list});
     return FileEntity.updateOne(this.state.file, {...this.state.file, file_tag_list: tag_selected_list});
   };
 
-  private readonly eventPrivacyChange = async (privacy: PrivacyCheckbox) => {
-    privacy.link.disabled = privacy.visibility.checked;
-    privacy.tags.disabled = privacy.visibility.checked;
-    if (privacy.visibility.checked) {
-      privacy.link.checked = false;
-      privacy.tags.checked = false;
+
+  private readonly eventFilePrivacyChange = async (file_privacy: FilePrivacyRadioButton) => {
+    if (!this.state.file) {
+      throw new FatalException("Could not manage file privacy", "The system encountered an unexpected error while managing the privacy settings for this file. Please reload the page and try again.");
     }
 
-    if (privacy.link.checked) {
-      await Router.push({pathname: location.origin + location.pathname, query: {share: v4()}});
+    this.setState({file_privacy});
+    if (file_privacy.private.checked) {
+      this.state.file.share_code = null;
+    }
+    else if (file_privacy.public.checked) {
+      this.state.file.share_code = "";
+    }
+    else {
+      this.state.file.share_code = this.state.file.id;
+    }
+
+    const file = await FileEntity.updateOne(this.props[FileAliasPageQuery.ALIAS], this.state.file);
+    this.setState({file});
+
+    if (file_privacy.link.checked) {
+      await Router.push({pathname: location.origin + location.pathname, query: {share: file.share_code}});
     }
     else {
       await Router.push({pathname: location.origin + location.pathname});
     }
-    this.setState({file_privacy: privacy});
+  };
+
+
+  private readonly eventTagPrivacyChange = async (tag_privacy: TagPrivacyCheckbox) => {
+    this.setState({tag_privacy});
   };
 
 }
@@ -297,7 +341,8 @@ enum FileAliasPageQuery {
   ALIAS = "alias",
 }
 
-type PrivacyCheckbox = CheckboxCollection<{visibility: boolean, link: boolean, tags: boolean}>
+type TagPrivacyCheckbox = CheckboxCollection<{public: boolean}>
+type FilePrivacyRadioButton = RadioButtonCollection<"private" | "link" | "public", boolean>
 
 interface FileAliasPageProps extends PageProps {
   [FileAliasPageQuery.ALIAS]: string
@@ -312,10 +357,11 @@ interface State {
   file?: FileEntity
   file_element?: HTMLElement
   file_loading: boolean
-  file_privacy: PrivacyCheckbox
+  file_privacy: FilePrivacyRadioButton
 
   tag_search: string
   tag_loading: boolean
   tag_selected_list: FileTagEntity[]
   tag_available_list: FileTagEntity[]
+  tag_privacy: TagPrivacyCheckbox
 }

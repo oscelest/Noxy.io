@@ -7,7 +7,6 @@ import Input from "../components/Form/Input";
 import ErrorText from "../components/Text/ErrorText";
 import TitleText from "../components/Text/TitleText";
 import UserEntity from "../entities/UserEntity";
-import ButtonType from "../enums/ButtonType";
 import InputType from "../enums/InputType";
 import Global from "../Global";
 import Style from "./PasswordResetRequestForm.module.scss";
@@ -73,7 +72,7 @@ export default class PasswordResetRequestForm extends React.Component<PasswordRe
         <TitleText>Reset password</TitleText>
         {this.renderError()}
         <Input className={Style.Input} type={InputType.EMAIL} label={"Email"} value={email} error={field_errors.email} autoComplete={"username"} onChange={this.eventInputEmailChange}/>
-        <Button className={Style.Button} type={ButtonType.SUCCESS} loading={flag_loading} onClick={this.submit}>Submit</Button>
+        <Button className={Style.Button} loading={flag_loading} onClick={this.submit}>Submit</Button>
       </div>
     );
   }

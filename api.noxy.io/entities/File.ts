@@ -2,12 +2,14 @@ import ADMZip from "adm-zip";
 import Crypto from "crypto";
 import * as FS from "fs";
 import _ from "lodash";
+import Moment from "moment";
 import {customAlphabet} from "nanoid";
 import Path from "path";
 import * as TypeORM from "typeorm";
 import {v4} from "uuid";
 import Entity, {Pagination} from "../../common/classes/Entity";
 import PermissionLevel from "../../common/enums/PermissionLevel";
+import Privacy from "../../common/enums/Privacy";
 import SetOperation from "../../common/enums/SetOperation";
 import ValidatorType from "../../common/enums/ValidatorType";
 import ServerException from "../../common/exceptions/ServerException";
@@ -17,9 +19,9 @@ import FileExtension, {FileExtensionJSON} from "./FileExtension";
 import FileTag, {FileTagJSON} from "./FileTag";
 import FileType from "./FileType";
 import User, {UserJSON} from "./User";
-import Moment from 'moment';
 
-const NanoID = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 16);
+const Alias = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 16);
+const ShareCode = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 32);
 
 @TypeORM.Entity()
 @TypeORM.Index("time_created", ["time_created"])
@@ -41,6 +43,15 @@ export default class File extends Entity<File>(TypeORM) {
 
   @TypeORM.Column({type: "int"})
   public size: number;
+
+  @TypeORM.Column({type: "enum", enum: Privacy})
+  public privacy: Privacy;
+
+  @TypeORM.Column({type: "varchar", length: 32})
+  public share_code: string;
+
+  @TypeORM.Column({type: "boolean"})
+  public flag_public_tag: boolean;
 
   @TypeORM.ManyToMany(() => FileTag, tag => tag.file_list)
   @TypeORM.JoinTable({
@@ -76,15 +87,17 @@ export default class File extends Entity<File>(TypeORM) {
 
   public toJSON(): FileJSON {
     return {
-      id:             this.id,
-      name:           this.name,
-      size:           this.size,
-      alias:          this.alias,
-      file_extension: this.file_extension.toJSON(),
-      file_tag_list:  _.map(this.file_tag_list, entity => entity.toJSON()),
-      user_created:   this.user_created.toJSON(),
-      time_created:   this.time_created,
-      time_updated:   this.time_updated,
+      id:              this.id,
+      name:            this.name,
+      size:            this.size,
+      alias:           this.alias,
+      share_code:      this.share_code,
+      flag_public_tag: this.flag_public_tag,
+      file_extension:  this.file_extension.toJSON(),
+      file_tag_list:   _.map(this.file_tag_list, entity => entity.toJSON()),
+      user_created:    this.user_created.toJSON(),
+      time_created:    this.time_created,
+      time_updated:    this.time_updated,
     };
   }
 
@@ -102,12 +115,20 @@ export default class File extends Entity<File>(TypeORM) {
     return query;
   }
 
-  public static addWhereID(query: TypeORM.SelectQueryBuilder<File>, id: string) {
+  public static async performSelect(id: string): Promise<File>
+  public static async performSelect(id: string[]): Promise<File[]>
+  public static async performSelect(id: string | string[]): Promise<File | File[]> {
+    if (Array.isArray(id)) {
+      const id_list = id.filter(id => id.match(/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i));
+      const alias_list = id.filter(alias => alias.match(/^[a-zA-Z0-9-_]{16}$/));
+      return this.createSelect().where(`${this.name}.id IN :id_list`, {id_list}).orWhere(`${this.name}.alias IN :alias_list`, {alias_list}).getMany();
+    }
+
     if (id.match(/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i)) {
-      return query.andWhere(`${this.name}.id = :id`, {id});
+      return this.createSelect().andWhere(`${this.name}.id = :id`, {id}).getOneOrFail();
     }
     else if (id.match(/^[a-zA-Z0-9-_]{16}$/)) {
-      return query.andWhere(`${this.name}.alias = :id`, {id});
+      return this.createSelect().andWhere(`${this.name}.alias = :id`, {id}).getOneOrFail();
     }
     else {
       throw new ServerException(400, {id}, "ID or alias is malformed.");
@@ -164,41 +185,35 @@ export default class File extends Entity<File>(TypeORM) {
   }
 
   @File.get("/:id")
-  public static async findOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.getFindOne, Request.getFindOne>) {
-    const query = this.createSelect();
-
-    this.addWhereID(query, id);
-    this.addValueClause(query, "user_created", user?.id);
+  @File.bindParameter<Request.getFindOne>("share_code", ValidatorType.STRING, {max_length: 32})
+  public static async findOne({params: {id}, locals: {respond, parameters, user}}: Server.Request<{id: string}, Response.getFindOne, Request.getFindOne>) {
+    const {share_code} = parameters!;
 
     try {
-      return respond?.(await query.getOneOrFail());
+      const file = await this.performSelect(id);
+      if (file.share_code === null && user?.id !== file.user_created.id) return respond?.(new ServerException(403, {id}));
+      if (file.share_code && file.share_code !== share_code && user?.id !== file.user_created.id) return respond?.(new ServerException(403, {id}));
+      if (!file.flag_public_tag && user?.id !== file.user_created.id) file.file_tag_list = [];
+
+      return respond?.(file);
     }
     catch (error) {
+      if (error instanceof TypeORM.EntityNotFoundError) return respond?.(new ServerException(404, {id}));
       return respond?.(error);
     }
   }
 
   @File.get("/data/:id", {user: false})
   public static async readOne({params: {id}, locals: {respond}}: Server.Request<{id: string}, Response.getReadOne, Request.getReadOne>, response: Server.Response) {
-    const where = {} as TypeORM.ObjectLiteral;
-
-    if (id.match(/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i)) {
-      where.id = id;
-    }
-    else if (id.match(/^[a-zA-Z0-9-_]{16}$/)) {
-      where.alias = id;
-    }
-    else {
-      return respond?.(new ServerException(400, {where}, "ID or alias is malformed."));
-    }
 
     try {
-      const file = await this.createSelect().where(where).getOneOrFail();
+      const file = await this.performSelect(id);
       response.setHeader("Content-Type", file.file_extension.mime_type);
       // response.setHeader("Content-Disposition", `attachment; filename="filename.jpg"`);
       response.sendFile(Path.resolve(process.env.FILE_PATH!, file.alias));
     }
     catch (error) {
+
       return respond?.(error);
     }
   }
@@ -216,13 +231,16 @@ export default class File extends Entity<File>(TypeORM) {
     const entity = TypeORM.getRepository(File).create();
     entity.id = v4();
     entity.name = file.originalname;
-    entity.alias = NanoID();
+    entity.alias = Alias();
     entity.size = file.size;
+    entity.privacy = Privacy.PRIVATE;
+    entity.share_code = ShareCode();
+    entity.flag_public_tag = false;
     entity.user_created = user!;
 
     try {
       const {id} = await FileType.createSelect().where({name: file.mimetype.split("/")[0]}).getOneOrFail();
-      entity.file_extension = await FileExtension.createSelect().where({file_type: id, mime_type: file.mimetype}).getOneOrFail();
+      entity.file_extension = await FileExtension.createSelect().where({file_type: id, name: _.last(entity.name.split(".")), mime_type: file.mimetype}).getOneOrFail();
     }
     catch (error) {
       return respond?.(new ServerException(400, {mime_type: file.mimetype}, "File MIME type is not accepted"));
@@ -283,13 +301,15 @@ export default class File extends Entity<File>(TypeORM) {
 
   @File.put("/:id", {permission: PermissionLevel.FILE_UPDATE})
   @File.bindParameter<Request.putUpdateOne>("name", ValidatorType.STRING, {min_length: 3}, {flag_optional: true})
+  @File.bindParameter<Request.putUpdateOne>("privacy", ValidatorType.ENUM, Privacy, {flag_optional: true})
+  @File.bindParameter<Request.putUpdateOne>("flag_public_tag", ValidatorType.BOOLEAN, {flag_optional: true})
   @File.bindParameter<Request.putUpdateOne>("file_extension", ValidatorType.UUID, {flag_optional: true})
   @File.bindParameter<Request.putUpdateOne>("file_tag_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
   private static async updateOne({params: {id}, locals: {respond, user, parameters}}: Server.Request<{id: string}, Response.putUpdateOne, Request.putUpdateOne>) {
-    const {name, file_extension, file_tag_list} = parameters!;
+    const {name, privacy, flag_public_tag, file_extension, file_tag_list} = parameters!;
 
     try {
-      const {file_tag_list: current_file_tag_list, ...file} = await File.performSelect(id);
+      const {file_tag_list: current_file_tag_list, ...file} = await this.performSelect(id);
       if (file.user_created.id !== user?.id) return respond?.(new ServerException(403));
 
       if (file_tag_list) {
@@ -301,10 +321,12 @@ export default class File extends Entity<File>(TypeORM) {
         await this.createRelation(File, "file_tag_list").of(file.id).add(file_tag_add_list);
       }
 
-      if (name) file.name = name;
-      if (file_extension) file.file_extension = await FileExtension.performSelect(file_extension);
+      if (name !== undefined) file.name = name;
+      if (file_extension !== undefined) file.file_extension = await FileExtension.performSelect(file_extension);
+      if (flag_public_tag !== undefined) file.flag_public_tag = flag_public_tag;
+      if (privacy !== undefined) file.privacy = privacy;
 
-      respond?.(await this.performUpdate(id, file));
+      respond?.(await this.performUpdate(file.id, file));
     }
     catch (error) {
       respond?.(new ServerException(500, error));
@@ -344,6 +366,8 @@ export type FileJSON = {
   alias: string
   name: string
   size: number
+  share_code: string | null
+  flag_public_tag: boolean
   file_extension: FileExtensionJSON
   file_tag_list: FileTagJSON[]
   user_created: UserJSON
@@ -354,12 +378,12 @@ export type FileJSON = {
 namespace Request {
   export type getFindMany = getCount & Pagination
   export type getCount = {name?: string; file_type_list?: string[]; file_tag_list?: string[]; file_tag_set_operation?: SetOperation}
-  export type getFindOne = never
+  export type getFindOne = {share_code?: string}
   export type getReadOne = never
   export type postCreateOne = {file: FileHandle; file_tag_list?: string[]}
   export type postRequestDownload = {id: string[]}
   export type postConfirmDownload = {token: string}
-  export type putUpdateOne = {name?: string; file_extension?: string; file_tag_list?: string[]}
+  export type putUpdateOne = {name?: string; file_extension?: string; file_tag_list?: string[], privacy?: Privacy, flag_public_tag?: boolean}
   export type deleteDeleteOne = never
 }
 

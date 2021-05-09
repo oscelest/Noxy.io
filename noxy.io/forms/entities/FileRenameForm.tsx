@@ -7,7 +7,6 @@ import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
 import Preview from "../../components/UI/Preview";
 import FileEntity from "../../entities/FileEntity";
-import ButtonType from "../../enums/ButtonType";
 import FatalException from "../../exceptions/FatalException";
 import Global from "../../Global";
 import Helper from "../../Helper";
@@ -81,7 +80,7 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
         <div className={Style.ExampleList}>
           {_.map(this.parseNames(), this.renderExample)}
         </div>
-        <Button className={Style.Submit} type={ButtonType.SUCCESS} onClick={this.submit}>Rename</Button>
+        <Button className={Style.Submit} onClick={this.submit}>Rename</Button>
       </div>
     );
   }

@@ -22,7 +22,6 @@ import PageHeader from "../components/UI/PageHeader";
 import Redirect from "../components/UI/Redirect";
 import APIKeyEntity from "../entities/APIKeyEntity";
 import UserEntity from "../entities/UserEntity";
-import ButtonType from "../enums/ButtonType";
 import IconType from "../enums/IconType";
 import InputType from "../enums/InputType";
 import APIKeyCreateForm from "../forms/entities/APIKeyCreateForm";
@@ -215,7 +214,7 @@ export default class AccountPage extends React.Component<AccountPageProps, State
 
     return (
       <div className={Style.Header}>
-        <Button key={0} type={ButtonType.SUCCESS} icon={IconType.UI_ADD} onClick={this.create}>Create</Button>
+        <Button key={0} icon={IconType.UI_ADD} onClick={this.create}>Create</Button>
       </div>
     );
   };

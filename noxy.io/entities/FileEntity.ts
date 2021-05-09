@@ -14,6 +14,8 @@ export default class FileEntity extends Entity {
   public name: string;
   public alias: string;
   public size: number;
+  public share_code: string | null;
+  public flag_public_tag: boolean;
   public file_tag_list: FileTagEntity[];
   public file_extension: FileExtensionEntity;
   public user_created: UserEntity;
@@ -27,6 +29,8 @@ export default class FileEntity extends Entity {
     this.name = entity?.name ?? "";
     this.alias = entity?.alias ?? "";
     this.size = entity?.size ?? 0;
+    this.share_code = entity?.share_code ?? null;
+    this.flag_public_tag = entity?.flag_public_tag ?? false;
     this.file_tag_list = FileTagEntity.instantiate(entity?.file_tag_list);
     this.file_extension = new FileExtensionEntity(entity?.file_extension);
     this.user_created = new UserEntity(entity?.user_created);

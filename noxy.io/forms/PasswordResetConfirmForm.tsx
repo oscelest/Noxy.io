@@ -7,7 +7,6 @@ import Input from "../components/Form/Input";
 import ErrorText from "../components/Text/ErrorText";
 import TitleText from "../components/Text/TitleText";
 import UserEntity from "../entities/UserEntity";
-import ButtonType from "../enums/ButtonType";
 import InputType from "../enums/InputType";
 import Global from "../Global";
 import Style from "./PasswordResetConfirmForm.module.scss";
@@ -85,7 +84,7 @@ export default class PasswordResetConfirmForm extends React.Component<PasswordRe
         {this.renderError()}
         <Input className={Style.Input} type={InputType.PASSWORD} label={"Password"} value={password} error={field_errors.password} autoComplete={"password"} onChange={this.eventInputPasswordChange}/>
         <Input className={Style.Input} type={InputType.PASSWORD} label={"Confirm"} value={confirm} error={field_errors.confirm} autoComplete={"password"} onChange={this.eventInputConfirmChange}/>
-        <Button className={Style.Button} type={ButtonType.SUCCESS} loading={flag_loading} onClick={this.submit}>Change password</Button>
+        <Button className={Style.Button} loading={flag_loading} onClick={this.submit}>Change password</Button>
       </div>
     );
   }

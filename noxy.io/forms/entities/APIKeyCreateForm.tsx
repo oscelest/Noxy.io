@@ -11,7 +11,6 @@ import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
 import APIKeyEntity from "../../entities/APIKeyEntity";
 import UserEntity from "../../entities/UserEntity";
-import ButtonType from "../../enums/ButtonType";
 import InputType from "../../enums/InputType";
 import Global from "../../Global";
 import Style from "./APIKeyCreateForm.module.scss";
@@ -85,7 +84,7 @@ export default class APIKeyCreateForm extends React.Component<APIKeyCreateFormPr
           <Input className={Style.ComboBox} type={InputType.NUMBER} label={"Limit per minute"} value={limit_per_minute} error={field_errors.limit_per_minute} onChange={this.eventInputLimitPerMinuteChange}/>
         </div>
         <PermissionExplorer permission={permission} onChange={this.eventPermissionChange}/>
-        <Button type={ButtonType.SUCCESS} loading={flag_loading} onClick={this.submit}>Submit</Button>
+        <Button loading={flag_loading} onClick={this.submit}>Submit</Button>
       </div>
     );
   }

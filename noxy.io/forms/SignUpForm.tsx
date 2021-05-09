@@ -6,7 +6,6 @@ import Button from "../components/Form/Button";
 import Input from "../components/Form/Input";
 import ErrorText from "../components/Text/ErrorText";
 import TitleText from "../components/Text/TitleText";
-import ButtonType from "../enums/ButtonType";
 import InputType from "../enums/InputType";
 import Global from "../Global";
 import Style from "./SignUpForm.module.scss";
@@ -96,7 +95,7 @@ export default class LogInForm extends React.Component<SignUpFormProps, State> {
         <Input type={InputType.TEXT} label={"Username"} value={username} error={field_errors.username} onChange={this.eventInputUsernameChange}/>
         <Input type={InputType.PASSWORD} label={"Password"} value={password} error={field_errors.password} onChange={this.eventInputPasswordChange}/>
         <Input type={InputType.PASSWORD} label={"Confirm password"} value={confirm} error={field_errors.confirm} onChange={this.eventInputConfirmChange}/>
-        <Button type={ButtonType.SUCCESS} loading={this.state.flag_loading} onClick={this.submit}>Submit</Button>
+        <Button  loading={this.state.flag_loading} onClick={this.submit}>Submit</Button>
       </div>
     );
   }

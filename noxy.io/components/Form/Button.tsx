@@ -1,6 +1,5 @@
 import _ from "lodash";
 import React from "react";
-import ButtonType from "../../enums/ButtonType";
 import EventKey from "../../enums/EventKey";
 import IconType from "../../enums/IconType";
 import Size from "../../enums/Size";
@@ -96,7 +95,6 @@ export default class Button<V> extends React.Component<EventProps | ValueProps<V
 
 interface BaseProps {
   icon?: IconType
-  type?: ButtonType
   loading?: boolean
   disabled?: boolean
   className?: string

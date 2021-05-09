@@ -4,7 +4,7 @@ import EventKey from "../../enums/EventKey";
 import Helper from "../../Helper";
 import Style from "./RadioButton.module.scss";
 
-export default class RadioButton<V, C extends RadioButtonCollection<V>> extends React.Component<RadioButtonProps<V, C>, State> {
+export default class RadioButton<V, C extends RadioButtonCollection<string, V>> extends React.Component<RadioButtonProps<V, C>, State> {
 
   constructor(props: RadioButtonProps<V, C>) {
     super(props);
@@ -17,14 +17,14 @@ export default class RadioButton<V, C extends RadioButtonCollection<V>> extends 
   public change = (key: keyof C) => {
     const collection = this.getData();
     if (collection[key].disabled) return;
-    this.props.onChange({...collection, [key]: {...collection[key], checked: !collection[key].checked}});
+    this.props.onChange(_.mapValues(collection, (item, index) => ({...item, checked: index === key})));
   };
 
   private readonly getData = () => {
     return this.props.children as C;
   };
 
-  public render = () => {
+  public render() {
     const classes = [Style.Component, Style.Checkbox];
     if (this.props.className) classes.push(this.props.className);
 
@@ -74,8 +74,8 @@ export default class RadioButton<V, C extends RadioButtonCollection<V>> extends 
 
 }
 
-export type RadioButtonCollection<V> = {
-  [key: string]: RadioButtonItem<V>
+export type RadioButtonCollection<K extends string, V> = {
+  [Key in K]: RadioButtonItem<V>
 }
 
 export interface RadioButtonItem<V> {
@@ -85,11 +85,11 @@ export interface RadioButtonItem<V> {
   disabled?: boolean
 }
 
-interface RadioButtonProps<V, C extends RadioButtonCollection<V>> {
+interface RadioButtonProps<V, C extends RadioButtonCollection<string, V>> {
   className?: string
-  children: RadioButtonCollection<V>
+  children: RadioButtonCollection<string, V>
 
-  onChange(value: RadioButtonCollection<V>): void | Promise<void>
+  onChange(value: RadioButtonCollection<string, V>): void | Promise<void>
 }
 
 interface State {

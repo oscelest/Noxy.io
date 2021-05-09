@@ -4,7 +4,6 @@ import EntityMultiSelect from "../../components/Form/EntityMultiSelect";
 import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
 import FileTagEntity from "../../entities/FileTagEntity";
-import ButtonType from "../../enums/ButtonType";
 import Global from "../../Global";
 import Helper from "../../Helper";
 import Style from "./FileTagSelectForm.module.scss";
@@ -40,7 +39,7 @@ export default class FileTagSelectForm extends React.Component<FileSetTagListFor
             {this.state.list}
           </EntityMultiSelect>
         </div>
-        <Button type={ButtonType.SUCCESS} onClick={this.submit}>Choose tag(s)</Button>
+        <Button onClick={this.submit}>Choose tag(s)</Button>
       </div>
     );
   }

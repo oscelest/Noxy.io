@@ -8,7 +8,6 @@ import Button from "../components/Form/Button";
 import Input from "../components/Form/Input";
 import ErrorText from "../components/Text/ErrorText";
 import TitleText from "../components/Text/TitleText";
-import ButtonType from "../enums/ButtonType";
 import IconType from "../enums/IconType";
 import InputType from "../enums/InputType";
 import Global from "../Global";
@@ -84,7 +83,7 @@ export default class LogInForm extends React.Component<LogInFormProps, State> {
                  onChange={this.eventInputPasswordChange}/>
           <Button icon={IconType.QUESTION} onClick={this.eventButtonPasswordClick}/>
         </div>
-        <Button type={ButtonType.SUCCESS} loading={flag_loading} onClick={this.submit}>Submit</Button>
+        <Button loading={flag_loading} onClick={this.submit}>Submit</Button>
       </div>
     );
   }
