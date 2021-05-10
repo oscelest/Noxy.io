@@ -114,16 +114,14 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
     );
   };
 
-  private readonly openTagDeleteDialog = async (tag: FileTagEntity) => {
-    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.FIRST, <ConfirmDialog title={"Permanently delete tag?"} value={tag} onAccept={this.eventTagDelete}/>);
+  private readonly openTagDeleteDialog = async (tag: FileTagEntity, tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]) => {
+    const value = {tag, tag_selected_list, tag_available_list};
+    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog title={"Permanently delete tag?"} value={value} onAccept={this.eventTagDelete}/>);
   };
 
-  private readonly eventTagDelete = async (tag: FileTagEntity) => {
-    tag = await FileTagEntity.deleteOne(tag);
-    this.setState({
-      tag_selected_list:  _.filter(this.state.tag_selected_list, value => value.name !== tag.name),
-      tag_available_list: _.filter(this.state.tag_available_list, value => value.name !== tag.name),
-    });
+  private readonly eventTagDelete = async ({tag, tag_selected_list, tag_available_list}: {tag: FileTagEntity, tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]}) => {
+    await FileTagEntity.deleteOne(tag);
+    this.setState({tag_selected_list, tag_available_list});
   };
 
   private readonly eventTagChange = (tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]) => {

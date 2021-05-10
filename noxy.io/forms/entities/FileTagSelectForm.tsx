@@ -1,6 +1,9 @@
+import _ from "lodash";
 import React from "react";
+import Dialog, {DialogListenerType, DialogPriority} from "../../components/Application/Dialog";
+import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
 import Button from "../../components/Form/Button";
-import EntityMultiSelect from "../../components/Form/EntityMultiSelect";
+import EntityPicker from "../../components/Form/EntityPicker";
 import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
 import FileTagEntity from "../../entities/FileTagEntity";
@@ -15,15 +18,19 @@ export default class FileTagSelectForm extends React.Component<FileSetTagListFor
 
   constructor(props: FileSetTagListFormProps) {
     super(props);
-
     this.state = {
-      list: props.file_tag_list ?? [],
+      selected:  this.props.selected ?? [],
+      available: [],
     };
   }
 
   public readonly submit = async () => {
-    Helper.schedule(() => this.props.onSubmit(this.state.list));
+    Helper.schedule(() => this.props.onSubmit(this.state.selected));
   };
+
+  public componentDidMount(): void {
+    this.setState({selected: this.props.selected});
+  }
 
   public render() {
 
@@ -34,11 +41,8 @@ export default class FileTagSelectForm extends React.Component<FileSetTagListFor
       <div className={classes.join(" ")}>
         <TitleText>Select File Tag(s)</TitleText>
         {this.renderError()}
-        <div>
-          <EntityMultiSelect className={Style.Select} label={"Search for tags"} method={this.eventFileTagSearch} property={"name"} onCreate={this.eventFileTagCreate} onChange={this.eventFileTagChange}>
-            {this.state.list}
-          </EntityMultiSelect>
-        </div>
+        <EntityPicker selected={this.state.selected} available={this.state.available}
+                      onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
         <Button onClick={this.submit}>Choose tag(s)</Button>
       </div>
     );
@@ -52,17 +56,26 @@ export default class FileTagSelectForm extends React.Component<FileSetTagListFor
     );
   };
 
-  private readonly eventFileTagCreate = async (name: string) => {
-    if (!name) throw new Error("");
-    return await FileTagEntity.createOne({name});
+  private readonly eventTagSearch = async (name: string) => {
+    this.setState({available: await FileTagEntity.findMany({name, exclude: this.state.selected})});
   };
 
-  private readonly eventFileTagSearch = async (name: string) => {
-    return name ? await FileTagEntity.findMany({name, exclude: this.state.list}) : [];
+  private readonly eventTagCreate = async (name: string) => {
+    return FileTagEntity.createOne({name});
   };
 
-  private readonly eventFileTagChange = (list: FileTagEntity[]) => {
-    this.setState({list});
+  private readonly eventTagChange = async (selected: FileTagEntity[], available: FileTagEntity[]) => {
+    this.setState({selected, available});
+  };
+
+  private readonly openTagDeleteDialog = async (tag: FileTagEntity, selected: FileTagEntity[], available: FileTagEntity[]) => {
+    const value = {tag, selected, available};
+    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog title={"Permanently delete tag?"} value={value} onAccept={this.eventTagDelete}/>);
+  };
+
+  private readonly eventTagDelete = async ({tag, selected, available}: {tag: FileTagEntity, selected: FileTagEntity[], available: FileTagEntity[]}) => {
+    await FileTagEntity.deleteOne(tag);
+    this.setState({selected, available});
   };
 
 }
@@ -70,12 +83,13 @@ export default class FileTagSelectForm extends React.Component<FileSetTagListFor
 export interface FileSetTagListFormProps {
   className?: string
 
-  file_tag_list?: FileTagEntity[]
+  selected: FileTagEntity[];
 
   onSubmit: (file_tag_list: FileTagEntity[]) => void
 }
 
 interface State {
   error?: Error
-  list: FileTagEntity[]
+  available: FileTagEntity[];
+  selected: FileTagEntity[]
 }

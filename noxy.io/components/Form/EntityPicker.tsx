@@ -147,11 +147,13 @@ export default class EntityPicker<V extends {toString(): string}> extends React.
   };
 
   private readonly eventItemDeleteSelected = (event: React.MouseEvent<HTMLElement>) => {
-    this.props.onDelete?.(this.getItemFromEvent(event, this.props.selected));
+    const item = this.getItemFromEvent(event, this.props.selected);
+    this.props.onDelete?.(item, _.filter(this.props.selected, value => this.getItemName(value) !== this.getItemName(item)), this.props.available);
   };
 
   private readonly eventItemDeleteAvailable = (event: React.MouseEvent<HTMLElement>) => {
-    this.props.onDelete?.(this.getItemFromEvent(event, this.props.available));
+    const item = this.getItemFromEvent(event, this.props.available);
+    this.props.onDelete?.(item, this.props.selected, _.filter(this.props.available, value => this.getItemName(value) !== this.getItemName(item)));
   };
 
   private readonly eventItemSelect = (event: React.MouseEvent<HTMLElement>) => {
@@ -177,9 +179,9 @@ export interface EntityPickerProps<V> {
   onSort?(previous: V, next: V): number
   onCreate?(search: string, selected: V[]): V | Promise<V>
   onSearch?(search: string): void | Promise<void>
-  onCompare?(entity: V): string | number | boolean | object
-  onRender?(selected: V): string
-  onDelete?(selected: V): void
+  onCompare?(item: V): string | number | boolean | object
+  onRender?(item: V): string
+  onDelete?(deleted: V, selected: V[], available: V[]): void
   onSelect?(selected: V): void
   onDeselect?(deselected: V): void
   onChange(selected: V[], available: V[]): void

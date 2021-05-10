@@ -257,7 +257,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   private readonly openFileTagChangeDialog = () => {
     Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT,
       <ElementDialog ref={this.state.ref_dialog}>
-        <FileTagSelectForm file_tag_list={this.state.tag_selected_list} onSubmit={this.eventFileTagChange}/>
+        <FileTagSelectForm selected={this.state.tag_selected_list} onSubmit={this.eventFileTagChange}/>
       </ElementDialog>,
     );
   };
@@ -280,14 +280,14 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     this.searchFile();
   };
 
-  private readonly openTagDeleteDialog = async (tag: FileTagEntity) => {
-    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog title={"Permanently delete tag?"} value={tag} onAccept={this.eventTagDelete}/>);
+  private readonly openTagDeleteDialog = async  (tag: FileTagEntity, tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]) => {
+    const value = {tag, tag_selected_list, tag_available_list};
+    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog title={"Permanently delete tag?"} value={value} onAccept={this.eventTagDelete}/>);
   };
 
-  private eventTagDelete = async (tag: FileTagEntity) => {
+  private readonly eventTagDelete = async ({tag, tag_selected_list, tag_available_list}: {tag: FileTagEntity, tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]}) => {
     await FileTagEntity.deleteOne(tag.id);
-    this.searchFile();
-    this.state.ref_entity_picker.current?.search();
+    this.searchFile({tag_selected_list, tag_available_list});
   };
 
   // endregion ----- Dialogs ----- endregion //
