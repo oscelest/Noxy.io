@@ -7,8 +7,7 @@ import React from "react";
 import FileTypeName from "../../../common/enums/FileTypeName";
 import Privacy from "../../../common/enums/Privacy";
 import Conditional from "../../components/Application/Conditional";
-import Dialog, {DialogListenerType, DialogPriority} from "../../components/Application/Dialog";
-import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
+import Dialog from "../../components/Application/Dialog";
 import Button from "../../components/Form/Button";
 import Checkbox, {CheckboxCollection} from "../../components/Form/Checkbox";
 import EntityPicker from "../../components/Form/EntityPicker";
@@ -21,6 +20,7 @@ import FileEntity from "../../entities/FileEntity";
 import FileTagEntity from "../../entities/FileTagEntity";
 import Size from "../../enums/Size";
 import FatalException from "../../exceptions/FatalException";
+import ConfirmForm from "../../forms/ConfirmForm";
 import Global from "../../Global";
 import Helper from "../../Helper";
 import Style from "./[alias].module.scss";
@@ -43,8 +43,6 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
   constructor(props: FileAliasPageProps) {
     super(props);
     this.state = {
-      ref_dialog: React.createRef(),
-
       data_loading: true,
 
       file_loading: true,
@@ -55,7 +53,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
       },
 
       tag_search:         "",
-      loading:            true,
+      tag_loading:        true,
       tag_selected_list:  [],
       tag_available_list: [],
       tag_privacy:        {
@@ -86,7 +84,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
       this.setState(next_state);
 
       if (next_state.file.user_created.getPrimaryKey() === this.context.state.user.getPrimaryKey()) {
-        next_state.loading = false;
+        next_state.tag_loading = false;
         next_state.tag_available_list = await FileTagEntity.findMany({name: this.state.tag_search, exclude: next_state.file.file_tag_list});
       }
 
@@ -106,7 +104,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     }
     catch (error) {
       const exception = error as AxiosError;
-      if (exception.response?.status === 404) return this.setState({loading: false, file_loading: false, data_loading: false});
+      if (exception.response?.status === 404) return this.setState({tag_loading: false, file_loading: false, data_loading: false});
       throw new FatalException("Unexpected error occurred", "A server error has caused this file to be unable to load. Please try again later. This error has already been reported.");
     }
   }
@@ -209,15 +207,17 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
   };
 
   private readonly openDeleteTagDialog = async (tag: FileTagEntity) => {
-    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog ref={this.state.ref_dialog} title={"Permanently delete tag?"} value={tag} onAccept={this.eventTagDelete}/>);
+    this.setState({dialog: Dialog.show(<ConfirmForm value={tag} onAccept={this.eventTagDelete}/>, {title: "Permanently delete tag?"})});
   };
 
   private readonly eventTagDelete = async (tag: FileTagEntity) => {
     if (!this.state.file) throw new FatalException("Could not delete tag", "The file you're trying to delete a new tag from could not be loaded or updated. Please reload the page and try again.");
 
     tag = await FileTagEntity.deleteOne(tag);
+    Dialog.close(this.state.dialog);
     this.state.file.file_tag_list = _.filter(this.state.tag_selected_list, value => value.getPrimaryKey() !== tag.getPrimaryKey());
     this.setState({
+      dialog:             undefined,
       file:               this.state.file,
       tag_selected_list:  this.state.file.file_tag_list,
       tag_available_list: _.filter(this.state.tag_available_list, value => value.getPrimaryKey() !== tag.getPrimaryKey()),
@@ -225,12 +225,12 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
   };
 
   private readonly openDeleteFileDialog = async () => {
-    const value = this.props[FileAliasPageQuery.ALIAS];
-    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog ref={this.state.ref_dialog} title={"Permanently delete file?"} value={value} onAccept={this.eventFileDelete}/>);
+    this.setState({dialog: Dialog.show(<ConfirmForm value={this.props[FileAliasPageQuery.ALIAS]} onAccept={this.eventFileDelete}/>, {title: "Permanently delete file?"})});
   };
 
   private readonly eventFileDelete = async (alias: string) => {
     await FileEntity.deleteOne(alias);
+    Dialog.close(this.state.dialog);
     return Router.push(`${location.origin}/file`);
   };
 
@@ -292,7 +292,7 @@ interface FileAliasPageProps extends PageProps {
 }
 
 interface State {
-  ref_dialog: React.RefObject<ConfirmDialog<any>>
+  dialog?: string
 
   data?: any
   data_loading: boolean
@@ -303,7 +303,7 @@ interface State {
   file_privacy: FilePrivacyRadioButton
 
   tag_search: string
-  loading: boolean
+  tag_loading: boolean
   tag_selected_list: FileTagEntity[]
   tag_available_list: FileTagEntity[]
   tag_privacy: TagPrivacyCheckbox

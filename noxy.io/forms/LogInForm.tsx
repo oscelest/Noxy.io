@@ -2,8 +2,7 @@ import {AxiosResponse} from "axios";
 import IsEmail from "isemail";
 import _ from "lodash";
 import React from "react";
-import Dialog, {DialogListenerType, DialogPriority} from "../components/Application/Dialog";
-import ElementDialog from "../components/Dialog/ElementDialog";
+import Dialog from "../components/Application/Dialog";
 import Button from "../components/Form/Button";
 import Input from "../components/Form/Input";
 import ErrorText from "../components/Text/ErrorText";
@@ -99,35 +98,33 @@ export default class LogInForm extends React.Component<LogInFormProps, State> {
   private readonly eventInputEmailChange = (email: string) => this.setState({email});
   private readonly eventInputPasswordChange = (password: string) => this.setState({password});
 
+  // TODO: Check this
+
   private readonly eventButtonEmailClick = () => {
-    Dialog.show(
-      DialogListenerType.GLOBAL,
-      DialogPriority.NEXT,
-      <ElementDialog>
+    this.setState({
+      dialog: Dialog.show(
         <div className={Style.DialogContent}>
           <TitleText>Problem logging in with your email?</TitleText>
           <p>To log in, please enter your email in this field. This is not your username.</p>
           <p>If your email and password is not accepted, please check that you've spelled your email and password correctly.</p>
           <p>If you think you have forgotten your password, please use the password help dialog, below the email help dialog (the button you pressed to show this text).</p>
-        </div>
-      </ElementDialog>,
-    );
+        </div>,
+      ),
+    });
   };
 
   private readonly eventButtonPasswordClick = () => {
-    Dialog.show(
-      DialogListenerType.GLOBAL,
-      DialogPriority.NEXT,
-      <ElementDialog>
+    this.setState({
+      dialog: Dialog.show(
         <div className={Style.DialogContent}>
           <TitleText>Problem logging in with your password?</TitleText>
           <p>We allow for emails and passwords to be changed, so please make sure you haven't changed either recently.</p>
           <p>If you're not sure if you're using the right password, or if you've forgotten your password, please use the form below to reset it.</p>
           <p/>
           <PasswordResetRequestForm/>
-        </div>
-      </ElementDialog>,
-    );
+        </div>,
+      ),
+    });
   };
 }
 
@@ -136,6 +133,8 @@ export interface LogInFormProps {
 }
 
 interface State {
+  dialog?: string
+
   flag_loading: boolean
   field_errors: Partial<Record<keyof Omit<State, "flag_loading" | "error" | "field_errors">, Error>>
   error?: Error

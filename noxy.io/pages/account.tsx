@@ -6,9 +6,8 @@ import React from "react";
 import Order from "../../common/enums/Order";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import RequestHeader from "../../common/enums/RequestHeader";
-import Dialog, {DialogListenerType, DialogPriority} from "../components/Application/Dialog";
+import Dialog from "../components/Application/Dialog";
 import {Masquerade} from "../components/Application/Masquerade";
-import ElementDialog from "../components/Dialog/ElementDialog";
 import Button from "../components/Form/Button";
 import Checkbox, {CheckboxCollection} from "../components/Form/Checkbox";
 import Input from "../components/Form/Input";
@@ -51,8 +50,7 @@ export default class AccountPage extends React.Component<AccountPageProps, State
     super(props);
 
     this.state = {
-      loading:    false,
-      ref_dialog: React.createRef(),
+      loading: false,
 
       email:    "",
       username: "",
@@ -93,13 +91,7 @@ export default class AccountPage extends React.Component<AccountPageProps, State
   };
 
   public readonly create = () => {
-    Dialog.show(
-      DialogListenerType.GLOBAL,
-      DialogPriority.FIRST,
-      <ElementDialog ref={this.state.ref_dialog}>
-        <APIKeyCreateForm onSubmit={this.eventAPIKeyFormCreateSubmit}/>
-      </ElementDialog>,
-    );
+    this.setState({dialog: Dialog.show(<APIKeyCreateForm onSubmit={this.eventAPIKeyFormCreateSubmit}/>)});
   };
 
   public readonly delete = async (user: string | UserEntity) => {
@@ -297,7 +289,7 @@ export default class AccountPage extends React.Component<AccountPageProps, State
   };
 
   private readonly eventAPIKeyFormCreateSubmit = (value: APIKeyEntity) => {
-    this.state.ref_dialog.current?.close();
+    Dialog.close(this.state.dialog);
     return value.user?.getPrimaryKey() === this.context.state.user?.getPrimaryKey() ? this.context.refreshLogIn() : this.search();
   };
 
@@ -326,8 +318,8 @@ export interface AccountPageProps {
 }
 
 interface State {
+  dialog?: string
   loading: boolean
-  ref_dialog: React.RefObject<ElementDialog>
 
   email: string
   email_error?: Error

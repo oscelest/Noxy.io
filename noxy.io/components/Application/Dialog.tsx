@@ -1,120 +1,222 @@
 import _ from "lodash";
-import React, {RefObject} from "react";
-import {v4 as UUID} from "uuid";
+import React from "react";
+import {v4} from "uuid";
+import DialogListenerName from "../../enums/DialogListenerName";
+import IconType from "../../enums/IconType";
+import QueuePosition from "../../enums/QueuePosition";
+import Icon from "../Base/Icon";
+import DragDrop from "../UI/DragDrop";
+import Conditional from "./Conditional";
 import Style from "./Dialog.module.scss";
-
-export enum DialogListenerType {
-  GLOBAL = "global",
-  OVERLAY = "overlay",
-  FILE_BROWSER = "file_browser",
-}
-
-export enum DialogPriority {
-  FIRST,
-  NEXT,
-  LAST
-}
 
 export default class Dialog extends React.Component<DialogProps, State> {
 
-  public static listeners: { [K in DialogListenerType]: Dialog[] } = {
-    [DialogListenerType.GLOBAL]:       [],
-    [DialogListenerType.OVERLAY]:      [],
-    [DialogListenerType.FILE_BROWSER]: [],
-  };
-  
-  #instances: DialogInstance[];
-  
+  public static id = v4();
+  public static dialog_listener_collection: {[key: string]: Dialog[]};
+
+  #instance_list: DialogInstance[] = [];
+  #flag_overlay: boolean = false;
+
   constructor(props: DialogProps) {
     super(props);
-    this.state = {
-      instances: [],
-      container: React.createRef(),
+    this.state = {};
+  }
+
+  private static getDialogList(listener: Listener) {
+    if (!this.dialog_listener_collection) this.dialog_listener_collection = {};
+    if (!this.dialog_listener_collection[listener]) this.dialog_listener_collection[listener] = []
+    return this.dialog_listener_collection[listener];
+  }
+
+  public static show(element: React.ReactNode, init: Partial<DialogConfiguration> = {}) {
+    const configuration = {
+      ...init,
+      id:       init.id ?? v4(),
+      dismiss:  init.dismiss ?? true,
+      overlay:  init.overlay ?? true,
+      position: init.position ?? QueuePosition.NEXT,
+      listener: init.listener ?? DialogListenerName.GLOBAL,
     };
-    this.#instances = [];
-  }
-  
-  public static show(listener: DialogListenerType, priority: DialogPriority, element: React.ComponentElement<any, any>) {
-    _.each(this.listeners[listener], listener => listener.addElement(priority, element));
-  }
-  
-  public static close(element: React.Component | React.ComponentElement<any, any>) {
-    _.each(this.listeners, listeners => _.each(listeners, listener => listener.removeElement(element)));
-  }
-  
-  public static closeAll(listener?: DialogListenerType) {
-    if (listener) {
-      _.each(this.listeners[listener], listener => listener.removeAllElements());
+
+    for (let dialog of this.getDialogList(configuration.listener)) {
+      dialog.addElement({element, configuration});
     }
-    else {
-      _.each(this.listeners, listeners => _.each(listeners, listener => listener.removeAllElements()));
+    return configuration.id;
+  }
+
+  public static close(id?: string) {
+    if (!id) return;
+    for (let dialog_list of Object.values(this.dialog_listener_collection)) {
+      for (let dialog of dialog_list) {
+        dialog.removeElement(id);
+      }
     }
   }
-  
-  private static subscribe(component: Dialog, listener: DialogListenerType) {
-    this.listeners[listener].push(component);
+
+  private static subscribe(component: Dialog) {
+    this.getDialogList(component.props.listener).push(component);
   }
-  
-  private static unsubscribe(component: Dialog, listener: DialogListenerType) {
-    this.listeners[listener].splice(_.findIndex(this.listeners[listener], listener => listener === component), 1);
+
+  private static unsubscribe(component: Dialog) {
+    _.remove(this.getDialogList(component.props.listener), dialog => dialog === component);
   }
-  
-  private addElement = (priority: DialogPriority, element: React.ComponentElement<any, any>) => {
-    const reference = (element.ref ?? React.createRef()) as RefObject<any>;
-    const instance = {reference, element: <element.type {...element.props} ref={reference} key={UUID()}/>};
-    
-    switch (priority) {
-      case DialogPriority.FIRST:
-        this.#instances.unshift(instance);
-        break;
-      case DialogPriority.NEXT:
-        this.#instances.splice(Math.min(this.#instances.length, 1), 0, instance);
-        break;
-      case DialogPriority.LAST:
-        this.#instances.push(instance);
-        break;
+
+  private addElement = (instance: DialogInstance) => {
+    this.setState({});
+    _.remove(this.#instance_list, value => value.configuration.id === instance.configuration.id)
+
+    switch (instance.configuration.position) {
+      case QueuePosition.FIRST:
+        return this.#instance_list = [instance, ...this.#instance_list];
+      case QueuePosition.NEXT:
+        return this.#instance_list = this.#instance_list.length ? [this.#instance_list[0], instance, ..._.tail(this.#instance_list)] : [instance];
+      case QueuePosition.LAST:
+        return this.#instance_list = [...this.#instance_list, instance];
     }
-    
-    return this.setState({instances: [...this.#instances]});
   };
-  
-  private removeElement = (component: React.Component | React.ReactElement) => {
-    this.#instances = _.filter(this.state.instances, value => !(value.element === component || value.reference.current === component));
-    this.setState({instances: this.#instances});
+
+  private removeElement = (id: string) => {
+    const indexes = [];
+    for (let index = 0; index < this.#instance_list.length; index++) {
+      const instance = this.#instance_list[index];
+      if (instance.configuration.id !== id) continue;
+      indexes.push(index);
+      instance.configuration.onClose?.();
+    }
+
+    _.pullAt(this.#instance_list, indexes);
+    this.setState({});
   };
-  
-  private removeAllElements = () => {
-    this.#instances.length = 0;
-    this.setState({instances: this.#instances});
+
+  private readonly getInstance = (id: string) => {
+    return _.find(this.#instance_list, instance => instance.configuration.id === id);
   };
-  
+
+  private readonly getIDFromElement = (element: Element | null) => {
+    return element?.closest(`.${Style.Instance}`)?.getAttribute("data-id") ?? "NULL";
+  };
+
   public componentDidMount(): void {
-    Dialog.subscribe(this, this.props.listener);
+    Dialog.subscribe(this);
   }
-  
+
   public componentWillUnmount(): void {
-    Dialog.unsubscribe(this, this.props.listener);
+    Dialog.unsubscribe(this);
   }
-  
+
   public render() {
     return (
-      <div ref={this.state.container} className={Style.dialog} data-active={!!_.size(this.state.instances)}>
-        {_.map(this.state.instances, instance => instance.element)}
+      <div className={Style.Component} data-active={!!_.size(this.#instance_list)} data-listener={this.props.listener}>
+        {_.map(this.#instance_list, this.renderInstance)}
       </div>
     );
   }
+
+  private readonly renderInstance = (instance: DialogInstance, index: number = 0) => {
+    return (
+      <Conditional key={index} condition={index === 0}>
+        <div data-id={instance.configuration.id} className={Style.Instance}>{this.renderDragDrop(instance)}</div>
+      </Conditional>
+    );
+  };
+
+  private readonly renderDragDrop = (instance: DialogInstance) => {
+    if (!instance.configuration.drag) return this.renderOverlay(instance);
+    const {title, message, onDrop, onDragEnter, onDragLeave, onDragOver} = instance.configuration.drag;
+
+    return (
+      <DragDrop className={Style.DragDrop} title={title} message={message} onDrop={onDrop} onDragEnter={onDragEnter} onDragLeave={onDragLeave} onDragOver={onDragOver}>
+        {this.renderOverlay(instance)}
+      </DragDrop>
+    );
+  };
+
+  private readonly renderOverlay = (instance: DialogInstance) => {
+    if (!instance.configuration.overlay) return this.renderContent(instance);
+
+    return (
+      <div className={Style.Overlay} onMouseDown={this.eventOverlayMouseDown} onMouseUp={this.eventOverlayMouseUp}>
+        {this.renderContent(instance)}
+      </div>
+    );
+  };
+
+  private readonly renderContent = (instance: DialogInstance) => {
+    return (
+      <div className={Style.Window}>
+        <Conditional condition={instance.configuration.dismiss}>
+          <Icon className={Style.Close} type={IconType.CLOSE} onClick={this.eventClose}/>
+        </Conditional>
+        <Conditional condition={instance.configuration.title}>
+          <span className={Style.Title}>{instance.configuration.title}</span>
+        </Conditional>
+        <div className={Style.Container}>
+          {this.renderElement(instance)}
+        </div>
+      </div>
+    );
+  };
+
+  private readonly renderElement = (instance: DialogInstance) => {
+    if (typeof instance.element === "object") {
+      const jsx = (instance.element as JSX.Element);
+      return React.createElement(jsx.type, {...jsx.props, key: instance.configuration.id});
+    }
+    return instance.element;
+  };
+
+  private readonly eventClose = (event: React.MouseEvent) => {
+    Dialog.close(this.getIDFromElement(event.currentTarget));
+  };
+
+  private readonly eventOverlayMouseDown = (event: React.MouseEvent) => {
+    const instance = this.getInstance(this.getIDFromElement(event.currentTarget));
+    if (!instance?.configuration.dismiss || event.button !== 0) return;
+    this.#flag_overlay = event.target === event.currentTarget;
+  };
+
+  private readonly eventOverlayMouseUp = (event: React.MouseEvent) => {
+    const instance = this.getInstance(this.getIDFromElement(event.currentTarget));
+    if (!instance?.configuration.dismiss || event.button !== 0) return;
+    if (this.#flag_overlay && event.target === event.currentTarget) Dialog.close(instance?.configuration.id);
+    this.#flag_overlay = false;
+  };
+
+}
+
+type Listener = string | DialogListenerName
+
+interface DialogInstance {
+  element: React.ReactNode
+  configuration: DialogConfiguration
+}
+
+export interface DialogConfiguration {
+  id: string
+  listener: Listener
+  position: QueuePosition
+
+  drag?: DragDropDialogConfiguration
+  title?: string
+  dismiss?: boolean
+  overlay?: boolean
+
+  onClose?(): void
+}
+
+interface DragDropDialogConfiguration {
+  title: string
+  message: string
+  onDrop?(event: React.DragEvent<HTMLDivElement>): void
+  onDragOver?(event: React.DragEvent<HTMLDivElement>): void
+  onDragEnter?(event: React.DragEvent<HTMLDivElement>): void
+  onDragLeave?(event: React.DragEvent<HTMLDivElement>): void
 }
 
 export interface DialogProps {
-  listener: DialogListenerType
+  listener: Listener
 }
 
 interface State {
-  instances: DialogInstance[]
-  container: React.RefObject<HTMLDivElement>
-}
 
-interface DialogInstance {
-  reference: React.RefObject<any>
-  element: React.ComponentElement<any, any>
 }

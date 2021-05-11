@@ -2,8 +2,7 @@ import {AxiosError, Canceler} from "axios";
 import _ from "lodash";
 import React from "react";
 import FileTransfer from "../../../common/classes/FileTransfer";
-import Dialog, {DialogListenerType, DialogPriority} from "../../components/Application/Dialog";
-import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
+import Dialog from "../../components/Application/Dialog";
 import Button from "../../components/Form/Button";
 import EntityPicker from "../../components/Form/EntityPicker";
 import FilePicker from "../../components/Form/FilePicker";
@@ -13,6 +12,7 @@ import TitleText from "../../components/Text/TitleText";
 import FileEntity from "../../entities/FileEntity";
 import FileTagEntity from "../../entities/FileTagEntity";
 import Global from "../../Global";
+import ConfirmForm from "../ConfirmForm";
 import Style from "./FileUploadForm.module.scss";
 
 export default class FileUploadForm extends React.Component<FileUploadFormProps, State> {
@@ -25,7 +25,7 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
 
     this.state = {
       tag_search:         "",
-      loading:            false,
+      tag_loading:        false,
       tag_available_list: [],
       tag_selected_list:  this.props.file_tag_list ?? [],
 
@@ -68,6 +68,12 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
       this.failFileTransfer(transfer, error);
     }
   };
+
+  public componentDidUpdate(prevProps: Readonly<FileUploadFormProps>, prevState: Readonly<State>, snapshot?: any): void {
+    if (prevProps.file_list !== this.props.file_list) {
+      this.setState({file_list: [...this.state.file_list, ..._.map(this.props.file_list, file => new FileTransfer(file))]});
+    }
+  }
 
   public render() {
     const {file_list, tag_selected_list, tag_available_list} = this.state;
@@ -116,11 +122,12 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
 
   private readonly openTagDeleteDialog = async (tag: FileTagEntity, tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]) => {
     const value = {tag, tag_selected_list, tag_available_list};
-    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog title={"Permanently delete tag?"} value={value} onAccept={this.eventTagDelete}/>);
+    this.setState({dialog: Dialog.show(<ConfirmForm value={value} onAccept={this.eventTagDelete}/>, {title: "Permanently delete tag?"})});
   };
 
   private readonly eventTagDelete = async ({tag, tag_selected_list, tag_available_list}: {tag: FileTagEntity, tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]}) => {
     await FileTagEntity.deleteOne(tag);
+    Dialog.close(this.state.dialog);
     this.setState({tag_selected_list, tag_available_list});
   };
 
@@ -173,11 +180,13 @@ export interface FileUploadFormProps {
 }
 
 interface State {
+  dialog?: string
+
   file_tag_error?: Error
   file_list: FileTransfer[]
 
   tag_search: string
-  loading: boolean
+  tag_loading: boolean
   tag_selected_list: FileTagEntity[]
   tag_available_list: FileTagEntity[]
 }

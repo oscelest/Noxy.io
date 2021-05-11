@@ -97,7 +97,7 @@ export default class EntityPicker<V extends {toString(): string}> extends React.
           <div className={Style.Search}>
             <Input className={Style.Input} label={"Search for tags"} value={search} onChange={this.search}/>
             <Conditional condition={this.props.onCreate}>
-              <Button className={Style.Button} icon={IconType.UI_ADD} value={search} disabled={search.length < 3} onClick={this.create}/>
+              <Button className={Style.Button} icon={IconType.UI_ADD} value={search} disabled={search.length < 1} onClick={this.create}/>
             </Conditional>
           </div>
         </Conditional>

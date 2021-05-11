@@ -1,6 +1,6 @@
 import React from "react";
-import Dialog, {DialogListenerType, DialogPriority} from "../Application/Dialog";
-import ElementDialog from "../Dialog/ElementDialog";
+import {v4} from "uuid";
+import Dialog from "../Application/Dialog";
 import Style from "./DragDrop.module.scss";
 
 export default class DragDrop<C extends typeof React.Component, I extends InstanceType<C>> extends React.Component<DragDropProps<C, I>, State> {
@@ -8,7 +8,7 @@ export default class DragDrop<C extends typeof React.Component, I extends Instan
   constructor(props: DragDropProps<C, I>) {
     super(props);
     this.state = {
-      ref_dialog:   React.createRef(),
+      id:           v4(),
       flag_overlay: 0,
     };
   }
@@ -23,11 +23,7 @@ export default class DragDrop<C extends typeof React.Component, I extends Instan
     event.preventDefault();
     event.stopPropagation();
     if (this.state.flag_overlay === 0) {
-      Dialog.show(
-        this.props.listener,
-        DialogPriority.FIRST,
-        <ElementDialog ref={this.state.ref_dialog} title={this.props.title} close={false}>{this.props.message}</ElementDialog>,
-      );
+      this.setState({dialog: Dialog.show(this.props.message, {title: this.props.title, dismiss: false, listener: this.state.id})});
     }
     this.setState({flag_overlay: this.state.flag_overlay + 1});
     this.props.onDragEnter?.(event);
@@ -36,17 +32,22 @@ export default class DragDrop<C extends typeof React.Component, I extends Instan
   private dragLeave = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    this.state.flag_overlay === 1 && this.state.ref_dialog.current && Dialog.close(this.state.ref_dialog.current);
-    this.setState({flag_overlay: this.state.flag_overlay - 1});
+    const next_state = {} as State;
+    next_state.flag_overlay = this.state.flag_overlay - 1;
+    if (!next_state.flag_overlay) {
+      Dialog.close(this.state.dialog);
+      next_state.dialog = undefined;
+    }
     this.props.onDragLeave?.(event);
+    this.setState(next_state);
   };
 
   private drop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    this.state.ref_dialog.current && Dialog.close(this.state.ref_dialog.current);
-    this.setState({flag_overlay: 0});
-    this.props.onDrop?.(event.dataTransfer.files, event);
+    Dialog.close(this.state.dialog);
+    this.setState({flag_overlay: 0, dialog: undefined});
+    this.props.onDrop?.(event);
   };
 
   public render() {
@@ -56,7 +57,7 @@ export default class DragDrop<C extends typeof React.Component, I extends Instan
     return (
       <div className={classes.join(" ")} onDragOver={this.dragOver} onDragEnter={this.dragEnter} onDragLeave={this.dragLeave} onDrop={this.drop}>
         {this.props.children}
-        <Dialog listener={this.props.listener}/>
+        <Dialog listener={this.state.id}/>
       </div>
     );
   }
@@ -67,15 +68,16 @@ export interface DragDropProps<C extends typeof React.Component, I extends Insta
 
   title: string
   message: string
-  listener: DialogListenerType
+  // listener: DialogListenerType
 
   onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void
   onDragEnter?: (event: React.DragEvent<HTMLDivElement>) => void
   onDragLeave?: (event: React.DragEvent<HTMLDivElement>) => void
-  onDrop?: (files: FileList, event: React.DragEvent<HTMLDivElement>) => void
+  onDrop?: (event: React.DragEvent<HTMLDivElement>) => void
 }
 
 interface State {
-  ref_dialog: React.RefObject<ElementDialog>
+  id: string
+  dialog?: string
   flag_overlay: number
 }

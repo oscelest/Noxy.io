@@ -1,4 +1,6 @@
-.dialog {
+@import "../../variables";
+
+.Component {
   display:  none;
   position: absolute;
   top:      0;
@@ -9,6 +11,76 @@
 
   &[data-active=true] {
     display: flex;
+  }
+
+  .Instance {
+    display: flex;
+    flex:    1 1 auto;
+
+
+    .DragDrop {
+      flex: 1 1 auto;
+    }
+
+    .Overlay {
+      display:          flex;
+      flex-flow:        column;
+      flex:             1 1 auto;
+      align-items:      center;
+      justify-content:  center;
+      background-color: rgba(0, 0, 0, 0.3);
+    }
+
+    .Window {
+      flex:          0 1 auto;
+      flex-flow:     column;
+      width:         40%;
+      min-width:     365px;
+      max-width:     calc(100% - 30px);
+      max-height:    calc(100% - 30px);
+      background:    $background-gradiant;
+      border-radius: $border-radius;
+      padding:       25px;
+      color:         white;
+      box-shadow:    0 0 0 5px $background-secondary-color;
+      overflow:      auto;
+
+      .Title {
+        flex:            1 1 auto;
+        align-items:     center;
+        justify-content: center;
+        margin-bottom:   20px;
+        font-size:       24px;
+        line-height:     32px;
+        border-bottom:   1px solid white;
+        white-space:     nowrap;
+      }
+
+      .Close {
+        flex:            0 0 auto;
+        align-items:     center;
+        justify-content: center;
+        width:           30px;
+        height:          30px;
+        position:        absolute;
+        top:             0;
+        right:           0;
+        font-size:       18px;
+        color:           rgba(255, 255, 255, 0.3);
+        transition:      color .2s ease-in-out;
+        cursor:          pointer;
+        z-index:         10;
+
+        &:hover {
+          color: rgba(255, 255, 255, 1);
+        }
+      }
+
+      .Container {
+        display:   flex;
+        flex-flow: column;
+      }
+    }
   }
 
   > *:not(:first-child) {

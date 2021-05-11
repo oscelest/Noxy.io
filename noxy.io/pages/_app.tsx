@@ -4,8 +4,9 @@ import router, {Router} from "next/router";
 import * as React from "react";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import Authorized from "../components/Application/Authorized";
-import Dialog, {DialogListenerType} from "../components/Application/Dialog";
+import Dialog from "../components/Application/Dialog";
 import Redirect from "../components/UI/Redirect";
+import DialogListenerName from "../enums/DialogListenerName";
 import Size from "../enums/Size";
 import Global from "../Global";
 import "../global.scss";
@@ -56,7 +57,7 @@ export default class Application extends App {
         <Content>
           <this.props.Component {...this.props.pageProps}/>
         </Content>
-        <Dialog key={"dialog"} listener={DialogListenerType.GLOBAL}/>
+        <Dialog key={"dialog"} listener={DialogListenerName.GLOBAL}/>
       </Global.Provider>
     );
   }

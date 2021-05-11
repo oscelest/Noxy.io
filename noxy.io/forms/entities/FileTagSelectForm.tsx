@@ -1,7 +1,5 @@
-import _ from "lodash";
 import React from "react";
-import Dialog, {DialogListenerType, DialogPriority} from "../../components/Application/Dialog";
-import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
+import Dialog from "../../components/Application/Dialog";
 import Button from "../../components/Form/Button";
 import EntityPicker from "../../components/Form/EntityPicker";
 import ErrorText from "../../components/Text/ErrorText";
@@ -9,6 +7,7 @@ import TitleText from "../../components/Text/TitleText";
 import FileTagEntity from "../../entities/FileTagEntity";
 import Global from "../../Global";
 import Helper from "../../Helper";
+import ConfirmForm from "../ConfirmForm";
 import Style from "./FileTagSelectForm.module.scss";
 
 export default class FileTagSelectForm extends React.Component<FileSetTagListFormProps, State> {
@@ -41,7 +40,7 @@ export default class FileTagSelectForm extends React.Component<FileSetTagListFor
       <div className={classes.join(" ")}>
         <TitleText>Select File Tag(s)</TitleText>
         {this.renderError()}
-        <EntityPicker selected={this.state.selected} available={this.state.available}
+        <EntityPicker className={Style.FileTagList} selected={this.state.selected} available={this.state.available} horizontal={true}
                       onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
         <Button onClick={this.submit}>Choose tag(s)</Button>
       </div>
@@ -70,11 +69,12 @@ export default class FileTagSelectForm extends React.Component<FileSetTagListFor
 
   private readonly openTagDeleteDialog = async (tag: FileTagEntity, selected: FileTagEntity[], available: FileTagEntity[]) => {
     const value = {tag, selected, available};
-    Dialog.show(DialogListenerType.GLOBAL, DialogPriority.NEXT, <ConfirmDialog title={"Permanently delete tag?"} value={value} onAccept={this.eventTagDelete}/>);
+    this.setState({dialog: Dialog.show(<ConfirmForm value={value} onAccept={this.eventTagDelete}/>, {title: "Permanently delete tag?"})});
   };
 
   private readonly eventTagDelete = async ({tag, selected, available}: {tag: FileTagEntity, selected: FileTagEntity[], available: FileTagEntity[]}) => {
     await FileTagEntity.deleteOne(tag);
+    Dialog.close(this.state.dialog);
     this.setState({selected, available});
   };
 
@@ -90,6 +90,7 @@ export interface FileSetTagListFormProps {
 
 interface State {
   error?: Error
+  dialog?: string
   available: FileTagEntity[];
   selected: FileTagEntity[]
 }
