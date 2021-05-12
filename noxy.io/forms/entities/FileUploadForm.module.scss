@@ -22,7 +22,7 @@
     flex-flow:    column;
     grid-row-gap: 10px;
     min-height:   86px;
-    max-height:   300px;
+    max-height:   280px;
     padding:      0 10px;
     border-left:  2px solid $background-secondary-color;
     border-right: 2px solid $background-secondary-color;
@@ -36,7 +36,7 @@
     grid-column-gap: 10px;
 
     .Action {
-      width: 95px;
+      width: 120px;
     }
   }
 

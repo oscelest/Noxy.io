@@ -1,7 +1,7 @@
 import React from "react";
 import Button from "../components/Form/Button";
 import Global from "../Global";
-import Style from "./LogInForm.module.scss";
+import Style from "./ConfirmForm.module.scss";
 
 export default class ConfirmForm<V> extends React.Component<ConfirmFormProps<V>, State> {
 

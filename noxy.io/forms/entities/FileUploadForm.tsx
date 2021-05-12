@@ -104,7 +104,7 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
 
         <div className={Style.ActionList}>
           <Button className={Style.Action} disabled={clear_disabled} onClick={this.eventFileCancelAll}>Cancel All</Button>
-          <FilePicker multiple={true} onChange={this.eventBrowseChange}>Browse</FilePicker>
+          <FilePicker className={Style.Action} multiple={true} onChange={this.eventBrowseChange}>Browse</FilePicker>
           <Button className={Style.Action} disabled={upload_disabled} onClick={this.eventFileUploadAll}>Upload all</Button>
         </div>
       </div>
