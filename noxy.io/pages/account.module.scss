@@ -129,8 +129,9 @@
 
     > .ActionList {
       flex:            0 0 auto;
-      justify-content: space-around;
+      justify-content: flex-start;
       grid-column-gap: 10px;
+      min-width:       110px;
     }
   }
 }

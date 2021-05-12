@@ -18,6 +18,7 @@ import PageHeader from "../../components/UI/PageHeader";
 import Placeholder from "../../components/UI/Placeholder";
 import FileEntity from "../../entities/FileEntity";
 import FileTagEntity from "../../entities/FileTagEntity";
+import QueuePosition from "../../enums/QueuePosition";
 import Size from "../../enums/Size";
 import FatalException from "../../exceptions/FatalException";
 import ConfirmForm from "../../forms/ConfirmForm";
@@ -34,9 +35,11 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): FileAliasPageProps {
     const alias = (context.query[FileAliasPageQuery.ALIAS] ?? "");
+    const share_code = (context.query[FileAliasPageQuery.SHARE_CODE] ?? "");
 
     return {
-      [FileAliasPageQuery.ALIAS]: (Array.isArray(alias) ? alias[0] : alias) || "",
+      [FileAliasPageQuery.ALIAS]:      (Array.isArray(alias) ? alias[0] : alias) || "",
+      [FileAliasPageQuery.SHARE_CODE]: (Array.isArray(share_code) ? share_code[0] : share_code) || "",
     };
   }
 
@@ -61,6 +64,10 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
       },
     };
   }
+
+  private readonly closeDialog = () => {
+    Dialog.close(this.state.dialog);
+  };
 
   public async componentDidMount() {
     if (!this.context.state.user) return this.setState({file_loading: false});
@@ -207,14 +214,19 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
   };
 
   private readonly openDeleteTagDialog = async (tag: FileTagEntity) => {
-    this.setState({dialog: Dialog.show(<ConfirmForm value={tag} onAccept={this.eventTagDelete}/>, {title: "Permanently delete tag?"})});
+    this.setState({
+      dialog: Dialog.show(
+        <ConfirmForm value={tag} onAccept={this.eventTagDelete} onDecline={this.closeDialog}/>,
+        {position: QueuePosition.FIRST, title: "Permanently delete tag?"},
+      ),
+    });
   };
 
   private readonly eventTagDelete = async (tag: FileTagEntity) => {
     if (!this.state.file) throw new FatalException("Could not delete tag", "The file you're trying to delete a new tag from could not be loaded or updated. Please reload the page and try again.");
 
+    this.closeDialog();
     tag = await FileTagEntity.deleteOne(tag);
-    Dialog.close(this.state.dialog);
     this.state.file.file_tag_list = _.filter(this.state.tag_selected_list, value => value.getPrimaryKey() !== tag.getPrimaryKey());
     this.setState({
       dialog:             undefined,
@@ -225,7 +237,12 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
   };
 
   private readonly openDeleteFileDialog = async () => {
-    this.setState({dialog: Dialog.show(<ConfirmForm value={this.props[FileAliasPageQuery.ALIAS]} onAccept={this.eventFileDelete}/>, {title: "Permanently delete file?"})});
+    this.setState({
+      dialog: Dialog.show(
+        <ConfirmForm value={this.props[FileAliasPageQuery.ALIAS]} onAccept={this.eventFileDelete} onDecline={this.closeDialog}/>,
+        {position: QueuePosition.NEXT, title: "Permanently delete file?"},
+      ),
+    });
   };
 
   private readonly eventFileDelete = async (alias: string) => {
@@ -280,8 +297,9 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
 
 }
 
-enum FileAliasPageQuery {
+export enum FileAliasPageQuery {
   ALIAS = "alias",
+  SHARE_CODE = "share",
 }
 
 type TagPrivacyCheckbox = CheckboxCollection<{public: boolean}>
@@ -289,6 +307,7 @@ type FilePrivacyRadioButton = RadioButtonCollection<"private" | "link" | "public
 
 interface FileAliasPageProps extends PageProps {
   [FileAliasPageQuery.ALIAS]: string
+  [FileAliasPageQuery.SHARE_CODE]: string
 }
 
 interface State {

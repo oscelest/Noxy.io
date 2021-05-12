@@ -36,7 +36,7 @@ $col-gap: 10px;
   }
 
   .List {
-    flex:      1 1 auto;
+    flex:            1 1 auto;
     grid-row-gap:    $row-gap;;
     grid-column-gap: $col-gap;
     overflow:        auto;
@@ -67,6 +67,7 @@ $col-gap: 10px;
     .Container {
       flex:            1 1 auto;
       grid-column-gap: 5px;
+      user-select:     none;
 
       .Icon {
         font-size:   12px;

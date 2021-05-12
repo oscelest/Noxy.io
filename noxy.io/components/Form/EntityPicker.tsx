@@ -47,6 +47,7 @@ export default class EntityPicker<V extends {toString(): string}> extends React.
     const entity = await this.props.onCreate?.(search, this.props.selected);
     if (!entity) throw new FatalException("", "");
 
+    this.search("");
     this.setState({search: ""});
     if (this.props.onCompare) {
       const selected = _.uniqBy([...this.props.selected, entity], value => this.props.onCompare!(value));

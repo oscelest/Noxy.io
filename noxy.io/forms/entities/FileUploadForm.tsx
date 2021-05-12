@@ -11,6 +11,7 @@ import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
 import FileEntity from "../../entities/FileEntity";
 import FileTagEntity from "../../entities/FileTagEntity";
+import QueuePosition from "../../enums/QueuePosition";
 import Global from "../../Global";
 import ConfirmForm from "../ConfirmForm";
 import Style from "./FileUploadForm.module.scss";
@@ -69,6 +70,10 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
     }
   };
 
+  private readonly closeDialog = () => {
+    Dialog.close(this.state.dialog);
+  }
+
   public componentDidUpdate(prevProps: Readonly<FileUploadFormProps>, prevState: Readonly<State>, snapshot?: any): void {
     if (prevProps.file_list !== this.props.file_list) {
       this.setState({file_list: [...this.state.file_list, ..._.map(this.props.file_list, file => new FileTransfer(file))]});
@@ -122,13 +127,19 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
 
   private readonly openTagDeleteDialog = async (tag: FileTagEntity, tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]) => {
     const value = {tag, tag_selected_list, tag_available_list};
-    this.setState({dialog: Dialog.show(<ConfirmForm value={value} onAccept={this.eventTagDelete}/>, {title: "Permanently delete tag?"})});
+    this.setState({
+      dialog:
+        Dialog.show(
+          <ConfirmForm value={value} onAccept={this.eventTagDelete} onDecline={this.closeDialog}/>,
+          {position: QueuePosition.FIRST, title: "Permanently delete tag?"},
+        ),
+    });
   };
 
   private readonly eventTagDelete = async ({tag, tag_selected_list, tag_available_list}: {tag: FileTagEntity, tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]}) => {
     await FileTagEntity.deleteOne(tag);
-    Dialog.close(this.state.dialog);
     this.setState({tag_selected_list, tag_available_list});
+    this.closeDialog();
   };
 
   private readonly eventTagChange = (tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]) => {

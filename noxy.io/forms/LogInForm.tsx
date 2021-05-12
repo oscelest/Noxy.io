@@ -104,7 +104,7 @@ export default class LogInForm extends React.Component<LogInFormProps, State> {
     this.setState({
       dialog: Dialog.show(
         <div className={Style.DialogContent}>
-          <TitleText>Problem logging in with your email?</TitleText>
+          <TitleText>Can't log in with your email?</TitleText>
           <p>To log in, please enter your email in this field. This is not your username.</p>
           <p>If your email and password is not accepted, please check that you've spelled your email and password correctly.</p>
           <p>If you think you have forgotten your password, please use the password help dialog, below the email help dialog (the button you pressed to show this text).</p>
@@ -117,7 +117,7 @@ export default class LogInForm extends React.Component<LogInFormProps, State> {
     this.setState({
       dialog: Dialog.show(
         <div className={Style.DialogContent}>
-          <TitleText>Problem logging in with your password?</TitleText>
+          <TitleText>Can't log in with your password?</TitleText>
           <p>We allow for emails and passwords to be changed, so please make sure you haven't changed either recently.</p>
           <p>If you're not sure if you're using the right password, or if you've forgotten your password, please use the form below to reset it.</p>
           <p/>

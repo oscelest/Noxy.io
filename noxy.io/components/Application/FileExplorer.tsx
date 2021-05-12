@@ -4,6 +4,7 @@ import React from "react";
 import FileTypeName from "../../../common/enums/FileTypeName";
 import Order from "../../../common/enums/Order";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
+import Privacy from "../../../common/enums/Privacy";
 import SetOperation from "../../../common/enums/SetOperation";
 import FileEntity, {FileEntitySearchParameters} from "../../entities/FileEntity";
 import FileTagEntity from "../../entities/FileTagEntity";
@@ -16,6 +17,7 @@ import FileTagSelectForm from "../../forms/entities/FileTagSelectForm";
 import FileUploadForm from "../../forms/entities/FileUploadForm";
 import Global from "../../Global";
 import Helper from "../../Helper";
+import {FileAliasPageQuery} from "../../pages/file/[alias]";
 import Button from "../Form/Button";
 import Checkbox, {CheckboxCollection} from "../Form/Checkbox";
 import EntityPicker from "../Form/EntityPicker";
@@ -31,6 +33,7 @@ import Loader from "../UI/Loader";
 import Preview from "../UI/Preview";
 import Redirect from "../UI/Redirect";
 import Authorized from "./Authorized";
+import Conditional from "./Conditional";
 import Dialog from "./Dialog";
 import Style from "./FileExplorer.module.scss";
 
@@ -117,6 +120,10 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     return _.reduce(this.state.file_selected, (result, value, index) => value ? [...result, this.state.file_list[index]] : result, [] as FileEntity[]);
   };
 
+  private readonly closeDialog = () => {
+    Dialog.close(this.state.dialog);
+  }
+
   public async componentDidMount() {
     const file_type_list = await FileTypeEntity.findMany();
     const type_tickable_collection = _.reduce(file_type_list, (r, v) => v.name !== FileTypeName.UNKNOWN ? _.set(r, v.id, Checkbox.createElement(v, v.toString())) : r, {} as TypeCheckbox);
@@ -128,7 +135,8 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   public render() {
     const {type_tickable_collection} = this.state;
     const {tag_set_operation, tag_selected_list, tag_available_list} = this.state;
-    const {file_loading, file_selected, file_list, file_order} = this.state;
+    const {file_loading, file_selected, file_list, file_order, file_search} = this.state;
+    const {pagination_current, pagination_total} = this.state;
 
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
@@ -154,13 +162,17 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
               </Loader>
             </DragDrop>
 
-            {this.renderPagination()}
+            <Conditional condition={pagination_total > 1}>
+              <Pagination className={Style.Pagination} current={pagination_current} total={pagination_total} onChange={this.eventPaginationChange}/>
+            </Conditional>
           </div>
 
           <div className={Style.Sidebar}>
             <div className={Style.FileSearch}>
-              <Input className={Style.Input} value={this.state.file_search} label={"Search"} onChange={this.eventFileSearchChange}/>
-              {this.renderCreateFile()}
+              <Input className={Style.Input} value={file_search} label={"Search"} onChange={this.eventFileSearchChange}/>
+              <Conditional condition={this.context.hasPermission(PermissionLevel.FILE_CREATE)}>
+                <Button icon={IconType.UPLOAD} onClick={this.openUploadDialog}/>
+              </Conditional>
             </div>
             <Sortable onChange={this.eventOrderChange}>{file_order}</Sortable>
 
@@ -184,29 +196,15 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   }
 
   private readonly renderFile = (file: FileEntity, index: number = 0) => {
+    const href = file.privacy === Privacy.LINK ? `/file/${file.alias}?${FileAliasPageQuery.SHARE_CODE}=${file.share_code}` : `/file/${file.alias}`;
+
     return (
       <div key={index} className={Style.File}>
-        <Redirect className={Style.Redirect} href={`/file/${file.alias}`} isDoubleClick={true}>
+        <Redirect className={Style.Redirect} href={href} isDoubleClick={true}>
           <Preview className={Style.FilePreview} file={file}/>
           <EllipsisText className={Style.FileName}>{file.name}</EllipsisText>
         </Redirect>
       </div>
-    );
-  };
-
-  private readonly renderPagination = () => {
-    if (this.state.pagination_total === 1) return null;
-
-    return (
-      <Pagination className={Style.Pagination} current={this.state.pagination_current} total={this.state.pagination_total} onChange={this.eventPaginationChange}/>
-    );
-  };
-
-  private readonly renderCreateFile = () => {
-    if (!this.context.hasPermission(PermissionLevel.FILE_CREATE)) return null;
-
-    return (
-      <Button icon={IconType.UPLOAD} onClick={this.openUploadDialog}/>
     );
   };
 
@@ -260,7 +258,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   private readonly openFileDeleteDialog = async () => {
     const count = _.filter(this.state.file_selected).length;
     const title = count === 1 ? "Permanently delete file?" : `Permanently delete ${_.filter(this.state.file_selected).length} file(s)?`;
-    this.setState({dialog: Dialog.show(<ConfirmForm value={this.getSelectedFileList()} onAccept={this.eventFileDelete}/>, {title})});
+    this.setState({dialog: Dialog.show(<ConfirmForm value={this.getSelectedFileList()} onAccept={this.eventFileDelete} onDecline={this.closeDialog}/>, {title})});
   };
 
   private readonly eventFileDelete = async (file_list: FileEntity[]) => {
@@ -270,7 +268,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   private readonly openTagDeleteDialog = async (tag: FileTagEntity, tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]) => {
     const value = {tag, tag_selected_list, tag_available_list};
-    this.setState({dialog: Dialog.show(<ConfirmForm value={value} onAccept={this.eventTagDelete}/>, {title: "Permanently delete tag?"})});
+    this.setState({dialog: Dialog.show(<ConfirmForm value={value} onAccept={this.eventTagDelete} onDecline={this.closeDialog}/>, {title: "Permanently delete tag?"})});
   };
 
   private readonly eventTagDelete = async ({tag, tag_selected_list, tag_available_list}: {tag: FileTagEntity, tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]}) => {
@@ -316,8 +314,10 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private readonly eventTypeChange = (type_tickable_collection: TypeCheckbox) => {
-    const type_selected_list = _.reduce(type_tickable_collection, (result, tick) => (tick.checked ? [...result, tick.value] : result), [] as FileTypeEntity[]);
-    this.searchFile({type_tickable_collection, type_selected_list});
+    this.searchFile({
+      type_tickable_collection,
+      type_selected_list: _.reduce(type_tickable_collection, (result, item) => (item.checked ? [...result, item.value] : result), [] as FileTypeEntity[]),
+    });
   };
 
   private readonly eventContextMenu = (selected: boolean[]): {[key: string]: ContextMenuItem} => {
