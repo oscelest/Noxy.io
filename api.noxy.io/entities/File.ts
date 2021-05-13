@@ -20,11 +20,9 @@ import FileTag, {FileTagJSON} from "./FileTag";
 import FileType from "./FileType";
 import User, {UserJSON} from "./User";
 
-const DataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~()'!*:@,;", 64);
+const DataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~()'!*@,;", 64);
 const ShareHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 32);
 
-const IDFormat = new RegExp("^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$", "i");
-const DataHashFormat = new RegExp("^[a-zA-Z0-9-._~()'!*:@,;]{64}$");
 const ShareHashFormat = new RegExp("^[a-zA-Z0-9-_]{32}$");
 
 @TypeORM.Entity()
