@@ -24,6 +24,7 @@ import User from "./entities/User";
   if (!process.env.DOMAIN) throw new Error("DOMAIN environmental value must be defined.");
 
   if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET environmental value must be defined.");
+  if (!process.env.FILE_SECRET) throw new Error("FILE_SECRET environmental value must be defined.");
 
   try {
     process.env.PATH_ROOT = Path.resolve(__dirname);
