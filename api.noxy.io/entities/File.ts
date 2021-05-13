@@ -1,6 +1,6 @@
 import ADMZip from "adm-zip";
-import Crypto from "crypto";
 import * as FS from "fs";
+import JWT from "jsonwebtoken";
 import _ from "lodash";
 import Moment from "moment";
 import {customAlphabet} from "nanoid";
@@ -20,12 +20,17 @@ import FileTag, {FileTagJSON} from "./FileTag";
 import FileType from "./FileType";
 import User, {UserJSON} from "./User";
 
-const Alias = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 16);
-const ShareCode = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 32);
+const DataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~()'!*:@,;", 64);
+const ShareHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 32);
+
+const IDFormat = new RegExp("^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$", "i");
+const DataHashFormat = new RegExp("^[a-zA-Z0-9-._~()'!*:@,;]{64}$");
+const ShareHashFormat = new RegExp("^[a-zA-Z0-9-_]{32}$");
 
 @TypeORM.Entity()
-@TypeORM.Index("time_created", ["time_created"])
-@TypeORM.Index("time_updated", ["time_updated"])
+@TypeORM.Index("time_created", ["time_created"] as (keyof File)[])
+@TypeORM.Index("time_updated", ["time_updated"] as (keyof File)[])
+@TypeORM.Unique("data_hash", ["data_hash"] as (keyof File)[])
 export default class File extends Entity<File>(TypeORM) {
 
   /**
@@ -34,9 +39,6 @@ export default class File extends Entity<File>(TypeORM) {
 
   @TypeORM.PrimaryGeneratedColumn("uuid")
   public id: string;
-
-  @TypeORM.Column({type: "varchar", length: 16})
-  public alias: string;
 
   @TypeORM.Column({type: "varchar", length: 128})
   public name: string;
@@ -47,8 +49,11 @@ export default class File extends Entity<File>(TypeORM) {
   @TypeORM.Column({type: "enum", enum: Privacy})
   public privacy: Privacy;
 
+  @TypeORM.Column({type: "varchar", length: 64})
+  public data_hash: string;
+
   @TypeORM.Column({type: "varchar", length: 32})
-  public share_code: string;
+  public share_hash: string;
 
   @TypeORM.Column({type: "boolean"})
   public flag_public_tag: boolean;
@@ -81,8 +86,17 @@ export default class File extends Entity<File>(TypeORM) {
    * Instance methods
    */
 
+  public getFullName() {
+    return this.name.match(new RegExp(`${this.file_extension.name}$`)) ? this.name : `${this.name}.${this.file_extension.name}`;
+  }
+
   public getFilePath() {
-    return Path.resolve(process.env.FILE_PATH!, this.alias);
+    return Path.resolve(process.env.FILE_PATH!, this.data_hash);
+  }
+
+  public hasAccess(user: User, share_code?: string) {
+    if (!this.flag_public_tag && user?.id !== this.user_created.id) this.file_tag_list = [];
+    return user?.id === this.user_created.id || this.privacy === Privacy.PUBLIC || this.privacy === Privacy.LINK && this.share_hash === share_code;
   }
 
   public toJSON(): FileJSON {
@@ -90,9 +104,9 @@ export default class File extends Entity<File>(TypeORM) {
       id:              this.id,
       name:            this.name,
       size:            this.size,
-      alias:           this.alias,
+      data_hash:       this.data_hash,
       privacy:         this.privacy,
-      share_code:      this.share_code,
+      share_hash:      this.share_hash,
       flag_public_tag: this.flag_public_tag,
       file_extension:  this.file_extension.toJSON(),
       file_tag_list:   _.map(this.file_tag_list, entity => entity.toJSON()),
@@ -114,26 +128,6 @@ export default class File extends Entity<File>(TypeORM) {
     this.join(query, "file_extension");
     this.join(query, "file_extension", "file_type");
     return query;
-  }
-
-  public static async performSelect(id: string): Promise<File>
-  public static async performSelect(id: string[]): Promise<File[]>
-  public static async performSelect(id: string | string[]): Promise<File | File[]> {
-    if (Array.isArray(id)) {
-      const id_list = id.filter(id => id.match(/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i));
-      const alias_list = id.filter(alias => alias.match(/^[a-zA-Z0-9-_]{16}$/));
-      return this.createSelect().where(`${this.name}.id IN :id_list`, {id_list}).orWhere(`${this.name}.alias IN :alias_list`, {alias_list}).getMany();
-    }
-
-    if (id.match(/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i)) {
-      return this.createSelect().andWhere(`${this.name}.id = :id`, {id}).getOneOrFail();
-    }
-    else if (id.match(/^[a-zA-Z0-9-_]{16}$/)) {
-      return this.createSelect().andWhere(`${this.name}.alias = :id`, {id}).getOneOrFail();
-    }
-    else {
-      throw new ServerException(400, {id}, "ID or alias is malformed.");
-    }
   }
 
   /**
@@ -185,16 +179,14 @@ export default class File extends Entity<File>(TypeORM) {
     }
   }
 
-  @File.get("/:id")
+  @File.get("/:id", {user: false})
   @File.bindParameter<Request.getFindOne>("share_code", ValidatorType.STRING, {max_length: 32})
-  public static async findOne({params: {id}, locals: {respond, parameters, user}}: Server.Request<{id: string}, Response.getFindOne, Request.getFindOne>) {
+  public static async findOne({params: {id}, locals: {respond, user, parameters}}: Server.Request<{id: string}, Response.getFindOne, Request.getFindOne>) {
     const {share_code} = parameters!;
 
     try {
       const file = await this.performSelect(id);
-      if (file.share_code === null && user?.id !== file.user_created.id) return respond?.(new ServerException(403, {id}));
-      if (file.share_code && file.share_code !== share_code && user?.id !== file.user_created.id) return respond?.(new ServerException(403, {id}));
-      if (!file.flag_public_tag && user?.id !== file.user_created.id) file.file_tag_list = [];
+      if (!file.hasAccess(user!, share_code)) return respond?.(new ServerException(403, {id, share_code}));
 
       return respond?.(file);
     }
@@ -204,17 +196,18 @@ export default class File extends Entity<File>(TypeORM) {
     }
   }
 
-  @File.get("/data/:id", {user: false})
-  public static async readOne({params: {id}, locals: {respond}}: Server.Request<{id: string}, Response.getReadOne, Request.getReadOne>, response: Server.Response) {
-
+  @File.get("/data/:data_hash", {user: false})
+  public static async readOne({params: {data_hash}, locals: {respond, user}}: Server.Request<{data_hash: string}, Response.getReadOne, Request.getReadOne>, response: Server.Response) {
     try {
-      const file = await this.performSelect(id);
+      const query = this.createSelect();
+      this.addValueClause(query, "data_hash", data_hash);
+      const file = await query.getOneOrFail();
+
       response.setHeader("Content-Type", file.file_extension.mime_type);
-      // response.setHeader("Content-Disposition", `attachment; filename="filename.jpg"`);
-      response.sendFile(Path.resolve(process.env.FILE_PATH!, file.alias));
+      response.sendFile(Path.resolve(process.env.FILE_PATH!, file.data_hash));
     }
     catch (error) {
-
+      if (error instanceof TypeORM.EntityNotFoundError) return respond?.(new ServerException(404, {data_hash}));
       return respond?.(error);
     }
   }
@@ -232,10 +225,10 @@ export default class File extends Entity<File>(TypeORM) {
     const entity = TypeORM.getRepository(File).create();
     entity.id = v4();
     entity.name = file.originalname;
-    entity.alias = Alias();
+    entity.data_hash = DataHash();
     entity.size = file.size;
     entity.privacy = Privacy.PRIVATE;
-    entity.share_code = ShareCode();
+    entity.share_hash = ShareHash();
     entity.flag_public_tag = false;
     entity.user_created = user!;
 
@@ -270,34 +263,53 @@ export default class File extends Entity<File>(TypeORM) {
 
   @File.post("/request-download")
   @File.bindParameter<Request.postRequestDownload>("id", ValidatorType.UUID, {flag_array: true})
-  private static async requestDownload({locals: {respond, parameters}}: Server.Request<{}, Response.postRequestDownload, Request.postRequestDownload>) {
-    const {id} = parameters!;
-
+  @File.bindParameter<Request.postRequestDownload>("share_hash", ValidatorType.STRING, {validator: ShareHashFormat}, {flag_array: true, flag_optional: true})
+  private static async requestDownload({locals: {respond, user, parameters}}: Server.Request<{}, Response.postRequestDownload, Request.postRequestDownload>) {
+    const {id, share_hash} = parameters!;
     const files = await this.performSelect(id);
-    const hash = Crypto.createHash("sha256");
 
-    const archive = new ADMZip();
-    for (let file of files) {
-      const name = file.name.match(new RegExp(`${file.file_extension.name}$`)) ? file.name : `${file.name}.${file.file_extension.name}`;
-      hash.update(file.alias);
-      archive.addLocalFile(file.getFilePath(), "", name);
-    }
+    if (!_.every(files, file => file.hasAccess(user!, share_hash))) return respond?.(new ServerException(403, {id}));
 
-    const token = hash.digest("hex");
-    const path = Path.resolve(process.env.TEMP!, token);
-    archive.writeZip(path, error => {
-      if (error) return respond?.(new ServerException(500, error, error.message));
-      respond?.(token);
-    });
+    return respond?.(JWT.sign({id}, `${process.env["FILE_SECRET"]}:${id.join(":")}`, {algorithm: "HS256", expiresIn: "1m"}));
   }
 
   @File.post("/confirm-download", {user: false})
   @File.bindParameter<Request.postConfirmDownload>("token", ValidatorType.STRING)
-  private static async confirmDownload({locals: {parameters}}: Server.Request<{}, Response.postConfirmDownload, Request.postConfirmDownload>, response: Server.Response) {
+  private static async confirmDownload({locals: {respond, parameters}}: Server.Request<{}, Response.postConfirmDownload, Request.postConfirmDownload>, response: Server.Response) {
     const {token} = parameters!;
-    const path = Path.resolve(process.env.TEMP!, token);
-    const name = `files_${Moment().format("YYYY_MM_DD_H_m_s")}.zip`;
-    response.download(path, name, {}, () => FS.unlink(path, (error) => (error && error.code !== "ENOENT") && Logger.write(Logger.Level.ERROR, error)));
+    const {id} = JWT.decode(token) as {id: string[]};
+    try {
+      JWT.verify(token, `${process.env["FILE_SECRET"]}:${id.join(":")}`);
+
+      const files = await this.performSelect(id);
+      if (files.length === 1) {
+        const path = Path.resolve(process.env.FILE_PATH!, files[0].getFilePath());
+        return response.download(path, files[0].getFullName(), err => err && respond?.(new ServerException(500, err)));
+      }
+
+      const archive = new ADMZip();
+      for (let file of files) archive.addLocalFile(file.getFilePath(), "", file.getFullName());
+
+      const name = `files_${Moment().format("YYYY_MM_DD_H_m_s")}.zip`;
+      const path = Path.resolve(process.env.TEMP!, v4());
+
+      archive.writeZip(path, error => {
+        if (error) return respond?.(new ServerException(500, error, error.message));
+
+        response.download(path, name, error => {
+          if (error) respond?.(new ServerException(500, error));
+
+          FS.unlink(path, error => {
+            if (!error || error.code === "ENOENT") return;
+
+            Logger.write(Logger.Level.ERROR, error);
+          });
+        });
+      });
+    }
+    catch (error) {
+      respond?.(new ServerException(500, error));
+    }
   }
 
   @File.put("/:id", {permission: PermissionLevel.FILE_UPDATE})
@@ -343,7 +355,7 @@ export default class File extends Entity<File>(TypeORM) {
       const file = await query.getOneOrFail();
       if (file.user_created.id !== user?.id) return respond?.(new ServerException(403));
 
-      FS.unlink(Path.resolve(process.env.FILE_PATH!, file.alias), async error => {
+      FS.unlink(Path.resolve(process.env.FILE_PATH!, file.data_hash), async error => {
         if (error) return respond?.(new ServerException(500, error));
 
         try {
@@ -364,11 +376,11 @@ export default class File extends Entity<File>(TypeORM) {
 
 export type FileJSON = {
   id: string
-  alias: string
   name: string
   size: number
   privacy: string
-  share_code: string
+  data_hash: string
+  share_hash: string
   flag_public_tag: boolean
   file_extension: FileExtensionJSON
   file_tag_list: FileTagJSON[]
@@ -383,7 +395,8 @@ namespace Request {
   export type getFindOne = {share_code?: string}
   export type getReadOne = never
   export type postCreateOne = {file: FileHandle; file_tag_list?: string[]}
-  export type postRequestDownload = {id: string[]}
+  export type postDownload = {id: string}
+  export type postRequestDownload = {id: string[], share_hash?: string}
   export type postConfirmDownload = {token: string}
   export type putUpdateOne = {name?: string; file_extension?: string; file_tag_list?: string[], privacy?: Privacy, flag_public_tag?: boolean}
   export type deleteDeleteOne = never
@@ -395,6 +408,7 @@ namespace Response {
   export type getFindOne = File | ServerException
   export type getReadOne = ServerException
   export type postCreateOne = File | ServerException
+  export type postDownload = never | ServerException
   export type postRequestDownload = string | ServerException
   export type postConfirmDownload = string | ServerException
   export type putUpdateOne = File | ServerException

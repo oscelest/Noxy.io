@@ -114,7 +114,7 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
     const {name} = parameters!;
     const query = this.createSelect();
 
-    this.addListClause(query, "name", name);
+    this.addValueClause(query, "name", name);
     this.addValueClause(query, "user_created", user!.id);
 
     try {

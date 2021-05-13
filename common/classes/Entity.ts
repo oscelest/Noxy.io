@@ -110,13 +110,13 @@ export default function Entity<E>(service: typeof TypeORM) {
       return  qb.loadRelationCountAndMap(`${this.name}.${column}`, this.getRelationColumn(key, relation_key!), this.getRelationAlias(key, relation_key!));
     }
 
-    public static addValueClause<Q extends TypeORM.SelectQueryBuilder<E> | TypeORM.UpdateQueryBuilder<E> | TypeORM.DeleteQueryBuilder<E>>(qb: Q, key: Key<E>, value?: EntityID): Q {
-      return (value?.length ? qb.andWhere(`${this.name}.${key} IN (:${key})`, {[key]: value}) : qb) as Q;
-    }
-
     // ----------------
     // Where conditions
     // ----------------
+
+    public static addValueClause<Q extends TypeORM.SelectQueryBuilder<E> | TypeORM.UpdateQueryBuilder<E> | TypeORM.DeleteQueryBuilder<E>>(qb: Q, key: Key<E>, value?: EntityID): Q {
+      return (value?.length ? qb.andWhere(`${this.name}.${key} IN (:${key})`, {[key]: value}) : qb) as Q;
+    }
 
     public static addExclusionClause(qb: TypeORM.SelectQueryBuilder<E>, key: Key<E>, value?: EntityID) {
       return value?.length ? qb.andWhere(`${this.name}.${key} NOT IN (:${key})`, {[key]: value}) : qb;
@@ -128,11 +128,6 @@ export default function Entity<E>(service: typeof TypeORM) {
 
     public static addWildcardClause(qb: TypeORM.SelectQueryBuilder<E>, key: Key<E>, value?: string) {
       return value ? qb.andWhere(`${this.name}.${key} LIKE :${key}`, {[key]: `%${value}%`}) : qb;
-    }
-
-    public static addListClause(qb: TypeORM.SelectQueryBuilder<E>, key: Key<E>, value?: string[]) {
-      const list = _.reduce(value, (result, value, index) => ({...result, [`:${key}.${index}`]: value}), {} as {[key: string]: string});
-      return value ? qb.andWhere(`${this.name}.${key} IN (${_.keys(list)})`, list) : qb;
     }
 
     public static addRelationClause<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, key: K, relation_key: Key<E[K]>, value?: EntityID) {

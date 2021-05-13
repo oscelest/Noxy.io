@@ -4,19 +4,21 @@ import Privacy from "../../common/enums/Privacy";
 import SetOperation from "../../common/enums/SetOperation";
 import Entity from "../classes/Entity";
 import RequestData from "../classes/RequestData";
+import Helper from "../Helper";
 import FileExtensionEntity from "./FileExtensionEntity";
 import FileTagEntity from "./FileTagEntity";
 import FileTypeEntity from "./FileTypeEntity";
 import UserEntity from "./UserEntity";
 
+
 export default class FileEntity extends Entity {
 
   public id: string;
   public name: string;
-  public alias: string;
   public size: number;
   public privacy: Privacy;
-  public share_code: string;
+  public data_hash: string;
+  public share_hash: string;
   public flag_public_tag: boolean;
   public file_tag_list: FileTagEntity[];
   public file_extension: FileExtensionEntity;
@@ -29,10 +31,10 @@ export default class FileEntity extends Entity {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? "";
-    this.alias = entity?.alias ?? "";
+    this.data_hash = entity?.data_hash ?? "";
     this.size = entity?.size ?? 0;
     this.privacy = entity?.privacy ?? Privacy.PRIVATE;
-    this.share_code = entity?.share_code ?? "";
+    this.share_hash = entity?.share_hash ?? "";
     this.flag_public_tag = entity?.flag_public_tag ?? false;
     this.file_tag_list = FileTagEntity.instantiate(entity?.file_tag_list);
     this.file_extension = new FileExtensionEntity(entity?.file_extension);
@@ -49,11 +51,11 @@ export default class FileEntity extends Entity {
   }
 
   public getDataPath() {
-    return `${FileEntity.URL}/data/${this.alias}`;
+    return `${FileEntity.URL}/data/${this.data_hash}`;
   }
 
   public getFilePath() {
-    return `${location.host}/file/${this.alias}`;
+    return `${FileEntity.URL}/file/${this.id}`;
   }
 
   public getFileType() {
@@ -76,9 +78,8 @@ export default class FileEntity extends Entity {
     return new this(result.data.content);
   }
 
-  public static async getDataByID(id: string | FileEntity) {
-    id = typeof id === "string" ? id : id.getPrimaryKey();
-    const result = await Axios.get<string>(`${this.URL}/data/${id}`);
+  public static async getByDataHash(data_hash: string) {
+    const result = await Axios.get<string>(`${this.URL}/data/${data_hash}`);
     return result.data;
   }
 
@@ -88,26 +89,13 @@ export default class FileEntity extends Entity {
     return new this(result.data.content);
   }
 
-  public static async requestDownload(id: (string | FileEntity)[]) {
+  public static async requestDownload(id: string | FileEntity | (string | FileEntity)[]) {
     const result = await Axios.post<APIRequest<string>>(`${this.URL}/request-download`, new RequestData({id}).toObject());
     return result.data.content;
   }
 
   public static async confirmDownload(token: string) {
-    const form = document.createElement("form");
-    form.setAttribute("action", `${FileEntity.URL}/confirm-download`);
-    form.setAttribute("method", "post");
-    form.setAttribute("target", "_blank");
-
-    const input = document.createElement("input");
-    input.setAttribute("type", "hidden");
-    input.setAttribute("name", "token");
-    input.setAttribute("value", token);
-    form.append(input);
-
-    document.getElementById("__next")?.append(form);
-    form.submit();
-    form.remove();
+    Helper.submitForm(`${FileEntity.URL}/confirm-download`, {token});
   }
 
   public static async updateOne(id: string | FileEntity, data: Properties<FileEntity>) {

@@ -7,20 +7,45 @@ namespace Helper {
 
   export const Canvas = process.browser ? document.createElement("canvas") : null;
 
+  export function submitForm(action: string, attributes: {[key: string]: string}): void
+  export function submitForm(action: string, target: string, attributes: {[key: string]: string}): void
+  export function submitForm(action: string, target: string | {[key: string]: string} = "_blank", attributes?: {[key: string]: string}) {
+    const parsed_target = attributes ? target as string : "_blank";
+    const parsed_attributes = attributes ? attributes : target as {[key: string]: string};
+
+    const form = document.createElement("form");
+    form.setAttribute("action", action);
+    form.setAttribute("method", "post");
+    form.setAttribute("target", parsed_target);
+
+    for (let key in parsed_attributes) {
+      const value = parsed_attributes[key];
+
+      const input = document.createElement("input");
+      input.setAttribute("type", "hidden");
+      input.setAttribute("name", key);
+      input.setAttribute("value", value);
+      form.append(input);
+    }
+
+    document.getElementById("__next")?.append(form);
+    form.submit();
+    form.remove();
+  }
+
   export function getDuration(seconds: number) {
     const s = Math.floor(seconds % 3600 % 60);
     const m = Math.floor(seconds % 3600 / 60);
 
     if (seconds > 3600) {
       const h = Math.floor(seconds / 3600);
-      return `${h}:${m < 10 ? `0${m}` : m}:${s < 10 ? `0${s}` : s}`
+      return `${h}:${m < 10 ? `0${m}` : m}:${s < 10 ? `0${s}` : s}`;
     }
     if (seconds > 60) {
-      return `${m}:${s < 10 ? `0${s}` : s}`
+      return `${m}:${s < 10 ? `0${s}` : s}`;
     }
 
     return `0:${s < 10 ? `0${s}` : s}`;
-
   }
 
   export function schedule(fn: Function, ...args: any[]) {

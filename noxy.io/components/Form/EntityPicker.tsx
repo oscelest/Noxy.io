@@ -21,7 +21,6 @@ export default class EntityPicker<V extends {toString(): string}> extends React.
     };
   }
 
-
   public readonly search = (search: string = this.state.search) => {
     this.setState({loading: true, search});
     this.searchInternal();

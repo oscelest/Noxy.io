@@ -24,7 +24,7 @@ import FatalException from "../../exceptions/FatalException";
 import ConfirmForm from "../../forms/ConfirmForm";
 import Global from "../../Global";
 import Helper from "../../Helper";
-import Style from "./[alias].module.scss";
+import Style from "./[id].module.scss";
 
 // noinspection JSUnusedGlobalSymbols
 export default class FileAliasPage extends React.Component<FileAliasPageProps, State> {
@@ -34,12 +34,12 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
 
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): FileAliasPageProps {
-    const alias = (context.query[FileAliasPageQuery.ALIAS] ?? "");
-    const share_code = (context.query[FileAliasPageQuery.SHARE_CODE] ?? "");
+    const alias = (context.query[FileAliasPageQuery.ID] ?? "");
+    const share_code = (context.query[FileAliasPageQuery.SHARE_HASH] ?? "");
 
     return {
-      [FileAliasPageQuery.ALIAS]:      (Array.isArray(alias) ? alias[0] : alias) || "",
-      [FileAliasPageQuery.SHARE_CODE]: (Array.isArray(share_code) ? share_code[0] : share_code) || "",
+      [FileAliasPageQuery.ID]:         (Array.isArray(alias) ? alias[0] : alias) || "",
+      [FileAliasPageQuery.SHARE_HASH]: (Array.isArray(share_code) ? share_code[0] : share_code) || "",
     };
   }
 
@@ -76,12 +76,12 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
       const next_state = {} as State;
 
       next_state.file_loading = false;
-      next_state.file = await FileEntity.getByID(this.props[FileAliasPageQuery.ALIAS]);
+      next_state.file = await FileEntity.getByID(this.props[FileAliasPageQuery.ID]);
 
       if (next_state.file.privacy === Privacy.PRIVATE) {
         next_state.file_privacy = {...this.state.file_privacy, private: {...this.state.file_privacy.private, checked: true}} as FilePrivacyRadioButton;
       }
-      else if (next_state.file.share_code === "") {
+      else if (next_state.file.share_hash === "") {
         next_state.file_privacy = {...this.state.file_privacy, public: {...this.state.file_privacy.public, checked: true}} as FilePrivacyRadioButton;
       }
       else {
@@ -101,7 +101,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
 
       switch (next_state.file.getFileType()) {
         case FileTypeName.TEXT:
-          return this.setState({...next_state, data_loading: false, data: await FileEntity.getDataByID(next_state.file.id)});
+          return this.setState({...next_state, data_loading: false, data: await FileEntity.getByDataHash(next_state.file.data_hash)});
         case FileTypeName.AUDIO:
         case FileTypeName.VIDEO:
           return this.setState({...next_state, data_loading: false, data: next_state.file.getDataPath()});
@@ -111,7 +111,8 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     }
     catch (error) {
       const exception = error as AxiosError;
-      if (exception.response?.status === 404) return this.setState({tag_loading: false, file_loading: false, data_loading: false});
+      this.setState({tag_loading: false, file_loading: false, data_loading: false});
+      if (exception.response?.status === 404) return;
       throw new FatalException("Unexpected error occurred", "A server error has caused this file to be unable to load. Please try again later. This error has already been reported.");
     }
   }
@@ -177,7 +178,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
                     </Checkbox>
                   </Conditional>
 
-                  <Button>Download file</Button>
+                  <Button onClick={this.eventDownload}>Download file</Button>
                   <Conditional condition={file?.user_created.getPrimaryKey() === this.context.state.user?.getPrimaryKey()}>
                     <Button onClick={this.openDeleteFileDialog}>Delete file</Button>
                   </Conditional>
@@ -239,7 +240,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
   private readonly openDeleteFileDialog = async () => {
     this.setState({
       dialog: Dialog.show(
-        <ConfirmForm value={this.props[FileAliasPageQuery.ALIAS]} onAccept={this.eventFileDelete} onDecline={this.closeDialog}/>,
+        <ConfirmForm value={this.props[FileAliasPageQuery.ID]} onAccept={this.eventFileDelete} onDecline={this.closeDialog}/>,
         {position: QueuePosition.NEXT, title: "Permanently delete file?"},
       ),
     });
@@ -280,11 +281,11 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     this.setState({file_privacy});
     this.state.file.privacy = _.find(file_privacy, item => !!item.checked)?.value ?? this.state.file.privacy;
 
-    const file = await FileEntity.updateOne(this.props[FileAliasPageQuery.ALIAS], this.state.file);
+    const file = await FileEntity.updateOne(this.props[FileAliasPageQuery.ID], this.state.file);
     this.setState({file});
 
     if (file_privacy.link.checked) {
-      await Router.replace({pathname: location.origin + location.pathname, query: {share: file.share_code}});
+      await Router.replace({pathname: location.origin + location.pathname, query: {share: file.share_hash}});
     }
     else {
       await Router.replace({pathname: location.origin + location.pathname});
@@ -295,19 +296,23 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     this.setState({tag_privacy});
   };
 
+  private readonly eventDownload = async () => {
+    await FileEntity.confirmDownload(await FileEntity.requestDownload(this.props[FileAliasPageQuery.ID]));
+  };
+
 }
 
 export enum FileAliasPageQuery {
-  ALIAS = "alias",
-  SHARE_CODE = "share",
+  ID = "id",
+  SHARE_HASH = "share",
 }
 
 type TagPrivacyCheckbox = CheckboxCollection<{public: boolean}>
 type FilePrivacyRadioButton = RadioButtonCollection<"private" | "link" | "public", Privacy>
 
 interface FileAliasPageProps extends PageProps {
-  [FileAliasPageQuery.ALIAS]: string
-  [FileAliasPageQuery.SHARE_CODE]: string
+  [FileAliasPageQuery.ID]: string
+  [FileAliasPageQuery.SHARE_HASH]: string
 }
 
 interface State {

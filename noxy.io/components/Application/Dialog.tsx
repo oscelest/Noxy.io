@@ -2,6 +2,7 @@ import _ from "lodash";
 import React from "react";
 import {v4} from "uuid";
 import DialogListenerName from "../../enums/DialogListenerName";
+import EventKey from "../../enums/EventKey";
 import IconType from "../../enums/IconType";
 import QueuePosition from "../../enums/QueuePosition";
 import Icon from "../Base/Icon";
@@ -24,7 +25,7 @@ export default class Dialog extends React.Component<DialogProps, State> {
 
   private static getDialogList(listener: Listener) {
     if (!this.dialog_listener_collection) this.dialog_listener_collection = {};
-    if (!this.dialog_listener_collection[listener]) this.dialog_listener_collection[listener] = []
+    if (!this.dialog_listener_collection[listener]) this.dialog_listener_collection[listener] = [];
     return this.dialog_listener_collection[listener];
   }
 
@@ -63,7 +64,7 @@ export default class Dialog extends React.Component<DialogProps, State> {
 
   private addElement = (instance: DialogInstance) => {
     this.setState({});
-    _.remove(this.#instance_list, value => value.configuration.id === instance.configuration.id)
+    _.remove(this.#instance_list, value => value.configuration.id === instance.configuration.id);
 
     switch (instance.configuration.position) {
       case QueuePosition.FIRST:
@@ -115,7 +116,7 @@ export default class Dialog extends React.Component<DialogProps, State> {
   private readonly renderInstance = (instance: DialogInstance, index: number = 0) => {
     return (
       <Conditional key={index} condition={index === 0}>
-        <div data-id={instance.configuration.id} className={Style.Instance}>{this.renderDragDrop(instance)}</div>
+        <div data-id={instance.configuration.id} className={Style.Instance} onKeyDown={this.eventDialogKeyDown}>{this.renderDragDrop(instance)}</div>
       </Conditional>
     );
   };
@@ -167,6 +168,15 @@ export default class Dialog extends React.Component<DialogProps, State> {
 
   private readonly eventClose = (event: React.MouseEvent) => {
     Dialog.close(this.getIDFromElement(event.currentTarget));
+  };
+
+  private readonly eventDialogKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === EventKey.ESCAPE) {
+      const instance = this.getInstance(this.getIDFromElement(event.currentTarget));
+      if (instance?.configuration.dismiss) {
+        Dialog.close(this.getIDFromElement(event.currentTarget));
+      }
+    }
   };
 
   private readonly eventOverlayMouseDown = (event: React.MouseEvent) => {

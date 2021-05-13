@@ -17,7 +17,7 @@ import FileTagSelectForm from "../../forms/entities/FileTagSelectForm";
 import FileUploadForm from "../../forms/entities/FileUploadForm";
 import Global from "../../Global";
 import Helper from "../../Helper";
-import {FileAliasPageQuery} from "../../pages/file/[alias]";
+import {FileAliasPageQuery} from "../../pages/file/[id]";
 import Button from "../Form/Button";
 import Checkbox, {CheckboxCollection} from "../Form/Checkbox";
 import EntityPicker from "../Form/EntityPicker";
@@ -196,7 +196,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   }
 
   private readonly renderFile = (file: FileEntity, index: number = 0) => {
-    const href = file.privacy === Privacy.LINK ? `/file/${file.alias}?${FileAliasPageQuery.SHARE_CODE}=${file.share_code}` : `/file/${file.alias}`;
+    const href = file.privacy === Privacy.LINK ? `/file/${file.id}?${FileAliasPageQuery.SHARE_HASH}=${file.share_hash}` : `/file/${file.id}`;
 
     return (
       <div key={index} className={Style.File}>
@@ -250,7 +250,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   private readonly eventFileTagChange = async (file_tag_list: FileTagEntity[]) => {
     await Promise.all(_.map(this.state.file_selected, async (value, i) => value ? await FileEntity.updateOne(this.state.file_list[i], {...this.state.file_list[i], file_tag_list}) : false));
-    Dialog.close(this.state.dialog);
+    this.closeDialog();
     this.searchFile();
     this.state.ref_entity_picker.current?.search();
   };
@@ -273,6 +273,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   private readonly eventTagDelete = async ({tag, tag_selected_list, tag_available_list}: {tag: FileTagEntity, tag_selected_list: FileTagEntity[], tag_available_list: FileTagEntity[]}) => {
     await FileTagEntity.deleteOne(tag.id);
+    this.closeDialog();
     this.searchFile({tag_selected_list, tag_available_list});
   };
 

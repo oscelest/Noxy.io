@@ -92,7 +92,7 @@ export default class FileType extends Entity<FileType>(TypeORM) {
     const {name} = parameters!;
     const query = this.createSelect();
 
-    this.addListClause(query, "name", name);
+    this.addValueClause(query, "name", name);
 
     return respond?.(await query.getMany());
   }
