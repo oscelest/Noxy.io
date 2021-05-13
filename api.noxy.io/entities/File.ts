@@ -274,6 +274,7 @@ export default class File extends Entity<File>(TypeORM) {
   @File.post("/confirm-download", {user: false})
   @File.bindParameter<Request.postConfirmDownload>("token", ValidatorType.STRING)
   private static async confirmDownload({locals: {respond, parameters}}: Server.Request<{}, Response.postConfirmDownload, Request.postConfirmDownload>, response: Server.Response) {
+    console.log("test")
     const {token} = parameters!;
     const {id} = JWT.decode(token) as {id: string[]};
     try {

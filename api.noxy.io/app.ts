@@ -47,7 +47,7 @@ import User from "./entities/User";
       ],
     });
 
-    Server.bindRoute(new Alias(), HTTPMethod.GET, "/", {}, async ({locals: {respond}}) => {
+    Server.bindRoute(new Alias(), HTTPMethod.GET, "/", {user: false}, async ({locals: {respond}}) => {
       setTimeout(() => respond?.({}), Math.ceil(Math.random() * 95) + 5);
     });
 
