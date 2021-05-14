@@ -12,6 +12,7 @@ import Server from "../../common/services/Server";
 import APIKey, {APIKeyJSON} from "./APIKey";
 import File from "./File";
 import FileTag from "./FileTag";
+import PermissionLevel from "../../common/enums/PermissionLevel";
 
 @TypeORM.Entity()
 @TypeORM.Unique("email", ["email"])
@@ -86,7 +87,7 @@ export default class User extends Entity<User>(TypeORM) {
 
   //region    Endpoint methods
 
-  @User.get("/")
+  @User.get("/", {permission: [PermissionLevel.USER_MASQUERADE]})
   @User.bindParameter<Request.getFindMany>("email", ValidatorType.STRING, {min_length: 1})
   @User.bindPagination(100, ["id", "email", "time_created"])
   public static async findMany({locals: {respond, api_key, parameters}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
@@ -98,6 +99,21 @@ export default class User extends Entity<User>(TypeORM) {
       const retrieved = await query.getMany();
       _.each(retrieved, user => api_key?.user !== user && _.each(user.api_key_list, api_key => _.unset(api_key, "token" as keyof APIKey)));
       return respond?.(retrieved);
+    }
+    catch (error) {
+      return respond?.(error);
+    }
+  }
+
+  @User.get("/:id", {permission: [PermissionLevel.USER_MASQUERADE]})
+  public static async findOneByID({params: {id}, locals: {respond}}: Server.Request<{id: string}, Response.getFindOneByID, Request.getFindOneByID>) {
+    try {
+      const user = await this.performSelect(id);
+      for (let api_key of user.api_key_list ?? []) {
+        if (api_key?.user === user) continue;
+        _.unset(api_key, "token" as keyof APIKey);
+      }
+      return respond?.(user);
     }
     catch (error) {
       return respond?.(error);
@@ -130,7 +146,7 @@ export default class User extends Entity<User>(TypeORM) {
   @User.post("/login", {user: false})
   @User.bindParameter<Request.postLogin>("email", ValidatorType.EMAIL, {flag_optional: true})
   @User.bindParameter<Request.postLogin>("password", ValidatorType.STRING, {min_length: 12}, {flag_optional: true})
-  public static async login({locals: {respond, user, parameters}}: Server.Request<{}, Response.postLogin, Request.postLogin>) {
+  public static async login({locals: {respond, user, api_key, parameters}}: Server.Request<{}, Response.postLogin, Request.postLogin>) {
     const {email, password} = parameters!;
 
     try {
@@ -140,6 +156,9 @@ export default class User extends Entity<User>(TypeORM) {
         if (!user || !crypto.pbkdf2Sync(password, user.salt, 10000, 255, "sha512").equals(user.hash)) {
           return respond?.(new ServerException(400));
         }
+      }
+      else {
+        user = api_key?.user;
       }
 
       if (user) {
@@ -259,8 +278,9 @@ export type UserJSON = {
 }
 
 namespace Request {
-  export type getFindMany = getCount & Pagination
   export type getCount = {email?: string}
+  export type getFindMany = getCount & Pagination
+  export type getFindOneByID = never;
   export type postLogin = {email: string, password: string}
   export type postRequestReset = {email: string}
   export type postConfirmReset = {token: string, password: {salt: Buffer, hash: Buffer}}
@@ -270,6 +290,7 @@ namespace Request {
 
 namespace Response {
   export type getFindMany = User[] | ServerException
+  export type getFindOneByID = User | ServerException
   export type postLogin = User | ServerException
   export type postRequestReset = {}
   export type postConfirmReset = User | ServerException

@@ -5,8 +5,12 @@ import PermissionExplorer from "../../components/Application/PermissionExplorer"
 import Form from "../../components/UI/Form";
 import APIKeyEntity from "../../entities/APIKeyEntity";
 import Style from "./APIKeyUpdateForm.module.scss";
+import Global from "../../Global";
 
 export default class APIKeyUpdateForm extends React.Component<APIKeyUpdateFormProps, State> {
+
+  public static contextType = Global?.Context ?? React.createContext({});
+  public context: Global.Context;
 
   constructor(props: APIKeyUpdateFormProps) {
     super(props);
@@ -44,7 +48,9 @@ export default class APIKeyUpdateForm extends React.Component<APIKeyUpdateFormPr
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
 
-    const onSubmit = entity.hasPermission(PermissionLevel.API_KEY_UPDATE) ? this.submit : undefined;
+    const api_key_update_check = this.context.hasPermission(PermissionLevel.API_KEY_UPDATE);
+    const other_admin_check = entity.hasPermission(PermissionLevel.ADMIN) && this.context.state.masquerade && this.context.state.user?.id !== this.context.state.masquerade?.id;
+    const onSubmit = api_key_update_check && !other_admin_check ? this.submit : undefined;
 
     return (
       <Form className={classes.join(" ")} loading={loading} error={error} onSubmit={onSubmit}>

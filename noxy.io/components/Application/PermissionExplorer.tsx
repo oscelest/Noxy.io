@@ -30,7 +30,9 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
   };
 
   private readonly isDisabled = (permission: PermissionLevel) => {
-    return this.props.permission[PermissionLevel.ADMIN] || !this.context.hasPermission(PermissionLevel.API_KEY_UPDATE) || !this.context.hasPermission(permission);
+    if (!this.context.hasAnyPermission(PermissionLevel.ADMIN, PermissionLevel.API_KEY_UPDATE, permission)) return true;
+    if (this.props.permission[PermissionLevel.ADMIN] && this.context.state.masquerade?.id && this.context.state.user?.id !== this.context.state.masquerade?.id) return true;
+    return false;
   };
 
   public render() {
@@ -43,8 +45,8 @@ export default class PermissionExplorer extends React.Component<PermissionExplor
         <Conditional condition={this.context.hasPermission(PermissionLevel.ADMIN)}>
           <div className={Style.Admin}>
             <div className={Style.Header}>
-              <Checkbox className={Style.Checkbox} onChange={_.noop}>
-                {{admin: {text: "Administrator", value: null, checked: true, disabled: true}}}
+              <Checkbox className={Style.Checkbox} onChange={this.eventCheckboxChange}>
+                {{[PermissionLevel.ADMIN]: this.getCheckboxItem("Administration", PermissionLevel.ADMIN)}}
               </Checkbox>
             </div>
             <p>Grants full permission to any and all API functionalities. Having administrator level permission overrules all other permission levels.</p>

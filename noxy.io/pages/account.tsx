@@ -101,6 +101,7 @@ export default class AccountPage extends React.Component<AccountPageProps, State
   };
 
   public componentDidMount = async () => {
+    console.log(this.context.state);
     const user = this.context.state.masquerade ?? this.context.state.user;
     this.setState({email: user?.email ?? "", username: user?.username ?? ""});
   };

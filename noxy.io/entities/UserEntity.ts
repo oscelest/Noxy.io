@@ -52,10 +52,17 @@ export default class UserEntity extends Entity {
     return this.getCurrentAPIKey().hasPermission(...permission_list);
   }
 
-  public static async get(search: UserEntityGetParameters = {}, pagination: RequestPagination<UserEntity> = {skip: 0, limit: 10, order: {email: Order.ASC}}) {
-    const {data: {content}} = await Axios.get<APIRequest<UserEntity[]>>(`${this.URL}?${new RequestData(search).paginate(pagination)}`);
-    return this.instantiate(content);
+  public static async findMany(search: UserEntityGetParameters = {}, pagination: RequestPagination<UserEntity> = {skip: 0, limit: 10, order: {email: Order.ASC}}) {
+    const response = await Axios.get<APIRequest<UserEntity[]>>(`${this.URL}?${new RequestData(search).paginate(pagination)}`);
+    return this.instantiate(response.data.content);
   }
+
+  public static async findOneByID(search: string | UserEntity) {
+    const id = search instanceof UserEntity ? search.id : search;
+    const response = await Axios.get<APIRequest<UserEntity>>(`${this.URL}/${id}`);
+    return new this(response.data.content);
+  }
+
 
   public static async create(params: UserEntityCreateParameters) {
     const {data: {content}} = await Axios.post<APIRequest<UserEntity>>(`${UserEntity.URL}`, new RequestData(params).toObject());

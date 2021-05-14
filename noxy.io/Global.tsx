@@ -6,6 +6,7 @@ import PermissionLevel from "../common/enums/PermissionLevel";
 import RequestHeader from "../common/enums/RequestHeader";
 import UserEntity from "./entities/UserEntity";
 import FatalException from "./exceptions/FatalException";
+import Helper from "./Helper";
 
 namespace Global {
 
@@ -23,21 +24,23 @@ namespace Global {
     public masquerade = (masquerade?: UserEntity) => {
       if (!masquerade || masquerade?.id === this.state.user?.id) {
         delete Axios.defaults.headers.common[RequestHeader.MASQUERADE];
+        delete localStorage[RequestHeader.MASQUERADE];
         this.setState({masquerade: undefined});
       }
       else {
         Axios.defaults.headers.common[RequestHeader.MASQUERADE] = masquerade.id;
+        localStorage[RequestHeader.MASQUERADE] = masquerade.id;
         this.setState({masquerade});
       }
     };
 
     public hasAnyPermission = (...permission_list: PermissionLevel[]) => {
-      return this.state.user?.hasAnyPermission(...permission_list) ?? false
-    }
+      return this.state.user?.hasAnyPermission(...permission_list) ?? false;
+    };
 
     public hasPermission = (...permission_list: PermissionLevel[]) => {
-      return this.state.user?.hasPermission(...permission_list) ?? false
-    }
+      return this.state.user?.hasPermission(...permission_list) ?? false;
+    };
 
     public performSignUp = async (email: string, username: string, password: string) => {
       return this.assignUser(await UserEntity.create({email, username, password}));
@@ -53,6 +56,12 @@ namespace Global {
 
       this.setState({loading: true});
       Axios.defaults.headers.common[RequestHeader.AUTHORIZATION] = jwt;
+      if (localStorage[RequestHeader.MASQUERADE]) {
+        console.log(localStorage[RequestHeader.MASQUERADE])
+        Axios.defaults.headers.common[RequestHeader.MASQUERADE] = localStorage[RequestHeader.MASQUERADE];
+        this.setState({masquerade: await UserEntity.findOneByID(localStorage[RequestHeader.MASQUERADE])});
+        Helper.schedule(() => console.log(this.state));
+      }
 
       try {
         return this.assignUser(await UserEntity.logIn());
@@ -63,7 +72,8 @@ namespace Global {
     };
 
     public performLogOut = () => {
-      localStorage.removeItem(RequestHeader.AUTHORIZATION);
+      delete localStorage[RequestHeader.MASQUERADE];
+      delete localStorage[RequestHeader.AUTHORIZATION];
       delete Axios.defaults.headers.common[RequestHeader.AUTHORIZATION];
       Router.reload();
     };
@@ -73,22 +83,17 @@ namespace Global {
     };
 
     private assignUser = (user: UserEntity) => {
+      const api_key = user.getCurrentAPIKey();
+      if (!api_key) throw new FatalException("User has no API Key", "A user must be granted an API Key.");
+
       const next_state = {} as State;
-
       next_state.loading = false;
-      if (!this.state.masquerade) {
-        const api_key = user.getCurrentAPIKey();
-        if (!api_key) throw new FatalException("User has no API Key", "A user must be granted an API Key.");
-        next_state.user = user;
+      next_state.user = user;
 
-        Axios.defaults.headers.common[RequestHeader.AUTHORIZATION] = api_key.token;
-        localStorage.setItem(RequestHeader.AUTHORIZATION, api_key.token);
-      }
-      else {
-        next_state.masquerade = user;
-      }
+      Axios.defaults.headers.common[RequestHeader.AUTHORIZATION] = api_key.token;
+      localStorage.setItem(RequestHeader.AUTHORIZATION, api_key.token);
 
-      setTimeout(() => this.setState(next_state));
+      Helper.schedule(() => this.setState(next_state));
       return user;
     };
 

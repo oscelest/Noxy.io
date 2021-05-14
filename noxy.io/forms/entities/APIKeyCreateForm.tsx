@@ -92,7 +92,7 @@ export default class APIKeyCreateForm extends React.Component<APIKeyCreateFormPr
 
   private readonly eventUserSearch = async (email: string) => {
     if (!email) return [];
-    return await UserEntity.get({email}, {skip: 0, limit: 10, order: {email: Order.ASC}});
+    return await UserEntity.findMany({email}, {skip: 0, limit: 10, order: {email: Order.ASC}});
   };
 
   private readonly eventUserChange = (user?: UserEntity) => {

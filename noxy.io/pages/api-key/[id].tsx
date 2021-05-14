@@ -35,7 +35,7 @@ export default class APIKeyIDPage extends React.Component<APIKeyIDPageProps, Sta
   }
 
   public async componentDidMount() {
-    if (!this.state.api_key && this.context.state.user) {
+    if (this.context.state.user) {
       this.setState({loading: false, api_key: await APIKeyEntity.getByID(this.props.id)});
     }
   }
@@ -43,7 +43,7 @@ export default class APIKeyIDPage extends React.Component<APIKeyIDPageProps, Sta
   public render() {
     return (
       <Loader size={Size.LARGE} show={this.state.loading}>
-        <Placeholder show={this.state.api_key.exists()} text={"API Key with this ID does not exist or you do not have the authority to view it."}>
+        <Placeholder show={!this.state.api_key.exists()} text={"API Key with this ID does not exist or you do not have the authority to view it."}>
           <div className={Style.Component}>
             <PageHeader title={`Manage API Key for ${this.state.api_key.user?.email} (ID: ${this.state.api_key?.id})`}/>
             <APIKeyUpdateForm entity={this.state.api_key}/>
