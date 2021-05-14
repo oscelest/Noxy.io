@@ -2,10 +2,10 @@ import {AxiosResponse} from "axios";
 import IsEmail from "isemail";
 import _ from "lodash";
 import React from "react";
-import Button from "../components/Form/Button";
+import Conditional from "../components/Application/Conditional";
 import Input from "../components/Form/Input";
 import ErrorText from "../components/Text/ErrorText";
-import TitleText from "../components/Text/TitleText";
+import Form from "../components/UI/Form";
 import UserEntity from "../entities/UserEntity";
 import InputType from "../enums/InputType";
 import Global from "../Global";
@@ -19,7 +19,7 @@ export default class PasswordResetRequestForm extends React.Component<PasswordRe
   constructor(props: PasswordResetRequestFormProps) {
     super(props);
     this.state = {
-      flag_loading: false,
+      loading:      false,
       field_errors: {},
 
       email: "",
@@ -38,10 +38,11 @@ export default class PasswordResetRequestForm extends React.Component<PasswordRe
     }
 
     if (!_.size(next_state.field_errors)) {
-      next_state.flag_loading = true;
+      next_state.loading = true;
       try {
         this.setState(next_state);
         await UserEntity.requestPasswordReset(email);
+        await this.props.onSubmit?.(email);
         next_state.error = new Error("An email has been sent.");
       }
       catch (error) {
@@ -58,44 +59,40 @@ export default class PasswordResetRequestForm extends React.Component<PasswordRe
         }
       }
     }
-    next_state.flag_loading = false;
+    next_state.loading = false;
     this.setState(next_state);
   };
 
   public render() {
-    const {email, flag_loading, field_errors} = this.state;
+    const {email, loading, error, field_errors} = this.state;
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
 
     return (
-      <div className={classes.join(" ")}>
-        <TitleText>Reset password</TitleText>
-        {this.renderError()}
+      <Form className={classes.join(" ")} loading={loading} error={error} onSubmit={this.submit}>
+        <Conditional condition={this.state.error}>
+          <ErrorText className={Style.Error}>{this.state.error?.message}</ErrorText>
+        </Conditional>
         <Input className={Style.Input} type={InputType.EMAIL} label={"Email"} value={email} error={field_errors.email} autoComplete={"username"} onChange={this.eventInputEmailChange}/>
-        <Button className={Style.Button} loading={flag_loading} onClick={this.submit}>Submit</Button>
-      </div>
+      </Form>
     );
   }
 
-  private readonly renderError = () => {
-    if (!this.state.error) return;
-
-    return (
-      <ErrorText className={Style.Error}>{this.state.error?.message}</ErrorText>
-    );
+  private readonly eventInputEmailChange = (email: string) => {
+    this.setState({email});
   };
-
-  private readonly eventInputEmailChange = (email: string) => this.setState({email});
 }
 
 export interface PasswordResetRequestFormProps {
   className?: string
+
+  onSubmit?(email: string): void
 }
 
 interface State {
-  flag_loading: boolean
-  field_errors: Partial<Record<keyof Omit<State, "flag_loading" | "error" | "field_errors">, Error>>
-  error?: Error
-
   email: string
+
+  loading: boolean
+  error?: Error
+  field_errors: Partial<Record<keyof Omit<State, "loading" | "error" | "field_errors">, Error>>
 }

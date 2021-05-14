@@ -5,17 +5,14 @@ import Button from "../../components/Form/Button";
 import Input from "../../components/Form/Input";
 import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
+import Form from "../../components/UI/Form";
 import Preview from "../../components/UI/Preview";
 import FileEntity from "../../entities/FileEntity";
 import FatalException from "../../exceptions/FatalException";
-import Global from "../../Global";
 import Helper from "../../Helper";
 import Style from "./FileRenameForm.module.scss";
 
 export default class FileRenameForm extends React.Component<FileRenameFormProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
 
   constructor(props: FileRenameFormProps) {
     super(props);
@@ -32,7 +29,7 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
 
   private readonly parseNames = () => {
     const tags = this.state.name.match(/(?<={)([a-z_]+)(?=})/gi);
-    return _.map(this.props.file_list, (file, index) => {
+    return _.map(this.props.files, (file, index) => {
       return new FileEntity({
         ...file, name: _.reduce(
           tags,
@@ -67,8 +64,7 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
     if (this.props.className) classes.push(this.props.className);
 
     return (
-      <div className={classes.join(" ")}>
-        <TitleText>{this.props.file_list.length > 1 ? `Rename ${this.props.file_list.length} files` : "Rename file"}</TitleText>
+      <Form className={classes.join(" ")}>
         {this.renderError()}
         <Input ref={this.state.ref} label={"Name"} value={this.state.name} onChange={this.eventInputChange}/>
         <div className={Style.Help}>
@@ -81,7 +77,7 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
           {_.map(this.parseNames(), this.renderExample)}
         </div>
         <Button className={Style.Submit} onClick={this.submit}>Rename</Button>
-      </div>
+      </Form>
     );
   }
 
@@ -100,7 +96,7 @@ export default class FileRenameForm extends React.Component<FileRenameFormProps,
       <div className={Style.Example} key={index}>
         <Preview className={Style.Preview} file={file}/>
         <div className={Style.NameList}>
-          <span className={Style.OldName}>{this.props.file_list[index].name}</span>
+          <span className={Style.OldName}>{this.props.files[index].name}</span>
           <span className={Style.NewName}>{file.name}</span>
         </div>
       </div>
@@ -117,7 +113,7 @@ export interface FileRenameFormProps {
   className?: string
 
   name?: string
-  file_list: FileEntity[]
+  files: FileEntity[]
 
   onSubmit: (file_tag_list: FileEntity[]) => void
 }

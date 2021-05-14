@@ -89,7 +89,7 @@ export default class User extends Entity<User>(TypeORM) {
   @User.get("/")
   @User.bindParameter<Request.getFindMany>("email", ValidatorType.STRING, {min_length: 1})
   @User.bindPagination(100, ["id", "email", "time_created"])
-  public static async findMany({locals: {respond, user, api_key, parameters}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
+  public static async findMany({locals: {respond, api_key, parameters}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
     const {skip, limit, order, email} = parameters!;
     const query = this.createPaginated({skip, limit, order});
     this.addWildcardClause(query, "email", email);
@@ -138,18 +138,21 @@ export default class User extends Entity<User>(TypeORM) {
       if (email && password) {
         user = await this.createSelect().where({email}).getOneOrFail();
 
-        if (!user || !crypto.pbkdf2Sync(password, user.salt, 10000, 255, "sha512").equals(user.hash)) {
+        if (!crypto.pbkdf2Sync(password, user.salt, 10000, 255, "sha512").equals(user.hash)) {
           return respond?.(new ServerException(400));
         }
       }
 
       if (user) {
+        await Promise.all(_.map(user.api_key_list, async ({id}) => await APIKey.performUpdate(id, {token: JWT.sign({id}, process.env.JWT_SECRET!, {algorithm: "HS512", expiresIn: "7d"})})));
         return respond?.(await this.performUpdate(user.id, {time_login: new Date()}));
       }
 
       return respond?.(new ServerException(400));
     }
     catch (error) {
+      if (error instanceof TypeORM.EntityNotFoundError) return respond?.(new ServerException(400, parameters));
+      console.log(error);
       return respond?.(error);
     }
   }

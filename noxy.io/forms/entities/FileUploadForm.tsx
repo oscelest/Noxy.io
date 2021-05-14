@@ -7,14 +7,13 @@ import Button from "../../components/Form/Button";
 import EntityPicker from "../../components/Form/EntityPicker";
 import FilePicker from "../../components/Form/FilePicker";
 import FileUpload from "../../components/Form/FileUpload";
-import ErrorText from "../../components/Text/ErrorText";
-import TitleText from "../../components/Text/TitleText";
 import FileEntity from "../../entities/FileEntity";
 import FileTagEntity from "../../entities/FileTagEntity";
 import QueuePosition from "../../enums/QueuePosition";
 import Global from "../../Global";
 import ConfirmForm from "../ConfirmForm";
 import Style from "./FileUploadForm.module.scss";
+import Form from "../../components/UI/Form";
 
 export default class FileUploadForm extends React.Component<FileUploadFormProps, State> {
 
@@ -33,14 +32,6 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
       file_list: _.map(this.props.file_list, file => new FileTransfer(file)),
     };
   }
-
-  private readonly advanceFileTransfer = (transfer: FileTransfer, next: Partial<FileTransfer>) => {
-    this.setState({file_list: _.map(this.state.file_list, value => value === transfer ? transfer.advance(next) : value)});
-  };
-
-  private readonly failFileTransfer = (transfer: FileTransfer, next: string | Error, fatal = false) => {
-    this.setState({file_list: _.map(this.state.file_list, value => value === transfer ? transfer.fail(next, fatal) : value)});
-  };
 
   private readonly upload = async (transfer: FileTransfer) => {
     if (!transfer.name) return transfer.fail("Field cannot be empty");
@@ -70,6 +61,14 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
     }
   };
 
+  private readonly advanceFileTransfer = (transfer: FileTransfer, next: Partial<FileTransfer>) => {
+    this.setState({file_list: _.map(this.state.file_list, value => value === transfer ? transfer.advance(next) : value)});
+  };
+
+  private readonly failFileTransfer = (transfer: FileTransfer, next: string | Error, fatal = false) => {
+    this.setState({file_list: _.map(this.state.file_list, value => value === transfer ? transfer.fail(next, fatal) : value)});
+  };
+
   private readonly closeDialog = () => {
     Dialog.close(this.state.dialog);
   }
@@ -81,20 +80,14 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
   }
 
   public render() {
-    const {file_list, tag_selected_list, tag_available_list} = this.state;
-
+    const {file_list, tag_selected_list, tag_available_list, error} = this.state;
     const upload_disabled = !_.some(file_list, handle => handle.progress === 0);
     const clear_disabled = !file_list.length;
-
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
 
     return (
-      <div className={classes.join(" ")}>
-        <TitleText>Upload file(s)</TitleText>
-
-        {this.renderFileTagError()}
-
+      <Form className={classes.join(" ")} error={error}>
         <EntityPicker className={Style.TagList} horizontal={true} selected={tag_selected_list} available={tag_available_list}
                       onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
 
@@ -107,17 +100,9 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
           <FilePicker className={Style.Action} multiple={true} onChange={this.eventBrowseChange}>Browse</FilePicker>
           <Button className={Style.Action} disabled={upload_disabled} onClick={this.eventFileUploadAll}>Upload all</Button>
         </div>
-      </div>
+      </Form>
     );
   }
-
-  private readonly renderFileTagError = () => {
-    if (!this.state.file_tag_error) return null;
-
-    return (
-      <ErrorText>{this.state.file_tag_error.message}</ErrorText>
-    );
-  };
 
   private readonly renderFileUpload = (transfer: FileTransfer, key: number = 0) => {
     return (
@@ -192,8 +177,8 @@ export interface FileUploadFormProps {
 
 interface State {
   dialog?: string
+  error?: Error
 
-  file_tag_error?: Error
   file_list: FileTransfer[]
 
   tag_search: string

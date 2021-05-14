@@ -23,8 +23,6 @@ export default class ConfirmForm<V> extends React.Component<ConfirmFormProps<V>,
       </div>
     );
   }
-
-
 }
 
 export interface ConfirmFormProps<V> {

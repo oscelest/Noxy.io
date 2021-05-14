@@ -21,7 +21,7 @@ export default class APIKey extends Entity<APIKey>(TypeORM) {
   @TypeORM.PrimaryGeneratedColumn("uuid")
   public id: string;
 
-  @TypeORM.Column({type: "varchar", length: 190})
+  @TypeORM.Column({type: "varchar", length: 230})
   public token: string;
 
   @TypeORM.Column({type: "json", transformer: {to: (value: Permission) => value.toJSON(), from: (init: PermissionLevel[]) => new Permission(init)}})

@@ -29,6 +29,7 @@ export default class APIKeyIDPage extends React.Component<APIKeyIDPageProps, Sta
   constructor(props: APIKeyIDPageProps) {
     super(props);
     this.state = {
+      api_key: new APIKeyEntity(),
       loading: true,
     };
   }
@@ -42,23 +43,15 @@ export default class APIKeyIDPage extends React.Component<APIKeyIDPageProps, Sta
   public render() {
     return (
       <Loader size={Size.LARGE} show={this.state.loading}>
-        <Placeholder show={!this.state.api_key} text={"API Key with this ID does not exist or you do not have the authority to view it."}>
+        <Placeholder show={this.state.api_key.exists()} text={"API Key with this ID does not exist or you do not have the authority to view it."}>
           <div className={Style.Component}>
-            <PageHeader title={`Manage API Key for ${this.state.api_key?.user?.email} (ID: ${this.state.api_key?.id})`}/>
-            {this.renderForm()}
+            <PageHeader title={`Manage API Key for ${this.state.api_key.user?.email} (ID: ${this.state.api_key?.id})`}/>
+            <APIKeyUpdateForm entity={this.state.api_key}/>
           </div>
         </Placeholder>
       </Loader>
     );
   }
-
-  private readonly renderForm = () => {
-    if (!this.state.api_key) return null;
-
-    return (
-      <APIKeyUpdateForm entity={this.state.api_key}/>
-    );
-  };
 }
 
 enum APIKeyIDPageQuery {
@@ -70,6 +63,6 @@ interface APIKeyIDPageProps extends PageProps {
 }
 
 interface State {
-  api_key?: APIKeyEntity
+  api_key: APIKeyEntity
   loading: boolean
 }

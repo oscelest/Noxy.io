@@ -1,40 +1,40 @@
 import _ from "lodash";
 import Router from "next/router";
 import React from "react";
-import FileTypeName from "../../../common/enums/FileTypeName";
-import Order from "../../../common/enums/Order";
-import PermissionLevel from "../../../common/enums/PermissionLevel";
-import Privacy from "../../../common/enums/Privacy";
-import SetOperation from "../../../common/enums/SetOperation";
+import Global from "../../Global";
+import Helper from "../../Helper";
+import Dialog from "./Dialog";
+import Authorized from "./Authorized";
+import Conditional from "./Conditional";
 import FileEntity, {FileEntitySearchParameters} from "../../entities/FileEntity";
 import FileTagEntity from "../../entities/FileTagEntity";
 import FileTypeEntity from "../../entities/FileTypeEntity";
-import IconType from "../../enums/IconType";
-import Size from "../../enums/Size";
 import ConfirmForm from "../../forms/ConfirmForm";
+import FileUploadForm from "../../forms/entities/FileUploadForm";
 import FileRenameForm from "../../forms/entities/FileRenameForm";
 import FileTagSelectForm from "../../forms/entities/FileTagSelectForm";
-import FileUploadForm from "../../forms/entities/FileUploadForm";
-import Global from "../../Global";
-import Helper from "../../Helper";
 import {FileAliasPageQuery} from "../../pages/file/[id]";
+import Input from "../Form/Input";
 import Button from "../Form/Button";
+import Switch from "../Form/Switch";
+import Sortable, {SortableCollection} from "../Form/Sortable";
 import Checkbox, {CheckboxCollection} from "../Form/Checkbox";
 import EntityPicker from "../Form/EntityPicker";
-import Input from "../Form/Input";
-import Sortable, {SortableCollection} from "../Form/Sortable";
-import Switch from "../Form/Switch";
 import Pagination from "../Table/Pagination";
 import EllipsisText from "../Text/EllipsisText";
-import {ContextMenuItem} from "../UI/ContextMenu";
-import DragDrop from "../UI/DragDrop";
-import ElementBrowser from "../UI/ElementBrowser";
 import Loader from "../UI/Loader";
 import Preview from "../UI/Preview";
+import DragDrop from "../UI/DragDrop";
 import Redirect from "../UI/Redirect";
-import Authorized from "./Authorized";
-import Conditional from "./Conditional";
-import Dialog from "./Dialog";
+import ElementBrowser from "../UI/ElementBrowser";
+import {ContextMenuItem} from "../UI/ContextMenu";
+import Size from "../../enums/Size";
+import IconType from "../../enums/IconType";
+import Order from "../../../common/enums/Order";
+import Privacy from "../../../common/enums/Privacy";
+import SetOperation from "../../../common/enums/SetOperation";
+import FileTypeName from "../../../common/enums/FileTypeName";
+import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Style from "./FileExplorer.module.scss";
 
 // noinspection JSUnusedGlobalSymbols
@@ -122,7 +122,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   private readonly closeDialog = () => {
     Dialog.close(this.state.dialog);
-  }
+  };
 
   public async componentDidMount() {
     const file_type_list = await FileTypeEntity.findMany();
@@ -217,7 +217,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     this.setState({
       dialog: Dialog.show(
         <FileUploadForm file_list={_.values(file_list)} file_tag_list={this.state.tag_selected_list} onFileUpload={this.eventUploadFileCreate} onTagCreate={this.eventUploadTagCreate}/>,
-        {id: "file-explorer-drag-drop", onClose: this.eventUploadDialogClose, drag: {title: "Test", message: "Test", onDrop: this.openUploadDialog}},
+        {id: "file-explorer-drag-drop", title: "Upload file(s)", onClose: this.eventUploadDialogClose, drag: {title: "Test", message: "Test", onDrop: this.openUploadDialog}},
       ),
     });
   };
@@ -235,7 +235,9 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private readonly openFileNameChangeDialog = () => {
-    this.setState({dialog: Dialog.show(<FileRenameForm file_list={this.getSelectedFileList()} onSubmit={this.eventFileNameChange}/>)});
+    const file_list = this.getSelectedFileList();
+    const title = file_list.length > 1 ? `Rename ${file_list.length} files` : "Rename file";
+    this.setState({dialog: Dialog.show(<FileRenameForm files={file_list} onSubmit={this.eventFileNameChange}/>, {title})});
   };
 
   private readonly eventFileNameChange = async (file_list: FileEntity[]) => {

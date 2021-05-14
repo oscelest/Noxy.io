@@ -2,10 +2,8 @@ import {AxiosResponse} from "axios";
 import _ from "lodash";
 import Router from "next/router";
 import React from "react";
-import Button from "../components/Form/Button";
 import Input from "../components/Form/Input";
-import ErrorText from "../components/Text/ErrorText";
-import TitleText from "../components/Text/TitleText";
+import Form from "../components/UI/Form";
 import UserEntity from "../entities/UserEntity";
 import InputType from "../enums/InputType";
 import Global from "../Global";
@@ -19,7 +17,7 @@ export default class PasswordResetConfirmForm extends React.Component<PasswordRe
   constructor(props: PasswordResetConfirmFormProps) {
     super(props);
     this.state = {
-      flag_loading: false,
+      loading:      false,
       field_errors: {},
 
       password: "",
@@ -46,10 +44,11 @@ export default class PasswordResetConfirmForm extends React.Component<PasswordRe
     }
 
     if (!_.size(next_state.field_errors)) {
-      next_state.flag_loading = true;
+      next_state.loading = true;
       try {
         this.setState(next_state);
         await UserEntity.confirmPasswordReset(this.props.token, password);
+        await this.props.onSubmit?.(this.props.token, password);
         return Router.push("/account");
       }
       catch (error) {
@@ -69,48 +68,45 @@ export default class PasswordResetConfirmForm extends React.Component<PasswordRe
         }
       }
     }
-    next_state.flag_loading = false;
+    next_state.loading = false;
     this.setState(next_state);
   };
 
   public render() {
-    const {password, confirm, flag_loading, field_errors} = this.state;
+    const {password, confirm, loading, error, field_errors} = this.state;
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
 
     return (
-      <div className={classes.join(" ")}>
-        <TitleText>Create your new password</TitleText>
-        {this.renderError()}
-        <Input className={Style.Input} type={InputType.PASSWORD} label={"Password"} value={password} error={field_errors.password} autoComplete={"password"} onChange={this.eventInputPasswordChange}/>
-        <Input className={Style.Input} type={InputType.PASSWORD} label={"Confirm"} value={confirm} error={field_errors.confirm} autoComplete={"password"} onChange={this.eventInputConfirmChange}/>
-        <Button className={Style.Button} loading={flag_loading} onClick={this.submit}>Change password</Button>
-      </div>
+      <Form className={classes.join(" ")} loading={loading} error={error} onSubmit={this.submit}>
+        <Input type={InputType.PASSWORD} label={"Password"} value={password} error={field_errors.password} autoComplete={"password"} onChange={this.eventInputPasswordChange}/>
+        <Input type={InputType.PASSWORD} label={"Confirm"} value={confirm} error={field_errors.confirm} autoComplete={"password"} onChange={this.eventInputConfirmChange}/>
+      </Form>
     );
   }
 
-  private readonly renderError = () => {
-    if (!this.state.error) return;
-
-    return (
-      <ErrorText className={Style.Error}>{this.state.error?.message}</ErrorText>
-    );
+  private readonly eventInputPasswordChange = (password: string) => {
+    this.setState({password});
   };
 
-  private readonly eventInputPasswordChange = (password: string) => this.setState({password});
-  private readonly eventInputConfirmChange = (confirm: string) => this.setState({confirm});
+  private readonly eventInputConfirmChange = (confirm: string) => {
+    this.setState({confirm});
+  };
 }
 
 export interface PasswordResetConfirmFormProps {
   className?: string
+
   token: string
+
+  onSubmit?(token: string, password: string): void
 }
 
 interface State {
-  flag_loading: boolean
-  field_errors: Partial<Record<keyof Omit<State, "flag_loading" | "error" | "field_errors">, Error>>
-  error?: Error
-
   password: string
   confirm: string
+
+  loading: boolean
+  error?: Error
+  field_errors: Partial<Record<keyof Omit<State, "loading" | "error" | "field_errors">, Error>>
 }

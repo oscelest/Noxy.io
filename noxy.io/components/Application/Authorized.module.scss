@@ -3,17 +3,10 @@
   flex-flow: row wrap;
   align-items: center;
   justify-content: center;
+  grid-column-gap: 30px;
 
-  > * {
-    margin: 0 10px;
-
-    &:first-child {
-      margin-left: 0;
-    }
-
-    &:last-child {
-      margin-right: 0;
-    }
+  .Form {
+    flex-flow: column;
+    grid-row-gap: 10px;
   }
-
 }

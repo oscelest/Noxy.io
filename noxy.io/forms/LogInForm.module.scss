@@ -1,31 +1,22 @@
-.Component {
-  display: flex;
-  flex-flow: column;
-  flex: 1 0 auto;
-  width: 260px;
-  max-width: 260px;
-  align-self: center;
-  justify-content: center;
+@import "variables";
 
-  > *:not(:last-child) {
-    margin-bottom: 10px;
-  }
+.Component .Wrapper {
+  flex:            1 1 auto;
+  grid-column-gap: 10px;
 
-  > .Wrapper {
-
-    > .Input {
-      flex: 1 1 auto;
-    }
-
-    > *:not(:last-child) {
-      margin-right: 10px;
-    }
+  .Input {
+    flex: 1 1 auto;
   }
 }
 
 .DialogContent {
-  flex-flow: column;
+  flex-flow:       column;
+  width:           $dialog-inner-width;
   justify-content: center;
-  align-items: center;
-  grid-row-gap: 10px;
+  align-items:     center;
+  grid-row-gap:    10px;
+
+  .PasswordResetForm {
+    width: 100%;
+  }
 }

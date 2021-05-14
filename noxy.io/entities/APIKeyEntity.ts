@@ -14,7 +14,7 @@ export default class APIKeyEntity extends Entity {
   public permission: Permission;
   public limit_per_decasecond: number;
   public limit_per_minute: number;
-  public user?: UserEntity;
+  public user: UserEntity;
   public time_created: Date;
 
   public static URL = `${Entity.domainAPI}/api-key`;

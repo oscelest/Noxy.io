@@ -2,18 +2,13 @@ import React from "react";
 import Dialog from "../../components/Application/Dialog";
 import Button from "../../components/Form/Button";
 import EntityPicker from "../../components/Form/EntityPicker";
-import ErrorText from "../../components/Text/ErrorText";
-import TitleText from "../../components/Text/TitleText";
 import FileTagEntity from "../../entities/FileTagEntity";
-import Global from "../../Global";
 import Helper from "../../Helper";
 import ConfirmForm from "../ConfirmForm";
 import Style from "./FileTagSelectForm.module.scss";
+import Form from "../../components/UI/Form";
 
 export default class FileTagSelectForm extends React.Component<FileSetTagListFormProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
 
   constructor(props: FileSetTagListFormProps) {
     super(props);
@@ -32,28 +27,18 @@ export default class FileTagSelectForm extends React.Component<FileSetTagListFor
   }
 
   public render() {
-
+    const {error} = this.state;
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
 
     return (
-      <div className={classes.join(" ")}>
-        <TitleText>Select File Tag(s)</TitleText>
-        {this.renderError()}
+      <Form className={classes.join(" ")} error={error} onSubmit={this.submit}>
         <EntityPicker className={Style.FileTagList} selected={this.state.selected} available={this.state.available} horizontal={true}
                       onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
         <Button onClick={this.submit}>Choose tag(s)</Button>
-      </div>
+      </Form>
     );
   }
-
-  private readonly renderError = () => {
-    if (!this.state.error) return;
-
-    return (
-      <ErrorText className={Style.Error}>{this.state.error?.message}</ErrorText>
-    );
-  };
 
   private readonly eventTagSearch = async (name: string) => {
     this.setState({available: await FileTagEntity.findMany({name, exclude: this.state.selected})});
@@ -91,6 +76,6 @@ export interface FileSetTagListFormProps {
 interface State {
   error?: Error
   dialog?: string
-  available: FileTagEntity[];
   selected: FileTagEntity[]
+  available: FileTagEntity[];
 }

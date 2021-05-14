@@ -4,6 +4,7 @@ import Direction from "../../enums/Direction";
 import EventKey from "../../enums/EventKey";
 import InputType from "../../enums/InputType";
 import FatalException from "../../exceptions/FatalException";
+import Conditional from "../Application/Conditional";
 import Dropdown from "../Base/Dropdown";
 import Select from "../Base/Select";
 import Style from "./Input.module.scss";
@@ -79,14 +80,15 @@ export default class Input<T extends string | number = string> extends React.Com
   };
 
   public render = () => {
-    const {ref_input, focus, hover} = this.state;
-    const {error, className, autoComplete} = this.props;
+    const {ref_input, focus, hover, dropdown} = this.state;
+    const {error, className, autoComplete, placeholder, loading, children} = this.props;
 
     const value = this.props.value ?? "";
-    const label = this.props.error ? `${this.props.label} - ${this.props.error.message}` : this.props.label;
+    const label = this.props.error?.message ? `${this.props.label} - ${this.props.error.message}` : this.props.label;
     const type = this.props.type ?? InputType.TEXT;
     const size = this.props.size ?? 1;
     const active = (!!error || focus || hover || value !== "");
+    const index = this.props.index ?? this.state.index;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
@@ -101,29 +103,29 @@ export default class Input<T extends string | number = string> extends React.Com
           <input ref={ref_input} className={Style.Value} type={type} value={value} autoComplete={autoComplete} size={size}
                  onChange={this.eventInputChange} onBlur={this.eventInputBlur} onFocus={this.eventInputFocus} onKeyDown={this.eventKeyDown}/>
         </label>
-        {this.renderDropdown()}
+        <Conditional condition={!loading && (!children || (Array.isArray(children) && !children.length) || !focus || !value)}>
+          <Dropdown className={Style.Dropdown} hidden={!dropdown} loading={loading} placeholder={placeholder}>
+            <Select className={Style.Select} index={index} onChange={this.eventSelectChange} onCommit={this.eventSelectCommit}>
+              {children}
+            </Select>
+          </Dropdown>
+        </Conditional>
       </div>
     );
   };
 
-  private readonly renderDropdown = () => {
-    if (!this.props.loading && (!this.props.children || (Array.isArray(this.props.children) && !this.props.children.length) || !this.state.focus || !this.props.value)) return null;
-
-    const index = this.props.index ?? this.state.index;
-
-    return (
-      <Dropdown className={Style.Dropdown} hidden={!this.state.dropdown} loading={this.props.loading} placeholder={this.props.placeholder}>
-        <Select className={Style.Select} index={index} onChange={this.eventSelectChange} onCommit={this.eventSelectCommit}>
-          {this.props.children}
-        </Select>
-      </Dropdown>
-    );
+  private readonly eventMouseEnter = () => {
+    this.setState({hover: true});
   };
 
-  private readonly eventMouseEnter = () => this.setState({hover: true});
-  private readonly eventMouseLeave = () => this.setState({hover: false});
+  private readonly eventMouseLeave = () => {
+    this.setState({hover: false});
+  };
 
-  private readonly eventInputFocus = () => this.setState({focus: true});
+  private readonly eventInputFocus = () => {
+    this.setState({focus: true});
+  };
+
   private readonly eventInputBlur = () => {
     this.setState({focus: false, dropdown: false});
     this.props.onReset?.();

@@ -20,7 +20,7 @@ export default class Button<V> extends React.Component<EventProps | ValueProps<V
     const {className, loading} = this.props;
 
     const tab_index = !this.props.disabled ? 0 : undefined;
-    const disabled = this.props.disabled ?? false;
+    const disabled = (this.props.disabled || this.props.loading) ?? false;
     const classes = [Style.Component];
     if (!this.props.children) classes.push(Style.Simple);
     if (className) classes.push(className);

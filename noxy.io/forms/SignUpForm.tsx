@@ -2,10 +2,8 @@ import {AxiosResponse} from "axios";
 import IsEmail from "isemail";
 import _ from "lodash";
 import React from "react";
-import Button from "../components/Form/Button";
 import Input from "../components/Form/Input";
-import ErrorText from "../components/Text/ErrorText";
-import TitleText from "../components/Text/TitleText";
+import Form from "../components/UI/Form";
 import InputType from "../enums/InputType";
 import Global from "../Global";
 import Style from "./SignUpForm.module.scss";
@@ -23,7 +21,7 @@ export default class LogInForm extends React.Component<SignUpFormProps, State> {
       password: "",
       confirm:  "",
 
-      flag_loading: false,
+      loading:      false,
       field_errors: {},
     };
   }
@@ -33,30 +31,39 @@ export default class LogInForm extends React.Component<SignUpFormProps, State> {
     const next_state = {error: undefined, field_errors: {}} as State;
 
     if (!email.length) {
-      next_state.field_errors.email = new Error("Please enter your email");
+      next_state.field_errors.email = new Error();
     }
-    else if (!IsEmail.validate(email)) next_state.field_errors.email = new Error("Please enter a valid email");
+    else if (!IsEmail.validate(email)) {
+      next_state.field_errors.email = new Error("Please enter a valid email");
+    }
 
     if (!username.length) {
-      next_state.field_errors.username = new Error("Please enter your username");
+      next_state.field_errors.username = new Error();
     }
-    else if (username.length < 3 || username.length > 32) next_state.field_errors.username = new Error("Username must be between 3 and 32 characters long");
+    else if (username.length < 3 || username.length > 32) {
+      next_state.field_errors.username = new Error("Must be 3-32 characters");
+    }
 
     if (!password.length) {
-      next_state.field_errors.password = new Error("Please enter your password");
+      next_state.field_errors.password = new Error();
     }
-    else if (password.length < 12) next_state.field_errors.password = new Error("Password must be at least 12 characters long");
+    else if (password.length < 12) {
+      next_state.field_errors.password = new Error("Must contain at least 12 chars");
+    }
 
     if (!confirm.length) {
-      next_state.field_errors.confirm = new Error("Please confirm your password");
+      next_state.field_errors.confirm = new Error();
     }
-    else if (password !== confirm) next_state.field_errors.confirm = new Error("Passwords do not match");
+    else if (password !== confirm) {
+      next_state.field_errors.confirm = new Error("Does not match");
+    }
 
     if (!_.size(next_state.field_errors)) {
-      next_state.flag_loading = true;
+      next_state.loading = true;
       try {
         this.setState(next_state);
         await this.context.performSignUp(email, username, password);
+        await this.props.onSubmit?.(email, username, password);
       }
       catch (error) {
         const response = error.response as AxiosResponse<APIRequest<unknown>>;
@@ -65,14 +72,14 @@ export default class LogInForm extends React.Component<SignUpFormProps, State> {
           next_state.error = new Error("Email and password does not match any account");
         }
         if (response?.status === 409) {
-          next_state.error = new Error("Email already exists in the system.");
+          next_state.error = new Error("Email is already registered.");
         }
         else {
           next_state.error = new Error("Unexpected server error occurred.");
         }
       }
       finally {
-        next_state.flag_loading = false;
+        next_state.loading = false;
         this.setState(next_state);
       }
     }
@@ -82,44 +89,41 @@ export default class LogInForm extends React.Component<SignUpFormProps, State> {
   };
 
   public render() {
-    const {email, username, password, confirm, field_errors} = this.state;
+    const {email, username, password, confirm, loading, error, field_errors} = this.state;
 
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
 
     return (
-      <div className={classes.join(" ")}>
-        <TitleText>Sign Up</TitleText>
-        {this.renderError()}
+      <Form className={classes.join(" ")} focus={false} loading={loading} error={error} onSubmit={this.submit}>
         <Input type={InputType.EMAIL} label={"Email"} value={email} error={field_errors.email} onChange={this.eventInputEmailChange}/>
         <Input type={InputType.TEXT} label={"Username"} value={username} error={field_errors.username} onChange={this.eventInputUsernameChange}/>
         <Input type={InputType.PASSWORD} label={"Password"} value={password} error={field_errors.password} onChange={this.eventInputPasswordChange}/>
-        <Input type={InputType.PASSWORD} label={"Confirm password"} value={confirm} error={field_errors.confirm} onChange={this.eventInputConfirmChange}/>
-        <Button  loading={this.state.flag_loading} onClick={this.submit}>Submit</Button>
-      </div>
+        <Input type={InputType.PASSWORD} label={"Re-enter password"} value={confirm} error={field_errors.confirm} onChange={this.eventInputConfirmChange}/>
+      </Form>
     );
   }
 
-  private readonly renderError = () => {
-    if (!this.state.error) return;
-
-    return (
-      <ErrorText>{this.state.error?.message}</ErrorText>
-    );
+  private readonly eventInputEmailChange = (email: string) => {
+    this.setState({email});
   };
 
-  private readonly eventInputEmailChange = (email: string) => this.setState({email});
-  private readonly eventInputUsernameChange = (username: string) => this.setState({username});
-  private readonly eventInputPasswordChange = (password: string) => this.setState({password});
-  private readonly eventInputConfirmChange = (confirm: string) => this.setState({confirm});
+  private readonly eventInputUsernameChange = (username: string) => {
+    this.setState({username});
+  };
 
+  private readonly eventInputPasswordChange = (password: string) => {
+    this.setState({password});
+  };
+
+  private readonly eventInputConfirmChange = (confirm: string) => {
+    this.setState({confirm});
+  };
 }
 
 export interface SignUpFormProps {
   className?: string
-
-  onValidate?: () => void
-  onSubmit?: () => void
+  onSubmit?(email: string, username: string, password: string): void
 }
 
 interface State {
@@ -128,7 +132,7 @@ interface State {
   password: string
   confirm: string
 
-  flag_loading: boolean
+  loading: boolean
   error?: Error
-  field_errors: Partial<Record<keyof Omit<State, "flag_loading" | "error" | "field_errors">, Error>>
+  field_errors: Partial<Record<keyof Omit<State, "loading" | "error" | "field_errors">, Error>>
 }

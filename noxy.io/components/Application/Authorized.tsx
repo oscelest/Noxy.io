@@ -4,6 +4,7 @@ import Size from "../../enums/Size";
 import LogInForm from "../../forms/LogInForm";
 import SignUpForm from "../../forms/SignUpForm";
 import Global from "../../Global";
+import TitleText from "../Text/TitleText";
 import Loader from "../UI/Loader";
 import Placeholder from "../UI/Placeholder";
 import Style from "./Authorized.module.scss";
@@ -46,8 +47,14 @@ export default class Authorized extends React.Component<AuthorizedProps, State> 
 
     return (
       <div className={classes.join(" ")}>
-        <LogInForm/>
-        <SignUpForm/>
+        <div className={Style.Form}>
+          <TitleText>Log In</TitleText>
+          <LogInForm/>
+        </div>
+        <div className={Style.Form}>
+          <TitleText>Sign Up</TitleText>
+          <SignUpForm/>
+        </div>
       </div>
     );
   };

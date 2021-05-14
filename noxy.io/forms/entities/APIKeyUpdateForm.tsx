@@ -2,23 +2,18 @@ import React from "react";
 import Permission from "../../../common/classes/Permission";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import PermissionExplorer from "../../components/Application/PermissionExplorer";
-import Button from "../../components/Form/Button";
+import Form from "../../components/UI/Form";
 import APIKeyEntity from "../../entities/APIKeyEntity";
-import Global from "../../Global";
 import Style from "./APIKeyUpdateForm.module.scss";
 
 export default class APIKeyUpdateForm extends React.Component<APIKeyUpdateFormProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
 
   constructor(props: APIKeyUpdateFormProps) {
     super(props);
 
     this.state = {
-      entity:       new APIKeyEntity(),
-      loading:      false,
-      field_errors: {},
+      entity:  new APIKeyEntity(),
+      loading: false,
     };
   }
 
@@ -45,26 +40,17 @@ export default class APIKeyUpdateForm extends React.Component<APIKeyUpdateFormPr
   }
 
   public render() {
+    const {entity, loading, error} = this.state;
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
 
-    return (
-      <div className={classes.join(" ")}>
+    const onSubmit = entity.hasPermission(PermissionLevel.API_KEY_UPDATE) ? this.submit : undefined;
 
+    return (
+      <Form className={classes.join(" ")} loading={loading} error={error} onSubmit={onSubmit}>
         <PermissionExplorer permission={this.state.entity.permission} onChange={this.eventPermissionChange}/>
-        {this.renderUpdateButton()}
-
-
-      </div>
+      </Form>
     );
-  }
-
-  private readonly renderUpdateButton = () => {
-    if (!this.state.entity.hasPermission(PermissionLevel.API_KEY_UPDATE)) return null;
-
-    return (
-      <Button className={Style.Submit} onClick={this.submit}>Update</Button>
-    )
   }
 
   private readonly eventPermissionChange = (permission: Permission) => {
@@ -82,8 +68,7 @@ export interface APIKeyUpdateFormProps {
 
 interface State {
   entity: APIKeyEntity
-  loading: boolean
 
+  loading: boolean
   error?: Error
-  field_errors: Partial<Record<keyof Omit<State, "loading" | "error" | "field_errors">, Error>>
 }
