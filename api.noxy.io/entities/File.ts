@@ -92,9 +92,9 @@ export default class File extends Entity<File>(TypeORM) {
     return Path.resolve(process.env.FILE_PATH!, this.data_hash);
   }
 
-  public hasAccess(user: User, share_code?: string) {
+  public hasAccess(user: User, share_hash?: string) {
     if (!this.flag_public_tag && user?.id !== this.user_created.id) this.file_tag_list = [];
-    return user?.id === this.user_created.id || this.privacy === Privacy.PUBLIC || this.privacy === Privacy.LINK && this.share_hash === share_code;
+    return user?.id === this.user_created.id || this.privacy === Privacy.PUBLIC || this.privacy === Privacy.LINK && this.share_hash === share_hash;
   }
 
   public toJSON(): FileJSON {
@@ -178,13 +178,13 @@ export default class File extends Entity<File>(TypeORM) {
   }
 
   @File.get("/:id", {user: false})
-  @File.bindParameter<Request.getFindOne>("share_code", ValidatorType.STRING, {max_length: 32})
+  @File.bindParameter<Request.getFindOne>("share_hash", ValidatorType.STRING, {max_length: 32})
   public static async findOne({params: {id}, locals: {respond, user, parameters}}: Server.Request<{id: string}, Response.getFindOne, Request.getFindOne>) {
-    const {share_code} = parameters!;
+    const {share_hash: share_hash} = parameters!;
 
     try {
       const file = await this.performSelect(id);
-      if (!file.hasAccess(user!, share_code)) return respond?.(new ServerException(403, {id, share_code}));
+      if (!file.hasAccess(user!, share_hash)) return respond?.(new ServerException(403, {id, share_hash: share_hash}));
 
       return respond?.(file);
     }
@@ -390,7 +390,7 @@ export type FileJSON = {
 namespace Request {
   export type getFindMany = getCount & Pagination
   export type getCount = {name?: string; file_type_list?: string[]; file_tag_list?: string[]; file_tag_set_operation?: SetOperation}
-  export type getFindOne = {share_code?: string}
+  export type getFindOne = {share_hash?: string}
   export type getReadOne = never
   export type postCreateOne = {file: FileHandle; file_tag_list?: string[]}
   export type postDownload = {id: string}

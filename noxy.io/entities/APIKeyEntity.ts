@@ -19,7 +19,7 @@ export default class APIKeyEntity extends Entity {
 
   public static URL = `${Entity.domainAPI}/api-key`;
 
-  constructor(entity?: Properties<APIKeyEntity>) {
+  constructor(entity?: EntityInitializer<APIKeyEntity>) {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.token = entity?.token ?? "";

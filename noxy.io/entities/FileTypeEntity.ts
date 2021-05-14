@@ -13,7 +13,7 @@ export default class FileTypeEntity extends Entity {
 
   public static URL = `${Entity.domainAPI}/file-type`;
 
-  constructor(entity?: Partial<Properties<FileTypeEntity>>) {
+  constructor(entity?: EntityInitializer<FileTypeEntity>) {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? FileTypeName.APPLICATION;

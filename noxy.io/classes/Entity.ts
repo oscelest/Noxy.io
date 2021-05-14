@@ -24,7 +24,7 @@ export default class Entity {
     throw new Error(`${this.constructor.name}.getPrimaryKey does not have an implementation. This should never show up in production.`);
   }
 
-  public static instantiate<E extends typeof Entity, I extends InstanceType<E>>(this: E, target: Properties<I>[] = []): I[] {
+  public static instantiate<E extends typeof Entity, I extends InstanceType<E>>(this: E, target: EntityInitializer<I>[] = []): I[] {
     return _.map(target, o => new this(o as Properties<I>) as I);
   }
 

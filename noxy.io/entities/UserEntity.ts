@@ -18,7 +18,7 @@ export default class UserEntity extends Entity {
 
   public static URL = `${Entity.domainAPI}/user`;
 
-  constructor(entity?: Properties<UserEntity>) {
+  constructor(entity?: EntityInitializer<UserEntity>) {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.email = entity?.email ?? "";

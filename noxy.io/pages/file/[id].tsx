@@ -35,11 +35,11 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): FileAliasPageProps {
     const alias = (context.query[FileAliasPageQuery.ID] ?? "");
-    const share_code = (context.query[FileAliasPageQuery.SHARE_HASH] ?? "");
+    const share_hash = (context.query[FileAliasPageQuery.SHARE_HASH] ?? "");
 
     return {
       [FileAliasPageQuery.ID]:         (Array.isArray(alias) ? alias[0] : alias) || "",
-      [FileAliasPageQuery.SHARE_HASH]: (Array.isArray(share_code) ? share_code[0] : share_code) || "",
+      [FileAliasPageQuery.SHARE_HASH]: (Array.isArray(share_hash) ? share_hash[0] : share_hash) || "",
     };
   }
 

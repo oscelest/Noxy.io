@@ -12,7 +12,7 @@ export default class FileExtensionEntity extends Entity {
   public mime_type: string;
   public time_created: Date;
 
-  constructor(entity?: Properties<FileExtensionEntity>) {
+  constructor(entity?: EntityInitializer<FileExtensionEntity>) {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? "";
