@@ -6,7 +6,6 @@ import PermissionLevel from "../common/enums/PermissionLevel";
 import RequestHeader from "../common/enums/RequestHeader";
 import UserEntity from "./entities/UserEntity";
 import FatalException from "./exceptions/FatalException";
-import Helper from "./Helper";
 
 namespace Global {
 
@@ -22,15 +21,15 @@ namespace Global {
     }
 
     public masquerade = (masquerade?: UserEntity) => {
-      if (!masquerade || masquerade?.id === this.state.user?.id) {
-        delete Axios.defaults.headers.common[RequestHeader.MASQUERADE];
-        delete localStorage[RequestHeader.MASQUERADE];
-        this.setState({masquerade: undefined});
-      }
-      else {
+      if (masquerade && masquerade?.id !== this.state.user?.id) {
         Axios.defaults.headers.common[RequestHeader.MASQUERADE] = masquerade.id;
         localStorage[RequestHeader.MASQUERADE] = masquerade.id;
         this.setState({masquerade});
+      }
+      else {
+        delete Axios.defaults.headers.common[RequestHeader.MASQUERADE];
+        delete localStorage[RequestHeader.MASQUERADE];
+        this.setState({masquerade: undefined});
       }
     };
 
@@ -56,11 +55,10 @@ namespace Global {
 
       this.setState({loading: true});
       Axios.defaults.headers.common[RequestHeader.AUTHORIZATION] = jwt;
+
       if (localStorage[RequestHeader.MASQUERADE]) {
-        console.log(localStorage[RequestHeader.MASQUERADE])
         Axios.defaults.headers.common[RequestHeader.MASQUERADE] = localStorage[RequestHeader.MASQUERADE];
         this.setState({masquerade: await UserEntity.findOneByID(localStorage[RequestHeader.MASQUERADE])});
-        Helper.schedule(() => console.log(this.state));
       }
 
       try {
@@ -93,7 +91,7 @@ namespace Global {
       Axios.defaults.headers.common[RequestHeader.AUTHORIZATION] = api_key.token;
       localStorage.setItem(RequestHeader.AUTHORIZATION, api_key.token);
 
-      Helper.schedule(() => this.setState(next_state));
+      this.setState(next_state);
       return user;
     };
 
