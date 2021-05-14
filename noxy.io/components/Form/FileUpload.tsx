@@ -7,6 +7,7 @@ import Button from "./Button";
 import Style from "./FileUpload.module.scss";
 import Input from "./Input";
 import ProgressBar from "./ProgressBar";
+import Conditional from "../Application/Conditional";
 
 export default class FileUpload extends React.Component<FileUploadProps, State> {
 
@@ -70,10 +71,14 @@ export default class FileUpload extends React.Component<FileUploadProps, State> 
       <div className={classes.join(" ")}>
         <Preview className={Style.FilePreview} path={path} type={type}/>
         <div className={Style.FileInfo}>
-          {this.renderProgressBar()}
-          {this.renderInput()}
+          <Conditional condition={this.props.transfer.progress}>
+            <ProgressBar progress={this.props.transfer.progress ?? 0}>{this.getProgressBarText()}</ProgressBar>
+            <Input label={"Name"} error={this.props.transfer.error} value={this.props.transfer.name} onChange={this.eventNameChange}/>
+          </Conditional>
           <div className={Style.FileActionList}>
-            {this.renderActionUpload()}
+            <Conditional condition={this.props.transfer.progress}>
+              <Button className={Style.FileAction} onClick={this.eventUploadClick}>{this.getUploadText()}</Button>
+            </Conditional>
             <Button className={Style.FileAction} onClick={this.eventCancelClick}>{this.getCancelText()}</Button>
           </div>
         </div>
@@ -81,33 +86,17 @@ export default class FileUpload extends React.Component<FileUploadProps, State> 
     );
   }
 
-  private readonly renderInput = () => {
-    if (this.props.transfer.progress) return null;
-
-    return (
-      <Input label={"Name"} error={this.props.transfer.error} value={this.props.transfer.name} onChange={this.eventNameChange}/>
-    );
+  private readonly eventNameChange = (name: string) => {
+    this.props.onChange?.(name, this.props.transfer);
   };
 
-  private readonly renderProgressBar = () => {
-    if (!this.props.transfer.progress) return null;
-
-    return (
-      <ProgressBar progress={this.props.transfer.progress ?? 0}>{this.getProgressBarText()}</ProgressBar>
-    );
+  private readonly eventCancelClick = () => {
+    this.props.onCancel?.(this.props.transfer);
   };
 
-  private readonly renderActionUpload = () => {
-    if (this.props.transfer.progress) return;
-
-    return (
-      <Button className={Style.FileAction} onClick={this.eventUploadClick}>{this.getUploadText()}</Button>
-    );
+  private readonly eventUploadClick = () => {
+    this.props.onUpload?.(this.props.transfer);
   };
-
-  private readonly eventNameChange = (name: string) => this.props.onChange?.(name, this.props.transfer);
-  private readonly eventCancelClick = () => this.props.onCancel?.(this.props.transfer);
-  private readonly eventUploadClick = () => this.props.onUpload?.(this.props.transfer);
 
 }
 

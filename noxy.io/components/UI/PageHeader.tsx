@@ -1,5 +1,6 @@
 import React from "react";
 import Style from "./PageHeader.module.scss";
+import Conditional from "../Application/Conditional";
 
 export default class PageHeader extends React.Component<PageHeaderProps, State> {
 
@@ -16,17 +17,11 @@ export default class PageHeader extends React.Component<PageHeaderProps, State> 
         <div className={Style.Title}>
           {this.props.title}
         </div>
-        {this.renderContent()}
-      </div>
-    );
-  };
-
-  private readonly renderContent = () => {
-    if (!this.props.children) return null;
-
-    return (
-      <div className={Style.Content}>
-        {this.props.children}
+        <Conditional condition={this.props.children}>
+          <div className={Style.Content}>
+            {this.props.children}
+          </div>
+        </Conditional>
       </div>
     );
   };

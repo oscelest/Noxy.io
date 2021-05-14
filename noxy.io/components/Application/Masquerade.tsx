@@ -36,8 +36,14 @@ export class Masquerade extends React.Component<UserComboBoxProps, State> {
     );
   }
 
-  private readonly eventSearch = async (email: string) => email ? await UserEntity.get({email}, {skip: 0, limit: 10, order: {email: Order.ASC}}) : [];
-  private readonly eventChange = (user?: UserEntity) => user && this.setUser(user);
+  private readonly eventSearch = async (email: string) => {
+    if (!email) return [];
+    return await UserEntity.get({email}, {skip: 0, limit: 10, order: {email: Order.ASC}});
+  };
+
+  private readonly eventChange = (user?: UserEntity) => {
+    if (user) this.setUser(user);
+  };
 
 }
 

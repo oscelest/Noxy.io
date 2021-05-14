@@ -131,14 +131,13 @@ export default class User extends Entity<User>(TypeORM) {
   @User.bindParameter<Request.postLogin>("email", ValidatorType.EMAIL, {flag_optional: true})
   @User.bindParameter<Request.postLogin>("password", ValidatorType.STRING, {min_length: 12}, {flag_optional: true})
   public static async login({locals: {respond, user, parameters}}: Server.Request<{}, Response.postLogin, Request.postLogin>) {
-
     const {email, password} = parameters!;
 
     try {
       if (email && password) {
-        user = await this.createSelect().where({email}).getOneOrFail();
+        user = await this.createSelect().where({email}).getOne();
 
-        if (!crypto.pbkdf2Sync(password, user.salt, 10000, 255, "sha512").equals(user.hash)) {
+        if (!user || !crypto.pbkdf2Sync(password, user.salt, 10000, 255, "sha512").equals(user.hash)) {
           return respond?.(new ServerException(400));
         }
       }

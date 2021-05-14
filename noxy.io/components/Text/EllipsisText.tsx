@@ -11,6 +11,12 @@ export default class EllipsisText extends React.Component<EllipsisTextProps, Sta
     };
   }
 
+  private readonly updateShow = () => {
+    if (!this.state.ref.current) return;
+    const show = this.state.ref.current?.offsetWidth < this.state.ref.current?.scrollWidth;
+    if (show !== this.state.show) this.setState({show});
+  };
+
   public componentDidMount(): void {
     this.updateShow();
   }
@@ -18,12 +24,6 @@ export default class EllipsisText extends React.Component<EllipsisTextProps, Sta
   public componentDidUpdate(): void {
     this.updateShow();
   }
-
-  private readonly updateShow = () => {
-    if (!this.state.ref.current) return;
-    const show = this.state.ref.current?.offsetWidth < this.state.ref.current?.scrollWidth;
-    if (show !== this.state.show) this.setState({show});
-  };
 
   public render() {
     const classes = [Style.Component];

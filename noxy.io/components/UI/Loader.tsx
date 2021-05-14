@@ -1,6 +1,7 @@
 import React from "react";
 import Size from "../../enums/Size";
 import Style from "./Loader.module.scss";
+import Conditional from "../Application/Conditional";
 
 export default class Loader extends React.Component<LoaderProps, State> {
   
@@ -28,19 +29,12 @@ export default class Loader extends React.Component<LoaderProps, State> {
     return (
       <div className={classes.join(" ")}>
         <object className={Style.Loader} type="image/svg+xml" data={"/static/loader.svg"}/>
-        {this.renderText()}
+        <Conditional condition={this.props.text}>
+          <span className={Style.Text}>{this.props.text}</span>
+        </Conditional>
       </div>
     );
   }
-  
-  private readonly renderText = () => {
-    if (!this.props.text) return;
-    
-    return (
-      <span className={Style.Text}>{this.props.text}</span>
-    );
-  };
-  
 }
 
 export interface LoaderProps {

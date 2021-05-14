@@ -1,4 +1,3 @@
-import _ from "lodash";
 import React from "react";
 import EventKey from "../../enums/EventKey";
 import IconType from "../../enums/IconType";
@@ -7,6 +6,7 @@ import Helper from "../../Helper";
 import Icon from "../Base/Icon";
 import Loader from "../UI/Loader";
 import Style from "./Button.module.scss";
+import Conditional from "../Application/Conditional";
 
 export default class Button<V> extends React.Component<EventProps | ValueProps<V>, State> {
 
@@ -29,40 +29,36 @@ export default class Button<V> extends React.Component<EventProps | ValueProps<V
       <div className={classes.join(" ")} tabIndex={tab_index} data-disabled={disabled}
            onClick={this.eventClick} onMouseEnter={this.eventMouseEnter} onMouseLeave={this.eventMouseLeave} onFocus={this.eventFocus} onBlur={this.eventBlur} onKeyDown={this.eventKeyDown}>
         <Loader size={Size.SMALL} show={loading}>
-          {this.renderIcon()}
-          {this.renderChildren()}
+          <Conditional condition={this.props.icon}>
+            <Icon className={Style.Icon} type={this.props.icon!}/>
+          </Conditional>
+          <Conditional condition={this.props.children}>
+            {this.props.children}
+          </Conditional>
         </Loader>
       </div>
     );
   }
 
-  private readonly renderIcon = () => {
-    if (!this.props.icon) return null;
+  private readonly eventMouseEnter = (event: React.MouseEvent) => {
+    this.invokeEvent(event, this.props.onMouseEnter);
+  }
 
-    return (
-      <Icon className={Style.Icon} type={this.props.icon}/>
-    );
-  };
+  private readonly eventMouseLeave = (event: React.MouseEvent) => {
+    this.invokeEvent(event, this.props.onMouseLeave);
+  }
 
-  private readonly renderChildren = () => {
-    if (!this.props.children) return null;
+  private readonly eventFocus = (event: React.FocusEvent) => {
+    this.invokeEvent(event, this.props.onFocus);
+  }
 
-    return Array.isArray(this.props.children) ? _.map(this.props.children, this.renderChild) : this.renderChild(this.props.children);
-  };
+  private readonly eventBlur = (event: React.FocusEvent) => {
+    this.invokeEvent(event, this.props.onBlur);
+  }
 
-  private readonly renderChild = (child: React.PropsWithChildren<BaseProps>["children"], index: number = 0) => {
-    if (typeof child === "object") return {...child, key: index};
-
-    return (
-      <span key={index}>{child}</span>
-    );
-  };
-
-  private readonly eventMouseEnter = (event: React.MouseEvent) => this.invokeEvent(event, this.props.onMouseEnter);
-  private readonly eventMouseLeave = (event: React.MouseEvent) => this.invokeEvent(event, this.props.onMouseLeave);
-  private readonly eventFocus = (event: React.FocusEvent) => this.invokeEvent(event, this.props.onFocus);
-  private readonly eventBlur = (event: React.FocusEvent) => this.invokeEvent(event, this.props.onBlur);
-  private readonly eventClick = (event: React.MouseEvent<HTMLDivElement>) => this.invokeEvent(event, this.props.onClick);
+  private readonly eventClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    this.invokeEvent(event, this.props.onClick);
+  }
 
   private readonly invokeEvent = (event: React.SyntheticEvent, callback?: (...args: any[]) => any | Promise<any>) => {
     if (!callback) return;

@@ -199,7 +199,8 @@ module Server {
     }
     else if (value instanceof Error) {
       this.res?.status(500).json({success: false, message: HTTPStatusCode[500], content: {}, time_started, time_completed});
-      Logger.write(Logger.Level.ERROR, {...value, name: value.name});
+      const {name, message, stack, ...error} = value;
+      Logger.write(Logger.Level.ERROR, {name, message, ...error, stack});
     }
     else {
       this.res?.status(200).json({success: true, message: HTTPStatusCode[200], content: value, time_started, time_completed});

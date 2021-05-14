@@ -3,6 +3,7 @@ import React from "react";
 import EventKey from "../../enums/EventKey";
 import Helper from "../../Helper";
 import Style from "./RadioButton.module.scss";
+import Conditional from "../Application/Conditional";
 
 export default class RadioButton<V, C extends RadioButtonCollection<string, V>> extends React.Component<RadioButtonProps<V, C>, State> {
 
@@ -43,16 +44,10 @@ export default class RadioButton<V, C extends RadioButtonCollection<string, V>> 
     return (
       <div key={key} className={Style.Item} tabIndex={tab_index} data-checked={checked} data-disabled={disabled} onClick={this.eventClick} onKeyDown={this.eventKeyDown}>
         <div className={Style.Box}/>
-        {this.renderText(tickable.text)}
+        <Conditional condition={tickable.text}>
+          <span className={Style.Text}>{tickable.text}</span>
+        </Conditional>
       </div>
-    );
-  };
-
-  private readonly renderText = (text?: string) => {
-    if (!text) return null;
-
-    return (
-      <div className={Style.Text}>{text}</div>
     );
   };
 

@@ -93,17 +93,21 @@ export default class EntityInput<E extends Entity, K extends EntityStringPropert
     );
   }
 
-  private readonly eventChange = (input: string) => this.search(input as E[K] & string);
-  private readonly eventIndexChange = (index: number) => this.setState({index});
-  private readonly eventIndexCommit = (index: number) => this.props.onChange(this.state.list[index]);
+  private readonly eventChange = (input: string) => {
+    this.search(input as E[K] & string);
+  };
+
+  private readonly eventIndexChange = (index: number) => {
+    this.setState({index});
+  };
+
+  private readonly eventIndexCommit = (index: number) => {
+    this.props.onChange(this.state.list[index]);
+  };
+
   private readonly eventReset = () => {
-    if (!this.state.input) {
-      this.props.onChange(undefined);
-    }
-
-    if (this.props.reset === false) return;
-
-    this.search(this.getValue());
+    if (!this.state.input) this.props.onChange(undefined);
+    if (this.props.reset !== false) this.search(this.getValue());
   };
 
 }

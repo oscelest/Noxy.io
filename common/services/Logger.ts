@@ -34,7 +34,7 @@ module Logger {
       case Level.HTTP:
         return winston.createLogger({
           level:      level,
-          format:     winston.format.combine(winston.format.json(), winston.format.timestamp()),
+          format:     winston.format.combine(winston.format.timestamp(), winston.format.json()),
           transports: new WinstonDailyRotateFile({
             filename:      `${process.env.SERVICE}-${level}-%DATE%.log`,
             dirname:       Path.resolve(process.env.LOG_PATH),

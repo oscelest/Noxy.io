@@ -6,6 +6,7 @@ import Helper from "../../Helper";
 import Icon from "../Base/Icon";
 import Button from "./Button";
 import Style from "./Sortable.module.scss";
+import Conditional from "../Application/Conditional";
 
 export default class Sortable<V extends {} = {}> extends React.Component<SortableProps<V>, State<V>> {
 
@@ -23,17 +24,12 @@ export default class Sortable<V extends {} = {}> extends React.Component<Sortabl
     return _.find(this.getData(), item => !!item.order);
   };
 
-  private readonly getNextOrder = (item: SortableItem) => {
+  private readonly getNextOrder = (item?: SortableItem) => {
     const active = this.getActive();
-    if (item === active) {
-      return item.order === Order.DESC ? Order.ASC : Order.DESC;
-    }
-    if (active) {
-      return active.order;
-    }
-    else {
-      return Order.DESC;
-    }
+
+    if (item === active) return item?.order === Order.DESC ? Order.ASC : Order.DESC;
+    if (active) return active.order;
+    return Order.DESC;
   };
 
   public change = (item: SortableItem) => {
@@ -41,6 +37,9 @@ export default class Sortable<V extends {} = {}> extends React.Component<Sortabl
   };
 
   public render = () => {
+    const active = this.state.active ?? this.getActive();
+    const order = active == this.state.active ? this.getNextOrder(active) : active?.order;
+
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
 
@@ -48,36 +47,17 @@ export default class Sortable<V extends {} = {}> extends React.Component<Sortabl
       <div className={classes.join(" ")}>
         <div className={Style.Header}>
           <span className={Style.Text}>Sorting</span>
-          {this.renderActive()}
-
+          <Conditional condition={active}>
+            <div className={Style.Value}>
+              <span className={Style.Name} style={{width: Helper.getWidestText(_.map(this.getData(), item => item.text ?? ""))}}>{active?.text}</span>
+              <Icon type={order === Order.ASC ? IconType.CARET_UP : IconType.CARET_DOWN}/>
+            </div>
+          </Conditional>
         </div>
         <div className={Style.List}>
           {_.map(this.getData(), this.renderItem)}
         </div>
       </div>
-    );
-  };
-
-  private readonly renderActive = () => {
-    const active = this.state.active ?? this.getActive();
-    if (!active) return null;
-
-    return (
-      <div className={Style.Value}>
-        <span className={Style.Name} style={{width: Helper.getWidestText(_.map(this.getData(), item => item.text ?? ""))}}>{active.text}</span>
-        {this.renderSortIcon()}
-      </div>
-    );
-  };
-
-  private readonly renderSortIcon = () => {
-    const active = this.getActive();
-    if (!active || !active.order) return null;
-
-    const order = active == this.state.active ? this.getNextOrder(active) : active.order;
-
-    return (
-      <Icon type={order === Order.ASC ? IconType.CARET_UP : IconType.CARET_DOWN}/>
     );
   };
 
@@ -93,9 +73,17 @@ export default class Sortable<V extends {} = {}> extends React.Component<Sortabl
     );
   };
 
-  private readonly eventItemMouseEnter = (value: SortableItem) => this.setState({active: value});
-  private readonly eventItemMouseLeave = () => this.setState({active: undefined});
-  private readonly eventItemButtonClick = (value: SortableItem, event: React.MouseEvent<HTMLDivElement>) => this.change(value);
+  private readonly eventItemMouseEnter = (value: SortableItem) => {
+    this.setState({active: value});
+  };
+
+  private readonly eventItemMouseLeave = () => {
+    this.setState({active: undefined});
+  };
+
+  private readonly eventItemButtonClick = (value: SortableItem) => {
+    this.change(value);
+  };
 }
 
 export interface SortableItem {
