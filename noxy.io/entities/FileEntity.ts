@@ -72,9 +72,9 @@ export default class FileEntity extends Entity {
     return this.instantiate(result.data.content);
   }
 
-  public static async getByID(id: string | FileEntity) {
+  public static async getByID(id: string | FileEntity, share_hash?: string) {
     id = typeof id === "string" ? id : id.getPrimaryKey();
-    const result = await Axios.get<APIRequest<FileEntity>>(`${this.URL}/${id}`);
+    const result = await Axios.get<APIRequest<FileEntity>>(`${this.URL}/${id}?${new RequestData({share_hash})}`);
     return new this(result.data.content);
   }
 

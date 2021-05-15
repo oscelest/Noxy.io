@@ -38,6 +38,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     const share_hash = (context.query[FileAliasPageQuery.SHARE_HASH] ?? "");
 
     return {
+      permission:                      null,
       [FileAliasPageQuery.ID]:         (Array.isArray(alias) ? alias[0] : alias) || "",
       [FileAliasPageQuery.SHARE_HASH]: (Array.isArray(share_hash) ? share_hash[0] : share_hash) || "",
     };
@@ -49,11 +50,6 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
       data_loading: true,
 
       file_loading: true,
-      file_privacy: {
-        "private": RadioButton.createElement(Privacy.PRIVATE, "Private", false, false),
-        "link":    RadioButton.createElement(Privacy.LINK, "Only with link", false, false),
-        "public":  RadioButton.createElement(Privacy.PUBLIC, "Public", false, false),
-      },
 
       tag_search:         "",
       tag_loading:        true,
@@ -69,42 +65,30 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     Dialog.close(this.state.dialog);
   };
 
-  public async componentDidMount() {
-    if (!this.context.state.user) return this.setState({file_loading: false});
+  private readonly isOwner = (file: FileEntity | undefined = this.state.file) => {
+    return file && this.context.state.user && file.user_created.getPrimaryKey() === this.context.state.user?.getPrimaryKey();
+  };
 
+  public async componentDidMount() {
     try {
+      const file = await FileEntity.getByID(this.props[FileAliasPageQuery.ID], this.props[FileAliasPageQuery.SHARE_HASH]);
+      this.setState({file, file_loading: false});
+
       const next_state = {} as State;
 
-      next_state.file_loading = false;
-      next_state.file = await FileEntity.getByID(this.props[FileAliasPageQuery.ID]);
+      next_state.tag_selected_list = file.file_tag_list;
+      next_state.file_privacy = {
+        [Privacy.PRIVATE]: RadioButton.createElement(Privacy.PRIVATE, "Private", file.privacy === Privacy.PRIVATE, !this.isOwner(file)),
+        [Privacy.LINK]:    RadioButton.createElement(Privacy.LINK, "With link", file.privacy === Privacy.LINK, !this.isOwner(file)),
+        [Privacy.PUBLIC]:  RadioButton.createElement(Privacy.PUBLIC, "Public", file.privacy === Privacy.PUBLIC, !this.isOwner(file)),
+      };
 
-      if (next_state.file.privacy === Privacy.PRIVATE) {
-        next_state.file_privacy = {...this.state.file_privacy, private: {...this.state.file_privacy.private, checked: true}} as FilePrivacyRadioButton;
-      }
-      else if (next_state.file.share_hash === "") {
-        next_state.file_privacy = {...this.state.file_privacy, public: {...this.state.file_privacy.public, checked: true}} as FilePrivacyRadioButton;
-      }
-      else {
-        next_state.file_privacy = {...this.state.file_privacy, link: {...this.state.file_privacy.link, checked: true}} as FilePrivacyRadioButton;
-      }
-
-      this.setState(next_state);
-
-      if (next_state.file.user_created.getPrimaryKey() === this.context.state.user.getPrimaryKey()) {
-        next_state.tag_loading = false;
-        next_state.tag_available_list = await FileTagEntity.findMany({name: this.state.tag_search, exclude: next_state.file.file_tag_list});
-      }
-
-      if (next_state.file.user_created.getPrimaryKey() === this.context.state.user.getPrimaryKey() || next_state.file.flag_public_tag) {
-        next_state.tag_selected_list = next_state.file.file_tag_list;
-      }
-
-      switch (next_state.file.getFileType()) {
+      switch (file.getFileType()) {
         case FileTypeName.TEXT:
-          return this.setState({...next_state, data_loading: false, data: await FileEntity.getByDataHash(next_state.file.data_hash)});
+          return this.setState({...next_state, data_loading: false, data: await FileEntity.getByDataHash(file.data_hash)});
         case FileTypeName.AUDIO:
         case FileTypeName.VIDEO:
-          return this.setState({...next_state, data_loading: false, data: next_state.file.getDataPath()});
+          return this.setState({...next_state, data_loading: false, data: file.getDataPath()});
         default:
           return this.setState(next_state);
       }
@@ -113,6 +97,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
       const exception = error as AxiosError;
       this.setState({tag_loading: false, file_loading: false, data_loading: false});
       if (exception.response?.status === 404) return;
+      if (exception.response?.status === 403) return;
       throw new FatalException("Unexpected error occurred", "A server error has caused this file to be unable to load. Please try again later. This error has already been reported.");
     }
   }
@@ -179,11 +164,8 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
                   </Conditional>
 
                   <Button onClick={this.eventDownload}>Download file</Button>
-                  <Conditional condition={file?.user_created.getPrimaryKey() === this.context.state.user?.getPrimaryKey()}>
+                  <Conditional condition={this.isOwner()}>
                     <Button onClick={this.openDeleteFileDialog}>Delete file</Button>
-                  </Conditional>
-
-                  <Conditional condition={true}>
                     <EntityPicker selected={tag_selected_list} available={tag_available_list}
                                   onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openDeleteTagDialog}/>
                   </Conditional>
@@ -308,7 +290,7 @@ export enum FileAliasPageQuery {
 }
 
 type TagPrivacyCheckbox = CheckboxCollection<{public: boolean}>
-type FilePrivacyRadioButton = RadioButtonCollection<"private" | "link" | "public", Privacy>
+type FilePrivacyRadioButton = RadioButtonCollection<Privacy, Privacy>
 
 interface FileAliasPageProps extends PageProps {
   [FileAliasPageQuery.ID]: string
@@ -324,7 +306,7 @@ interface State {
   file?: FileEntity
   file_element?: HTMLElement
   file_loading: boolean
-  file_privacy: FilePrivacyRadioButton
+  file_privacy?: FilePrivacyRadioButton
 
   tag_search: string
   tag_loading: boolean

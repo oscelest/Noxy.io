@@ -73,10 +73,12 @@ export default class FileUpload extends React.Component<FileUploadProps, State> 
         <div className={Style.FileInfo}>
           <Conditional condition={this.props.transfer.progress}>
             <ProgressBar progress={this.props.transfer.progress ?? 0}>{this.getProgressBarText()}</ProgressBar>
+          </Conditional>
+          <Conditional condition={!this.props.transfer.progress}>
             <Input label={"Name"} error={this.props.transfer.error} value={this.props.transfer.name} onChange={this.eventNameChange}/>
           </Conditional>
           <div className={Style.FileActionList}>
-            <Conditional condition={this.props.transfer.progress}>
+            <Conditional condition={!this.props.transfer.progress}>
               <Button className={Style.FileAction} onClick={this.eventUploadClick}>{this.getUploadText()}</Button>
             </Conditional>
             <Button className={Style.FileAction} onClick={this.eventCancelClick}>{this.getCancelText()}</Button>

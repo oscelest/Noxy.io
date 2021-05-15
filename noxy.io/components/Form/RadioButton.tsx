@@ -82,7 +82,7 @@ export interface RadioButtonItem<V> {
 
 interface RadioButtonProps<V, C extends RadioButtonCollection<string, V>> {
   className?: string
-  children: RadioButtonCollection<string, V>
+  children?: RadioButtonCollection<string, V>
 
   onChange(value: RadioButtonCollection<string, V>): void | Promise<void>
 }

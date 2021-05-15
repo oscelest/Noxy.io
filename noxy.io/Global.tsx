@@ -1,11 +1,11 @@
-import Axios from "axios";
 import _ from "lodash";
-import Router from "next/router";
 import React from "react";
-import PermissionLevel from "../common/enums/PermissionLevel";
-import RequestHeader from "../common/enums/RequestHeader";
+import Axios from "axios";
+import Router from "next/router";
 import UserEntity from "./entities/UserEntity";
 import FatalException from "./exceptions/FatalException";
+import RequestHeader from "../common/enums/RequestHeader";
+import PermissionLevel from "../common/enums/PermissionLevel";
 
 namespace Global {
 
@@ -16,7 +16,7 @@ namespace Global {
     constructor(props: Props) {
       super(props);
       this.state = {
-        loading: false,
+        loading: true,
       };
     }
 
@@ -96,7 +96,12 @@ namespace Global {
     };
 
     public componentDidMount = async () => {
-      if (localStorage[RequestHeader.AUTHORIZATION]) await this.refreshLogIn();
+      if (localStorage[RequestHeader.AUTHORIZATION]) {
+        await this.refreshLogIn();
+      }
+      else {
+        this.setState({loading: false})
+      }
     };
 
     public render = () => {

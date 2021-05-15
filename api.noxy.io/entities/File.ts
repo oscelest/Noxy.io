@@ -20,7 +20,7 @@ import FileTag, {FileTagJSON} from "./FileTag";
 import FileType from "./FileType";
 import User, {UserJSON} from "./User";
 
-const DataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~()'!*@,;", 64);
+const DataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~()'!@,;", 64);
 const ShareHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 32);
 
 const ShareHashFormat = new RegExp("^[a-zA-Z0-9-_]{32}$");
@@ -184,6 +184,8 @@ export default class File extends Entity<File>(TypeORM) {
 
     try {
       const file = await this.performSelect(id);
+      console.log(user?.id, file.user_created.id)
+      console.log(user?.id === file.user_created.id)
       if (!file.hasAccess(user!, share_hash)) return respond?.(new ServerException(403, {id, share_hash: share_hash}));
 
       return respond?.(file);
