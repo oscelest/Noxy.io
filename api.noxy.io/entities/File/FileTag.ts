@@ -1,10 +1,10 @@
 import * as TypeORM from "typeorm";
-import Entity, {Pagination} from "../../common/classes/Entity";
-import ValidatorType from "../../common/enums/ValidatorType";
-import ServerException from "../../common/exceptions/ServerException";
-import Server from "../../common/services/Server";
+import Entity, {Pagination} from "../../../common/classes/Entity";
+import ValidatorType from "../../../common/enums/ValidatorType";
+import ServerException from "../../../common/exceptions/ServerException";
+import Server from "../../../common/services/Server";
 import File from "./File";
-import User, {UserJSON} from "./User";
+import User, {UserJSON} from "../User";
 
 @TypeORM.Entity()
 @TypeORM.Unique("file_tag", ["name", "user_created"] as (keyof FileTag)[])
@@ -12,9 +12,7 @@ import User, {UserJSON} from "./User";
 @TypeORM.Index("time_updated", ["time_updated"] as (keyof FileTag)[])
 export default class FileTag extends Entity<FileTag>(TypeORM) {
 
-  /**
-   * Properties
-   */
+  //region    ----- Properties -----
 
   @TypeORM.PrimaryGeneratedColumn("uuid")
   public id: string;
@@ -22,7 +20,7 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
   @TypeORM.Column({type: "varchar", length: 64})
   public name: string;
 
-  @TypeORM.ManyToOne(() => User, user => user.file_tag_created_list, {nullable: false})
+  @TypeORM.ManyToOne(() => User, entity => entity.file_tag_created_list, {nullable: false})
   @TypeORM.JoinColumn({name: "user_created_id"})
   public user_created: User;
   public user_created_id: string;
@@ -33,16 +31,16 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
   @TypeORM.UpdateDateColumn({nullable: true, select: false, default: null})
   public time_updated: Date;
 
-  /**
-   * Relations
-   */
+  //endregion ----- Properties -----
+
+  //region    ----- Relations -----
 
   @TypeORM.ManyToMany(() => File, file => file.file_tag_list)
   public file_list: File[];
 
-  /**
-   * Instance methods
-   */
+  //endregion ----- Relations -----
+
+  //region    ----- Instance methods -----
 
   public toJSON(): FileTagJSON {
     return {
@@ -54,9 +52,9 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
     };
   }
 
-  /**
-   * Utility methods
-   */
+  //endregion ----- Instance methods -----
+
+  //region    ----- Utility methods -----
 
   public static createSelect() {
     const query = TypeORM.createQueryBuilder(this);
@@ -64,9 +62,9 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
     return query;
   }
 
-  /**
-   * Endpoint methods
-   */
+  //endregion ----- Utility methods -----
+
+  //region    ----- Endpoint methods -----
 
   @FileTag.get("/count")
   @FileTag.bindParameter<Request.getCount>("name", ValidatorType.STRING, {max_length: 64})
@@ -189,6 +187,9 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
       respond?.(new ServerException(500, error));
     }
   }
+
+  //endregion ----- Endpoint methods -----
+
 }
 
 export type FileTagJSON = {

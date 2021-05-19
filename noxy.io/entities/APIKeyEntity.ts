@@ -27,7 +27,7 @@ export default class APIKeyEntity extends Entity {
     this.limit_per_decasecond = entity?.limit_per_decasecond ?? 0;
     this.limit_per_minute = entity?.limit_per_minute ?? 0;
     this.user = new UserEntity(entity?.user);
-    this.time_created = entity?.time_created ?? new Date();
+    this.time_created = new Date(entity?.time_created ?? 0);
   }
 
   public getPrimaryKey(): string {

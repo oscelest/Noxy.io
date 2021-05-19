@@ -16,19 +16,17 @@ export default class Button<V> extends React.Component<EventProps | ValueProps<V
   }
 
   public render() {
-    const {} = this.state;
-    const {className, loading} = this.props;
-
     const tab_index = !this.props.disabled ? 0 : undefined;
-    const disabled = (this.props.disabled || this.props.loading) ?? false;
+    const disabled = this.props.disabled ?? false;
+    const loading = this.props.loading ?? false;
     const classes = [Style.Component];
     if (!this.props.children) classes.push(Style.Simple);
-    if (className) classes.push(className);
+    if (this.props.className) classes.push(this.props.className);
 
     return (
-      <div className={classes.join(" ")} tabIndex={tab_index} data-disabled={disabled}
+      <div className={classes.join(" ")} tabIndex={tab_index} data-disabled={disabled} data-loading={loading}
            onClick={this.eventClick} onMouseEnter={this.eventMouseEnter} onMouseLeave={this.eventMouseLeave} onFocus={this.eventFocus} onBlur={this.eventBlur} onKeyDown={this.eventKeyDown}>
-        <Loader size={Size.SMALL} show={loading}>
+        <Loader className={Style.Loader} size={Size.SMALL} show={loading}>
           <Conditional condition={this.props.icon}>
             <Icon className={Style.Icon} type={this.props.icon!}/>
           </Conditional>
@@ -42,33 +40,32 @@ export default class Button<V> extends React.Component<EventProps | ValueProps<V
 
   private readonly eventMouseEnter = (event: React.MouseEvent) => {
     this.invokeEvent(event, this.props.onMouseEnter);
-  }
+  };
 
   private readonly eventMouseLeave = (event: React.MouseEvent) => {
     this.invokeEvent(event, this.props.onMouseLeave);
-  }
+  };
 
   private readonly eventFocus = (event: React.FocusEvent) => {
     this.invokeEvent(event, this.props.onFocus);
-  }
+  };
 
   private readonly eventBlur = (event: React.FocusEvent) => {
     this.invokeEvent(event, this.props.onBlur);
-  }
+  };
 
   private readonly eventClick = (event: React.MouseEvent<HTMLDivElement>) => {
     this.invokeEvent(event, this.props.onClick);
-  }
+  };
 
   private readonly invokeEvent = (event: React.SyntheticEvent, callback?: (...args: any[]) => any | Promise<any>) => {
-    if (!callback) return;
     if (this.props.disabled || this.props.loading) {
       event.stopPropagation();
       event.preventDefault();
       return;
     }
 
-    this.props.value !== undefined ? callback(this.props.value, event) : callback(event);
+    Helper.hasProperty(this.props, "value") ? callback?.(this.props.value, event) : callback?.(event);
   };
 
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {

@@ -7,6 +7,17 @@ namespace Helper {
 
   export const Canvas = process.browser ? document.createElement("canvas") : null;
 
+  export function hasProperty<O extends object>(object: O, key: keyof O) {
+    return object.hasOwnProperty(key);
+  }
+
+  export function getQueryProp<V>(prop: undefined | string | string[]): string | undefined
+  export function getQueryProp<V>(prop: undefined | string | string[], default_value: V): string | V
+  export function getQueryProp<V>(prop: undefined | string | string[], default_value?: V): undefined | string | V {
+    if (prop === undefined) return default_value;
+    return (Array.isArray(prop) ? prop[0] : prop) || default_value;
+  }
+
   export function submitForm(action: string, attributes: {[key: string]: string}): void
   export function submitForm(action: string, target: string, attributes: {[key: string]: string}): void
   export function submitForm(action: string, target: string | {[key: string]: string} = "_blank", attributes?: {[key: string]: string}) {
@@ -52,11 +63,11 @@ namespace Helper {
     return setTimeout(fn, 0, ...args);
   }
 
-  export function getReactChildObject<O extends {} | [], V extends Unwrap<O>>(element: HTMLElement, object: O): V | undefined {
+  export function getReactChildObject<O extends {} | [], V extends Unwrap<O>>(element: Element, object: O): V | undefined {
     return object[getChildKey(element, object)] as V;
   }
 
-  export function getChildKey<O extends {} | []>(element: HTMLElement, object: O): keyof O {
+  export function getChildKey<O extends {} | []>(element: Element, object: O): keyof O {
     return _.keys(object)[_.findIndex(element.parentElement?.children, child => child === element)] as keyof O;
   }
 

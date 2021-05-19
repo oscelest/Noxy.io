@@ -41,6 +41,10 @@ namespace Global {
       return this.state.user?.hasPermission(...permission_list) ?? false;
     };
 
+    public isCurrentUser = (user?: UserEntity) => {
+      return this.state.user && this.state.user.exists() && user && user.exists() && this.state.user.getCurrentAPIKey() === user.getCurrentAPIKey();
+    }
+
     public performSignUp = async (email: string, username: string, password: string) => {
       return this.assignUser(await UserEntity.create({email, username, password}));
     };

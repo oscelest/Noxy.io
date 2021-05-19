@@ -1,9 +1,9 @@
 import * as TypeORM from "typeorm";
-import Entity, {Pagination} from "../../common/classes/Entity";
-import FileTypeName from "../../common/enums/FileTypeName";
-import ValidatorType from "../../common/enums/ValidatorType";
-import ServerException from "../../common/exceptions/ServerException";
-import Server from "../../common/services/Server";
+import Entity, {Pagination} from "../../../common/classes/Entity";
+import FileTypeName from "../../../common/enums/FileTypeName";
+import ValidatorType from "../../../common/enums/ValidatorType";
+import ServerException from "../../../common/exceptions/ServerException";
+import Server from "../../../common/services/Server";
 import FileExtension from "./FileExtension";
 
 @TypeORM.Entity()
@@ -12,9 +12,7 @@ import FileExtension from "./FileExtension";
 @TypeORM.Index("time_updated", ["time_updated"])
 export default class FileType extends Entity<FileType>(TypeORM) {
 
-  /**
-   * Properties
-   */
+  //region    ----- Properties -----
 
   @TypeORM.PrimaryGeneratedColumn("uuid")
   public id: string;
@@ -22,7 +20,7 @@ export default class FileType extends Entity<FileType>(TypeORM) {
   @TypeORM.Column({type: "enum", enum: FileTypeName, nullable: false})
   public name: FileTypeName;
 
-  @TypeORM.OneToMany(() => FileExtension, file => file.file_type)
+  @TypeORM.OneToMany(() => FileExtension, entity => entity.file_type)
   public file_extensions: FileExtension[];
 
   @TypeORM.CreateDateColumn()
@@ -31,9 +29,9 @@ export default class FileType extends Entity<FileType>(TypeORM) {
   @TypeORM.UpdateDateColumn({nullable: true, select: false, default: null})
   public time_updated: Date;
 
-  /**
-   * Instance methods
-   */
+  //endregion ----- Properties -----
+
+  //region    ----- Instance methods -----
 
   public toJSON(): FileTypeJSON {
     return {
@@ -44,18 +42,17 @@ export default class FileType extends Entity<FileType>(TypeORM) {
     };
   }
 
-  /**
-   * Utility methods
-   */
+  //endregion ----- Instance methods -----
+
+  //region    ----- Utility methods -----
 
   public static createSelect() {
     return TypeORM.createQueryBuilder(this);
   }
 
-  /**
-   * Endpoint methods
-   */
+  //endregion ----- Utility methods -----
 
+  //region    ----- Endpoint methods -----
 
   @FileType.get("/")
   @FileType.bindParameter<Request.getFindMany>("name", ValidatorType.ENUM, FileTypeName)
@@ -103,6 +100,9 @@ export default class FileType extends Entity<FileType>(TypeORM) {
   private static async createOne({locals: {respond, parameters}}: Server.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
     return respond?.(await this.performInsert(parameters!));
   }
+
+  //endregion ----- Endpoint methods -----
+
 }
 
 export type FileTypeJSON = {

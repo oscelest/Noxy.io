@@ -1,9 +1,9 @@
 import Axios from "axios";
 import _ from "lodash";
-import FileTypeName from "../../common/enums/FileTypeName";
-import Order from "../../common/enums/Order";
-import Entity from "../classes/Entity";
-import RequestData from "../classes/RequestData";
+import FileTypeName from "../../../common/enums/FileTypeName";
+import Order from "../../../common/enums/Order";
+import Entity from "../../classes/Entity";
+import RequestData from "../../classes/RequestData";
 
 export default class FileTypeEntity extends Entity {
 
@@ -17,7 +17,7 @@ export default class FileTypeEntity extends Entity {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? FileTypeName.APPLICATION;
-    this.time_created = entity?.time_created ?? new Date();
+    this.time_created = new Date(entity?.time_created ?? 0);
   }
 
   public toString() {

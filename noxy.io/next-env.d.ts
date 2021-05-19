@@ -36,3 +36,5 @@ declare type EntityInitializer<O> = Partial<Properties<O>>
 declare type RequestPaginationOrder<O extends {}> = { [K in keyof Pick<O, { [K in keyof O]: O[K] extends Function ? never : K }[keyof O]>]?: "ASC" | "DESC" }
 
 declare type PageProps = {permission?: string | null}
+
+declare type JSONObject = null | boolean | number | string | JSONObject[] | { [prop: string]: JSONObject }

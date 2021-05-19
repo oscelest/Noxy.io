@@ -1,5 +1,5 @@
 import * as TypeORM from "typeorm";
-import Entity from "../../common/classes/Entity";
+import Entity from "../../../common/classes/Entity";
 import File from "./File";
 import FileType, {FileTypeJSON} from "./FileType";
 
@@ -10,9 +10,7 @@ import FileType, {FileTypeJSON} from "./FileType";
 @TypeORM.Index("time_updated", ["time_updated"])
 export default class FileExtension extends Entity<FileExtension>(TypeORM) {
 
-  /**
-   * Properties
-   */
+  //region    ----- Properties -----
 
   @TypeORM.PrimaryGeneratedColumn("uuid")
   public id: string;
@@ -23,7 +21,7 @@ export default class FileExtension extends Entity<FileExtension>(TypeORM) {
   @TypeORM.Column({type: "varchar", length: 128})
   public mime_type: string;
 
-  @TypeORM.ManyToOne(() => FileType, file_type => file_type.file_extensions, {nullable: false, onDelete: "RESTRICT", onUpdate: "CASCADE"})
+  @TypeORM.ManyToOne(() => FileType, entity => entity.file_extensions, {nullable: false, onDelete: "RESTRICT", onUpdate: "CASCADE"})
   @TypeORM.JoinColumn({name: "file_type_id"})
   public file_type: FileType;
   public file_type_id: string;
@@ -34,16 +32,16 @@ export default class FileExtension extends Entity<FileExtension>(TypeORM) {
   @TypeORM.UpdateDateColumn({nullable: true, select: false, default: null})
   public time_updated: Date;
 
-  /**
-   * Relations
-   */
+  //endregion ----- Properties -----
 
-  @TypeORM.OneToMany(() => File, file => file.file_extension)
+  //region    ----- Relations -----
+
+  @TypeORM.OneToMany(() => File, entity => entity.file_extension)
   public file_list: File[];
 
-  /**
-   * Instance methods
-   */
+  //endregion ----- Relations -----
+
+  //region    ----- Instance methods -----
 
   public toJSON(): FileExtensionJSON {
     return {
@@ -56,18 +54,19 @@ export default class FileExtension extends Entity<FileExtension>(TypeORM) {
     };
   }
 
-  /**
-   * Utility methods
-   */
+  //endregion ----- Instance methods -----
+
+  //region    ----- Utility methods -----
 
   public static createSelect() {
     return TypeORM.createQueryBuilder(this);
   }
 
-  /**
-   * Endpoint methods
-   */
+  //endregion ----- Utility methods -----
 
+  //region    ----- Endpoint methods -----
+
+  //endregion ----- Endpoint methods -----
 }
 
 export type FileExtensionJSON = {

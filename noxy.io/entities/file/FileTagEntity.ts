@@ -1,9 +1,8 @@
 import Axios, {AxiosError} from "axios";
-import _ from "lodash";
-import Order from "../../common/enums/Order";
-import Entity from "../classes/Entity";
-import RequestData from "../classes/RequestData";
-import UserEntity from "./UserEntity";
+import Order from "../../../common/enums/Order";
+import Entity from "../../classes/Entity";
+import RequestData from "../../classes/RequestData";
+import UserEntity from "../UserEntity";
 
 export default class FileTagEntity extends Entity {
 
@@ -19,7 +18,7 @@ export default class FileTagEntity extends Entity {
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? "";
     this.user_created = new UserEntity(entity?.user_created);
-    this.time_created = entity?.time_created ?? new Date();
+    this.time_created = new Date(entity?.time_created ?? 0);
   }
 
   public toString() {

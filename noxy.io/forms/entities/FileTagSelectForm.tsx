@@ -2,7 +2,7 @@ import React from "react";
 import Dialog from "../../components/Application/Dialog";
 import Button from "../../components/Form/Button";
 import EntityPicker from "../../components/Form/EntityPicker";
-import FileTagEntity from "../../entities/FileTagEntity";
+import FileTagEntity from "../../entities/file/FileTagEntity";
 import Helper from "../../Helper";
 import ConfirmForm from "../ConfirmForm";
 import Style from "./FileTagSelectForm.module.scss";

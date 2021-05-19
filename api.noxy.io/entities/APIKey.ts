@@ -14,9 +14,7 @@ import Server from "../../common/services/Server";
 @TypeORM.Unique("token", ["token"])
 export default class APIKey extends Entity<APIKey>(TypeORM) {
 
-  /**
-   * Properties
-   */
+  //region    ----- Properties -----
 
   @TypeORM.PrimaryGeneratedColumn("uuid")
   public id: string;
@@ -44,9 +42,9 @@ export default class APIKey extends Entity<APIKey>(TypeORM) {
   @TypeORM.UpdateDateColumn({nullable: true, select: false, default: null})
   public time_updated: Date;
 
-  /**
-   * Instance methods
-   */
+  //endregion ----- Properties -----
+
+  //region    ----- Instance methods -----
 
   public toJSON(): APIKeyJSON {
     return {
@@ -66,9 +64,9 @@ export default class APIKey extends Entity<APIKey>(TypeORM) {
     return this;
   }
 
-  /**
-   * Utility methods
-   */
+  //endregion ----- Instance methods -----
+
+  //region    ----- Utility methods -----
 
   public static createSelect() {
     const query = TypeORM.createQueryBuilder(this);
@@ -76,9 +74,9 @@ export default class APIKey extends Entity<APIKey>(TypeORM) {
     return query;
   }
 
-  /**
-   * Endpoint methods
-   */
+  //endregion ----- Utility methods -----
+
+  //region    ----- Endpoint methods -----
 
   @APIKey.get("/", {permission: PermissionLevel.API_KEY_VIEW})
   @APIKey.bindPagination(100, ["id", "time_created"])
@@ -194,6 +192,9 @@ export default class APIKey extends Entity<APIKey>(TypeORM) {
       respond?.(error);
     }
   }
+
+  //endregion ----- Endpoint methods -----
+
 }
 
 export type APIKeyJSON = {

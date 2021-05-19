@@ -6,9 +6,9 @@ import Helper from "../../Helper";
 import Dialog from "./Dialog";
 import Authorized from "./Authorized";
 import Conditional from "./Conditional";
-import FileEntity, {FileEntitySearchParameters} from "../../entities/FileEntity";
-import FileTagEntity from "../../entities/FileTagEntity";
-import FileTypeEntity from "../../entities/FileTypeEntity";
+import FileEntity, {FileEntitySearchParameters} from "../../entities/file/FileEntity";
+import FileTagEntity from "../../entities/file/FileTagEntity";
+import FileTypeEntity from "../../entities/file/FileTypeEntity";
 import ConfirmForm from "../../forms/ConfirmForm";
 import FileUploadForm from "../../forms/entities/FileUploadForm";
 import FileRenameForm from "../../forms/entities/FileRenameForm";
@@ -389,7 +389,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
 }
 
-type SortOrder = Pick<FileEntity, "name" | "size" | "time_created">
+type SortOrder = "name" | "size" | "time_created"
 type TypeCheckbox = CheckboxCollection<{[key: string]: FileTypeEntity}>
 
 export interface FileBrowserProps {

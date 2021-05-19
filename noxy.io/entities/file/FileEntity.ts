@@ -1,15 +1,14 @@
 import Axios, {Canceler} from "axios";
-import Order from "../../common/enums/Order";
-import Privacy from "../../common/enums/Privacy";
-import SetOperation from "../../common/enums/SetOperation";
-import Entity from "../classes/Entity";
-import RequestData from "../classes/RequestData";
-import Helper from "../Helper";
+import Order from "../../../common/enums/Order";
+import Privacy from "../../../common/enums/Privacy";
+import SetOperation from "../../../common/enums/SetOperation";
+import Entity from "../../classes/Entity";
+import RequestData from "../../classes/RequestData";
+import Helper from "../../Helper";
 import FileExtensionEntity from "./FileExtensionEntity";
 import FileTagEntity from "./FileTagEntity";
 import FileTypeEntity from "./FileTypeEntity";
-import UserEntity from "./UserEntity";
-
+import UserEntity from "../UserEntity";
 
 export default class FileEntity extends Entity {
 
@@ -39,7 +38,7 @@ export default class FileEntity extends Entity {
     this.file_tag_list = FileTagEntity.instantiate(entity?.file_tag_list);
     this.file_extension = new FileExtensionEntity(entity?.file_extension);
     this.user_created = new UserEntity(entity?.user_created);
-    this.time_created = entity?.time_created ?? new Date();
+    this.time_created = new Date(entity?.time_created ?? 0);
   }
 
   public toString() {

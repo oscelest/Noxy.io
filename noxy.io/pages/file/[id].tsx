@@ -16,8 +16,8 @@ import EllipsisText from "../../components/Text/EllipsisText";
 import Loader from "../../components/UI/Loader";
 import PageHeader from "../../components/UI/PageHeader";
 import Placeholder from "../../components/UI/Placeholder";
-import FileEntity from "../../entities/FileEntity";
-import FileTagEntity from "../../entities/FileTagEntity";
+import FileEntity from "../../entities/file/FileEntity";
+import FileTagEntity from "../../entities/file/FileTagEntity";
 import QueuePosition from "../../enums/QueuePosition";
 import Size from "../../enums/Size";
 import FatalException from "../../exceptions/FatalException";
@@ -65,22 +65,19 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     Dialog.close(this.state.dialog);
   };
 
-  private readonly isOwner = (file: FileEntity | undefined = this.state.file) => {
-    return file && this.context.state.user && file.user_created.getPrimaryKey() === this.context.state.user?.getPrimaryKey();
-  };
-
   public async componentDidMount() {
     try {
       const file = await FileEntity.getByID(this.props[FileAliasPageQuery.ID], this.props[FileAliasPageQuery.SHARE_HASH]);
       this.setState({file, file_loading: false});
 
       const next_state = {} as State;
+      const isOwner = file && this.context.isCurrentUser(file.user_created)
 
       next_state.tag_selected_list = file.file_tag_list;
       next_state.file_privacy = {
-        [Privacy.PRIVATE]: RadioButton.createElement(Privacy.PRIVATE, "Private", file.privacy === Privacy.PRIVATE, !this.isOwner(file)),
-        [Privacy.LINK]:    RadioButton.createElement(Privacy.LINK, "With link", file.privacy === Privacy.LINK, !this.isOwner(file)),
-        [Privacy.PUBLIC]:  RadioButton.createElement(Privacy.PUBLIC, "Public", file.privacy === Privacy.PUBLIC, !this.isOwner(file)),
+        [Privacy.PRIVATE]: RadioButton.createElement(Privacy.PRIVATE, "Private", file.privacy === Privacy.PRIVATE, !isOwner),
+        [Privacy.LINK]:    RadioButton.createElement(Privacy.LINK, "With link", file.privacy === Privacy.LINK, !isOwner),
+        [Privacy.PUBLIC]:  RadioButton.createElement(Privacy.PUBLIC, "Public", file.privacy === Privacy.PUBLIC, !isOwner),
       };
 
       switch (file.getFileType()) {
@@ -106,6 +103,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     const {file, file_element, file_loading, file_privacy} = this.state;
     const {tag_privacy, tag_selected_list, tag_available_list} = this.state;
     const loading_sidebar = _.includes([FileTypeName.AUDIO, FileTypeName.IMAGE, FileTypeName.VIDEO], file?.getFileType()) && !file_element;
+    const isOwner = file && this.context.isCurrentUser(file.user_created)
 
     return (
       <Loader size={Size.LARGE} show={file_loading}>
@@ -154,7 +152,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
                     </div>
                   </Conditional>
 
-                  <Conditional condition={file && this.context.state.user?.getPrimaryKey() === file?.user_created.getPrimaryKey()}>
+                  <Conditional condition={isOwner}>
                     <RadioButton className={Style.Privacy} onChange={this.eventFilePrivacyChange}>
                       {file_privacy}
                     </RadioButton>
@@ -164,7 +162,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
                   </Conditional>
 
                   <Button onClick={this.eventDownload}>Download file</Button>
-                  <Conditional condition={this.isOwner()}>
+                  <Conditional condition={isOwner}>
                     <Button onClick={this.openDeleteFileDialog}>Delete file</Button>
                     <EntityPicker selected={tag_selected_list} available={tag_available_list}
                                   onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openDeleteTagDialog}/>

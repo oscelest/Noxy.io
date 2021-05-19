@@ -1,7 +1,7 @@
 import Axios from "axios";
-import Order from "../../common/enums/Order";
-import Entity from "../classes/Entity";
-import RequestData from "../classes/RequestData";
+import Order from "../../../common/enums/Order";
+import Entity from "../../classes/Entity";
+import RequestData from "../../classes/RequestData";
 import FileTypeEntity from "./FileTypeEntity";
 
 export default class FileExtensionEntity extends Entity {
@@ -18,7 +18,7 @@ export default class FileExtensionEntity extends Entity {
     this.name = entity?.name ?? "";
     this.file_type = new FileTypeEntity(entity?.file_type);
     this.mime_type = entity?.mime_type ?? "";
-    this.time_created = entity?.time_created ?? new Date();
+    this.time_created = new Date(entity?.time_created ?? 0);
   }
 
   public toString() {

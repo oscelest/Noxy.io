@@ -10,15 +10,16 @@ import ServerException from "../../common/exceptions/ServerException";
 import Email from "../../common/services/Email";
 import Server from "../../common/services/Server";
 import APIKey, {APIKeyJSON} from "./APIKey";
-import File from "./File";
-import FileTag from "./FileTag";
+import File from "./File/File";
+import FileTag from "./File/FileTag";
 import PermissionLevel from "../../common/enums/PermissionLevel";
+import Board from "./Board/Board";
 
 @TypeORM.Entity()
 @TypeORM.Unique("email", ["email"])
 export default class User extends Entity<User>(TypeORM) {
 
-  //region    Properties
+  //region ----- Properties -----
 
   @TypeORM.PrimaryGeneratedColumn("uuid")
   public id: string;
@@ -35,7 +36,7 @@ export default class User extends Entity<User>(TypeORM) {
   @TypeORM.Column({type: "binary", length: 255})
   public hash: Buffer;
 
-  @TypeORM.OneToMany(() => APIKey, api_key => api_key.user)
+  @TypeORM.OneToMany(() => APIKey, entity => entity.user)
   public api_key_list?: APIKey[];
 
   @TypeORM.Column({type: "datetime", nullable: true, default: null})
@@ -47,20 +48,22 @@ export default class User extends Entity<User>(TypeORM) {
   @TypeORM.UpdateDateColumn({nullable: true, select: false, default: null})
   public time_updated: Date;
 
-  //endregion Properties
+  //endregion ----- Properties -----
 
-  //region    Relations
+  //region    ----- Relations -----
 
-
-  @TypeORM.OneToMany(() => File, file => file.user_created)
+  @TypeORM.OneToMany(() => File, entity => entity.user_created)
   public file_created_list?: File[];
 
-  @TypeORM.OneToMany(() => FileTag, file_tag => file_tag.user_created)
+  @TypeORM.OneToMany(() => FileTag, entity => entity.user_created)
   public file_tag_created_list?: FileTag[];
 
-  //endregion Relations
+  @TypeORM.OneToMany(() => Board, entity => entity.user_created)
+  public board_created_list?: Board[];
 
-  //region    Instance methods
+  //endregion ----- Relations -----
+
+  //region    ----- Instance methods -----
 
   public toJSON(): UserJSON {
     return {
@@ -73,9 +76,9 @@ export default class User extends Entity<User>(TypeORM) {
     };
   }
 
-  //endregion Instance methods
+  //endregion ----- Instance methods -----
 
-  //region    Utility methods
+  //region    ----- Utility methods -----
 
   public static createSelect() {
     const query = TypeORM.createQueryBuilder(this);
@@ -83,9 +86,9 @@ export default class User extends Entity<User>(TypeORM) {
     return query;
   }
 
-  //endregion Utility methods
+  //endregion ----- Utility methods -----
 
-  //region    Endpoint methods
+  //region    ----- Endpoint methods -----
 
   @User.get("/", {permission: [PermissionLevel.USER_MASQUERADE]})
   @User.bindParameter<Request.getFindMany>("email", ValidatorType.STRING, {min_length: 1})
@@ -170,7 +173,6 @@ export default class User extends Entity<User>(TypeORM) {
     }
     catch (error) {
       if (error instanceof TypeORM.EntityNotFoundError) return respond?.(new ServerException(400, parameters));
-      console.log(error);
       return respond?.(error);
     }
   }
@@ -265,7 +267,7 @@ export default class User extends Entity<User>(TypeORM) {
     ));
   }
 
-  //endregion Endpoint methods
+  //endregion ----- Endpoint methods -----
 }
 
 export type UserJSON = {
@@ -278,8 +280,7 @@ export type UserJSON = {
 }
 
 namespace Request {
-  export type getCount = {email?: string}
-  export type getFindMany = getCount & Pagination
+  export type getFindMany = {email?: string} & Pagination
   export type getFindOneByID = never;
   export type postLogin = {email: string, password: string}
   export type postRequestReset = {email: string}

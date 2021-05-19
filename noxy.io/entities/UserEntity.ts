@@ -24,8 +24,8 @@ export default class UserEntity extends Entity {
     this.email = entity?.email ?? "";
     this.username = entity?.username ?? "";
     this.api_key_list = APIKeyEntity.instantiate(entity?.api_key_list);
-    this.time_created = entity?.time_created ?? new Date();
-    this.time_login = entity?.time_login;
+    this.time_created = new Date(entity?.time_created ?? 0);
+    this.time_login = new Date(entity?.time_login ?? 0);
   }
 
   public toString() {

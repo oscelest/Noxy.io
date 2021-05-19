@@ -7,18 +7,18 @@ import {customAlphabet} from "nanoid";
 import Path from "path";
 import * as TypeORM from "typeorm";
 import {v4} from "uuid";
-import Entity, {Pagination} from "../../common/classes/Entity";
-import PermissionLevel from "../../common/enums/PermissionLevel";
-import Privacy from "../../common/enums/Privacy";
-import SetOperation from "../../common/enums/SetOperation";
-import ValidatorType from "../../common/enums/ValidatorType";
-import ServerException from "../../common/exceptions/ServerException";
-import Logger from "../../common/services/Logger";
-import Server from "../../common/services/Server";
+import Entity, {Pagination} from "../../../common/classes/Entity";
+import PermissionLevel from "../../../common/enums/PermissionLevel";
+import Privacy from "../../../common/enums/Privacy";
+import SetOperation from "../../../common/enums/SetOperation";
+import ValidatorType from "../../../common/enums/ValidatorType";
+import ServerException from "../../../common/exceptions/ServerException";
+import Logger from "../../../common/services/Logger";
+import Server from "../../../common/services/Server";
 import FileExtension, {FileExtensionJSON} from "./FileExtension";
 import FileTag, {FileTagJSON} from "./FileTag";
 import FileType from "./FileType";
-import User, {UserJSON} from "./User";
+import User, {UserJSON} from "../User";
 
 const DataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~()'!@,;", 64);
 const ShareHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 32);
@@ -31,9 +31,7 @@ const ShareHashFormat = new RegExp("^[a-zA-Z0-9-_]{32}$");
 @TypeORM.Unique("data_hash", ["data_hash"] as (keyof File)[])
 export default class File extends Entity<File>(TypeORM) {
 
-  /**
-   * Properties
-   */
+  //region    ----- Properties -----
 
   @TypeORM.PrimaryGeneratedColumn("uuid")
   public id: string;
@@ -56,7 +54,7 @@ export default class File extends Entity<File>(TypeORM) {
   @TypeORM.Column({type: "boolean"})
   public flag_public_tag: boolean;
 
-  @TypeORM.ManyToMany(() => FileTag, tag => tag.file_list)
+  @TypeORM.ManyToMany(() => FileTag, entity => entity.file_list)
   @TypeORM.JoinTable({
     name:              `jct/file-file_tag`,
     joinColumn:        {name: "file_id", referencedColumnName: "id"},
@@ -80,9 +78,9 @@ export default class File extends Entity<File>(TypeORM) {
   @TypeORM.UpdateDateColumn({nullable: true, select: false, default: null})
   public time_updated: Date;
 
-  /**
-   * Instance methods
-   */
+  //endregion ----- Properties -----
+
+  //region    ----- Instance methods -----
 
   public getFullName() {
     return this.name.match(new RegExp(`${this.file_extension.name}$`)) ? this.name : `${this.name}.${this.file_extension.name}`;
@@ -114,9 +112,9 @@ export default class File extends Entity<File>(TypeORM) {
     };
   }
 
-  /**
-   * Utility methods
-   */
+  //endregion ----- Instance methods -----
+
+  //region    ----- Utility methods -----
 
   public static createSelect() {
     const query = TypeORM.createQueryBuilder(this);
@@ -128,9 +126,9 @@ export default class File extends Entity<File>(TypeORM) {
     return query;
   }
 
-  /**
-   * Endpoint methods
-   */
+  //endregion ----- Utility methods -----
+
+  //region    ----- Endpoint methods -----
 
   @File.get("/")
   @File.bindParameter<Request.getFindMany>("name", ValidatorType.STRING, {max_length: 128})
@@ -184,8 +182,6 @@ export default class File extends Entity<File>(TypeORM) {
 
     try {
       const file = await this.performSelect(id);
-      console.log(user?.id, file.user_created.id)
-      console.log(user?.id === file.user_created.id)
       if (!file.hasAccess(user!, share_hash)) return respond?.(new ServerException(403, {id, share_hash: share_hash}));
 
       return respond?.(file);
@@ -371,6 +367,9 @@ export default class File extends Entity<File>(TypeORM) {
       respond?.(new ServerException(500, error));
     }
   }
+
+  //endregion ----- Endpoint methods -----
+
 }
 
 
