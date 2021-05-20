@@ -20,6 +20,8 @@ export default class BoardCategory extends Entity<BoardCategory>(TypeORM) {
   @TypeORM.ManyToOne(() => Board, entity => entity.board_category_list, {nullable: false, onDelete: "RESTRICT", onUpdate: "CASCADE"})
   @TypeORM.JoinColumn({name: "board_id"})
   public board: Board;
+
+  @TypeORM.Column({type: "varchar", length: 36})
   public board_id: string;
 
   @TypeORM.OneToMany(() => BoardLane, entity => entity.board_category)
@@ -52,6 +54,7 @@ export default class BoardCategory extends Entity<BoardCategory>(TypeORM) {
 
   public static createSelect() {
     const query = TypeORM.createQueryBuilder(this);
+    this.join(query, "board");
     this.join(query, "board_lane_list");
     this.join(query, "board_lane_list", "board_card_list");
     return query;
@@ -86,16 +89,12 @@ export default class BoardCategory extends Entity<BoardCategory>(TypeORM) {
     const {board, name} = parameters!;
     const entity = TypeORM.getRepository(BoardCategory).create();
 
-    entity.name = name;
-
     try {
       entity.board = await Board.performSelect(board);
-    }
-    catch (error) {
-      return respond?.(error);
-    }
+      if (entity.board.user_created_id !== user?.id) return respond?.(new ServerException(403));
 
-    try {
+      entity.name = name;
+
       return respond?.(await this.performInsert(entity));
     }
     catch (error) {

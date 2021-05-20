@@ -4,12 +4,12 @@ import BoardCategoryEntity from "./BoardCategoryEntity";
 import Axios from "axios";
 import RequestData from "../../classes/RequestData";
 
-export default class BoardLaneEntity extends Entity {
+export default class BoardLaneEntity<LaneContent = any, CardContent = any> extends Entity {
 
   public id: string;
-  public content: string;
-  public board_category: BoardCategoryEntity;
-  public board_card_list: BoardCardEntity[];
+  public content: LaneContent;
+  public board_category: BoardCategoryEntity<CardContent, LaneContent>;
+  public board_card_list: BoardCardEntity<CardContent>[];
   public time_created: Date;
 
   public static URL = `${Entity.domainAPI}/board-lane`;
@@ -24,7 +24,7 @@ export default class BoardLaneEntity extends Entity {
   }
 
   public toString() {
-    return this.content;
+    return JSON.stringify(this.content);
   }
 
   public getPrimaryKey(): string {
@@ -38,7 +38,7 @@ export default class BoardLaneEntity extends Entity {
 
 }
 
-export type BoardLaneEntityCreateParameters = {
-  content: string
+export type BoardLaneEntityCreateParameters<Content extends JSONObject = JSONObject> = {
+  content: Content
   board_category: string | BoardCategoryEntity
 }

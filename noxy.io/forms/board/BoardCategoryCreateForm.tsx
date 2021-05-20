@@ -79,8 +79,6 @@ export interface BoardCategoryCreateFormProps {
 }
 
 interface State {
-  dialog?: string
-
   loading: boolean
   error?: Error
   field_errors: Partial<Record<keyof Omit<State, "loading" | "error" | "field_errors">, Error>>

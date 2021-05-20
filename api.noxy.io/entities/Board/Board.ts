@@ -24,6 +24,8 @@ export default class Board extends Entity<Board>(TypeORM) {
   @TypeORM.ManyToOne(() => User, user => user.board_created_list, {nullable: false})
   @TypeORM.JoinColumn({name: "user_created_id"})
   public user_created: User;
+
+  @TypeORM.Column({type: "varchar", length: 36})
   public user_created_id: string;
 
   @TypeORM.CreateDateColumn()

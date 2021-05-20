@@ -7,6 +7,8 @@ import Loader from "../../components/UI/Loader";
 import PageHeader from "../../components/UI/PageHeader";
 import BoardElement from "../../components/Application/BoardElement";
 import Style from "./[id].module.scss";
+import BoardCardEntity from "../../entities/board/BoardCardEntity";
+import BoardLaneEntity from "../../entities/board/BoardLaneEntity";
 
 export default class BoardIDPage extends React.Component<BoardIDPageProps, State> {
 
@@ -30,10 +32,7 @@ export default class BoardIDPage extends React.Component<BoardIDPageProps, State
 
   public async componentDidMount() {
     try {
-      this.setState({
-        loading: false,
-        entity:  await BoardEntity.findOneByID(this.props[BoardIDPageQuery.ID]),
-      });
+      this.setState({entity: await BoardEntity.findOneByID(this.props[BoardIDPageQuery.ID]), loading: false});
     }
     catch (error) {
 
@@ -45,12 +44,35 @@ export default class BoardIDPage extends React.Component<BoardIDPageProps, State
       <div className={Style.Component}>
         <Loader show={!this.state.entity.exists()}>
           <PageHeader title={this.props.id}/>
-          <BoardElement entity={this.state.entity}/>
+          <BoardElement entity={this.state.entity}
+                        onCardEdit={this.eventCardEdit} onCardRender={this.renderCard} onCardTransform={this.eventCardTransform}
+                        onLaneEdit={this.eventLaneEdit}/>
         </Loader>
       </div>
     );
   }
 
+  private readonly renderCard = (card: BoardCardEntity) => {
+    return (
+      <span className={Style.CardName}>{card.id}</span>
+    );
+  };
+
+  private readonly eventCardTransform = (entity: BoardCardEntity) => {
+    return entity.content
+  };
+
+  private readonly eventCardEdit = (entity: BoardCardEntity) => {
+    // this.setState({dialog: Dialog.show(<BoardCardEditForm card={entity} onSubmit={this.eventCardEditSubmit}/>)});
+  };
+
+  // private readonly eventCardEditSubmit = () => {
+  //   this.setState({dialog: Dialog.close(this.state.dialog)});
+  // };
+
+  private readonly eventLaneEdit = (entity: BoardLaneEntity) => {
+
+  };
 
 }
 
@@ -64,6 +86,8 @@ export interface BoardIDPageProps {
 
 interface State {
   entity: BoardEntity
+
+  dialog?: string
 
   loading: boolean
 }

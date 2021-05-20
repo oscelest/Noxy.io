@@ -20,6 +20,8 @@ export default class BoardCard extends Entity<BoardCard>(TypeORM) {
   @TypeORM.ManyToOne(() => BoardLane, entity => entity.board_card_list, {nullable: false, onDelete: "RESTRICT", onUpdate: "CASCADE"})
   @TypeORM.JoinColumn({name: "board_lane_id"})
   public board_lane: BoardLane;
+
+  @TypeORM.Column({type: "varchar", length: 36})
   public board_lane_id: string;
 
   @TypeORM.CreateDateColumn()
@@ -59,32 +61,35 @@ export default class BoardCard extends Entity<BoardCard>(TypeORM) {
   @BoardCard.bindParameter<Request.postCreateOne>("content", ValidatorType.STRING)
   @BoardCard.bindParameter<Request.postCreateOne>("board_category", ValidatorType.UUID)
   @BoardCard.bindParameter<Request.postCreateOne>("board_lane", ValidatorType.UUID)
-  private static async createOne({locals: {respond, parameters}}: Server.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
-    const {board_category, board_lane, content} = parameters!;
+  private static async createOne({locals: {respond, user, parameters}}: Server.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
+    const {board_lane, content} = parameters!;
     const entity = TypeORM.getRepository(BoardCard).create();
 
-    entity.content = content;
-
     try {
+      entity.content = content;
       entity.board_lane = await BoardLane.performSelect(board_lane);
-    }
-    catch (error) {
-      return respond?.(error);
-    }
-
-    try {
-      const board_category_entity = await BoardCategory.performSelect(board_category);
-      if (board_category_entity.id !== entity.board_lane.board_category.id) return respond?.(new ServerException(403, {board_category}));
-    }
-    catch (error) {
-      return respond?.(error);
-    }
-
-    try {
+      entity.board_lane.board_category = await BoardCategory.performSelect(entity.board_lane.board_category.id);
+      if (user?.id !== entity.board_lane.board_category.board.user_created.id) return respond?.(new ServerException(403));
       return respond?.(await this.performInsert(entity));
     }
     catch (error) {
       if (error.code === "ER_DUP_ENTRY") return respond?.(new ServerException(409, {name: content}));
+      return respond?.(error);
+    }
+  }
+
+  @BoardCard.put("/:id")
+  @BoardCard.bindParameter<Request.putUpdateOne>("content", ValidatorType.STRING)
+  private static async updateOne({params: {id}, locals: {respond, user, parameters}}: Server.Request<{id: string}, Response.putUpdateOne, Request.putUpdateOne>) {
+    try {
+      const entity = await this.performSelect(id);
+      const board_lane = await BoardLane.performSelect(entity.board_lane.id);
+      const board_category = await BoardCategory.performSelect(board_lane.board_category.id);
+      if (user?.id !== board_category.board.user_created_id) return respond?.(new ServerException(403));
+
+      return respond?.(await this.performUpdate(id, parameters!));
+    }
+    catch (error) {
       return respond?.(error);
     }
   }
@@ -102,8 +107,10 @@ export type BoardCardJSON = {
 
 namespace Request {
   export type postCreateOne = {content: string, board_category: string, board_lane: string}
+  export type putUpdateOne = {content?: string}
 }
 
 namespace Response {
   export type postCreateOne = BoardCard | ServerException
+  export type putUpdateOne = BoardCard | ServerException
 }

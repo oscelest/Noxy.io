@@ -1,23 +1,22 @@
-import React from "react";
-import BoardEntity from "../../entities/board/BoardEntity";
-import Style from "./BoardElement.module.scss";
-import Placeholder from "../UI/Placeholder";
-import BoardCategoryEntity from "../../entities/board/BoardCategoryEntity";
-import Loader from "../UI/Loader";
-import IconType from "../../enums/IconType";
 import _ from "lodash";
-import Dialog from "./Dialog";
-import BoardCategoryCreateForm from "../../forms/board/BoardCategoryCreateForm";
-import Helper from "../../Helper";
-import FatalException from "../../exceptions/FatalException";
-import Button from "../Form/Button";
-import BoardLaneEntity from "../../entities/board/BoardLaneEntity";
-import BoardCardEntity from "../../entities/board/BoardCardEntity";
+import React from "react";
 import Icon from "../Base/Icon";
+import Button from "../Form/Button";
+import Dialog from "./Dialog";
+import Helper from "../../Helper";
+import Loader from "../UI/Loader";
 import Conditional from "./Conditional";
-import Point from "../../classes/Point";
+import Placeholder from "../UI/Placeholder";
+import BoardCategoryCreateForm from "../../forms/board/BoardCategoryCreateForm";
 import Rect from "../../classes/Rect";
-
+import Point from "../../classes/Point";
+import IconType from "../../enums/IconType";
+import FatalException from "../../exceptions/FatalException";
+import BoardEntity from "../../entities/board/BoardEntity";
+import BoardCardEntity from "../../entities/board/BoardCardEntity";
+import BoardLaneEntity from "../../entities/board/BoardLaneEntity";
+import BoardCategoryEntity from "../../entities/board/BoardCategoryEntity";
+import Style from "./BoardElement.module.scss";
 
 export default class BoardElement extends React.Component<BoardElementProps, State> {
 
@@ -96,6 +95,11 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
     return index;
   };
 
+  private readonly getDragStyle = (current?: boolean): React.CSSProperties => {
+    const {drag_origin, drag_point} = this.state;
+    return current && drag_origin && drag_point ? {left: `${drag_point.x - drag_origin.x}px`, top: `${drag_point.y - drag_origin.y}px`, zIndex: 100} : {};
+  };
+
   public async componentDidMount() {
     const next_state = {} as State;
     next_state.loading = false;
@@ -105,10 +109,14 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
 
       for (let category of next_state.board_category_list) {
         category.board = this.props.entity;
+
         for (let lane of category.board_lane_list) {
           lane.board_category = category;
+          lane.content = this.props.onLaneTransform?.(lane) ?? lane.content;
+
           for (let card of lane.board_card_list) {
             card.board_lane = lane;
+            card.content = this.props.onCardTransform?.(card) ?? card.content;
           }
         }
       }
@@ -117,7 +125,6 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
     }
 
     this.setState(next_state);
-    console.log(next_state.board_category_list);
   }
 
   public render() {
@@ -143,7 +150,7 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
 
               <div className={Style.LaneList}>
                 {_.map(this.state.board_category_current.board_lane_list, this.renderBoardLane)}
-                <Button className={Style.LaneAdd} icon={IconType.UI_ADD} value={this.state.board_category_current} onClick={this.eventLaneCreate}/>
+                <Button className={Style.LaneAdd} icon={IconType.UI_ADD} value={this.state.board_category_current} onClick={this.eventLaneCreate}>Add new lane</Button>
               </div>
 
             </div>
@@ -165,16 +172,9 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
     const is_drag_lane = this.state.drag_entity && this.state.drag_entity instanceof BoardLaneEntity && this.state.drag_entity.getPrimaryKey() === lane.getPrimaryKey();
     const ref = is_drag_lane ? this.state.ref_drag : undefined;
 
-    const style = {} as React.CSSProperties;
-    if (is_drag_lane && this.state.drag_origin && this.state.drag_point) {
-      style.left = `${this.state.drag_point.x - this.state.drag_origin.x}px`;
-      style.top = `${this.state.drag_point.y - this.state.drag_origin.y}px`;
-      style.zIndex = 100;
-    }
-
     return (
-      <div key={index} ref={ref} className={Style.Lane} style={style}>
-        <div className={Style.LaneContent}>{lane.content}</div>
+      <div key={index} ref={ref} className={Style.Lane} style={this.getDragStyle(is_drag_lane)}>
+        <div className={Style.LaneContent}>{this.props.onLaneRender ? this.props.onLaneRender(lane) : lane.content?.toString() ?? ""}</div>
         <div className={Style.ActionList}>
           <Icon className={Style.ActionDelete} type={IconType.CLOSE}/>
           <div className={Style.ActionDrag} onMouseDown={this.eventDragMouseDown}/>
@@ -192,18 +192,11 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
     const is_drag_card = this.state.drag_entity && this.state.drag_entity instanceof BoardCardEntity && this.state.drag_entity.getPrimaryKey() === card.getPrimaryKey();
     const ref = is_drag_card ? this.state.ref_drag : undefined;
 
-    const style = {} as React.CSSProperties;
-    if (is_drag_card && this.state.drag_origin && this.state.drag_point) {
-      style.left = `${this.state.drag_point.x - this.state.drag_origin.x}px`;
-      style.top = `${this.state.drag_point.y - this.state.drag_origin.y}px`;
-      style.zIndex = 100;
-    }
-
     return (
-      <div key={index} ref={ref} className={Style.Card} style={style} data-active={is_drag_card} onMouseDown={this.eventDragMouseDown}>
+      <div key={index} ref={ref} className={Style.Card} style={this.getDragStyle(is_drag_card)} data-active={is_drag_card} onMouseDown={this.eventDragMouseDown}>
         <Conditional condition={card.content}>
           <div className={Style.CardContent} onMouseDown={this.eventBlockMouseDown}>
-            {card.content}
+            {this.props.onCardRender ? this.props.onCardRender(card) : card.content?.toString() ?? ""}
           </div>
         </Conditional>
         <div className={Style.ActionList}>
@@ -303,7 +296,7 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
 
   private readonly eventCreateCategorySubmit = (entity: BoardCategoryEntity) => {
     Dialog.close(this.state.dialog);
-    this.setState({board_category_list: [...this.state.board_category_list, entity], board_category_current: entity});
+    this.setState({dialog: undefined, board_category_list: [...this.state.board_category_list, entity], board_category_current: entity});
   };
 
   private readonly eventLaneCreate = async (board_category_current: BoardCategoryEntity) => {
@@ -314,12 +307,12 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
 
   private readonly eventCardCreate = async (lane: BoardLaneEntity) => {
     this.setState({loading_add_card: lane});
-    lane.board_card_list.push(await BoardCardEntity.createOne({content: `"New card"`, board_lane: lane, board_category: lane.board_category}));
+    lane.board_card_list.push(await BoardCardEntity.createOne({content: `"New card"`, board_lane: lane}));
     this.setState({loading_add_card: undefined});
   };
 
   private readonly eventCardEdit = (card: BoardCardEntity) => {
-    console.log(card);
+    this.props.onCardEdit(card);
   };
 
   private readonly eventBlockMouseDown = (event: React.MouseEvent) => {
@@ -331,6 +324,14 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
 export interface BoardElementProps {
   entity: BoardEntity
   className?: string
+
+  onCardEdit(card: BoardCardEntity): void | Promise<void>
+  onCardRender?(card: BoardCardEntity): React.ReactNode
+  onCardTransform?(card: BoardCardEntity): any | Promise<any>
+
+  onLaneEdit(card: BoardLaneEntity): void | Promise<void>
+  onLaneRender?(lane: BoardLaneEntity): React.ReactNode
+  onLaneTransform?(card: BoardLaneEntity): any | Promise<any>
 }
 
 interface State {

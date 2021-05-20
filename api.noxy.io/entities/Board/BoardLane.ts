@@ -20,6 +20,8 @@ export default class BoardLane extends Entity<BoardLane>(TypeORM) {
   @TypeORM.ManyToOne(() => BoardCategory, entity => entity.board_lane_list, {nullable: false, onDelete: "RESTRICT", onUpdate: "CASCADE"})
   @TypeORM.JoinColumn({name: "board_category_id"})
   public board_category: BoardCategory;
+
+  @TypeORM.Column({type: "varchar", length: 36})
   public board_category_id: string;
 
   @TypeORM.OneToMany(() => BoardCard, entity => entity.board_lane)

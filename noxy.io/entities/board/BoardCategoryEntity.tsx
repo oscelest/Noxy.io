@@ -5,17 +5,17 @@ import Order from "../../../common/enums/Order";
 import Axios from "axios";
 import RequestData from "../../classes/RequestData";
 
-export default class BoardCategoryEntity extends Entity {
+export default class BoardCategoryEntity<CardContent = any, LaneContent = any> extends Entity {
 
   public id: string;
   public name: string;
   public board: BoardEntity;
-  public board_lane_list: BoardLaneEntity[];
+  public board_lane_list: BoardLaneEntity<CardContent, LaneContent>[];
   public time_created: Date;
 
   public static URL = `${Entity.domainAPI}/board-category`;
 
-  constructor(entity?: EntityInitializer<BoardCategoryEntity>) {
+  constructor(entity?: EntityInitializer<BoardCategoryEntity<CardContent, LaneContent>>) {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? "";

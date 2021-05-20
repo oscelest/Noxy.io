@@ -9,6 +9,7 @@ import Icon from "../Base/Icon";
 import DragDrop from "../UI/DragDrop";
 import Conditional from "./Conditional";
 import Style from "./Dialog.module.scss";
+import Helper from "../../Helper";
 
 export default class Dialog extends React.Component<DialogProps, State> {
 
@@ -46,12 +47,13 @@ export default class Dialog extends React.Component<DialogProps, State> {
   }
 
   public static close(id?: string) {
-    if (!id) return;
+    if (!id) return undefined;
     for (let dialog_list of Object.values(this.dialog_listener_collection)) {
       for (let dialog of dialog_list) {
         dialog.removeElement(id);
       }
     }
+    return undefined;
   }
 
   private static subscribe(component: Dialog) {
@@ -86,7 +88,7 @@ export default class Dialog extends React.Component<DialogProps, State> {
     }
 
     _.pullAt(this.#instance_list, indexes);
-    this.setState({});
+    Helper.schedule(() => this.setState({}));
   };
 
   private readonly getInstance = (id: string) => {
