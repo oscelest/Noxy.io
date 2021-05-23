@@ -17,6 +17,8 @@ import BoardCardEntity from "../../entities/board/BoardCardEntity";
 import BoardLaneEntity from "../../entities/board/BoardLaneEntity";
 import BoardCategoryEntity from "../../entities/board/BoardCategoryEntity";
 import Style from "./BoardElement.module.scss";
+import BoardContentEditForm from "../../forms/board/BoardContentEditForm";
+import ConfirmForm from "../../forms/ConfirmForm";
 
 export default class BoardElement extends React.Component<BoardElementProps, State> {
 
@@ -33,15 +35,6 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
       board_category_current: new BoardCategoryEntity(),
     };
   }
-
-  private readonly getBoardCategoryList = async () => {
-    try {
-      return await BoardCategoryEntity.findManyByBoard(this.props.entity.id);
-    }
-    catch (error) {
-      return [];
-    }
-  };
 
   private readonly getLaneElement = (target: Element) => {
     const element = target.closest(`.${Style.Lane}`);
@@ -104,25 +97,33 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
     const next_state = {} as State;
     next_state.loading = false;
 
-    if (this.props.entity.exists()) {
-      next_state.board_category_list = await this.getBoardCategoryList();
+    try {
+      if (this.props.entity.exists()) {
+        next_state.board_category_list = await BoardCategoryEntity.findManyByBoard(this.props.entity.id);
+        this.props.entity.board_category_list.sort((a, b) => a.weight > b.weight ? 1 : -1);
 
-      for (let category of next_state.board_category_list) {
-        category.board = this.props.entity;
+        for (let category of next_state.board_category_list) {
+          category.board = this.props.entity;
+          category.board_lane_list.sort((a, b) => a.weight > b.weight ? 1 : -1);
 
-        for (let lane of category.board_lane_list) {
-          lane.board_category = category;
-          lane.content = this.props.onLaneTransform?.(lane) ?? lane.content;
+          for (let lane of category.board_lane_list) {
+            lane.board_category = category;
+            lane.content = this.props.onLaneTransform?.(lane) ?? lane.content;
 
-          for (let card of lane.board_card_list) {
-            card.board_lane = lane;
-            card.content = this.props.onCardTransform?.(card) ?? card.content;
+            lane.board_card_list.sort((a, b) => a.weight > b.weight ? 1 : -1);
+
+            for (let card of lane.board_card_list) {
+              card.board_lane = lane;
+              card.content = this.props.onCardTransform?.(card) ?? card.content;
+            }
           }
         }
       }
-
-      next_state.board_category_current = next_state.board_category_list[0] ?? new BoardCategoryEntity();
     }
+    catch (error) {
+      next_state.board_category_list = [];
+    }
+    next_state.board_category_current = next_state.board_category_list[0] ?? new BoardCategoryEntity();
 
     this.setState(next_state);
   }
@@ -138,7 +139,7 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
           <Placeholder className={Style.Placeholder} show={!this.props.entity.exists()} text={"This board could not be loaded."}>
 
             <div className={Style.Header}>
-              <Button>Hello World</Button>
+              {/*<Button>Hello World</Button>*/}
             </div>
 
             <div className={Style.Content}>
@@ -174,11 +175,13 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
 
     return (
       <div key={index} ref={ref} className={Style.Lane} style={this.getDragStyle(is_drag_lane)}>
-        <div className={Style.LaneContent}>{this.props.onLaneRender ? this.props.onLaneRender(lane) : lane.content?.toString() ?? ""}</div>
+        <div className={Style.LaneContent}>
+          {this.props.onLaneRender ? this.props.onLaneRender(lane) : Helper.renderJSON(lane.content)}
+        </div>
         <div className={Style.ActionList}>
-          <Icon className={Style.ActionDelete} type={IconType.CLOSE}/>
+          <Icon className={Style.ActionDelete} type={IconType.CLOSE} value={lane} onClick={this.eventContentDelete}/>
           <div className={Style.ActionDrag} onMouseDown={this.eventDragMouseDown}/>
-          <Icon className={Style.ActionEdit} type={IconType.EDIT}/>
+          <Icon className={Style.ActionEdit} type={IconType.EDIT} value={lane} onClick={this.eventContentEdit}/>
         </div>
         <div className={Style.CardList}>
           {_.map(lane.board_card_list, this.renderBoardCard)}
@@ -196,13 +199,13 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
       <div key={index} ref={ref} className={Style.Card} style={this.getDragStyle(is_drag_card)} data-active={is_drag_card} onMouseDown={this.eventDragMouseDown}>
         <Conditional condition={card.content}>
           <div className={Style.CardContent} onMouseDown={this.eventBlockMouseDown}>
-            {this.props.onCardRender ? this.props.onCardRender(card) : card.content?.toString() ?? ""}
+            {this.props.onCardRender ? this.props.onCardRender(card) : Helper.renderJSON(card.content)}
           </div>
         </Conditional>
         <div className={Style.ActionList}>
-          <Icon className={Style.ActionDelete} type={IconType.CLOSE} value={card} onClick={this.eventCardEdit}/>
+          <Icon className={Style.ActionDelete} type={IconType.CLOSE} value={card} onClick={this.eventContentDelete}/>
           <div className={Style.ActionDrag}/>
-          <Icon className={Style.ActionEdit} type={IconType.EDIT} value={card} onClick={this.eventCardEdit}/>
+          <Icon className={Style.ActionEdit} type={IconType.EDIT} value={card} onClick={this.eventContentEdit}/>
         </div>
       </div>
     );
@@ -220,6 +223,9 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
     const {left, top} = (card_element ?? lane_element).getBoundingClientRect();
     next_state.drag_offset = new Point(next_state.drag_origin.x - left, next_state.drag_origin.y - top);
     next_state.drag_entity = card_element ? this.getCardEntity(lane_entity, card_element) : lane_entity;
+
+    next_state.drag_start_entity = card_element ? lane_entity : lane_entity.board_category;
+    next_state.drag_start_index = card_element ? this.getCardIndex(next_state.drag_entity as BoardCardEntity) : this.getLaneIndex(next_state.drag_entity as BoardLaneEntity);
 
     this.setState(next_state);
     event.preventDefault();
@@ -247,7 +253,8 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
         this.state.board_category_current.board_lane_list.splice(drag_lane_index, 1);
         this.state.board_category_current.board_lane_list.splice(target_lane_index, 0, drag_entity);
 
-        return this.setState({drag_point, drag_origin: new Point(target_rect.x + drag_offset.x, target_rect.y + drag_offset.y)});
+        const drag_origin = new Point(target_rect.x + drag_offset.x, target_rect.y + drag_offset.y);
+        this.setState({drag_point, drag_origin, drag_end_index: target_lane_index, drag_end_entity: target_lane_entity.board_category});
       }
     }
     else {
@@ -266,7 +273,8 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
         target_lane_entity.board_card_list.splice(target_card_index, 0, drag_entity);
         drag_entity.board_lane = target_lane_entity;
 
-        return this.setState({drag_point, drag_origin: new Point(target_rect.x + drag_offset.x, target_rect.y + drag_offset.y)});
+        const drag_origin = new Point(target_rect.x + drag_offset.x, target_rect.y + drag_offset.y);
+        this.setState({drag_point, drag_origin, drag_end_index: target_card_index, drag_end_entity: target_lane_entity});
       }
     }
 
@@ -274,9 +282,21 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
   };
 
   private readonly eventDragMouseUp = () => {
+    const {drag_entity, drag_start_entity, drag_start_index, drag_end_index, drag_end_entity} = this.state;
     this.setState({drag_entity: undefined, drag_point: undefined, drag_origin: undefined, drag_offset: undefined});
     window.removeEventListener("mousemove", this.eventDragMouseMove);
     window.removeEventListener("mouseup", this.eventDragMouseUp);
+    if (drag_start_index !== undefined && drag_start_entity && drag_end_index !== undefined && drag_end_entity) {
+      if (drag_start_entity.getPrimaryKey() === drag_end_entity.getPrimaryKey() && drag_start_index === drag_end_index) return;
+
+      if (drag_entity instanceof BoardCardEntity && drag_end_entity instanceof BoardLaneEntity) {
+        return BoardCardEntity.moveOne({board_card: drag_entity, board_lane: drag_end_entity, weight: drag_end_index});
+      }
+
+      if (drag_entity instanceof BoardLaneEntity && drag_end_entity instanceof BoardCategoryEntity) {
+        return BoardLaneEntity.moveOne({board_lane: drag_entity, board_category: drag_end_entity, weight: drag_end_index});
+      }
+    }
   };
 
   private readonly eventCategoryClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -299,20 +319,52 @@ export default class BoardElement extends React.Component<BoardElementProps, Sta
     this.setState({dialog: undefined, board_category_list: [...this.state.board_category_list, entity], board_category_current: entity});
   };
 
-  private readonly eventLaneCreate = async (board_category_current: BoardCategoryEntity) => {
+  private readonly eventLaneCreate = async (category: BoardCategoryEntity) => {
     this.setState({loading_add_lane: true});
-    board_category_current.board_lane_list.push(await BoardLaneEntity.createOne({content: "New lane", board_category: board_category_current}));
+    const entity = await this.props.onLaneCreate?.(category) ?? await BoardLaneEntity.createOne({board_category: category});
+    entity.board_category = category;
+    category.board_lane_list.push(entity);
     this.setState({loading_add_lane: false});
   };
 
   private readonly eventCardCreate = async (lane: BoardLaneEntity) => {
     this.setState({loading_add_card: lane});
-    lane.board_card_list.push(await BoardCardEntity.createOne({content: `"New card"`, board_lane: lane}));
+    const entity = await this.props.onCardCreate?.(lane) ?? await BoardCardEntity.createOne({board_lane: lane});
+    entity.board_lane = lane;
+    lane.board_card_list.push(entity);
     this.setState({loading_add_card: undefined});
   };
 
-  private readonly eventCardEdit = (card: BoardCardEntity) => {
-    this.props.onCardEdit(card);
+  private readonly eventContentEdit = (entity: BoardCardEntity | BoardLaneEntity) => {
+    if (entity instanceof BoardCardEntity && this.props.onCardEdit) return this.props.onCardEdit(entity);
+    if (entity instanceof BoardLaneEntity && this.props.onLaneEdit) return this.props.onLaneEdit(entity);
+
+    this.setState({dialog: Dialog.show(<BoardContentEditForm entity={entity} onSubmit={this.eventContentEditSubmit}/>)});
+  };
+
+  private readonly eventContentEditSubmit = <V extends BoardCardEntity | BoardLaneEntity>(new_entity: V, old_entity: V) => {
+    old_entity.content = new_entity.content;
+    this.setState({dialog: Dialog.close(this.state.dialog)});
+  };
+
+  private readonly eventContentDelete = (entity: BoardCardEntity | BoardLaneEntity) => {
+    if (entity instanceof BoardLaneEntity && this.props.onLaneEdit) return this.props.onLaneEdit(entity);
+    if (entity instanceof BoardCardEntity && this.props.onCardEdit) return this.props.onCardEdit(entity);
+
+    this.setState({dialog: Dialog.show(<ConfirmForm value={entity} onAccept={this.eventContentDeleteSubmit}/>, {title: `Permanently delete "${entity.content}"?`})});
+  };
+
+  private readonly eventContentDeleteSubmit = async <V extends BoardCardEntity | BoardLaneEntity>(entity: V) => {
+    if (entity instanceof BoardLaneEntity) {
+      await BoardLaneEntity.deleteOne(entity.id);
+      _.remove(entity.board_category.board_lane_list, value => value.getPrimaryKey() === entity.getPrimaryKey());
+    }
+    else if (entity instanceof BoardCardEntity) {
+      await BoardCardEntity.deleteOne(entity.id);
+      _.remove(entity.board_lane.board_card_list, value => value.getPrimaryKey() === entity.getPrimaryKey());
+    }
+
+    this.setState({dialog: Dialog.close(this.state.dialog)});
   };
 
   private readonly eventBlockMouseDown = (event: React.MouseEvent) => {
@@ -325,12 +377,14 @@ export interface BoardElementProps {
   entity: BoardEntity
   className?: string
 
-  onCardEdit(card: BoardCardEntity): void | Promise<void>
+  onCardEdit?(card: BoardCardEntity): void | Promise<void>
   onCardRender?(card: BoardCardEntity): React.ReactNode
+  onCardCreate?(lane: BoardLaneEntity): BoardCardEntity | Promise<BoardCardEntity>
   onCardTransform?(card: BoardCardEntity): any | Promise<any>
 
-  onLaneEdit(card: BoardLaneEntity): void | Promise<void>
+  onLaneEdit?(card: BoardLaneEntity): void | Promise<void>
   onLaneRender?(lane: BoardLaneEntity): React.ReactNode
+  onLaneCreate?(category: BoardCategoryEntity): BoardLaneEntity | Promise<BoardLaneEntity>
   onLaneTransform?(card: BoardLaneEntity): any | Promise<any>
 }
 
@@ -348,6 +402,10 @@ interface State {
   drag_origin?: Point
   drag_offset?: Point
   drag_entity?: BoardLaneEntity | BoardCardEntity;
+  drag_start_index?: number
+  drag_start_entity?: BoardLaneEntity | BoardCategoryEntity;
+  drag_end_index?: number
+  drag_end_entity?: BoardLaneEntity | BoardCategoryEntity;
 
   board_category_list: BoardCategoryEntity[]
   board_category_current: BoardCategoryEntity

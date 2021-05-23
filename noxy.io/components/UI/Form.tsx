@@ -4,6 +4,7 @@ import Conditional from "../Application/Conditional";
 import Button from "../Form/Button";
 import ErrorText from "../Text/ErrorText";
 import Style from "./Form.module.scss";
+import Helper from "../../Helper";
 
 export default class Form extends React.Component<FormProps, State> {
 
@@ -15,7 +16,20 @@ export default class Form extends React.Component<FormProps, State> {
   }
 
   public componentDidMount() {
-    if (this.props.focus !== false) this.state.ref.current?.querySelector("input")?.focus();
+    if (this.props.focus !== false) {
+      const input = this.state.ref.current?.querySelector(`input:not([disabled]), textarea:not([disabled])`) as HTMLInputElement | HTMLTextAreaElement | null;
+      if (input) {
+        input.focus();
+        if (input.getAttribute("type") === "email") {
+          input.setAttribute("type", "text");
+          Helper.schedule(() => input.setAttribute("type", "email"))
+        }
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
+      else {
+        (this.state.ref.current?.querySelector("[tabindex]:not([disabled])") as HTMLElement)?.focus();
+      }
+    }
   }
 
   public render() {

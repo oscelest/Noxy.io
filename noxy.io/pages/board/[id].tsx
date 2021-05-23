@@ -43,10 +43,8 @@ export default class BoardIDPage extends React.Component<BoardIDPageProps, State
     return (
       <div className={Style.Component}>
         <Loader show={!this.state.entity.exists()}>
-          <PageHeader title={this.props.id}/>
-          <BoardElement entity={this.state.entity}
-                        onCardEdit={this.eventCardEdit} onCardRender={this.renderCard} onCardTransform={this.eventCardTransform}
-                        onLaneEdit={this.eventLaneEdit}/>
+          <PageHeader title={this.state.entity.name}/>
+          <BoardElement entity={this.state.entity} />
         </Loader>
       </div>
     );

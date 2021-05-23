@@ -77,9 +77,10 @@ $lane-width: 200px;
             }
 
             .CardContent {
-              flex:      0 0 auto;
-              flex-flow: column;
-              cursor:    auto;
+              flex:        0 0 auto;
+              flex-flow:   column;
+              white-space: pre-wrap;
+              cursor:      auto;
             }
 
             .ActionList {

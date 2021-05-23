@@ -7,6 +7,10 @@ namespace Helper {
 
   export const Canvas = process.browser ? document.createElement("canvas") : null;
 
+  export function renderJSON(content: JSONObject) {
+    return typeof content === "string" ? content : JSON.stringify(content, undefined, 2);
+  }
+
   export function hasProperty<O extends object>(object: O, key: keyof O) {
     return object.hasOwnProperty(key);
   }

@@ -9,6 +9,7 @@ export default class BoardCategoryEntity<CardContent = any, LaneContent = any> e
 
   public id: string;
   public name: string;
+  public weight: number;
   public board: BoardEntity;
   public board_lane_list: BoardLaneEntity<CardContent, LaneContent>[];
   public time_created: Date;
@@ -19,6 +20,7 @@ export default class BoardCategoryEntity<CardContent = any, LaneContent = any> e
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? "";
+    this.weight = entity?.weight ?? 0;
     this.board = new BoardEntity(entity?.board);
     this.board_lane_list =  BoardLaneEntity.instantiate(entity?.board_lane_list);
     this.time_created = new Date(entity?.time_created ?? 0);
@@ -46,6 +48,7 @@ export default class BoardCategoryEntity<CardContent = any, LaneContent = any> e
 }
 
 export type BoardCategoryEntityCreateParameters = {
-  name: string
+  name?: string
+  weight?: number
   board: string | BoardEntity
 }

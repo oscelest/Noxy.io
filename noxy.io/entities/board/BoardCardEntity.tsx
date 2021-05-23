@@ -7,6 +7,7 @@ export default class BoardCardEntity<CardContent = any, LaneContent = any> exten
 
   public id: string;
   public content: CardContent;
+  public weight: number;
   public board_lane: BoardLaneEntity<LaneContent>;
   public time_created: Date;
 
@@ -16,6 +17,7 @@ export default class BoardCardEntity<CardContent = any, LaneContent = any> exten
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.content = entity?.content ?? "";
+    this.weight = entity?.weight ?? 0;
     this.board_lane = new BoardLaneEntity(entity?.board_lane);
     this.time_created = new Date(entity?.time_created ?? 0);
   }
@@ -29,8 +31,12 @@ export default class BoardCardEntity<CardContent = any, LaneContent = any> exten
   }
 
   public static async createOne<C extends JSONObject = JSONObject>(parameters: BoardCardEntityCreateParameters<C>) {
-    const result = await Axios.post<APIRequest<BoardCardEntity<C>>>(this.URL, new RequestData(parameters).toObject());
+    const result = await Axios.post<APIRequest<BoardCardEntity<C>>>(this.URL, new RequestData({...parameters, content: JSON.stringify(parameters.content)}).toObject());
     return new this(result.data.content);
+  }
+
+  public static async moveOne(parameters: BoardCardEntityMoveParameters) {
+    return await Axios.post<APIRequest<boolean>>(`${this.URL}/move`, new RequestData(parameters).toObject());
   }
 
   public static async updateOne<C extends JSONObject = JSONObject>(id: string | BoardCardEntity, data: BoardCardEntityUpdateParameters<C>) {
@@ -39,11 +45,24 @@ export default class BoardCardEntity<CardContent = any, LaneContent = any> exten
     return new this(result.data.content);
   }
 
+  public static async deleteOne(id: string | BoardCardEntity) {
+    id = id instanceof BoardCardEntity ? id.id : id;
+    const result = await Axios.delete<APIRequest<BoardCardEntity>>(`${this.URL}/${id}`);
+    return new this(result.data.content);
+  }
+
 }
 
 export type BoardCardEntityCreateParameters<Content extends JSONObject = JSONObject> = {
-  content: Content
+  content?: Content
+  weight?: number
   board_lane: string | BoardLaneEntity;
+}
+
+export type BoardCardEntityMoveParameters = {
+  board_card: BoardCardEntity
+  board_lane: BoardLaneEntity
+  weight: number
 }
 
 export type BoardCardEntityUpdateParameters<Content extends JSONObject = JSONObject> = {

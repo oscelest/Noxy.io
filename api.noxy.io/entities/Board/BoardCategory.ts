@@ -17,7 +17,10 @@ export default class BoardCategory extends Entity<BoardCategory>(TypeORM) {
   @TypeORM.Column({type: "varchar", length: 64})
   public name: string;
 
-  @TypeORM.ManyToOne(() => Board, entity => entity.board_category_list, {nullable: false, onDelete: "RESTRICT", onUpdate: "CASCADE"})
+  @TypeORM.Column({type: "int"})
+  public weight: number;
+
+  @TypeORM.ManyToOne(() => Board, entity => entity.board_category_list, {nullable: false, onDelete: "CASCADE", onUpdate: "CASCADE"})
   @TypeORM.JoinColumn({name: "board_id"})
   public board: Board;
 
@@ -41,7 +44,8 @@ export default class BoardCategory extends Entity<BoardCategory>(TypeORM) {
   public toJSON(): BoardCategoryJSON {
     return {
       id:              this.id,
-      name:            this.name,
+      name:              this.name,
+      weight:       this.weight,
       board:           this.board,
       board_lane_list: this.board_lane_list,
       time_created:    this.time_created,
@@ -84,9 +88,10 @@ export default class BoardCategory extends Entity<BoardCategory>(TypeORM) {
 
   @BoardCategory.post("/")
   @BoardCategory.bindParameter<Request.postCreateOne>("name", ValidatorType.STRING, {min_length: 1})
+  @BoardCategory.bindParameter<Request.postCreateOne>("weight", ValidatorType.INTEGER, {min: 0}, {flag_optional: true})
   @BoardCategory.bindParameter<Request.postCreateOne>("board", ValidatorType.UUID)
   private static async createOne({locals: {respond, user, parameters}}: Server.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
-    const {board, name} = parameters!;
+    const {name, weight, board} = parameters!;
     const entity = TypeORM.getRepository(BoardCategory).create();
 
     try {
@@ -94,6 +99,7 @@ export default class BoardCategory extends Entity<BoardCategory>(TypeORM) {
       if (entity.board.user_created_id !== user?.id) return respond?.(new ServerException(403));
 
       entity.name = name;
+      entity.weight = weight ?? entity.board.board_category_list.length;
 
       return respond?.(await this.performInsert(entity));
     }
@@ -110,6 +116,7 @@ export default class BoardCategory extends Entity<BoardCategory>(TypeORM) {
 export type BoardCategoryJSON = {
   id: string
   name: string
+  weight: number
   board: BoardJSON
   board_lane_list: BoardLaneJSON[]
   time_created: Date
@@ -117,7 +124,7 @@ export type BoardCategoryJSON = {
 
 namespace Request {
   export type getFindManyByBoardID = Pagination
-  export type postCreateOne = {name: string, board: string}
+  export type postCreateOne = {name: string, weight?: number, board: string}
 }
 
 namespace Response {
