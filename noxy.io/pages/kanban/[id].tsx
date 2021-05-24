@@ -9,6 +9,8 @@ import BoardElement from "../../components/Application/BoardElement";
 import Style from "./[id].module.scss";
 import BoardCardEntity from "../../entities/board/BoardCardEntity";
 import BoardLaneEntity from "../../entities/board/BoardLaneEntity";
+import BoardType from "../../../common/enums/BoardType";
+import Placeholder from "../../components/UI/Placeholder";
 
 export default class BoardIDPage extends React.Component<BoardIDPageProps, State> {
 
@@ -31,20 +33,34 @@ export default class BoardIDPage extends React.Component<BoardIDPageProps, State
   }
 
   public async componentDidMount() {
+    const next_state = {} as State;
+    next_state.loading = false;
+
     try {
-      this.setState({entity: await BoardEntity.findOneByID(this.props[BoardIDPageQuery.ID]), loading: false});
+      next_state.entity = await BoardEntity.findOneByID(this.props[BoardIDPageQuery.ID]);
     }
     catch (error) {
-
+      next_state.placeholder = "Could not load the Kanban board";
     }
+
+    console.log(next_state)
+
+    if (next_state.entity.exists() && next_state.entity.type !== BoardType.KANBAN) {
+      next_state.placeholder = `The board you're trying to load is not a kanban board but a board of type "${next_state.entity.type}".`;
+    }
+
+    this.setState(next_state);
   }
 
   public render() {
     return (
       <div className={Style.Component}>
+
         <Loader show={!this.state.entity.exists()}>
-          <PageHeader title={this.state.entity.name}/>
-          <BoardElement entity={this.state.entity} />
+          <Placeholder show={!!this.state.placeholder} text={this.state.placeholder}>
+            <PageHeader title={this.state.entity.name}/>
+            <BoardElement entity={this.state.entity}/>
+          </Placeholder>
         </Loader>
       </div>
     );
@@ -57,7 +73,7 @@ export default class BoardIDPage extends React.Component<BoardIDPageProps, State
   };
 
   private readonly eventCardTransform = (entity: BoardCardEntity) => {
-    return entity.content
+    return entity.content;
   };
 
   private readonly eventCardEdit = (entity: BoardCardEntity) => {
@@ -88,4 +104,5 @@ interface State {
   dialog?: string
 
   loading: boolean
+  placeholder?: string
 }

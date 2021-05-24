@@ -60,7 +60,9 @@ export default class DataTable<K extends string> extends React.Component<DataTab
       <div className={classes.join(" ")}>
         <div className={Style.Header}>
           <div className={Style.Left}>
-
+            <Sortable onChange={this.eventOrderChange}>
+              {order}
+            </Sortable>
           </div>
 
           <div className={Style.Center}>
@@ -101,9 +103,7 @@ export default class DataTable<K extends string> extends React.Component<DataTab
           </div>
 
           <div className={Style.Right}>
-            <Sortable onChange={this.eventOrderChange}>
-              {order}
-            </Sortable>
+
           </div>
 
         </div>

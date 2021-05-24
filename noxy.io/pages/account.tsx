@@ -18,7 +18,7 @@ import ColumnText from "../components/Text/ColumnText";
 import ErrorText from "../components/Text/ErrorText";
 import HeaderText from "../components/Text/HeaderText";
 import PageHeader from "../components/UI/PageHeader";
-import Redirect from "../components/UI/Redirect";
+import Redirect from "../components/Application/Redirect";
 import APIKeyEntity from "../entities/APIKeyEntity";
 import UserEntity from "../entities/UserEntity";
 import IconType from "../enums/IconType";

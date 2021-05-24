@@ -2,7 +2,7 @@ import React from "react";
 import Permission from "../../../common/classes/Permission";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import PermissionExplorer from "../../components/Application/PermissionExplorer";
-import Form from "../../components/UI/Form";
+import Form from "../../components/Base/Form";
 import APIKeyEntity from "../../entities/APIKeyEntity";
 import Style from "./APIKeyUpdateForm.module.scss";
 import Global from "../../Global";

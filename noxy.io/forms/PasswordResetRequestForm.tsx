@@ -5,7 +5,7 @@ import React from "react";
 import Conditional from "../components/Application/Conditional";
 import Input from "../components/Form/Input";
 import ErrorText from "../components/Text/ErrorText";
-import Form from "../components/UI/Form";
+import Form from "../components/Base/Form";
 import UserEntity from "../entities/UserEntity";
 import InputType from "../enums/InputType";
 import Global from "../Global";

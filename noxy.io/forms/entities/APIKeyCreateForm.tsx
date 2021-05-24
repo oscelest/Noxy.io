@@ -7,7 +7,7 @@ import PermissionExplorer from "../../components/Application/PermissionExplorer"
 import Button from "../../components/Form/Button";
 import EntityInput from "../../components/Form/EntityInput";
 import Input from "../../components/Form/Input";
-import Form from "../../components/UI/Form";
+import Form from "../../components/Base/Form";
 import APIKeyEntity from "../../entities/APIKeyEntity";
 import UserEntity from "../../entities/UserEntity";
 import InputType from "../../enums/InputType";

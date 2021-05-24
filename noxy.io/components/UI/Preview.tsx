@@ -3,7 +3,7 @@ import FileTypeName from "../../../common/enums/FileTypeName";
 import FileEntity from "../../entities/file/FileEntity";
 import FileTypeEntity from "../../entities/file/FileTypeEntity";
 import IconType from "../../enums/IconType";
-import Icon from "../Base/Icon";
+import Icon from "../Form/Icon";
 import Style from "./Preview.module.scss";
 
 export default class Preview extends React.Component<PreviewProps, State> {

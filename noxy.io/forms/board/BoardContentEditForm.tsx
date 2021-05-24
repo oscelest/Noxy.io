@@ -2,7 +2,7 @@ import {AxiosResponse} from "axios";
 import _ from "lodash";
 import React from "react";
 import Style from "./BoardContentEditForm.module.scss";
-import Form from "../../components/UI/Form";
+import Form from "../../components/Base/Form";
 import BoardCardEntity from "../../entities/board/BoardCardEntity";
 import BoardLaneEntity from "../../entities/board/BoardLaneEntity";
 import Helper from "../../Helper";

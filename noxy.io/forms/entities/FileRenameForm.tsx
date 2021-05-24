@@ -5,7 +5,7 @@ import Button from "../../components/Form/Button";
 import Input from "../../components/Form/Input";
 import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
-import Form from "../../components/UI/Form";
+import Form from "../../components/Base/Form";
 import Preview from "../../components/UI/Preview";
 import FileEntity from "../../entities/file/FileEntity";
 import FatalException from "../../exceptions/FatalException";

@@ -5,7 +5,7 @@ import DialogListenerName from "../../enums/DialogListenerName";
 import EventKey from "../../enums/EventKey";
 import IconType from "../../enums/IconType";
 import QueuePosition from "../../enums/QueuePosition";
-import Icon from "../Base/Icon";
+import Icon from "../Form/Icon";
 import DragDrop from "../UI/DragDrop";
 import Conditional from "./Conditional";
 import Style from "./Dialog.module.scss";

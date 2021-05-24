@@ -4,7 +4,7 @@ import IconType from "../../enums/IconType";
 import FatalException from "../../exceptions/FatalException";
 import Helper from "../../Helper";
 import Conditional from "../Application/Conditional";
-import Icon from "../Base/Icon";
+import Icon from "./Icon";
 import EllipsisText from "../Text/EllipsisText";
 import Loader from "../UI/Loader";
 import Button from "./Button";

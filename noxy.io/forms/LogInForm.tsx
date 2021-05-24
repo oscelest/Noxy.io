@@ -6,7 +6,7 @@ import Dialog from "../components/Application/Dialog";
 import Button from "../components/Form/Button";
 import Input from "../components/Form/Input";
 import TitleText from "../components/Text/TitleText";
-import Form from "../components/UI/Form";
+import Form from "../components/Base/Form";
 import IconType from "../enums/IconType";
 import InputType from "../enums/InputType";
 import Global from "../Global";

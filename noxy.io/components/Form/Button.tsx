@@ -3,7 +3,7 @@ import EventKey from "../../enums/EventKey";
 import IconType from "../../enums/IconType";
 import Size from "../../enums/Size";
 import Helper from "../../Helper";
-import Icon from "../Base/Icon";
+import Icon from "./Icon";
 import Loader from "../UI/Loader";
 import Style from "./Button.module.scss";
 import Conditional from "../Application/Conditional";

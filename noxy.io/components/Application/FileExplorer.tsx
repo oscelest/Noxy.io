@@ -25,7 +25,7 @@ import EllipsisText from "../Text/EllipsisText";
 import Loader from "../UI/Loader";
 import Preview from "../UI/Preview";
 import DragDrop from "../UI/DragDrop";
-import Redirect from "../UI/Redirect";
+import Redirect from "./Redirect";
 import ElementBrowser from "../UI/ElementBrowser";
 import {ContextMenuItem} from "../UI/ContextMenu";
 import Size from "../../enums/Size";

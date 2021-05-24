@@ -5,7 +5,7 @@ import Rect from "../../classes/Rect";
 import IconType from "../../enums/IconType";
 import FatalException from "../../exceptions/FatalException";
 import Helper from "../../Helper";
-import Icon from "../Base/Icon";
+import Icon from "../Form/Icon";
 import Style from "./ContextMenu.module.scss";
 
 export default class ContextMenu extends React.Component<ContextMenuProps, State> {

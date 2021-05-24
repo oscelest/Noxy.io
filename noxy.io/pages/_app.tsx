@@ -5,7 +5,7 @@ import * as React from "react";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import Authorized from "../components/Application/Authorized";
 import Dialog from "../components/Application/Dialog";
-import Redirect from "../components/UI/Redirect";
+import Redirect from "../components/Application/Redirect";
 import DialogListenerName from "../enums/DialogListenerName";
 import Size from "../enums/Size";
 import Global from "../Global";

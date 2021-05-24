@@ -13,7 +13,7 @@ import QueuePosition from "../../enums/QueuePosition";
 import Global from "../../Global";
 import ConfirmForm from "../ConfirmForm";
 import Style from "./FileUploadForm.module.scss";
-import Form from "../../components/UI/Form";
+import Form from "../../components/Base/Form";
 
 export default class FileUploadForm extends React.Component<FileUploadFormProps, State> {
 

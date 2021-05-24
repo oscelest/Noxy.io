@@ -5,6 +5,7 @@ import ValidatorType from "../../../common/enums/ValidatorType";
 import Server from "../../../common/services/Server";
 import ServerException from "../../../common/exceptions/ServerException";
 import User from "../User";
+import BoardType from "../../../common/enums/BoardType";
 
 @TypeORM.Entity()
 export default class Board extends Entity<Board>(TypeORM) {
@@ -16,6 +17,9 @@ export default class Board extends Entity<Board>(TypeORM) {
 
   @TypeORM.Column({type: "varchar", length: 64})
   public name: string;
+
+  @TypeORM.Column({type: "enum", enum: BoardType})
+  public type: BoardType;
 
   @TypeORM.OneToMany(() => BoardCategory, entity => entity.board)
   @TypeORM.JoinColumn({name: "user_id"})
@@ -42,6 +46,7 @@ export default class Board extends Entity<Board>(TypeORM) {
     return {
       id:                  this.id,
       name:                this.name,
+      type:                this.type,
       board_category_list: this.board_category_list,
       time_created:        this.time_created,
       time_updated:        this.time_updated,
@@ -64,12 +69,15 @@ export default class Board extends Entity<Board>(TypeORM) {
   //region    ----- Endpoint methods -----
 
   @Board.get("/")
+  @Board.bindParameter<Request.getCount>("name", ValidatorType.STRING, {min_length: 0})
+  @Board.bindParameter<Request.getCount>("type", ValidatorType.ENUM, BoardType)
   @Board.bindPagination(100, ["id", "name", "time_created"])
   public static async findMany({locals: {respond, user, parameters}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
-    const {skip, limit, order, name} = parameters!;
+    const {skip, limit, order, name, type} = parameters!;
     const query = this.createPaginated({skip, limit, order});
 
     this.addWildcardClause(query, "name", name);
+    this.addValueClause(query, "type", type);
     this.addValueClause(query, "user_created", user?.id);
 
     try {
@@ -81,11 +89,14 @@ export default class Board extends Entity<Board>(TypeORM) {
   }
 
   @Board.get("/count")
+  @Board.bindParameter<Request.getCount>("name", ValidatorType.STRING, {min_length: 0})
+  @Board.bindParameter<Request.getCount>("type", ValidatorType.ENUM, BoardType)
   public static async count({locals: {respond, user, parameters}}: Server.Request<{}, Response.getCount, Request.getCount>) {
-    const {name} = parameters!;
+    const {name, type} = parameters!;
     const query = this.createSelect();
 
     this.addWildcardClause(query, "name", name);
+    this.addValueClause(query, "type", type);
     this.addValueClause(query, "user_created", user?.id);
 
     try {
@@ -133,13 +144,14 @@ export default class Board extends Entity<Board>(TypeORM) {
 export type BoardJSON = {
   id: string
   name: string
+  type: string
   board_category_list: BoardCategoryJSON[]
   time_created: Date
   time_updated: Date
 }
 
 namespace Request {
-  export type getCount = {name?: string}
+  export type getCount = {name?: string, type?: BoardType}
   export type getFindMany = getCount & Pagination
   export type getFindOnyByID = never
   export type postCreateOne = {name: string}

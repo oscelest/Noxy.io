@@ -6,7 +6,7 @@ import FileTagEntity from "../../entities/file/FileTagEntity";
 import Helper from "../../Helper";
 import ConfirmForm from "../ConfirmForm";
 import Style from "./FileTagSelectForm.module.scss";
-import Form from "../../components/UI/Form";
+import Form from "../../components/Base/Form";
 
 export default class FileTagSelectForm extends React.Component<FileSetTagListFormProps, State> {
 

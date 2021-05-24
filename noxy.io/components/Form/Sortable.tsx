@@ -3,7 +3,7 @@ import React from "react";
 import Order from "../../../common/enums/Order";
 import IconType from "../../enums/IconType";
 import Helper from "../../Helper";
-import Icon from "../Base/Icon";
+import Icon from "./Icon";
 import Button from "./Button";
 import Style from "./Sortable.module.scss";
 

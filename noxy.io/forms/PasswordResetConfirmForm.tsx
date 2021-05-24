@@ -3,7 +3,7 @@ import _ from "lodash";
 import Router from "next/router";
 import React from "react";
 import Input from "../components/Form/Input";
-import Form from "../components/UI/Form";
+import Form from "../components/Base/Form";
 import UserEntity from "../entities/UserEntity";
 import InputType from "../enums/InputType";
 import Global from "../Global";

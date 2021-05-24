@@ -6,7 +6,7 @@ import BoardEntity from "../../entities/board/BoardEntity";
 import Style from "./index.module.scss";
 import ColumnText from "../../components/Text/ColumnText";
 import Button from "../../components/Form/Button";
-import Redirect from "../../components/UI/Redirect";
+import Redirect from "../../components/Application/Redirect";
 import IconType from "../../enums/IconType";
 import _ from "lodash";
 import {SortableCollection} from "../../components/Form/Sortable";

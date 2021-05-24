@@ -1,6 +1,6 @@
 import _ from "lodash";
 import React from "react";
-import Icon from "../Base/Icon";
+import Icon from "../Form/Icon";
 import Button from "../Form/Button";
 import Dialog from "./Dialog";
 import Helper from "../../Helper";

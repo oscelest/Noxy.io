@@ -4,7 +4,7 @@ import React from "react";
 import Style from "./BoardCategoryCreateForm.module.scss";
 import BoardCategoryEntity from "../../entities/board/BoardCategoryEntity";
 import InputType from "../../enums/InputType";
-import Form from "../../components/UI/Form";
+import Form from "../../components/Base/Form";
 import Input from "../../components/Form/Input";
 import BoardEntity from "../../entities/board/BoardEntity";
 

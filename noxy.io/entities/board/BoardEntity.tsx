@@ -4,11 +4,13 @@ import BoardCategoryEntity from "./BoardCategoryEntity";
 import Axios from "axios";
 import RequestData from "../../classes/RequestData";
 import Order from "../../../common/enums/Order";
+import BoardType from "../../../common/enums/BoardType";
 
 export default class BoardEntity extends Entity {
 
   public id: string;
   public name: string;
+  public type: BoardType;
   public board_category_list: BoardCategoryEntity[];
   public user_created: UserEntity;
   public time_created: Date;
@@ -20,6 +22,7 @@ export default class BoardEntity extends Entity {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? "";
+    this.type = entity?.type ?? BoardType.UNKNOWN;
     this.board_category_list = BoardCategoryEntity.instantiate(entity?.board_category_list);
     this.user_created = entity?.user_created ?? new UserEntity();
     this.time_created = new Date(entity?.time_created ?? 0);

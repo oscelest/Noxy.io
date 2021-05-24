@@ -3,7 +3,7 @@ import IsEmail from "isemail";
 import _ from "lodash";
 import React from "react";
 import Input from "../components/Form/Input";
-import Form from "../components/UI/Form";
+import Form from "../components/Base/Form";
 import InputType from "../enums/InputType";
 import Global from "../Global";
 import Style from "./SignUpForm.module.scss";
