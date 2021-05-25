@@ -6,19 +6,19 @@ import RequestData from "../../classes/RequestData";
 import Order from "../../../common/enums/Order";
 import BoardType from "../../../common/enums/BoardType";
 
-export default class BoardEntity extends Entity {
+export default class BoardEntity<CardContent = any, LaneContent = any> extends Entity {
 
   public id: string;
   public name: string;
   public type: BoardType;
-  public board_category_list: BoardCategoryEntity[];
+  public board_category_list: BoardCategoryEntity<CardContent, LaneContent>[];
   public user_created: UserEntity;
   public time_created: Date;
   public time_updated: Date;
 
   public static URL = `${Entity.domainAPI}/board`;
 
-  constructor(entity?: EntityInitializer<BoardEntity>) {
+  constructor(entity?: Initializer<BoardEntity>) {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? "";
@@ -53,7 +53,7 @@ export default class BoardEntity extends Entity {
     return new this (result.data.content);
   }
 
-  public static async createOne(search: BoardEntitySearchParameters = {}) {
+  public static async createOne(search: BoardEntityCreateParameters) {
     const result = await Axios.post<APIRequest<BoardEntity>>(this.URL, new RequestData(search).toObject());
     return new this(result.data.content);
   }
@@ -68,4 +68,5 @@ export type BoardEntitySearchParameters = {
 
 export type BoardEntityCreateParameters = {
   name: string
+  content: JSONObject
 }

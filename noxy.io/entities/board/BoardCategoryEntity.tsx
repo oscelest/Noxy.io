@@ -16,7 +16,7 @@ export default class BoardCategoryEntity<CardContent = any, LaneContent = any> e
 
   public static URL = `${Entity.domainAPI}/board-category`;
 
-  constructor(entity?: EntityInitializer<BoardCategoryEntity<CardContent, LaneContent>>) {
+  constructor(entity?: Initializer<BoardCategoryEntity<CardContent, LaneContent>>) {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? "";

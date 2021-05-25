@@ -31,7 +31,7 @@ declare type Simplify<O> = (O extends object ? Properties<O> : O)
 
 declare type Properties<O> = { [K in keyof Pick<O, { [K in keyof O]: O[K] extends Function ? never : K }[keyof O]>]: O[K] };
 
-declare type EntityInitializer<O> = Partial<Properties<O>>
+declare type Initializer<O> = Partial<Properties<O>>
 
 declare type RequestPaginationOrder<O extends {}> = { [K in keyof Pick<O, { [K in keyof O]: O[K] extends Function ? never : K }[keyof O]>]?: "ASC" | "DESC" }
 

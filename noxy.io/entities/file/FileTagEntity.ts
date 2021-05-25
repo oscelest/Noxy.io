@@ -13,7 +13,7 @@ export default class FileTagEntity extends Entity {
 
   public static URL = `${Entity.domainAPI}/file-tag`;
 
-  constructor(entity?: EntityInitializer<FileTagEntity>) {
+  constructor(entity?: Initializer<FileTagEntity>) {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? "";

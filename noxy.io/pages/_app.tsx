@@ -77,7 +77,7 @@ class Header extends React.Component {
         <div className={Style.Navigation}>
           <Authorized size={Size.SMALL} permission={null}>
             <Authorized>
-              <Redirect className={Style.Link} href={"/board"}>Boards</Redirect>
+              <Redirect className={Style.Link} href={"/kanban"}>Kanban</Redirect>
               <Redirect className={Style.Link} href={"/file"}>Files</Redirect>
             </Authorized>
             <Redirect className={Style.Link} href={"/account"}>

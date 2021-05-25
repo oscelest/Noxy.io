@@ -14,6 +14,7 @@ import Order from "../../../common/enums/Order";
 import Helper from "../../Helper";
 import EllipsisText from "../../components/Text/EllipsisText";
 import Moment from "moment";
+import KanbanCardContent from "../../classes/KanbanCardContent";
 
 export default class BoardIndexPage extends React.Component<BoardIndexPageProps, State> {
 
@@ -86,7 +87,7 @@ export default class BoardIndexPage extends React.Component<BoardIndexPageProps,
           {Moment(entity.time_created).format("DD-MM-YYYY HH:mm:ss")}
         </ColumnText>
 
-        <Redirect className={Style.Redirect} href={`/board/${entity.id}`}>
+        <Redirect className={Style.Redirect} href={`/kanban/${entity.id}`}>
           <Button icon={IconType.EXTERNAL_LINK}/>
         </Redirect>
       </div>
@@ -94,7 +95,7 @@ export default class BoardIndexPage extends React.Component<BoardIndexPageProps,
   };
 
   private readonly eventCreate = async (name: string) => {
-    await BoardEntity.createOne({name});
+    await BoardEntity.createOne({name, content: new KanbanCardContent().toJSON()});
     await this.eventSearch();
   };
 

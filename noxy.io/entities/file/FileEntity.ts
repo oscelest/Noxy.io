@@ -26,7 +26,7 @@ export default class FileEntity extends Entity {
 
   public static URL = `${Entity.domainAPI}/file`;
 
-  constructor(entity?: EntityInitializer<FileEntity>) {
+  constructor(entity?: Initializer<FileEntity>) {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? "";
