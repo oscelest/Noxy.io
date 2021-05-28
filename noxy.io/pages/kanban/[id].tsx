@@ -5,12 +5,15 @@ import Helper from "../../Helper";
 import BoardEntity from "../../entities/board/BoardEntity";
 import Loader from "../../components/UI/Loader";
 import PageHeader from "../../components/UI/PageHeader";
-import BoardElement, {Lane, Card} from "../../components/Application/BoardElement";
+import BoardExplorer, {BoardLaneType, BoardCardType} from "../../components/Application/BoardExplorer";
 import Style from "./[id].module.scss";
 import BoardCardEntity from "../../entities/board/BoardCardEntity";
 import BoardType from "../../../common/enums/BoardType";
 import Placeholder from "../../components/UI/Placeholder";
 import KanbanCardContent from "../../classes/KanbanCardContent";
+import Conditional from "../../components/Application/Conditional";
+import Dialog from "../../components/Application/Dialog";
+import KanbanCardEditForm from "../../forms/kanban/KanbanCardEditForm";
 
 class KanbanLaneContent {
   public test: string;
@@ -60,37 +63,47 @@ export default class BoardIDPage extends React.Component<BoardIDPageProps, State
         <Loader show={!this.state.entity.exists()}>
           <Placeholder show={!!this.state.placeholder} text={this.state.placeholder}>
             <PageHeader title={this.state.entity.name}/>
-            <BoardElement className={Style.Board} entity={this.state.entity}
-                          onCardTransform={this.eventCardTransform} onCardRender={this.eventCardRender} onCardCreate={this.eventCardCreate} onCardEdit={this.eventCardEdit}/>
+            <BoardExplorer className={Style.Board} entity={this.state.entity}
+                           onCardTransform={this.eventCardTransform} onCardRender={this.eventCardRender} onCardCreate={this.eventCardCreate} onCardEdit={this.eventCardEdit}/>
           </Placeholder>
         </Loader>
       </div>
     );
   }
 
-  private readonly eventCardCreate = async (board_lane: Lane<State["entity"]>) => {
-    return await BoardCardEntity.createOne({board_lane, content: new KanbanCardContent().toJSON()}) as Card<State["entity"]>;
+  private readonly eventCardCreate = async (board_lane: BoardLaneType<State["entity"]>) => {
+    return await BoardCardEntity.createOne({board_lane, content: new KanbanCardContent().toJSON()}) as BoardCardType<State["entity"]>;
   };
 
-  private readonly eventCardRender = (card: Card<BoardEntity>) => {
+  private readonly eventCardRender = (card: BoardCardType<State["entity"]>) => {
     return (
       <div className={Style.Content}>
         <div>{card.content.name}</div>
+        <Conditional condition={card.content.description}>
+          <div>{card.content.description}</div>
+        </Conditional>
+        <Conditional condition={card.content.priority && !Number.isNaN(card.content.priority)}>
+          <div className={Style.Priority}>
+            <div>Priority:</div>
+            <div>{card.content.priority}</div>
+          </div>
+        </Conditional>
       </div>
     );
   };
 
-  private readonly eventCardTransform = (entity: Card<State["entity"]>) => {
+  private readonly eventCardTransform = (entity: BoardCardType<State["entity"]>) => {
     return new KanbanCardContent(entity.content);
   };
 
-  private readonly eventCardEdit = (entity: Card<State["entity"]>) => {
-    // this.setState({dialog: Dialog.show(<BoardCardEditForm card={entity} onSubmit={this.eventCardEditSubmit}/>)});
+  private readonly eventCardEdit = (entity: BoardCardType<State["entity"]>) => {
+    this.setState({dialog: Dialog.show(<KanbanCardEditForm entity={entity} onSubmit={this.eventCardEditSubmit}/>)});
   };
 
-  // private readonly eventCardEditSubmit = () => {
-  //   this.setState({dialog: Dialog.close(this.state.dialog)});
-  // };
+  private readonly eventCardEditSubmit = (new_entity: BoardCardType<State["entity"]>, old_entity: BoardCardType<State["entity"]>) => {
+    old_entity.content = new_entity.content;
+    this.setState({dialog: Dialog.close(this.state.dialog)});
+  };
 }
 
 

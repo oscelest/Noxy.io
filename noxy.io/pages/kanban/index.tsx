@@ -15,6 +15,7 @@ import Helper from "../../Helper";
 import EllipsisText from "../../components/Text/EllipsisText";
 import Moment from "moment";
 import KanbanCardContent from "../../classes/KanbanCardContent";
+import BoardType from "../../../common/enums/BoardType";
 
 export default class BoardIndexPage extends React.Component<BoardIndexPageProps, State> {
 
@@ -95,7 +96,8 @@ export default class BoardIndexPage extends React.Component<BoardIndexPageProps,
   };
 
   private readonly eventCreate = async (name: string) => {
-    await BoardEntity.createOne({name, content: new KanbanCardContent().toJSON()});
+    if (!name) return;
+    await BoardEntity.createOne({name, type: BoardType.KANBAN, content: new KanbanCardContent().toJSON()});
     await this.eventSearch();
   };
 

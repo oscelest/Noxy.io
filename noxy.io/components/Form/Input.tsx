@@ -73,17 +73,30 @@ export default class Input<T extends string | number = string> extends React.Com
     }
   };
 
-  private readonly getInnerText = (element: JSX.Element): string => {
+  private readonly getInnerText = (element: React.ReactElement): string => {
     if (Array.isArray(element.props.children)) return _.filter(_.map(element.props.children, child => this.getInnerText(child))).join(" ");
     if (typeof element.props.children === "object") return this.getInnerText(element.props.children as JSX.Element);
     return element.props.children;
   };
 
+  private readonly parseValue = (value: string) => {
+    switch (typeof this.props.value) {
+      case "string":
+        return value;
+      case "number":
+        if (value === "") return NaN;
+        if (isNaN(+value)) return this.props.value;
+        return +value;
+      default:
+        return "";
+    }
+  }
+
   public render = () => {
     const {ref_input, focus, hover, dropdown} = this.state;
     const {error, className, autoComplete, placeholder, loading, children} = this.props;
 
-    const value = this.props.value ?? "";
+    const value = this.props.value !== undefined && (typeof this.props.value !== "number" || !isNaN(this.props.value)) ? this.props.value : "";
     const label = this.props.error?.message ? `${this.props.label} - ${this.props.error.message}` : this.props.label;
     const type = this.props.type ?? InputType.TEXT;
     const size = this.props.size ?? 1;
@@ -132,10 +145,8 @@ export default class Input<T extends string | number = string> extends React.Com
   };
 
   private readonly eventInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const str = event.target.value;
-    const num = +event.target.value;
-    const value = (str === "" || typeof this.props.value === "string" || Number.isNaN(num) ? str : num) as T;
-    const next_state = {dropdown: str !== ""} as State;
+    const value = this.parseValue(event.target.value) as T;
+    const next_state = {dropdown: value !== ""} as State;
 
     if (this.props.index !== undefined) {
       next_state.index = _.findIndex(_.concat(this.props.children), (element, index) => {
@@ -143,9 +154,9 @@ export default class Input<T extends string | number = string> extends React.Com
           return this.props.onCompare(value, index);
         }
         if (typeof element === "object") {
-          return this.getInnerText(element as JSX.Element).toLowerCase() === str.toLowerCase();
+          return this.getInnerText(element as React.ReactElement).toLowerCase() === value.toString().toLowerCase();
         }
-        return element?.toString().toLowerCase() === str.toLowerCase();
+        return element?.toString().toLowerCase() === value.toString().toLowerCase();
       });
     }
 

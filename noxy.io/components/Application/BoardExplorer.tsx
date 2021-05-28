@@ -16,11 +16,11 @@ import BoardEntity from "../../entities/board/BoardEntity";
 import BoardCardEntity from "../../entities/board/BoardCardEntity";
 import BoardLaneEntity from "../../entities/board/BoardLaneEntity";
 import BoardCategoryEntity from "../../entities/board/BoardCategoryEntity";
-import Style from "./BoardElement.module.scss";
+import Style from "./BoardExplorer.module.scss";
 import BoardContentEditForm from "../../forms/board/BoardContentEditForm";
 import ConfirmForm from "../../forms/ConfirmForm";
 
-export default class BoardElement<Board extends BoardEntity> extends React.Component<BoardElementProps<Board>, State<Board>> {
+export default class BoardExplorer<Board extends BoardEntity> extends React.Component<BoardElementProps<Board>, State<Board>> {
 
   constructor(props: BoardElementProps<Board>) {
     super(props);
@@ -32,7 +32,7 @@ export default class BoardElement<Board extends BoardEntity> extends React.Compo
       loading_add_lane: false,
 
       board_category_list:    [],
-      board_category_current: new BoardCategoryEntity() as Category<Board>,
+      board_category_current: new BoardCategoryEntity() as BoardCategoryType<Board>,
     };
   }
 
@@ -63,7 +63,7 @@ export default class BoardElement<Board extends BoardEntity> extends React.Compo
     const entity = Helper.getReactChildObject(element, this.state.board_category_current.board_lane_list);
     if (!entity) throw new FatalException("Lane entity missing", "Lane entity missing in current category.");
 
-    return entity as Lane<Board>;
+    return entity as BoardLaneType<Board>;
   };
 
   private readonly getCardEntity = (lane: BoardLaneEntity, target: Element) => {
@@ -73,7 +73,7 @@ export default class BoardElement<Board extends BoardEntity> extends React.Compo
     const entity = Helper.getReactChildObject(element, lane.board_card_list);
     if (!entity) throw new FatalException("Card entity missing", "Card entity missing in lane card list.");
 
-    return entity as Card<Board>;
+    return entity as BoardCardType<Board>;
   };
 
   private readonly getLaneIndex = (lane: BoardLaneEntity, category: BoardCategoryEntity = lane.board_category) => {
@@ -99,20 +99,20 @@ export default class BoardElement<Board extends BoardEntity> extends React.Compo
 
     try {
       if (this.props.entity.exists()) {
-        next_state.board_category_list = await BoardCategoryEntity.findManyByBoard(this.props.entity.id) as Category<Board>[];
+        next_state.board_category_list = await BoardCategoryEntity.findManyByBoard(this.props.entity.id) as BoardCategoryType<Board>[];
         this.props.entity.board_category_list.sort((a, b) => a.weight > b.weight ? 1 : -1);
 
         for (let category of next_state.board_category_list) {
           category.board = this.props.entity;
           category.board_lane_list.sort((a, b) => a.weight > b.weight ? 1 : -1);
 
-          for (let lane of category.board_lane_list as Lane<Board>[]) {
+          for (let lane of category.board_lane_list as BoardLaneType<Board>[]) {
             lane.board_category = category;
             lane.content = this.props.onLaneTransform?.(lane) ?? lane.content;
 
             lane.board_card_list.sort((a, b) => a.weight > b.weight ? 1 : -1);
 
-            for (let card of lane.board_card_list as Card<Board>[]) {
+            for (let card of lane.board_card_list as BoardCardType<Board>[]) {
               card.board_lane = lane;
               card.content = this.props.onCardTransform?.(card) ?? card.content;
             }
@@ -149,10 +149,12 @@ export default class BoardElement<Board extends BoardEntity> extends React.Compo
                 <Button className={Style.Category} icon={IconType.UI_ADD} onClick={this.eventCreateCategoryClick}/>
               </div>
 
-              <div className={Style.LaneList}>
-                {_.map(this.state.board_category_current.board_lane_list, this.renderBoardLane)}
-                <Button className={Style.LaneAdd} icon={IconType.UI_ADD} value={this.state.board_category_current} onClick={this.eventLaneCreate}>Add new lane</Button>
-              </div>
+              <Placeholder show={!this.state.board_category_current.exists()} text={"Please create a category first"}>
+                <div className={Style.LaneList}>
+                  {_.map(this.state.board_category_current.board_lane_list, this.renderBoardLane)}
+                  <Button className={Style.LaneAdd} icon={IconType.UI_ADD} value={this.state.board_category_current} onClick={this.eventLaneCreate}>Add new lane</Button>
+                </div>
+              </Placeholder>
 
             </div>
 
@@ -163,13 +165,13 @@ export default class BoardElement<Board extends BoardEntity> extends React.Compo
     );
   }
 
-  private readonly renderBoardCategory = (category: Category<Board>, index: number = 0) => {
+  private readonly renderBoardCategory = (category: BoardCategoryType<Board>, index: number = 0) => {
     return (
       <Button key={index} className={Style.Category} icon={IconType.CLOCK} onClick={this.eventCategoryClick}/>
     );
   };
 
-  private readonly renderBoardLane = (lane: Lane<Board>, index: number = 0) => {
+  private readonly renderBoardLane = (lane: BoardLaneType<Board>, index: number = 0) => {
     const is_drag_lane = this.state.drag_entity && this.state.drag_entity instanceof BoardLaneEntity && this.state.drag_entity.getPrimaryKey() === lane.getPrimaryKey();
     const ref = is_drag_lane ? this.state.ref_drag : undefined;
 
@@ -191,7 +193,7 @@ export default class BoardElement<Board extends BoardEntity> extends React.Compo
     );
   };
 
-  private readonly renderBoardCard = (card: Card<Board>, index: number = 0) => {
+  private readonly renderBoardCard = (card: BoardCardType<Board>, index: number = 0) => {
     const is_drag_card = this.state.drag_entity && this.state.drag_entity instanceof BoardCardEntity && this.state.drag_entity.getPrimaryKey() === card.getPrimaryKey();
     const ref = is_drag_card ? this.state.ref_drag : undefined;
 
@@ -224,8 +226,8 @@ export default class BoardElement<Board extends BoardEntity> extends React.Compo
     next_state.drag_offset = new Point(next_state.drag_origin.x - left, next_state.drag_origin.y - top);
     next_state.drag_entity = card_element ? this.getCardEntity(lane_entity, card_element) : lane_entity;
 
-    next_state.drag_start_entity = card_element ? lane_entity : lane_entity.board_category as Category<Board>;
-    next_state.drag_start_index = card_element ? this.getCardIndex(next_state.drag_entity as Card<Board>) : this.getLaneIndex(next_state.drag_entity as Lane<Board>);
+    next_state.drag_start_entity = card_element ? lane_entity : lane_entity.board_category as BoardCategoryType<Board>;
+    next_state.drag_start_index = card_element ? this.getCardIndex(next_state.drag_entity as BoardCardType<Board>) : this.getLaneIndex(next_state.drag_entity as BoardLaneType<Board>);
 
     this.setState(next_state);
     event.preventDefault();
@@ -314,12 +316,12 @@ export default class BoardElement<Board extends BoardEntity> extends React.Compo
     });
   };
 
-  private readonly eventCreateCategorySubmit = (entity: Category<Board>) => {
+  private readonly eventCreateCategorySubmit = (entity: BoardCategoryType<Board>) => {
     Dialog.close(this.state.dialog);
     this.setState({dialog: undefined, board_category_list: [...this.state.board_category_list, entity], board_category_current: entity});
   };
 
-  private readonly eventLaneCreate = async (category: Category<Board>) => {
+  private readonly eventLaneCreate = async (category: BoardCategoryType<Board>) => {
     this.setState({loading_add_lane: true});
     const entity = await this.props.onLaneCreate?.(category) ?? await BoardLaneEntity.createOne({board_category: category});
     entity.board_category = category;
@@ -327,7 +329,7 @@ export default class BoardElement<Board extends BoardEntity> extends React.Compo
     this.setState({loading_add_lane: false});
   };
 
-  private readonly eventCardCreate = async (lane: Lane<Board>) => {
+  private readonly eventCardCreate = async (lane: BoardLaneType<Board>) => {
     this.setState({loading_add_card: lane});
     const entity = await this.props.onCardCreate?.(lane) ?? await BoardCardEntity.createOne({board_lane: lane});
     entity.board_lane = lane;
@@ -335,26 +337,26 @@ export default class BoardElement<Board extends BoardEntity> extends React.Compo
     this.setState({loading_add_card: undefined});
   };
 
-  private readonly eventContentEdit = (entity: Card<Board> | Lane<Board>) => {
+  private readonly eventContentEdit = (entity: BoardCardType<Board> | BoardLaneType<Board>) => {
     if (entity instanceof BoardCardEntity && this.props.onCardEdit) return this.props.onCardEdit(entity);
     if (entity instanceof BoardLaneEntity && this.props.onLaneEdit) return this.props.onLaneEdit(entity);
 
     this.setState({dialog: Dialog.show(<BoardContentEditForm entity={entity} onSubmit={this.eventContentEditSubmit}/>)});
   };
 
-  private readonly eventContentEditSubmit = <V extends Card<Board> | Lane<Board>>(new_entity: V, old_entity: V) => {
+  private readonly eventContentEditSubmit = <V extends BoardCardType<Board> | BoardLaneType<Board>>(new_entity: V, old_entity: V) => {
     old_entity.content = new_entity.content;
     this.setState({dialog: Dialog.close(this.state.dialog)});
   };
 
-  private readonly eventContentDelete = (entity: Card<Board> | Lane<Board>) => {
+  private readonly eventContentDelete = (entity: BoardCardType<Board> | BoardLaneType<Board>) => {
     if (entity instanceof BoardLaneEntity && this.props.onLaneEdit) return this.props.onLaneEdit(entity);
     if (entity instanceof BoardCardEntity && this.props.onCardEdit) return this.props.onCardEdit(entity);
 
     this.setState({dialog: Dialog.show(<ConfirmForm value={entity} onAccept={this.eventContentDeleteSubmit}/>, {title: `Permanently delete "${entity.content}"?`})});
   };
 
-  private readonly eventContentDeleteSubmit = async <V extends Card<Board> | Lane<Board>>(entity: V) => {
+  private readonly eventContentDeleteSubmit = async <V extends BoardCardType<Board> | BoardLaneType<Board>>(entity: V) => {
     if (entity instanceof BoardLaneEntity) {
       await BoardLaneEntity.deleteOne(entity.id);
       _.remove(entity.board_category.board_lane_list, value => value.getPrimaryKey() === entity.getPrimaryKey());
@@ -373,30 +375,28 @@ export default class BoardElement<Board extends BoardEntity> extends React.Compo
 
 }
 
-type CardValue<B extends BoardEntity, L extends Lane<B> = Lane<B>> = { [K in keyof L]: L[K] extends (infer R)[] ? R : L[K] }["board_card_list"]
-export type Card<B extends BoardEntity> = CardValue<B> extends BoardCardEntity ? CardValue<B> & {"board_lane": Lane<B>} : never;
-export type CardContent<B extends BoardEntity> = Card<B>["content"];
+type CardValue<B extends BoardEntity, L extends BoardLaneType<B> = BoardLaneType<B>> = { [K in keyof L]: L[K] extends (infer R)[] ? R : L[K] }["board_card_list"]
+export type BoardCardType<B extends BoardEntity> = CardValue<B> extends BoardCardEntity ? CardValue<B> & {"board_lane": BoardLaneType<B>} : never;
 
-type LaneValue<B extends BoardEntity, C extends Category<B> = Category<B>> = { [K in keyof C]: C[K] extends (infer R)[] ? R : C[K] }["board_lane_list"]
-export type Lane<B extends BoardEntity> = LaneValue<B> extends BoardLaneEntity ? LaneValue<B> & {board_category: Category<B>} : never;
-export type LaneContent<B extends BoardEntity> = Lane<B>["content"];
+type LaneValue<B extends BoardEntity, C extends BoardCategoryType<B> = BoardCategoryType<B>> = { [K in keyof C]: C[K] extends (infer R)[] ? R : C[K] }["board_lane_list"]
+export type BoardLaneType<B extends BoardEntity> = LaneValue<B> extends BoardLaneEntity ? LaneValue<B> & {board_category: BoardCategoryType<B>} : never;
 
 type CategoryValue<B extends BoardEntity> = { [K in keyof B]: B[K] extends (infer R)[] ? R : B[K] }["board_category_list"]
-type Category<B extends BoardEntity> = CategoryValue<B> extends BoardCategoryEntity ? CategoryValue<B> : never;
+type BoardCategoryType<B extends BoardEntity> = CategoryValue<B> extends BoardCategoryEntity ? CategoryValue<B> & {board: B} : never;
 
 export interface BoardElementProps<Board extends BoardEntity> {
   entity: Board
   className?: string
 
-  onCardEdit?(card: Card<Board>): void | Promise<void>
-  onCardRender?(card: Card<Board>): React.ReactNode
-  onCardCreate?(lane: Lane<Board>): Card<Board> | Promise<Card<Board>>
-  onCardTransform?(card: Card<Board>): any | Promise<any>
+  onCardEdit?(card: BoardCardType<Board>): void | Promise<void>
+  onCardRender?(card: BoardCardType<Board>): React.ReactNode
+  onCardCreate?(lane: BoardLaneType<Board>): BoardCardType<Board> | Promise<BoardCardType<Board>>
+  onCardTransform?(card: BoardCardType<Board>): any | Promise<any>
 
-  onLaneEdit?(card: Lane<Board>): void | Promise<void>
-  onLaneRender?(lane: Lane<Board>): React.ReactNode
-  onLaneCreate?(category: Category<Board>): Lane<Board> | Promise<Lane<Board>>
-  onLaneTransform?(card: Lane<Board>): any | Promise<any>
+  onLaneEdit?(card: BoardLaneType<Board>): void | Promise<void>
+  onLaneRender?(lane: BoardLaneType<Board>): React.ReactNode
+  onLaneCreate?(category: BoardCategoryType<Board>): BoardLaneType<Board> | Promise<BoardLaneType<Board>>
+  onLaneTransform?(card: BoardLaneType<Board>): any | Promise<any>
 }
 
 interface State<Board extends BoardEntity> {
@@ -407,17 +407,17 @@ interface State<Board extends BoardEntity> {
 
   loading: boolean
   loading_add_lane: boolean
-  loading_add_card?: Lane<Board>;
+  loading_add_card?: BoardLaneType<Board>;
 
   drag_point?: Point
   drag_origin?: Point
   drag_offset?: Point
-  drag_entity?: Lane<Board> | Card<Board>
+  drag_entity?: BoardLaneType<Board> | BoardCardType<Board>
   drag_start_index?: number
-  drag_start_entity?: Category<Board> | Lane<Board>
+  drag_start_entity?: BoardCategoryType<Board> | BoardLaneType<Board>
   drag_end_index?: number
-  drag_end_entity?: Category<Board> | Lane<Board>
+  drag_end_entity?: BoardCategoryType<Board> | BoardLaneType<Board>
 
-  board_category_list: Category<Board>[]
-  board_category_current: Category<Board>
+  board_category_list: BoardCategoryType<Board>[]
+  board_category_current: BoardCategoryType<Board>
 }

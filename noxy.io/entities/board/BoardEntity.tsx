@@ -68,5 +68,6 @@ export type BoardEntitySearchParameters = {
 
 export type BoardEntityCreateParameters = {
   name: string
+  type: BoardType
   content: JSONObject
 }

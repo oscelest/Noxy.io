@@ -48,8 +48,8 @@ export default class BoardLaneEntity<CardContent = any, LaneContent = any> exten
     return new this(result.data.content);
   }
 
-  public static async deleteOne(id: string | BoardCardEntity) {
-    id = id instanceof BoardCardEntity ? id.id : id;
+  public static async deleteOne(id: string | BoardLaneEntity) {
+    id = id instanceof BoardLaneEntity ? id.id : id;
     const result = await Axios.delete<APIRequest<BoardLaneEntity>>(`${this.URL}/${id}`);
     return new this(result.data.content);
   }
@@ -63,7 +63,7 @@ export type BoardLaneEntityCreateParameters = {
 }
 
 export type BoardLaneEntityMoveParameters = {
-  board_lane: BoardLaneEntity
-  board_category: BoardCategoryEntity
+  board_lane: string | BoardLaneEntity
+  board_category: string | BoardCategoryEntity
   weight: number
 }

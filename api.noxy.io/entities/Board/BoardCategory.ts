@@ -5,6 +5,7 @@ import BoardLane, {BoardLaneJSON} from "./BoardLane";
 import Server from "../../../common/services/Server";
 import ServerException from "../../../common/exceptions/ServerException";
 import ValidatorType from "../../../common/enums/ValidatorType";
+import _ from "lodash";
 
 @TypeORM.Entity()
 export default class BoardCategory extends Entity<BoardCategory>(TypeORM) {
@@ -44,10 +45,10 @@ export default class BoardCategory extends Entity<BoardCategory>(TypeORM) {
   public toJSON(): BoardCategoryJSON {
     return {
       id:              this.id,
-      name:              this.name,
-      weight:       this.weight,
-      board:           this.board,
-      board_lane_list: this.board_lane_list,
+      name:            this.name,
+      weight:          this.weight,
+      board:           this.board.toJSON(),
+      board_lane_list: _.map(this.board_lane_list, entity => entity.toJSON()),
       time_created:    this.time_created,
     };
   }

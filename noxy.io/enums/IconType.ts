@@ -30,6 +30,7 @@ enum IconType {
   EDIT_ALT = "\ueded",
   FONT = "\uedef",
 
+  SAVE = "\uee00",
   TEXT_HEIGHT = "\uee07",
   BIN = "\ueebb",
   CHECK = "\ueed8",

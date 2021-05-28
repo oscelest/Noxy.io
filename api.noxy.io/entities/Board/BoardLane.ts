@@ -6,6 +6,7 @@ import ValidatorType from "../../../common/enums/ValidatorType";
 import Server from "../../../common/services/Server";
 import ServerException from "../../../common/exceptions/ServerException";
 import Board from "./Board";
+import _ from "lodash";
 
 @TypeORM.Entity()
 export default class BoardLane extends Entity<BoardLane>(TypeORM) {
@@ -47,8 +48,8 @@ export default class BoardLane extends Entity<BoardLane>(TypeORM) {
       id:              this.id,
       content:         this.content,
       weight:          this.weight,
-      board_category:  this.board_category,
-      board_card_list: this.board_card_list,
+      board_category:  this.board_category.toJSON(),
+      board_card_list: _.map(this.board_card_list, entity => entity.toJSON()),
       time_created:    this.time_created,
     };
   }

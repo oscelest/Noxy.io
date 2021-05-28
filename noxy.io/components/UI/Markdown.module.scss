@@ -1,0 +1,13 @@
+@import "../../variables";
+
+.Component {
+  flex:            0 0 auto;
+  flex-flow:       column;
+  grid-row-gap:    15px;
+  grid-column-gap: 15px;
+
+  blockquote {
+    border-left: 2px solid lightgray;
+  }
+
+}

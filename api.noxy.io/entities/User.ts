@@ -14,6 +14,7 @@ import File from "./File/File";
 import FileTag from "./File/FileTag";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import Board from "./Board/Board";
+import Page from "./Page/Page";
 
 @TypeORM.Entity()
 @TypeORM.Unique("email", ["email"])
@@ -52,14 +53,17 @@ export default class User extends Entity<User>(TypeORM) {
 
   //region    ----- Relations -----
 
+  @TypeORM.OneToMany(() => Board, entity => entity.user_created)
+  public board_created_list?: Board[];
+
   @TypeORM.OneToMany(() => File, entity => entity.user_created)
   public file_created_list?: File[];
 
   @TypeORM.OneToMany(() => FileTag, entity => entity.user_created)
   public file_tag_created_list?: FileTag[];
 
-  @TypeORM.OneToMany(() => Board, entity => entity.user_created)
-  public board_created_list?: Board[];
+  @TypeORM.OneToMany(() => Page, entity => entity.user_created)
+  public page_created_list?: Page[];
 
   //endregion ----- Relations -----
 
@@ -70,7 +74,7 @@ export default class User extends Entity<User>(TypeORM) {
       id:           this.id,
       email:        this.email,
       username:     this.username,
-      api_key_list: _.map(this.api_key_list ?? [], entity => entity.toJSON()),
+      api_key_list: _.map(this.api_key_list, entity => entity.toJSON()),
       time_login:   this.time_login,
       time_created: this.time_created,
     };

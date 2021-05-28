@@ -43,7 +43,7 @@ export default class BoardCard extends Entity<BoardCard>(TypeORM) {
       id:           this.id,
       content:      this.content,
       weight:       this.weight,
-      board_lane:   this.board_lane,
+      board_lane:   this.board_lane.toJSON(),
       time_created: this.time_created,
     };
   }
