@@ -1,13 +1,18 @@
 @import "../../variables";
 
 .Component {
-  flex:            0 0 auto;
+  flex:            1 1 auto;
   flex-flow:       column;
   grid-row-gap:    15px;
   grid-column-gap: 15px;
+  overflow-y:      auto;
 
   blockquote {
     border-left: 2px solid lightgray;
+  }
+
+  span {
+    white-space: pre-wrap;
   }
 
 }
