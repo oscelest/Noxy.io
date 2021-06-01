@@ -5,8 +5,11 @@ import ValidatorType from "../../../common/enums/ValidatorType";
 import Server from "../../../common/services/Server";
 import ServerException from "../../../common/exceptions/ServerException";
 import User, {UserJSON} from "../User";
+import Privacy from "../../../common/enums/Privacy";
 
 @TypeORM.Entity()
+@TypeORM.Unique("name", ["name"] as (keyof Page)[])
+@TypeORM.Unique("path", ["path"] as (keyof Page)[])
 export default class Page extends Entity<Page>(TypeORM) {
 
   //region    ----- Properties -----
@@ -16,6 +19,12 @@ export default class Page extends Entity<Page>(TypeORM) {
 
   @TypeORM.Column({type: "varchar", length: 64})
   public name: string;
+
+  @TypeORM.Column({type: "varchar", length: 256})
+  public path: string;
+
+  @TypeORM.Column({type: "enum", enum: Privacy})
+  public privacy: Privacy;
 
   @TypeORM.Column({type: "text"})
   public content: string;
@@ -102,6 +111,22 @@ export default class Page extends Entity<Page>(TypeORM) {
     try {
       const entity = await this.performSelect(id);
       if (entity.user_created.id !== user!.id) return respond?.(new ServerException(403, {id}));
+      return respond?.(entity);
+    }
+    catch (error) {
+      return respond?.(error);
+    }
+  }
+
+  @Page.get("/by-path/:path")
+  public static async findOneByPath({params: {path}, locals: {respond, user}}: Server.Request<{path: string}, Response.getFindOne, Request.getFindOne>) {
+    const query = this.createSelect();
+
+    try {
+      this.addValueClause(query, "path", path);
+      const entity = await query.getOneOrFail();
+
+      if (entity.user_created.id !== user!.id) return respond?.(new ServerException(403, {path}));
       return respond?.(entity);
     }
     catch (error) {

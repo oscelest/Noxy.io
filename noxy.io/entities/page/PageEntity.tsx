@@ -43,9 +43,14 @@ export default class PageEntity extends Entity {
     return this.instantiate(result.data.content);
   }
 
-  public static async findOneByID(entity: string | PageEntity) {
+  public static async findOne(entity: string | PageEntity) {
     const id = entity instanceof PageEntity ? entity.id : entity;
     const result = await Axios.get<APIRequest<PageEntity>>(`${this.URL}/${id}`);
+    return new this(result.data.content);
+  }
+
+  public static async findOneByPath(entity: string | PageEntity) {
+    const result = await Axios.get<APIRequest<PageEntity>>(`${this.URL}/by-path/${entity instanceof PageEntity ? entity.id : entity}`);
     return new this(result.data.content);
   }
 

@@ -38,7 +38,7 @@ export default class PageIDPage extends React.Component<PageIDPageProps, State> 
     next_state.loading = false;
 
     try {
-      next_state.entity = await PageEntity.findOneByID(this.props[PageIDPageQuery.ID]) as State["entity"];
+      next_state.entity = await PageEntity.findOne(this.props[PageIDPageQuery.ID]) as State["entity"];
     }
     catch (error) {
       next_state.placeholder = "Page could not be loaded.";

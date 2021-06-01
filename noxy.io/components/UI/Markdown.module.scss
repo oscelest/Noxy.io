@@ -7,12 +7,25 @@
   grid-column-gap: 15px;
   overflow-y:      auto;
 
+
   blockquote {
-    border-left: 2px solid lightgray;
+    display:      flex;
+    flex-flow:    column;
+    grid-row-gap: 15px;
+    margin:       0;
+    padding:      15px 15px;
+    border-left:  5px solid rgba(255, 255, 255, 0.3);
   }
 
   span {
     white-space: pre-wrap;
+  }
+
+  hr {
+    width:         calc(100% - 20px);
+    margin-right:  20px;
+    border-top:    1px solid white;
+    border-bottom: none;
   }
 
 }

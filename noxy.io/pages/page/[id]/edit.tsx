@@ -36,7 +36,7 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
     next_state.loading = false;
 
     try {
-      next_state.entity = await PageEntity.findOneByID(this.props[PageIDEditPageQuery.ID]) as State["entity"];
+      next_state.entity = await PageEntity.findOne(this.props[PageIDEditPageQuery.ID]) as State["entity"];
       next_state.value = next_state.entity.content;
     }
     catch (error) {

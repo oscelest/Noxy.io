@@ -44,7 +44,7 @@ export default class Application extends App {
               // "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-SemiBold.ttf); font-weight: 600;}\n" +
               // "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-SemiBoldItalic.ttf); font-style: italic; font-weight: 600;}\n" +
               "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-Bold.ttf); font-weight: 700;}\n" +
-              // "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-BoldItalic.ttf); font-style: italic; font-weight: 700;}\n" +
+              "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-BoldItalic.ttf); font-style: italic; font-weight: 700;}\n" +
               // "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-ExtraBold.ttf); font-weight: 800;}\n" +
               // "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-ExtraBoldItalic.ttf); font-style: italic; font-weight: 800;}\n" +
               // "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-Black.ttf); font-weight: 900;}\n" +
