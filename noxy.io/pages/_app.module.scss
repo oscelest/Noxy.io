@@ -1,54 +1,55 @@
 @import "../variables";
 
 .Header {
-  flex: 0 0 auto;
-  justify-content: space-between;
-  height: 60px;
+  flex:             0 0 auto;
+  justify-content:  space-between;
+  height:           60px;
   background-color: $background-secondary-color;
-  padding-right: 17px;
+  padding-right:    17px;
 
   .Logo {
-    flex: 1 1 auto;
-    font-size: 28px;
-    line-height: 28px;
+    flex:            1 1 auto;
+    font-size:       28px;
+    line-height:     28px;
     justify-content: center;
-    margin-right: 10px;
-    margin-bottom: 7.5px;
-    align-items: center;
+    margin-right:    10px;
+    margin-bottom:   7.5px;
+    align-items:     center;
 
     &:before {
-      content: " ";
-      position: absolute;
+      content:       " ";
+      position:      absolute;
       border-bottom: 2px solid white;
-      border-right: 2px solid white;
-      left: 0;
-      right: -7.5px;
-      bottom: 7.5px;
-      top: 30px;
+      border-right:  2px solid white;
+      left:          0;
+      right:         -7.5px;
+      bottom:        7.5px;
+      top:           30px;
     }
 
     &:after {
-      content: "o";
+      content:   "o";
       font-size: 14px;
-      position: absolute;
-      right: -10px;
-      top: 10px;
+      position:  absolute;
+      right:     -10px;
+      top:       10px;
     }
   }
 
   > .Navigation {
-    flex: 1 1 auto;
+    flex:            1 1 auto;
     justify-content: flex-end;
   }
 
   .Link {
-    flex: 0 0 auto;
-    flex-flow: column;
-    align-items: center;
+    flex:            0 0 auto;
+    flex-flow:       column;
+    align-items:     center;
     justify-content: center;
-    padding: 0 15px;
-    transition: .2s background ease-in-out, .2s color ease-in-out;
-    cursor: pointer;
+    padding:         0 15px;
+    color:           white;
+    transition:      .2s background ease-in-out, .2s color ease-in-out;
+    cursor:          pointer;
 
     > *:not(:last-child) {
       border-left: 1px solid black;
@@ -56,20 +57,20 @@
 
     &:hover {
       background: $border-color;
-      color: $focus-color;
+      color:      $focus-color;
     }
   }
 }
 
 .Content {
-  flex: 1 1 auto;
+  flex:     1 1 auto;
   overflow: auto;
 
   .Page {
-    flex: 1 1 auto;
+    flex:      1 1 auto;
     flex-flow: column;
-    overflow: auto;
-    padding: 15px;
+    overflow:  auto;
+    padding:   15px;
   }
 }
 

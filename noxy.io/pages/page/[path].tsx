@@ -2,16 +2,17 @@ import React from "react";
 import {NextPageContext} from "next";
 import Global from "../../Global";
 import Helper from "../../Helper";
+import Entity from "../../classes/Entity";
+import Redirect from "../../components/Application/Redirect";
+import Conditional from "../../components/Application/Conditional";
+import Button from "../../components/Form/Button";
 import Loader from "../../components/UI/Loader";
+import Markdown from "../../components/UI/Markdown";
 import PageHeader from "../../components/UI/PageHeader";
 import Placeholder from "../../components/UI/Placeholder";
 import PageEntity from "../../entities/page/PageEntity";
-import Style from "./[id].module.scss";
-import Conditional from "../../components/Application/Conditional";
-import Button from "../../components/Form/Button";
-import Redirect from "../../components/Application/Redirect";
 import IconType from "../../enums/IconType";
-import Markdown from "../../components/UI/Markdown";
+import Style from "./[path].module.scss";
 
 export default class PageIDPage extends React.Component<PageIDPageProps, State> {
 
@@ -21,14 +22,14 @@ export default class PageIDPage extends React.Component<PageIDPageProps, State> 
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): PageIDPageProps {
     return {
-      [PageIDPageQuery.ID]: Helper.getQueryProp(context.query[PageIDPageQuery.ID], new PageEntity().getPrimaryKey()),
+      [PageIDPageQuery.PATH]: Helper.getQueryProp(context.query[PageIDPageQuery.PATH], Entity.defaultID),
     };
   }
 
   constructor(props: PageIDPageProps) {
     super(props);
     this.state = {
-      entity:  new PageEntity({id: props[PageIDPageQuery.ID]}) as State["entity"],
+      entity:  new PageEntity({id: props[PageIDPageQuery.PATH]}) as State["entity"],
       loading: true,
     };
   }
@@ -38,7 +39,12 @@ export default class PageIDPage extends React.Component<PageIDPageProps, State> 
     next_state.loading = false;
 
     try {
-      next_state.entity = await PageEntity.findOne(this.props[PageIDPageQuery.ID]) as State["entity"];
+      if (Entity.regexID.exec(this.props[PageIDPageQuery.PATH])) {
+        next_state.entity = await PageEntity.findOne(this.props[PageIDPageQuery.PATH]) as State["entity"];
+      }
+      else {
+        next_state.entity = await PageEntity.findOneByPath(this.props[PageIDPageQuery.PATH]) as State["entity"];
+      }
     }
     catch (error) {
       next_state.placeholder = "Page could not be loaded.";
@@ -71,11 +77,11 @@ export default class PageIDPage extends React.Component<PageIDPageProps, State> 
 
 
 export enum PageIDPageQuery {
-  ID = "id",
+  PATH = "path",
 }
 
 export interface PageIDPageProps {
-  [PageIDPageQuery.ID]: string
+  [PageIDPageQuery.PATH]: string
 }
 
 interface State {

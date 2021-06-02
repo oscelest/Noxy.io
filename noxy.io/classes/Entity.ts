@@ -5,6 +5,7 @@ export default class Entity {
   public static domainAPI = process.browser ? `${location.protocol}//api.${location.hostname}` : "";
   public static domainFile = process.browser ? `${location.protocol}//files.${location.hostname}` : "";
   public static defaultID = "00000000-0000-0000-0000-000000000000";
+  public static regexID = new RegExp("^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$", "i")
 
   public static get URL(): string {
     throw new Error(`${this.constructor.name} should implement its own getURL method. This should never show up in production.`);

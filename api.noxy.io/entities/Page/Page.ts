@@ -114,6 +114,7 @@ export default class Page extends Entity<Page>(TypeORM) {
       return respond?.(entity);
     }
     catch (error) {
+      if (error instanceof TypeORM.EntityNotFoundError) return respond?.(new ServerException(404, {id}));
       return respond?.(error);
     }
   }
@@ -130,6 +131,7 @@ export default class Page extends Entity<Page>(TypeORM) {
       return respond?.(entity);
     }
     catch (error) {
+      if (error instanceof TypeORM.EntityNotFoundError) return respond?.(new ServerException(404, {path}));
       return respond?.(error);
     }
   }

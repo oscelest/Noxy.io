@@ -9,6 +9,7 @@ import Global from "../../../Global";
 import Style from "./edit.module.scss";
 import Button from "../../../components/Form/Button";
 import IconType from "../../../enums/IconType";
+import Entity from "../../../classes/Entity";
 
 export default class PageIDEditPage extends React.Component<PageIDEditPageProps, State> {
 
@@ -18,14 +19,14 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): PageIDEditPageProps {
     return {
-      [PageIDEditPageQuery.ID]: Helper.getQueryProp(context.query[PageIDEditPageQuery.ID], new PageEntity().getPrimaryKey()),
+      [PageIDEditPageQuery.PATH]: Helper.getQueryProp(context.query[PageIDEditPageQuery.PATH], new PageEntity().getPrimaryKey()),
     };
   }
 
   constructor(props: PageIDEditPageProps) {
     super(props);
     this.state = {
-      entity:  new PageEntity({id: props[PageIDEditPageQuery.ID]}) as State["entity"],
+      entity:  new PageEntity({id: props[PageIDEditPageQuery.PATH]}) as State["entity"],
       loading: true,
       value:   "",
     };
@@ -36,7 +37,12 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
     next_state.loading = false;
 
     try {
-      next_state.entity = await PageEntity.findOne(this.props[PageIDEditPageQuery.ID]) as State["entity"];
+      if (Entity.regexID.exec(this.props[PageIDEditPageQuery.PATH])) {
+        next_state.entity = await PageEntity.findOne(this.props[PageIDEditPageQuery.PATH]) as State["entity"];
+      }
+      else {
+        next_state.entity = await PageEntity.findOneByPath(this.props[PageIDEditPageQuery.PATH]) as State["entity"];
+      }
       next_state.value = next_state.entity.content;
     }
     catch (error) {
@@ -76,11 +82,11 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
 
 
 export enum PageIDEditPageQuery {
-  ID = "id",
+  PATH = "path",
 }
 
 export interface PageIDEditPageProps {
-  [PageIDEditPageQuery.ID]: string
+  [PageIDEditPageQuery.PATH]: string
 }
 
 interface State {

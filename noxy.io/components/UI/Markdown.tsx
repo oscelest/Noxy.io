@@ -7,24 +7,22 @@ import SpoilerText from "../Text/SpoilerText";
 export default class Markdown extends React.Component<MarkdownProps, State> {
 
   private static readonly PatternMap: {[key: string]: {width: number, value: number, pattern: RegExp}} = {
-    "`":   {width: 1, value: 1, pattern: /(?<=^|[^`])`[^`]+`(?=[^`]|$)/g},
-    "_":   {width: 1, value: 2, pattern: /(?<=^|[^_])_[^_]+_(?=[^_]|$)/g},
-    "__":  {width: 2, value: 4, pattern: /(?<=^|[^_])_{2}[^_]+_{2}(?=[^_]|$)/g},
-    "___": {width: 3, value: 6, pattern: /(?<=^|[^_])_{3}[^_]+_{3}(?=[^_]|$)/g},
-    "*":   {width: 1, value: 2, pattern: /(?<=^|[^*])\*[^*]+\*(?=[^*]|$)/g},
-    "**":  {width: 2, value: 4, pattern: /(?<=^|[^*])\*{2}[^*]+\*{2}(?=[^*]|$)/g},
-    "***": {width: 3, value: 6, pattern: /(?<=^|[^*])\*{3}[^*]+\*{3}(?=[^*]|$)/g},
-    "~~":  {width: 2, value: 8, pattern: /(?<=^|[^~])~{2}[^~]+~{2}(?=[^~]|$)/g},
-    "||":  {width: 2, value: 16, pattern: /(?<=^|[^|])\|{2}[^|]+\|{2}(?=[^|]|$)/g},
+    "||":  {width: 2, value: 32, pattern: /(?<!\|)\|\|.+?\|\|(?!\|)/g},
+    "__":  {width: 2, value: 16, pattern: /(?<!_)__.+?__(?!_)/g},
+    "~~":  {width: 2, value: 8, pattern: /(?<!~)~~.+?~~(?!~)/g},
+    "***": {width: 3, value: 6, pattern: /(?<!\*)\*\*\*.+?\*\*\*(?!\*)/g},
+    "**":  {width: 2, value: 4, pattern: /(?<!\*)\*\*.+?\*\*(?!\*)/g},
+    "*":   {width: 1, value: 2, pattern: /(?<!\*)\*.+?\*(?!\*)/g},
+    "`":   {width: 1, value: 1, pattern: /(?<!`)`.+?`(?!`)/g},
   };
 
-  private static readonly BlockQuoteRegex = new RegExp("^(?<content>>+ (.|\\n)+?(?=\\n\\n|$))");
+  private static readonly BlockQuoteRegex = new RegExp("^(?<content>>+ .+?(?=\\n\\n|$))", "s");
   private static readonly HorizontalRuleRegex = new RegExp("^(?<content>\\*{3,}|_{3,}|-{3,})(?=\\n|$)");
-  private static readonly PreFormattedRegex = new RegExp("^```(?<type>.+)?\\n(?<content>[^\\n]*\\n)*?```(?=\\n|$)");
-  private static readonly OrderedListRegex = new RegExp("^(?<content>(?:\\d\.)+ (.|\\n)+?(?=\\n\\n|$))");
-  private static readonly UnorderedListRegex = new RegExp("^(?<content>\\*+ (.|\\n)+?(?=\\n\\n|$))");
+  private static readonly PreformattedRegex = new RegExp("^```(?<type>[^\\n]+)?\\n(?<content>.*)\\n```(?=\\n|$)", "s");
+  private static readonly OrderedListRegex = new RegExp("^(?<content>(?:\\d\.)+ .+?(?=\\n\\n|$))", "s");
+  private static readonly UnorderedListRegex = new RegExp("^(?<content>\\*+ .+?(?=\\n\\n|$))", "s");
   private static readonly HeaderRegex = new RegExp("^(?<level>#{1,6}) (?<content>.+?)(?=\\n|$)");
-  private static readonly ParagraphRegex = new RegExp("^(?<content>(.|\\n)+?(?=\\n\\n|$))");
+  private static readonly ParagraphRegex = new RegExp("^(?<content>.+?(?=\\n\\n|$))", "s");
   // private static readonly TableRegex = new RegExp("^(?<content>(\\|[\\s\\S]+\\|\\n*?)+)");
 
   private static readonly LinkRegex = new RegExp("\\[(?<content>.+?)]\\((?<link>.+?)(?: \"(?<title>.+?)\")?\\)", "g");
@@ -67,10 +65,10 @@ export default class Markdown extends React.Component<MarkdownProps, State> {
     let result: RegExpMatchArray | null = null;
 
     do {
-      // ----- Pre ----- //
-      if (!!(result = Markdown.PreFormattedRegex.exec(markdown))) {
+      // ----- Preformatted ----- //
+      if (!!(result = Markdown.PreformattedRegex.exec(markdown))) {
         if (!result.groups || !result.groups.content) throw new FatalException(`Could not parse <pre> segment "${result[0]}"`);
-        segments.push(this.renderPreSegment(result.groups as PreSegment, segments.length));
+        segments.push(this.renderPreformattedSegment(result.groups as PreformattedSegment, segments.length));
       }
       // ----- Horizontal rule ----- //
       else if (!!(result = Markdown.HorizontalRuleRegex.exec(markdown))) {
@@ -124,7 +122,7 @@ export default class Markdown extends React.Component<MarkdownProps, State> {
     );
   };
 
-  private readonly renderPreSegment = (segment: PreSegment, index: number = 0) => {
+  private readonly renderPreformattedSegment = (segment: PreformattedSegment, index: number = 0) => {
     return <pre key={index}>{segment.content}</pre>;
   };
 
@@ -194,7 +192,7 @@ export default class Markdown extends React.Component<MarkdownProps, State> {
           if (characters[i] === -1) continue;
 
           if (i >= start + width && i < end - width) {
-            characters[i] = (characters[i] & value) == value ? Math.max(characters[i], value) : value;
+            characters[i] = (characters[i] & value) == value ? Math.max(characters[i], value) : value + (characters[i] ?? 0);
           }
           else {
             characters[i] = -1;
@@ -231,7 +229,8 @@ export default class Markdown extends React.Component<MarkdownProps, State> {
   };
 
   private readonly renderTextFragment = (value: string, type: number, index: number = 0) => {
-    if (type >= 16) return <SpoilerText key={index}>{this.renderTextFragment(value, type - 16)}</SpoilerText>;
+    if (type >= 32) return <SpoilerText key={index}>{this.renderTextFragment(value, type - 32)}</SpoilerText>;
+    if (type >= 16) return <u key={index}>{this.renderTextFragment(value, type - 16)}</u>;
     if (type >= 8) return <s key={index}>{this.renderTextFragment(value, type - 8)}</s>;
     if (type >= 4) return <strong key={index}>{this.renderTextFragment(value, type - 4)}</strong>;
     if (type >= 2) return <i key={index}>{this.renderTextFragment(value, type - 2)}</i>;
@@ -275,7 +274,7 @@ export default class Markdown extends React.Component<MarkdownProps, State> {
 type Text = {value: number; text: string}
 type Segment = {content: string}
 
-type PreSegment = {type?: string} & Segment
+type PreformattedSegment = {type?: string} & Segment
 type LinkSegment = {link: string; title?: string} & Segment
 type HeaderSegment = {level: string} & Segment;
 
