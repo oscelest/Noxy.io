@@ -6,10 +6,16 @@
   .Container {
     flex:  1 1 auto;
     width: 100%;
+    grid-column-gap: 15px;
 
     .Editor {
       flex:   1 1 auto;
       resize: none;
+    }
+
+    .ReferenceList {
+      flex:  0 0 auto;
+      width: 200px;
     }
   }
 }

@@ -10,7 +10,10 @@ import Style from "./edit.module.scss";
 import Button from "../../../components/Form/Button";
 import IconType from "../../../enums/IconType";
 import Entity from "../../../classes/Entity";
+import {Masquerade} from "../../../components/Application/Masquerade";
+import Router from "next/router";
 
+// noinspection JSUnusedGlobalSymbols
 export default class PageIDEditPage extends React.Component<PageIDEditPageProps, State> {
 
   public static contextType = Global?.Context ?? React.createContext({});
@@ -26,9 +29,9 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
   constructor(props: PageIDEditPageProps) {
     super(props);
     this.state = {
+      value:   "",
       entity:  new PageEntity({id: props[PageIDEditPageQuery.PATH]}) as State["entity"],
       loading: true,
-      value:   "",
     };
   }
 
@@ -58,10 +61,15 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
         <Loader show={!this.state.entity.exists()}>
           <Placeholder show={!!this.state.placeholder} text={this.state.placeholder}>
             <PageHeader title={`Edit: ${this.state.entity.name}`}>
+              <Masquerade className={Style.Masquerade}/>
               <Button icon={IconType.SAVE} onClick={this.eventSave}>Save</Button>
+              <Button icon={IconType.SAVE} onClick={this.eventSaveAndClose}>Save & Close</Button>
             </PageHeader>
             <div className={Style.Container}>
               <textarea className={Style.Editor} value={this.state.value} onChange={this.eventValueChange}/>
+              <div className={Style.ReferenceList} >
+
+              </div>
             </div>
           </Placeholder>
         </Loader>
@@ -71,7 +79,14 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
 
   private readonly eventSave = async () => {
     if (this.state.entity.content === this.state.value) return;
-    await PageEntity.updateOne(this.state.entity.id, {content: this.state.value})
+    await PageEntity.updateOne(this.state.entity.id, {content: this.state.value});
+  };
+
+  private readonly eventSaveAndClose = async () => {
+    if (this.state.entity.content !== this.state.value) {
+      await PageEntity.updateOne(this.state.entity.id, {content: this.state.value});
+    }
+    return Router.push(`/page/${this.props[PageIDEditPageQuery.PATH]}`);
   };
 
   private readonly eventValueChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {

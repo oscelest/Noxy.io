@@ -19,6 +19,7 @@ import FileExtension, {FileExtensionJSON} from "./FileExtension";
 import FileTag, {FileTagJSON} from "./FileTag";
 import FileType from "./FileType";
 import User, {UserJSON} from "../User";
+import Page from "../Page/Page";
 
 const DataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~()'!@,;", 64);
 const ShareHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 32);
@@ -79,6 +80,13 @@ export default class File extends Entity<File>(TypeORM) {
   public time_updated: Date;
 
   //endregion ----- Properties -----
+
+  //region    ----- Relations -----
+
+  @TypeORM.ManyToMany(() => Page, entity => entity.file_list)
+  public page_list: Page[];
+
+  //endregion ----- Relations -----
 
   //region    ----- Instance methods -----
 

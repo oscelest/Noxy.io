@@ -13,7 +13,9 @@ import Placeholder from "../../components/UI/Placeholder";
 import PageEntity from "../../entities/page/PageEntity";
 import IconType from "../../enums/IconType";
 import Style from "./[path].module.scss";
+import {Masquerade} from "../../components/Application/Masquerade";
 
+// noinspection JSUnusedGlobalSymbols
 export default class PageIDPage extends React.Component<PageIDPageProps, State> {
 
   public static contextType = Global?.Context ?? React.createContext({});
@@ -59,6 +61,7 @@ export default class PageIDPage extends React.Component<PageIDPageProps, State> 
         <Loader show={!this.state.entity.exists()}>
           <Placeholder show={!!this.state.placeholder} text={this.state.placeholder}>
             <PageHeader title={this.state.entity.name}>
+              <Masquerade className={Style.Masquerade}/>
               <Conditional condition={this.context.isCurrentUser(this.state.entity.user_created)}>
                 <Redirect href={`/page/${this.state.entity.id}/edit`}>
                   <Button icon={IconType.UI_EDIT}>Edit</Button>

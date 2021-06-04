@@ -95,6 +95,7 @@ export default class ElementBrowser extends React.Component<ElementBrowserProps,
 
 
   private readonly endSelection = () => {
+    console.log("mouse up element")
     const {point_origin, point_target, selection_rect} = this.state;
     if (!point_origin || !point_target) return;
 

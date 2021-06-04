@@ -6,6 +6,7 @@ import Server from "../../../common/services/Server";
 import ServerException from "../../../common/exceptions/ServerException";
 import User, {UserJSON} from "../User";
 import Privacy from "../../../common/enums/Privacy";
+import File from "../File/File";
 
 @TypeORM.Entity()
 @TypeORM.Unique("name", ["name"] as (keyof Page)[])
@@ -29,6 +30,14 @@ export default class Page extends Entity<Page>(TypeORM) {
   @TypeORM.Column({type: "text"})
   public content: string;
 
+  @TypeORM.ManyToMany(() => File, entity => entity.page_list)
+  @TypeORM.JoinTable({
+    name:              `jct/page-file`,
+    joinColumn:        {name: "page_id", referencedColumnName: "id"},
+    inverseJoinColumn: {name: "file_id", referencedColumnName: "id"},
+  })
+  public file_list: File[];
+
   @TypeORM.ManyToOne(() => User, user => user.page_created_list, {nullable: false})
   @TypeORM.JoinColumn({name: "user_created_id"})
   public user_created: User;
@@ -43,6 +52,7 @@ export default class Page extends Entity<Page>(TypeORM) {
   public time_updated: Date;
 
   //endregion ----- Properties -----
+
 
   //region    ----- Instance methods -----
 
