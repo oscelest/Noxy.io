@@ -3,12 +3,18 @@ import UserEntity from "../UserEntity";
 import Axios from "axios";
 import RequestData from "../../classes/RequestData";
 import Order from "../../../common/enums/Order";
+import Privacy from "../../../common/enums/Privacy";
+import FileEntity from "../file/FileEntity";
 
 export default class PageEntity extends Entity {
 
   public id: string;
+  public path: string;
   public name: string;
   public content: string;
+  public privacy: Privacy;
+  public share_hash: string;
+  public file_list: FileEntity[];
   public user_created: UserEntity;
   public time_created: Date;
   public time_updated: Date;
@@ -18,8 +24,11 @@ export default class PageEntity extends Entity {
   constructor(entity?: Initializer<PageEntity>) {
     super();
     this.id = entity?.id ?? Entity.defaultID;
+    this.path = entity?.path ?? "";
     this.name = entity?.name ?? "";
     this.content = entity?.content ?? "";
+    this.privacy = entity?.privacy ?? Privacy.PRIVATE;
+    this.file_list = FileEntity.instantiate(entity?.file_list);
     this.user_created = new UserEntity(entity?.user_created);
     this.time_created = new Date(entity?.time_created ?? 0);
     this.time_updated = new Date(entity?.time_updated ?? 0);
@@ -79,5 +88,6 @@ export type PageEntityCreateParameters = {
 
 export type PageEntityUpdateParameters = {
   name?: string
+  privacy?: Privacy
   content?: string
 }

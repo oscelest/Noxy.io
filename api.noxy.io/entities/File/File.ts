@@ -3,7 +3,6 @@ import * as FS from "fs";
 import JWT from "jsonwebtoken";
 import _ from "lodash";
 import Moment from "moment";
-import {customAlphabet} from "nanoid";
 import Path from "path";
 import * as TypeORM from "typeorm";
 import {v4} from "uuid";
@@ -20,11 +19,6 @@ import FileTag, {FileTagJSON} from "./FileTag";
 import FileType from "./FileType";
 import User, {UserJSON} from "../User";
 import Page from "../Page/Page";
-
-const DataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~()'!@,;", 64);
-const ShareHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 32);
-
-const ShareHashFormat = new RegExp("^[a-zA-Z0-9-_]{32}$");
 
 @TypeORM.Entity()
 @TypeORM.Index("time_created", ["time_created"] as (keyof File)[])
@@ -229,10 +223,10 @@ export default class File extends Entity<File>(TypeORM) {
     const entity = TypeORM.getRepository(File).create();
     entity.id = v4();
     entity.name = file.originalname;
-    entity.data_hash = DataHash();
+    entity.data_hash = File.generateDataHash();
     entity.size = file.size;
     entity.privacy = Privacy.PRIVATE;
-    entity.share_hash = ShareHash();
+    entity.share_hash = File.generateShareHash();
     entity.flag_public_tag = false;
     entity.user_created = user!;
 
@@ -267,7 +261,7 @@ export default class File extends Entity<File>(TypeORM) {
 
   @File.post("/request-download")
   @File.bindParameter<Request.postRequestDownload>("id", ValidatorType.UUID, {flag_array: true})
-  @File.bindParameter<Request.postRequestDownload>("share_hash", ValidatorType.STRING, {validator: ShareHashFormat}, {flag_array: true, flag_optional: true})
+  @File.bindParameter<Request.postRequestDownload>("share_hash", ValidatorType.STRING, {validator: File.regexShareHash}, {flag_array: true, flag_optional: true})
   private static async requestDownload({locals: {respond, user, parameters}}: Server.Request<{}, Response.postRequestDownload, Request.postRequestDownload>) {
     const {id, share_hash} = parameters!;
     const files = await this.performSelect(id);
@@ -326,24 +320,24 @@ export default class File extends Entity<File>(TypeORM) {
     const {name, privacy, flag_public_tag, file_extension, file_tag_list} = parameters!;
 
     try {
-      const {file_tag_list: current_file_tag_list, ...file} = await this.performSelect(id);
-      if (file.user_created.id !== user?.id) return respond?.(new ServerException(403));
+      const entity = await this.performSelect(id);
+      if (entity.user_created.id !== user?.id) return respond?.(new ServerException(403));
 
       if (file_tag_list) {
-        const file_tag_id_list = _.map(current_file_tag_list, file_tag => file_tag.id);
+        const file_tag_id_list = _.map(entity.file_tag_list, file_tag => file_tag.id);
         const file_tag_add_list = _.differenceWith(file_tag_list, file_tag_id_list, (a, b) => a === b);
         const file_tag_remove_list = _.differenceWith(file_tag_id_list, file_tag_list, (a, b) => a === b);
 
-        await this.createRelation(File, "file_tag_list").of(file.id).remove(file_tag_remove_list);
-        await this.createRelation(File, "file_tag_list").of(file.id).add(file_tag_add_list);
+        await this.createRelation(File, "file_tag_list").of(entity.id).remove(file_tag_remove_list);
+        await this.createRelation(File, "file_tag_list").of(entity.id).add(file_tag_add_list);
       }
 
-      if (name !== undefined) file.name = name;
-      if (file_extension !== undefined) file.file_extension = await FileExtension.performSelect(file_extension);
-      if (flag_public_tag !== undefined) file.flag_public_tag = flag_public_tag;
-      if (privacy !== undefined) file.privacy = privacy;
+      if (name !== undefined) entity.name = name;
+      if (file_extension !== undefined) entity.file_extension = await FileExtension.performSelect(file_extension);
+      if (flag_public_tag !== undefined) entity.flag_public_tag = flag_public_tag;
+      if (privacy !== undefined) entity.privacy = privacy;
 
-      respond?.(await this.performUpdate(file.id, file));
+      respond?.(await this.performUpdate(entity.id, entity));
     }
     catch (error) {
       respond?.(new ServerException(500, error));

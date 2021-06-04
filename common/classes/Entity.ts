@@ -7,6 +7,7 @@ import Validator from "../services/Validator";
 import ValidatorType from "../enums/ValidatorType";
 import ServerException from "../exceptions/ServerException";
 import Server from "../services/Server";
+import {customAlphabet} from "nanoid";
 
 export default function Entity<E>(service: typeof TypeORM) {
 
@@ -21,6 +22,12 @@ export default function Entity<E>(service: typeof TypeORM) {
     // ----------
     // Decorators
     // ----------
+
+    public static generateDataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~()'!@,;", 64);
+    public static generateShareHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 32);
+
+    public static regexDataHash = new RegExp("^[a-zA-Z0-9-._~()'!@,;]{64}$");
+    public static regexShareHash = new RegExp("^[a-zA-Z0-9-_]{32}$");
 
     public static [HTTPMethod.GET](path: string, options?: Server.EndpointOptions) {
       return this.bindRoute(HTTPMethod.GET, path, options);
@@ -101,13 +108,13 @@ export default function Entity<E>(service: typeof TypeORM) {
     public static join<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, key: K): TypeORM.SelectQueryBuilder<E>
     public static join<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, key: K, relation_key: Key<E[K]>): TypeORM.SelectQueryBuilder<E>
     public static join<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, key: K, relation_key?: Key<E[K]>): TypeORM.SelectQueryBuilder<E> {
-      return  qb.leftJoinAndSelect(this.getRelationColumn(key, relation_key!), this.getRelationAlias(key, relation_key!));
+      return qb.leftJoinAndSelect(this.getRelationColumn(key, relation_key!), this.getRelationAlias(key, relation_key!));
     }
 
     public static countRelation<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, column: Key<E>, key: K): TypeORM.SelectQueryBuilder<E>
     public static countRelation<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, column: Key<E>, key: K, relation_key: Key<E[K]>): TypeORM.SelectQueryBuilder<E>
     public static countRelation<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, column: Key<E>, key: K, relation_key?: Key<E[K]>): TypeORM.SelectQueryBuilder<E> {
-      return  qb.loadRelationCountAndMap(`${this.name}.${column}`, this.getRelationColumn(key, relation_key!), this.getRelationAlias(key, relation_key!));
+      return qb.loadRelationCountAndMap(`${this.name}.${column}`, this.getRelationColumn(key, relation_key!), this.getRelationAlias(key, relation_key!));
     }
 
     // ----------------
@@ -209,7 +216,18 @@ export default function Entity<E>(service: typeof TypeORM) {
 
     public static async performUpdate(id: string, values: TypeORM.DeepPartial<E>) {
       try {
-        const result = await service.getRepository(this).update(id, values);
+        const repository = service.getRepository(this);
+
+        for (let column of repository.metadata.manyToManyRelations) {
+          delete (values as {[key: string]: any})[column.propertyPath];
+        }
+
+        for (let column of repository.metadata.columns) {
+          if (!column.relationMetadata?.isWithJoinColumn && !column.relationMetadata?.isManyToMany) continue;
+          delete (values as {[key: string]: any})[column.propertyPath];
+        }
+
+        const result = await repository.update(id, values);
         if (result.affected === 1) {
           return await this.createSelect().whereInIds(id).getOneOrFail();
         }

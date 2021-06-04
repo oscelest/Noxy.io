@@ -69,7 +69,7 @@ export default class RadioButton<V, C extends RadioButtonCollection<string, V>> 
 
 }
 
-export type RadioButtonCollection<K extends string, V> = {
+export type RadioButtonCollection<K extends string, V = K> = {
   [Key in K]: RadioButtonItem<V>
 }
 

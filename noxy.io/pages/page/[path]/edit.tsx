@@ -12,6 +12,10 @@ import IconType from "../../../enums/IconType";
 import Entity from "../../../classes/Entity";
 import {Masquerade} from "../../../components/Application/Masquerade";
 import Router from "next/router";
+import FatalException from "../../../exceptions/FatalException";
+import _ from "lodash";
+import RadioButton, {RadioButtonCollection} from "../../../components/Form/RadioButton";
+import Privacy from "../../../../common/enums/Privacy";
 
 // noinspection JSUnusedGlobalSymbols
 export default class PageIDEditPage extends React.Component<PageIDEditPageProps, State> {
@@ -47,6 +51,13 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
         next_state.entity = await PageEntity.findOneByPath(this.props[PageIDEditPageQuery.PATH]) as State["entity"];
       }
       next_state.value = next_state.entity.content;
+
+      const isOwner = this.context.isCurrentUser(next_state.entity.user_created);
+      next_state.privacy = {
+        [Privacy.PRIVATE]: RadioButton.createElement(Privacy.PRIVATE, "Private", next_state.entity.privacy === Privacy.PRIVATE, !isOwner),
+        [Privacy.LINK]:    RadioButton.createElement(Privacy.LINK, "With link", next_state.entity.privacy === Privacy.LINK, !isOwner),
+        [Privacy.PUBLIC]:  RadioButton.createElement(Privacy.PUBLIC, "Public", next_state.entity.privacy === Privacy.PUBLIC, !isOwner),
+      };
     }
     catch (error) {
       next_state.placeholder = "Page could not be loaded.";
@@ -67,8 +78,13 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
             </PageHeader>
             <div className={Style.Container}>
               <textarea className={Style.Editor} value={this.state.value} onChange={this.eventValueChange}/>
-              <div className={Style.ReferenceList} >
+              <div className={Style.Sidebar}>
+                <RadioButton className={Style.Privacy} onChange={this.eventFilePrivacyChange}>
+                  {this.state.privacy}
+                </RadioButton>
+                <div className={Style.ReferenceList}>
 
+                </div>
               </div>
             </div>
           </Placeholder>
@@ -93,6 +109,26 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
     this.setState({value: event.target.value});
   };
 
+
+  private readonly eventFilePrivacyChange = async (privacy: RadioButtonCollection<Privacy>) => {
+    if (!this.state.entity) {
+      throw new FatalException("Could not manage file privacy", "The system encountered an unexpected error while managing the privacy settings for this file. Please reload the page and try again.");
+    }
+
+    this.setState({privacy});
+    this.state.entity.privacy = _.find(privacy, item => !!item.checked)?.value ?? this.state.entity.privacy;
+
+    const entity = await PageEntity.updateOne(this.props[PageIDEditPageQuery.PATH], {privacy: this.state.entity.privacy});
+    this.setState({entity});
+
+    if (privacy.link.checked) {
+      await Router.replace({pathname: location.origin + location.pathname, query: {hash: entity.share_hash}});
+    }
+    else {
+      await Router.replace({pathname: location.origin + location.pathname});
+    }
+  };
+
 }
 
 
@@ -108,9 +144,9 @@ interface State {
   entity: PageEntity
 
   value: string
+  privacy?: RadioButtonCollection<Privacy>
 
   dialog?: string
-
   loading: boolean
   placeholder?: string
 }

@@ -9,7 +9,8 @@
   },
   "nodemonConfig": {
     "watch": [
-      "./"
+      "./",
+      "../common/"
     ],
     "ext": "ts",
     "ignore": [
@@ -29,7 +30,6 @@
     "mime-types": "^2.1.31",
     "moment": "^2.29.1",
     "mysql2": "^2.2.5",
-    "nanoid": "^3.1.23",
     "ts-node": "^10.0.0",
     "typeorm": "^0.2.33",
     "typescript": "^4.3.2",
@@ -43,7 +43,6 @@
     "@types/jsonwebtoken": "^8.5.1",
     "@types/lodash": "^4.14.170",
     "@types/mime-types": "^2.1.0",
-    "@types/nanoid": "^3.0.0",
     "@types/node": "^15.9.0",
     "@types/uuid": "^8.3.0",
     "nodemon": "^2.0.7",

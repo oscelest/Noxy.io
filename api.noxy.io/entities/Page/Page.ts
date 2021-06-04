@@ -6,7 +6,7 @@ import Server from "../../../common/services/Server";
 import ServerException from "../../../common/exceptions/ServerException";
 import User, {UserJSON} from "../User";
 import Privacy from "../../../common/enums/Privacy";
-import File from "../File/File";
+import File, {FileJSON} from "../File/File";
 
 @TypeORM.Entity()
 @TypeORM.Unique("name", ["name"] as (keyof Page)[])
@@ -18,17 +18,20 @@ export default class Page extends Entity<Page>(TypeORM) {
   @TypeORM.PrimaryGeneratedColumn("uuid")
   public id: string;
 
+  @TypeORM.Column({type: "varchar", length: 256})
+  public path: string;
+
   @TypeORM.Column({type: "varchar", length: 64})
   public name: string;
 
-  @TypeORM.Column({type: "varchar", length: 256})
-  public path: string;
+  @TypeORM.Column({type: "text"})
+  public content: string;
 
   @TypeORM.Column({type: "enum", enum: Privacy})
   public privacy: Privacy;
 
-  @TypeORM.Column({type: "text"})
-  public content: string;
+  @TypeORM.Column({type: "varchar", length: 32})
+  public share_hash: string;
 
   @TypeORM.ManyToMany(() => File, entity => entity.page_list)
   @TypeORM.JoinTable({
@@ -59,8 +62,12 @@ export default class Page extends Entity<Page>(TypeORM) {
   public toJSON(): PageJSON {
     return {
       id:           this.id,
+      path:         this.path,
       name:         this.name,
       content:      this.content,
+      privacy:      this.privacy,
+      file_list:    _.map(this.file_list, entity => entity.toJSON()),
+      share_hash:   this.share_hash,
       user_created: this.user_created.toJSON(),
       time_created: this.time_created,
       time_updated: this.time_updated,
@@ -74,6 +81,7 @@ export default class Page extends Entity<Page>(TypeORM) {
   public static createSelect() {
     const query = TypeORM.createQueryBuilder(this);
     this.join(query, "user_created");
+    this.join(query, "file_list");
     return query;
   }
 
@@ -147,14 +155,19 @@ export default class Page extends Entity<Page>(TypeORM) {
   }
 
   @Page.post("/")
+  @Page.bindParameter<Request.postCreateOne>("path", ValidatorType.STRING, {min_length: 1})
   @Page.bindParameter<Request.postCreateOne>("name", ValidatorType.STRING, {min_length: 1})
   @Page.bindParameter<Request.postCreateOne>("content", ValidatorType.STRING, {min_length: 1})
+  @Page.bindParameter<Request.postCreateOne>("privacy", ValidatorType.ENUM, Privacy, {flag_optional: true})
   private static async createOne({locals: {respond, user, parameters}}: Server.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
-    const {name, content} = parameters!;
+    const {name, path, content, privacy} = parameters!;
     const entity = TypeORM.getRepository(this).create();
 
     entity.name = name;
+    entity.path = path;
     entity.content = content;
+    entity.privacy = privacy ?? Privacy.PRIVATE;
+    entity.share_hash = File.generateShareHash();
     entity.user_created = user!;
 
     try {
@@ -167,23 +180,35 @@ export default class Page extends Entity<Page>(TypeORM) {
   }
 
   @Page.put("/:id")
+  @Page.bindParameter<Request.putUpdateOne>("path", ValidatorType.STRING, {min_length: 1}, {flag_optional: true})
   @Page.bindParameter<Request.putUpdateOne>("name", ValidatorType.STRING, {min_length: 1}, {flag_optional: true})
   @Page.bindParameter<Request.putUpdateOne>("content", ValidatorType.STRING, {min_length: 1}, {flag_optional: true})
+  @Page.bindParameter<Request.putUpdateOne>("privacy", ValidatorType.ENUM, Privacy, {flag_optional: true})
+  @Page.bindParameter<Request.putUpdateOne>("file_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
   private static async updateOne({params: {id}, locals: {respond, user, parameters}}: Server.Request<{id: string}, Response.putUpdateOne, Request.putUpdateOne>) {
-    const {name, content} = parameters!;
-    const entity = TypeORM.getRepository(this).create();
+    const {name, path, content, privacy, file_list} = parameters!;
 
     try {
-      const page = await this.performSelect(id);
-      if (page.user_created.id !== user?.id) return respond?.(new ServerException(403));
+      const entity = await this.performSelect(id);
+      if (entity.user_created.id !== user?.id) return respond?.(new ServerException(403));
 
+      if (path !== undefined) entity.path = path;
       if (name !== undefined) entity.name = name;
       if (content !== undefined) entity.content = content;
+      if (privacy !== undefined) entity.privacy = privacy;
 
-      return respond?.(await this.performUpdate(id, _.pickBy(entity)));
+      if (file_list) {
+        const file_tag_id_list = _.map(entity.file_list, file => file.id);
+        const file_add_list = _.differenceWith(file_list, file_tag_id_list, (a, b) => a === b);
+        const file_remove_list = _.differenceWith(file_tag_id_list, file_list, (a, b) => a === b);
+
+        await this.createRelation(Page, "file_list").of(entity.id).remove(file_remove_list);
+        await this.createRelation(Page, "file_list").of(entity.id).add(file_add_list);
+      }
+
+      return respond?.(await this.performUpdate(id, entity));
     }
     catch (error) {
-      if (error.code === "ER_DUP_ENTRY") return respond?.(new ServerException(409, {name}));
       return respond?.(error);
     }
   }
@@ -194,8 +219,12 @@ export default class Page extends Entity<Page>(TypeORM) {
 
 export type PageJSON = {
   id: string
+  path: string
   name: string
   content: string
+  privacy: Privacy
+  file_list: FileJSON[]
+  share_hash: string
   user_created: UserJSON
   time_created: Date
   time_updated: Date
@@ -205,8 +234,8 @@ namespace Request {
   export type getCount = {name?: string}
   export type getFindMany = getCount & Pagination
   export type getFindOne = never
-  export type postCreateOne = {name: string, content: string}
-  export type putUpdateOne = {name?: string, content?: string}
+  export type postCreateOne = {path: string; name: string; content: string; privacy?: Privacy}
+  export type putUpdateOne = {path?: string; name?: string; content?: string; privacy?: Privacy; file_list?: string[]}
 }
 
 namespace Response {
