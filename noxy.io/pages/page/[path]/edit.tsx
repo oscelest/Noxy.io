@@ -82,6 +82,7 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
                 <RadioButton className={Style.Privacy} onChange={this.eventFilePrivacyChange}>
                   {this.state.privacy}
                 </RadioButton>
+                <Button className={Style.ReferenceButton} icon={IconType.LINK}>Manage references</Button>
                 <div className={Style.ReferenceList}>
 
                 </div>

@@ -23,6 +23,8 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
   @TypeORM.ManyToOne(() => User, entity => entity.file_tag_created_list, {nullable: false})
   @TypeORM.JoinColumn({name: "user_created_id"})
   public user_created: User;
+
+  @TypeORM.Column({type: "varchar", length: 36})
   public user_created_id: string;
 
   @TypeORM.CreateDateColumn()
@@ -46,7 +48,7 @@ export default class FileTag extends Entity<FileTag>(TypeORM) {
     return {
       id:           this.id,
       name:         this.name,
-      user_created: this.user_created.toJSON(),
+      user_created: this.user_created?.toJSON() ?? this.user_created_id,
       time_created: this.time_created,
       time_updated: this.time_updated,
     };

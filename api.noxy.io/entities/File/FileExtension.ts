@@ -24,6 +24,8 @@ export default class FileExtension extends Entity<FileExtension>(TypeORM) {
   @TypeORM.ManyToOne(() => FileType, entity => entity.file_extensions, {nullable: false, onDelete: "RESTRICT", onUpdate: "CASCADE"})
   @TypeORM.JoinColumn({name: "file_type_id"})
   public file_type: FileType;
+
+  @TypeORM.Column({type: "varchar", length: 36})
   public file_type_id: string;
 
   @TypeORM.CreateDateColumn()
@@ -48,7 +50,7 @@ export default class FileExtension extends Entity<FileExtension>(TypeORM) {
       id:           this.id,
       name:         this.name,
       mime_type:    this.mime_type,
-      file_type:    this.file_type.toJSON(),
+      file_type:    this.file_type?.toJSON() ?? this.file_type_id,
       time_created: this.time_created,
       time_updated: this.time_updated,
     };

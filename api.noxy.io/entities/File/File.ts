@@ -60,17 +60,21 @@ export default class File extends Entity<File>(TypeORM) {
   @TypeORM.ManyToOne(() => FileExtension, file_extension => file_extension.file_list, {nullable: false, onDelete: "RESTRICT", onUpdate: "CASCADE"})
   @TypeORM.JoinColumn({name: "file_extension_id"})
   public file_extension: FileExtension;
+
+  @TypeORM.Column({type: "varchar", length: 36})
   public file_extension_id: string;
 
   @TypeORM.ManyToOne(() => User, user => user.file_created_list, {nullable: false})
   @TypeORM.JoinColumn({name: "user_created_id"})
   public user_created: User;
+
+  @TypeORM.Column({type: "varchar", length: 36})
   public user_created_id: string;
 
   @TypeORM.CreateDateColumn()
   public time_created: Date;
 
-  @TypeORM.UpdateDateColumn({nullable: true, select: false, default: null})
+  @TypeORM.UpdateDateColumn({nullable: true, default: null})
   public time_updated: Date;
 
   //endregion ----- Properties -----
@@ -98,6 +102,8 @@ export default class File extends Entity<File>(TypeORM) {
   }
 
   public toJSON(): FileJSON {
+    console.log(this);
+
     return {
       id:              this.id,
       name:            this.name,
@@ -106,9 +112,9 @@ export default class File extends Entity<File>(TypeORM) {
       privacy:         this.privacy,
       share_hash:      this.share_hash,
       flag_public_tag: this.flag_public_tag,
-      file_extension:  this.file_extension.toJSON(),
-      file_tag_list:   _.map(this.file_tag_list, entity => entity.toJSON()),
-      user_created:    this.user_created.toJSON(),
+      file_extension:  this.file_extension?.toJSON() ?? this.file_extension_id,
+      file_tag_list:   this.file_tag_list?.map(entity => entity.toJSON()),
+      user_created:    this.user_created?.toJSON() ?? this.user_created_id,
       time_created:    this.time_created,
       time_updated:    this.time_updated,
     };
@@ -384,7 +390,7 @@ export type FileJSON = {
   share_hash: string
   flag_public_tag: boolean
   file_extension: FileExtensionJSON
-  file_tag_list: FileTagJSON[]
+  file_tag_list?: FileTagJSON[]
   user_created: UserJSON
   time_created: Date
   time_updated: Date

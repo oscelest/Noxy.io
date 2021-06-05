@@ -4,8 +4,8 @@
   grid-row-gap: 10px;
 
   .Container {
-    flex:  1 1 auto;
-    width: 100%;
+    flex:            1 1 auto;
+    width:           100%;
     grid-column-gap: 15px;
 
     .Editor {
@@ -14,8 +14,15 @@
     }
 
     .Sidebar {
-      flex:  0 0 auto;
-      width: 200px;
+      flex:      0 0 auto;
+      flex-flow: column;
+      width:     200px;
+      grid-row-gap: 10px;
+
+      .Privacy {
+        flex-flow:    column;
+        grid-row-gap: 10px;
+      }
     }
   }
 }

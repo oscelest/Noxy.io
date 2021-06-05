@@ -74,7 +74,7 @@ export default class User extends Entity<User>(TypeORM) {
       id:           this.id,
       email:        this.email,
       username:     this.username,
-      api_key_list: _.map(this.api_key_list, entity => entity.toJSON()),
+      api_key_list: this.api_key_list?.map(entity => entity.toJSON()),
       time_login:   this.time_login,
       time_created: this.time_created,
     };
@@ -278,7 +278,7 @@ export type UserJSON = {
   id: string
   email: string
   username: string
-  api_key_list: APIKeyJSON[]
+  api_key_list?: APIKeyJSON[]
   time_login: Date
   time_created: Date
 }

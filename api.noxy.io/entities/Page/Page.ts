@@ -66,9 +66,9 @@ export default class Page extends Entity<Page>(TypeORM) {
       name:         this.name,
       content:      this.content,
       privacy:      this.privacy,
-      file_list:    _.map(this.file_list, entity => entity.toJSON()),
+      file_list:    this.file_list?.map(entity => entity.toJSON()),
       share_hash:   this.share_hash,
-      user_created: this.user_created.toJSON(),
+      user_created: this.user_created?.toJSON() ?? this.user_created_id,
       time_created: this.time_created,
       time_updated: this.time_updated,
     };
@@ -159,8 +159,9 @@ export default class Page extends Entity<Page>(TypeORM) {
   @Page.bindParameter<Request.postCreateOne>("name", ValidatorType.STRING, {min_length: 1})
   @Page.bindParameter<Request.postCreateOne>("content", ValidatorType.STRING, {min_length: 1})
   @Page.bindParameter<Request.postCreateOne>("privacy", ValidatorType.ENUM, Privacy, {flag_optional: true})
+  @Page.bindParameter<Request.postCreateOne>("file_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
   private static async createOne({locals: {respond, user, parameters}}: Server.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
-    const {name, path, content, privacy} = parameters!;
+    const {name, path, content, privacy, file_list} = parameters!;
     const entity = TypeORM.getRepository(this).create();
 
     entity.name = name;
@@ -171,7 +172,13 @@ export default class Page extends Entity<Page>(TypeORM) {
     entity.user_created = user!;
 
     try {
-      return respond?.(await this.performInsert(entity));
+      const inserted = await this.performInsert(entity);
+
+      if (file_list) {
+        await this.createRelation(Page, "file_list").of(inserted.id).add(file_list);
+      }
+
+      return respond?.(inserted);
     }
     catch (error) {
       if (error.code === "ER_DUP_ENTRY") return respond?.(new ServerException(409, {name}));
@@ -223,7 +230,7 @@ export type PageJSON = {
   name: string
   content: string
   privacy: Privacy
-  file_list: FileJSON[]
+  file_list?: FileJSON[]
   share_hash: string
   user_created: UserJSON
   time_created: Date
@@ -234,7 +241,7 @@ namespace Request {
   export type getCount = {name?: string}
   export type getFindMany = getCount & Pagination
   export type getFindOne = never
-  export type postCreateOne = {path: string; name: string; content: string; privacy?: Privacy}
+  export type postCreateOne = {path: string; name: string; content: string; privacy?: Privacy; file_list?: string[]}
   export type putUpdateOne = {path?: string; name?: string; content?: string; privacy?: Privacy; file_list?: string[]}
 }
 

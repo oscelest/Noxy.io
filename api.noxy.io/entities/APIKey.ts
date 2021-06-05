@@ -34,6 +34,8 @@ export default class APIKey extends Entity<APIKey>(TypeORM) {
   @TypeORM.ManyToOne(() => User, user => user.api_key_list, {nullable: false})
   @TypeORM.JoinColumn({name: "user_id"})
   public user: User;
+
+  @TypeORM.Column({type: "varchar", length: 36})
   public user_id: string;
 
   @TypeORM.CreateDateColumn()
@@ -53,7 +55,7 @@ export default class APIKey extends Entity<APIKey>(TypeORM) {
       permission:           this.permission.toJSON(),
       limit_per_decasecond: this.limit_per_decasecond,
       limit_per_minute:     this.limit_per_minute,
-      user:                 this.user?.toJSON(),
+      user:                 this.user?.toJSON() ?? this.user_id,
       time_created:         this.time_created,
       time_updated:         this.time_updated,
     };

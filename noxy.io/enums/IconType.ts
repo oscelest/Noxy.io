@@ -32,7 +32,9 @@ enum IconType {
 
   SAVE = "\uee00",
   TEXT_HEIGHT = "\uee07",
+  ATTACHMENT = "\ueea7",
   BIN = "\ueebb",
+  FILE_BINARY = "\ueebc",
   CHECK = "\ueed8",
   CLOCK = "\ueedc",
   CLOSE_LINE = "\ueee1",
@@ -45,6 +47,7 @@ enum IconType {
   EDIT = "\uef10",
   EXPAND = "\uef1e",
   EXTERNAL_LINK = "\uef1f",
+  FILE_FILL = "\uef27",
   FILTER = "\uef29",
   GEAR = "\uef3a",
   GEARS = "\uef3b",
