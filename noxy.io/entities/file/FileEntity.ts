@@ -7,8 +7,8 @@ import RequestData from "../../classes/RequestData";
 import Helper from "../../Helper";
 import FileExtensionEntity from "./FileExtensionEntity";
 import FileTagEntity from "./FileTagEntity";
-import FileTypeEntity from "./FileTypeEntity";
 import UserEntity from "../UserEntity";
+import FileTypeName from "../../../common/enums/FileTypeName";
 
 export default class FileEntity extends Entity {
 
@@ -58,7 +58,7 @@ export default class FileEntity extends Entity {
   }
 
   public getFileType() {
-    return this.file_extension.file_type.name;
+    return this.file_extension.type;
   }
 
   public static async count(search: FileEntitySearchParameters = {}) {
@@ -113,7 +113,7 @@ export default class FileEntity extends Entity {
 
 export type FileEntitySearchParameters = {
   name?: string
-  file_type_list?: FileTypeEntity[] | string[]
+  file_type_list?: FileTypeName[]
   file_tag_list?: FileTagEntity[] | string[]
   file_tag_set_operation?: SetOperation
 }

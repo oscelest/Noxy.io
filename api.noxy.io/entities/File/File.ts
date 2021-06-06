@@ -16,9 +16,9 @@ import Logger from "../../../common/services/Logger";
 import Server from "../../../common/services/Server";
 import FileExtension, {FileExtensionJSON} from "./FileExtension";
 import FileTag, {FileTagJSON} from "./FileTag";
-import FileType from "./FileType";
 import User, {UserJSON} from "../User";
 import Page from "../Page/Page";
+import FileTypeName from "../../../common/enums/FileTypeName";
 
 @TypeORM.Entity()
 @TypeORM.Index("time_created", ["time_created"] as (keyof File)[])
@@ -102,8 +102,6 @@ export default class File extends Entity<File>(TypeORM) {
   }
 
   public toJSON(): FileJSON {
-    console.log(this);
-
     return {
       id:              this.id,
       name:            this.name,
@@ -130,8 +128,15 @@ export default class File extends Entity<File>(TypeORM) {
     this.join(query, "file_tag_list");
     this.join(query, "file_tag_list", "user_created");
     this.join(query, "file_extension");
-    this.join(query, "file_extension", "file_type");
     return query;
+  }
+
+  public static parseFileType(mime_type: string) {
+    if (!mime_type) throw new ServerException(400, {mime_type});
+    const file_type_name = mime_type.split("/")[0];
+    const file_type = _.find(FileTypeName, name => name === file_type_name);
+    if (!file_type) throw new ServerException(400, {mime_type});
+    return file_type as FileTypeName;
   }
 
   //endregion ----- Utility methods -----
@@ -145,12 +150,11 @@ export default class File extends Entity<File>(TypeORM) {
   @File.bindParameter<Request.getFindMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
   @File.bindPagination(100, ["id", "name", "size", "time_created"])
   public static async findMany({locals: {respond, user, parameters}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
-    const {skip, limit, order, name, file_type_list, file_tag_list, file_tag_set_operation} = parameters!;
+    const {skip, limit, order, name, file_tag_list, file_tag_set_operation} = parameters!;
     const query = this.createPaginated({skip, limit, order});
 
     this.addWildcardClause(query, "name", name);
     this.addValueClause(query, "user_created", user?.id);
-    this.addRelationClause(query, "file_extension", "file_type", file_type_list);
     this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
 
     try {
@@ -167,12 +171,11 @@ export default class File extends Entity<File>(TypeORM) {
   @File.bindParameter<Request.getFindMany>("file_tag_list", ValidatorType.UUID, {flag_array: true})
   @File.bindParameter<Request.getFindMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
   public static async count({locals: {respond, user, parameters}}: Server.Request<{}, Response.getCount, Request.getCount>) {
-    const {name, file_type_list, file_tag_list, file_tag_set_operation} = parameters!;
+    const {name, file_tag_list, file_tag_set_operation} = parameters!;
     const query = this.createSelect();
 
     this.addWildcardClause(query, "name", name);
     this.addValueClause(query, "user_created", user?.id);
-    this.addRelationClause(query, "file_extension", "file_type", file_type_list);
     this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
 
     try {
@@ -237,27 +240,26 @@ export default class File extends Entity<File>(TypeORM) {
     entity.user_created = user!;
 
     try {
-      const {id} = await FileType.createSelect().where({name: file.mimetype.split("/")[0]}).getOneOrFail();
-      entity.file_extension = await FileExtension.createSelect().where({file_type: id, name: _.last(entity.name.split(".")), mime_type: file.mimetype}).getOneOrFail();
+      const where = {
+        name:      _.last(entity.name.split(".")),
+        type:      this.parseFileType(file.mimetype),
+        mime_type: file.mimetype,
+      };
+      entity.file_extension = await FileExtension.createSelect().where(where).getOneOrFail();
     }
     catch (error) {
-      return respond?.(new ServerException(400, {mime_type: file.mimetype}, "File MIME type is not accepted"));
+      if (error instanceof TypeORM.EntityNotFoundError) return respond?.(new ServerException(400, {mime_type: file.mimetype}, "File MIME type is not accepted"));
+      return respond?.(error);
     }
 
     FS.rename(file.path, entity.getFilePath(), async error => {
       if (error) return respond?.(new ServerException(500, {from: file.path, to: entity.getFilePath()}, "Error while moving file"));
 
       try {
-        _.merge(entity, await this.performInsert(entity));
-      }
-      catch (error) {
-        return respond?.(error);
-      }
-
-      try {
-        entity.file_tag_list = await FileTag.performSelect(file_tag_list ?? []);
-        await this.createRelation(File, "file_tag_list").of(entity.id).add(entity.file_tag_list);
-        return respond?.(entity);
+        const inserted = await this.performInsert(entity);
+        inserted.file_tag_list = await FileTag.performSelect(file_tag_list ?? []);
+        await this.createRelation(File, "file_tag_list").of(inserted.id).add(inserted.file_tag_list);
+        return respond?.(inserted);
       }
       catch (error) {
         return respond?.(error);

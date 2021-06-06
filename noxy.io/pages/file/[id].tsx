@@ -127,21 +127,21 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
                     <EllipsisText className={Style.Body}>{file?.file_extension.mime_type ?? ""}</EllipsisText>
                   </div>
 
-                  <Conditional condition={file?.file_extension.file_type.name === FileTypeName.AUDIO && file_element}>
+                  <Conditional condition={file?.file_extension.type === FileTypeName.AUDIO && file_element}>
                     <div className={Style.Info}>
                       <span className={Style.Header}>Audio Length</span>
                       <EllipsisText className={Style.Body}>{Helper.getDuration((file_element as HTMLAudioElement)?.duration)}</EllipsisText>
                     </div>
                   </Conditional>
 
-                  <Conditional condition={file?.file_extension.file_type.name === FileTypeName.IMAGE && file_element}>
+                  <Conditional condition={file?.file_extension.type === FileTypeName.IMAGE && file_element}>
                     <div className={Style.Info}>
                       <span className={Style.Header}>Image dimensions</span>
                       <EllipsisText className={Style.Body}>{`${(file_element as HTMLImageElement)?.naturalWidth}px 🞩 ${(file_element as HTMLImageElement)?.naturalHeight}px`}</EllipsisText>
                     </div>
                   </Conditional>
 
-                  <Conditional condition={file?.file_extension.file_type.name === FileTypeName.VIDEO && file_element}>
+                  <Conditional condition={file?.file_extension.type === FileTypeName.VIDEO && file_element}>
                     <div className={Style.Info}>
                       <span className={Style.Header}>Video dimensions</span>
                       <EllipsisText className={Style.Body}>{`${(file_element as HTMLVideoElement)?.videoWidth}px 🞩 ${(file_element as HTMLVideoElement)?.videoHeight}px`}</EllipsisText>

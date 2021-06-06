@@ -16,6 +16,9 @@ import FatalException from "../../../exceptions/FatalException";
 import _ from "lodash";
 import RadioButton, {RadioButtonCollection} from "../../../components/Form/RadioButton";
 import Privacy from "../../../../common/enums/Privacy";
+import FileEntity from "../../../entities/file/FileEntity";
+import EllipsisText from "../../../components/Text/EllipsisText";
+import Preview from "../../../components/UI/Preview";
 
 // noinspection JSUnusedGlobalSymbols
 export default class PageIDEditPage extends React.Component<PageIDEditPageProps, State> {
@@ -82,9 +85,9 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
                 <RadioButton className={Style.Privacy} onChange={this.eventFilePrivacyChange}>
                   {this.state.privacy}
                 </RadioButton>
-                <Button className={Style.ReferenceButton} icon={IconType.LINK}>Manage references</Button>
+                <Button className={Style.ManageReference}>Manage references</Button>
                 <div className={Style.ReferenceList}>
-
+                  {_.map(this.state.entity.file_list, this.renderReference)}
                 </div>
               </div>
             </div>
@@ -92,6 +95,20 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
         </Loader>
       </div>
     );
+  }
+
+  private readonly renderReference = (file: FileEntity, index: number = 0) => {
+    return (
+      <div key={index} className={Style.Reference}>
+        <Button className={Style.ReferenceInsert} icon={IconType.LINK}/>
+        <Preview className={Style.ReferencePreview} file={file}/>
+        <div className={Style.ReferenceText}>
+          <EllipsisText className={Style.ReferenceName}>{file.name}</EllipsisText>
+          <EllipsisText className={Style.ReferenceID}>{file.id}</EllipsisText>
+        </div>
+
+      </div>
+    )
   }
 
   private readonly eventSave = async () => {

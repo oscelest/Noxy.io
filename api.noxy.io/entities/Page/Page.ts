@@ -82,6 +82,7 @@ export default class Page extends Entity<Page>(TypeORM) {
     const query = TypeORM.createQueryBuilder(this);
     this.join(query, "user_created");
     this.join(query, "file_list");
+    this.join(query, "file_list", "file_extension");
     return query;
   }
 

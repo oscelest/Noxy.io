@@ -53,6 +53,7 @@ enum IconType {
   GEARS = "\uef3b",
   ID = "\uef4a",
   LINK = "\uef71",
+  LIST = "\uef72",
   MINUS = "\uef9a",
   NOT_ALLOWED = "\uefa9",
   PLUS = "\uefc2",

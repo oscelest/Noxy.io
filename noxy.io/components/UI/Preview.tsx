@@ -1,7 +1,6 @@
 import React from "react";
 import FileTypeName from "../../../common/enums/FileTypeName";
 import FileEntity from "../../entities/file/FileEntity";
-import FileTypeEntity from "../../entities/file/FileTypeEntity";
 import IconType from "../../enums/IconType";
 import Icon from "../Form/Icon";
 import Style from "./Preview.module.scss";
@@ -26,8 +25,7 @@ export default class Preview extends React.Component<PreviewProps, State> {
   }
 
   private readonly getFileType = () => {
-    if (this.props.file) return this.props.file.file_extension.file_type.name;
-    if (this.props.type instanceof FileTypeEntity) return this.props.type.name;
+    if (this.props.file) return this.props.file.file_extension.type;
     return this.props.type;
   };
 
@@ -41,17 +39,17 @@ export default class Preview extends React.Component<PreviewProps, State> {
       case FileTypeName.AUDIO:
         return <Icon className={Style.Icon} type={IconType.FILE_AUDIO}/>;
       case FileTypeName.APPLICATION:
-        return  <Icon className={Style.Icon} type={IconType.FILE_EXE}/>
+        return <Icon className={Style.Icon} type={IconType.FILE_EXE}/>;
       case FileTypeName.FONT:
-        return  <Icon className={Style.Icon} type={IconType.FILE_DOCUMENT}/>
+        return <Icon className={Style.Icon} type={IconType.FILE_DOCUMENT}/>;
       case FileTypeName.IMAGE:
-        return <img className={Style.Image} src={this.getPath()} alt={""}/>
+        return <img className={Style.Image} src={this.getPath()} alt={""}/>;
       case FileTypeName.TEXT:
-        return <Icon className={Style.Icon} type={IconType.FILE_TEXT}/>
+        return <Icon className={Style.Icon} type={IconType.FILE_TEXT}/>;
       case FileTypeName.VIDEO:
-        return <Icon className={Style.Icon} type={IconType.FILE_VIDEO}/>
+        return <Icon className={Style.Icon} type={IconType.FILE_VIDEO}/>;
       default:
-        return <Icon className={Style.Icon} type={IconType.FILE_FILE}/>
+        return <Icon className={Style.Icon} type={IconType.FILE_FILE}/>;
     }
   };
 
@@ -68,7 +66,7 @@ interface PreviewFileEntityProps extends PreviewDefaultProps {
 interface PreviewLooseProps extends PreviewDefaultProps {
   file?: never
   path: string
-  type: FileTypeEntity | FileTypeName
+  type: FileTypeName
 }
 
 export interface PreviewDefaultProps {

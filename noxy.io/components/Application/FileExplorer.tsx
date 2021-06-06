@@ -8,7 +8,6 @@ import Authorized from "./Authorized";
 import Conditional from "./Conditional";
 import FileEntity, {FileEntitySearchParameters} from "../../entities/file/FileEntity";
 import FileTagEntity from "../../entities/file/FileTagEntity";
-import FileTypeEntity from "../../entities/file/FileTypeEntity";
 import ConfirmForm from "../../forms/ConfirmForm";
 import FileUploadForm from "../../forms/entities/FileUploadForm";
 import FileRenameForm from "../../forms/entities/FileRenameForm";
@@ -71,8 +70,14 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
       tag_selected_list:  [],
       tag_available_list: [],
 
-      type_selected_list:       [],
-      type_tickable_collection: {},
+      type_tickable_collection: {
+        AUDIO:       Checkbox.createElement(FileTypeName.AUDIO, "Audio"),
+        APPLICATION: Checkbox.createElement(FileTypeName.APPLICATION, "Application"),
+        FONT:        Checkbox.createElement(FileTypeName.FONT, "Font"),
+        IMAGE:       Checkbox.createElement(FileTypeName.IMAGE, "Image"),
+        TEXT:        Checkbox.createElement(FileTypeName.TEXT, "Text"),
+        VIDEO:       Checkbox.createElement(FileTypeName.VIDEO, "Video"),
+      },
 
       pagination_current: 1,
       pagination_total:   1,
@@ -91,7 +96,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
       const params: FileEntitySearchParameters = {
         name:                   this.state.file_search,
-        file_type_list:         this.state.type_selected_list,
+        file_type_list:         _.reduce(this.state.type_tickable_collection, (result, value) => value.checked ? [...result, value.value] : result, [] as FileTypeName[]),
         file_tag_list:          this.state.tag_selected_list,
         file_tag_set_operation: this.state.tag_set_operation,
       };
@@ -125,10 +130,6 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   public async componentDidMount() {
-    const file_type_list = await FileTypeEntity.findMany();
-    const type_tickable_collection = _.reduce(file_type_list, (r, v) => v.name !== FileTypeName.UNKNOWN ? _.set(r, v.id, Checkbox.createElement(v, v.toString())) : r, {} as TypeCheckbox);
-
-    this.setState({type_tickable_collection});
     this.searchFile();
   }
 
@@ -317,10 +318,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private readonly eventTypeChange = (type_tickable_collection: TypeCheckbox) => {
-    this.searchFile({
-      type_tickable_collection,
-      type_selected_list: _.reduce(type_tickable_collection, (result, item) => (item.checked ? [...result, item.value] : result), [] as FileTypeEntity[]),
-    });
+    this.searchFile({type_tickable_collection});
   };
 
   private readonly eventContextMenu = (selected: boolean[]): {[key: string]: ContextMenuItem} => {
@@ -374,7 +372,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     this.searchFile({
       file_search:              "",
       file_order:               FileExplorer.defaultOrder,
-      type_tickable_collection: _.mapValues(this.state.type_tickable_collection, val => ({...val, checked: false})),
+      type_tickable_collection: _.mapValues(this.state.type_tickable_collection, val => ({...val, checked: false})) as TypeCheckbox,
       tag_selected_list:        [],
       tag_set_operation:        SetOperation.UNION,
     });
@@ -390,7 +388,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 }
 
 type SortOrder = "name" | "size" | "time_created"
-type TypeCheckbox = CheckboxCollection<{[key: string]: FileTypeEntity}>
+type TypeCheckbox = CheckboxCollection<{ [K in keyof Omit<typeof FileTypeName, "UNKNOWN">]: typeof FileTypeName[K] }>
 
 export interface FileBrowserProps {
   className?: string
@@ -400,7 +398,7 @@ export interface FileBrowserProps {
 
   set_operation?: SetOperation
   tags?: FileTagEntity[]
-  types?: FileTypeEntity[]
+  types?: FileTypeName[]
 
   size?: number
   page?: number
@@ -428,7 +426,6 @@ interface State {
   tag_selected_list: FileTagEntity[]
   tag_available_list: FileTagEntity[]
 
-  type_selected_list: FileTypeEntity[]
   type_tickable_collection: TypeCheckbox
 
   pagination_size: number
