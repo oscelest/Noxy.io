@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "@aws-sdk/client-ses": "^3.17.0",
+    "@mikro-orm/core": "^4.5.5",
+    "@mikro-orm/mysql": "^4.5.5",
     "express": "^4.17.1",
     "isemail": "^3.2.0",
     "lodash": "^4.17.21",

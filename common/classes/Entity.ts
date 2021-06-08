@@ -8,8 +8,12 @@ import ValidatorType from "../enums/ValidatorType";
 import ServerException from "../exceptions/ServerException";
 import Server from "../services/Server";
 import {customAlphabet} from "nanoid";
+import {EntityManager, MikroORM, Constructor, FindOptions, Collection} from "@mikro-orm/core";
+import {FilterQuery} from "@mikro-orm/core/typings";
+import Order from "../enums/Order";
+import Database from "../services/Database";
 
-export default function Entity<E>(service: typeof TypeORM) {
+export default function Entity<E>() {
 
   abstract class Entity {
 
@@ -17,17 +21,18 @@ export default function Entity<E>(service: typeof TypeORM) {
     // Abstract methods
     // ----------------
 
-    public abstract toJSON(): EntityJSONObject
 
     // ----------
     // Decorators
     // ----------
 
-    public static generateDataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~()'!@,;", 64);
-    public static generateShareHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 32);
+    public static defaultID: string;
 
-    public static regexDataHash = new RegExp("^[a-zA-Z0-9-._~()'!@,;]{64}$");
-    public static regexShareHash = new RegExp("^[a-zA-Z0-9-_]{32}$");
+    public static generateDataHash: () => string;
+    public static generateShareHash: () => string;
+
+    public static regexDataHash: RegExp;
+    public static regexShareHash: RegExp;
 
     public static [HTTPMethod.GET](path: string, options?: Server.EndpointOptions) {
       return this.bindRoute(HTTPMethod.GET, path, options);
@@ -46,7 +51,7 @@ export default function Entity<E>(service: typeof TypeORM) {
     }
 
     private static bindRoute(http_method: HTTPMethod, path: string, options: Server.EndpointOptions = {}) {
-      return function (constructor: Constructor, method: string, descriptor: PropertyDescriptor) {
+      return function (constructor: DecoratorConstructor, method: string, descriptor: PropertyDescriptor) {
         Server.bindRoute(new Alias(constructor, method), http_method, [_.kebabCase(constructor.name), path], options, descriptor.value.bind(constructor));
       };
     }
@@ -63,7 +68,7 @@ export default function Entity<E>(service: typeof TypeORM) {
     public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.ORDER, conditions?: Validator.OrderParameterConditions, options?: Server.EndpointParameterOptions): Decorator
     public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.STRING, conditions?: Validator.StringParameterConditions, options?: Server.EndpointParameterOptions): Decorator
     public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType, conditions: any = {}, options: Server.EndpointParameterOptions = {}): Decorator {
-      return (constructor: Constructor, method: string) => {
+      return (constructor: DecoratorConstructor, method: string) => {
         switch (type) {
           case ValidatorType.BOOLEAN:
           case ValidatorType.EMAIL:
@@ -77,13 +82,70 @@ export default function Entity<E>(service: typeof TypeORM) {
     }
 
     public static bindPagination<K extends Key<E>>(limit: number, columns: K[]) {
-      return function (constructor: Constructor, method: string) {
+      return function (constructor: DecoratorConstructor, method: string) {
         const alias = new Alias(constructor, method);
         Server.bindRouteParameter(alias, "skip", ValidatorType.INTEGER, {min: 0}, {});
-        Server.bindRouteParameter(alias, "limit", ValidatorType.INTEGER, {min: 1, max: limit}, {});
+        Server.bindRouteParameter(alias, "size", ValidatorType.INTEGER, {min: 1, max: limit}, {});
         Server.bindRouteParameter(alias, "order", ValidatorType.ORDER, columns as string[], {flag_array: true});
       };
     }
+
+    //region    ----- Query methods -----
+
+    public static create(values: Initializer<E>) {
+      return Database.manager.create(this, values) as E;
+    }
+
+    public static async count(where: FilterQuery<Constructor<E>>, options: CountOptions<E> = {}) {
+      return await Database.manager.count(this, where, {...options}) as number;
+    }
+
+    public static async find(where: FilterQuery<Constructor<E>>, options: FindManyOptions<E> = {}) {
+      return await Database.manager.find(this, where, {...options, limit: options.limit, offset: options.skip, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E[];
+    }
+
+    public static async findOne(where: FilterQuery<Constructor<E>>, options: FindOneOptions<E> = {}) {
+      try {
+        return await Database.manager.findOneOrFail(this, where, {...options, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E;
+      }
+      catch (error) {
+        if (error instanceof TypeORM.EntityNotFoundError) throw new ServerException(404);
+        throw error;
+      }
+    }
+
+    public static async populate(entities: E | E[], populate: Populate<E>) {
+      return await Database.manager.populate(entities, populate);
+    }
+
+    public static async persist(object: Initializer<E>) {
+      try {
+        if (!(object instanceof this)) object = Database.manager.create(this, object);
+        await Database.manager.persistAndFlush(object);
+        return object as E;
+      }
+      catch (error) {
+        if (error.code === "ER_DUP_ENTRY") throw new ServerException(409);
+        throw error;
+      }
+    }
+
+    public static async remove(where: FilterQuery<Constructor<E>>, options: FindOneOptions<E> = {}) {
+      const entity = await this.findOne(where, options);
+      await Database.manager.removeAndFlush(entity);
+      return entity;
+    }
+
+    private static resolvePopulate(object?: Populate<E>, prefix?: string): string[] {
+      if (!object) return [];
+      if (typeof object === "boolean") return object && prefix ? [prefix] : [];
+      if (typeof object !== "object") return [prefix ? `${prefix}.${object}` : object.toString()];
+      if (Array.isArray(object)) return _.map(object as string[], value => prefix ? `${prefix}.${value}` : value);
+      return _.reduce(object, (result, value: any, key: string) => _.concat(result, this.resolvePopulate(value, prefix ? `${prefix}.${key}` : key)), [] as string[]);
+    }
+
+    //endregion ----- Query methods -----
+
 
     // ---------------
     // Utility methods
@@ -99,10 +161,6 @@ export default function Entity<E>(service: typeof TypeORM) {
     public static getRelationAlias<K extends Key<E>>(key: K, relation_key: Key<E[K]>): string
     public static getRelationAlias<K extends Key<E>>(key: K, relation_key?: Key<E[K]>): string {
       return relation_key ? `join_${key}_${relation_key}` : key;
-    }
-
-    public static merge(entity: Entity & E, values: TypeORM.DeepPartial<Entity & E>): E {
-      return service.getRepository(this).merge(entity, values) as unknown as E;
     }
 
     public static join<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, key: K): TypeORM.SelectQueryBuilder<E>
@@ -161,106 +219,133 @@ export default function Entity<E>(service: typeof TypeORM) {
       }
     }
 
-    public static createRelation(relation: typeof Entity, path: Key<E> & string): TypeORM.RelationQueryBuilder<Entity & E> {
-      return service.getRepository(this).createQueryBuilder().relation(relation, path) as TypeORM.RelationQueryBuilder<Entity & E>;
-    }
+    // public static createRelation(relation: typeof Entity, path: Key<E> & string): TypeORM.RelationQueryBuilder<Entity & E> {
+    //   return service.getRepository(this).createQueryBuilder().relation(relation, path) as TypeORM.RelationQueryBuilder<Entity & E>;
+    // }
 
     // --------------
     // Query builders
     // --------------
 
-    public static createSelect(): TypeORM.SelectQueryBuilder<Entity & E> {
-      return service.getRepository(this).createQueryBuilder().select() as TypeORM.SelectQueryBuilder<Entity & E>;
-    }
+    // public static createSelect(): TypeORM.SelectQueryBuilder<Entity & E> {
+    //   return service.getRepository(this).createQueryBuilder().select() as TypeORM.SelectQueryBuilder<Entity & E>;
+    // }
 
-    public static createPaginated({skip, limit, order}: Pagination): TypeORM.SelectQueryBuilder<E> {
-      const query = this.createSelect();
-      if (skip) query.skip(skip);
-      if (limit) query.take(limit);
-      if (order) query.orderBy(_.mapKeys(order, (sort, column) => !column.match(/\w+\.\w+/) ? `${this.name}.${column}` : column));
-      return query as TypeORM.SelectQueryBuilder<E>;
-    }
+    // public static createPaginated({skip, size, order}: Pagination): TypeORM.SelectQueryBuilder<E> {
+    //   const query = this.createSelect();
+    //   if (skip) query.skip(skip);
+    //   if (size) query.take(size);
+    //   if (order) query.orderBy(_.mapKeys(order, (sort, column) => !column.match(/\w+\.\w+/) ? `${this.name}.${column}` : column));
+    //   return query as TypeORM.SelectQueryBuilder<E>;
+    // }
 
-    public static createInsert(): TypeORM.InsertQueryBuilder<Entity & E> {
-      return service.getRepository(this).createQueryBuilder().insert() as TypeORM.InsertQueryBuilder<Entity & E>;
-    }
+    // public static createInsert(): TypeORM.InsertQueryBuilder<Entity & E> {
+    //   return service.getRepository(this).createQueryBuilder().insert() as TypeORM.InsertQueryBuilder<Entity & E>;
+    // }
+    //
+    // public static createUpdate(): TypeORM.UpdateQueryBuilder<Entity & E> {
+    //   return service.getRepository(this).createQueryBuilder().update() as TypeORM.UpdateQueryBuilder<Entity & E>;
+    // }
+    //
+    // public static createDelete(): TypeORM.DeleteQueryBuilder<Entity & E> {
+    //   return service.getRepository(this).createQueryBuilder().delete() as TypeORM.DeleteQueryBuilder<Entity & E>;
+    // }
+    //
+    // public static async performSelect(id: string): Promise<Entity & E>
+    // public static async performSelect(id: string[]): Promise<(Entity & E)[]>
+    // public static async performSelect(id: string | string[]): Promise<(Entity & E) | (Entity & E)[]> {
+    //   try {
+    //     return Array.isArray(id)
+    //       ? await this.createSelect().whereInIds(id).getMany()
+    //       : await this.createSelect().whereInIds(id).getOneOrFail();
+    //   }
+    //   catch (error) {
+    //     throw error;
+    //   }
+    // }
 
-    public static createUpdate(): TypeORM.UpdateQueryBuilder<Entity & E> {
-      return service.getRepository(this).createQueryBuilder().update() as TypeORM.UpdateQueryBuilder<Entity & E>;
-    }
-
-    public static createDelete(): TypeORM.DeleteQueryBuilder<Entity & E> {
-      return service.getRepository(this).createQueryBuilder().delete() as TypeORM.DeleteQueryBuilder<Entity & E>;
-    }
-
-    public static async performSelect(id: string): Promise<Entity & E>
-    public static async performSelect(id: string[]): Promise<(Entity & E)[]>
-    public static async performSelect(id: string | string[]): Promise<(Entity & E) | (Entity & E)[]> {
-      try {
-        return Array.isArray(id)
-          ? await this.createSelect().whereInIds(id).getMany()
-          : await this.createSelect().whereInIds(id).getOneOrFail();
-      }
-      catch (error) {
-        throw error;
-      }
-    }
-
-    public static async performInsert(values: TypeORM.DeepPartial<Entity & E>) {
-      const result = await this.createInsert().values(values).execute();
-      if (result.raw && result.raw.affectedRows === 0) {
-        throw new ServerException(500);
-      }
-      return await this.createSelect().where(result.identifiers).getOne() as Entity & E;
-    }
-
-    public static async performUpdate(id: string, values: TypeORM.DeepPartial<E>) {
-      try {
-        const repository = service.getRepository(this);
-
-        for (let column of repository.metadata.manyToManyRelations) {
-          delete (values as {[key: string]: any})[column.propertyPath];
-        }
-
-        for (let column of repository.metadata.columns) {
-          if (!column.relationMetadata?.isWithJoinColumn && !column.relationMetadata?.isManyToMany) continue;
-          delete (values as {[key: string]: any})[column.propertyPath];
-        }
-
-        const result = await repository.update(id, values);
-        if (result.affected === 1) {
-          return await this.createSelect().whereInIds(id).getOneOrFail();
-        }
-      }
-      catch (error) {
-        throw error;
-      }
-      throw new ServerException(404);
-    }
-
-    public static async performDelete(id: string) {
-      try {
-        const entity = await this.performSelect(id);
-        const result = await this.createDelete().andWhereInIds(id).execute();
-        if (result.affected === 1) return entity;
-      }
-      catch (error) {
-        throw error;
-      }
-      throw new ServerException(404);
-    }
+    // public static async performInsert(values: TypeORM.DeepPartial<Entity & E>) {
+    //   const result = await this.createInsert().values(values).execute();
+    //   if (result.raw && result.raw.affectedRows === 0) {
+    //     throw new ServerException(500);
+    //   }
+    //   return await this.createSelect().where(result.identifiers).getOne() as Entity & E;
+    // }
+    //
+    // public static async performUpdate(id: string, values: TypeORM.DeepPartial<E>) {
+    //   try {
+    //     const repository = service.getRepository(this);
+    //
+    //     for (let column of repository.metadata.manyToManyRelations) {
+    //       delete (values as {[key: string]: any})[column.propertyPath];
+    //     }
+    //
+    //     for (let column of repository.metadata.columns) {
+    //       if (!column.relationMetadata?.isWithJoinColumn && !column.relationMetadata?.isManyToMany) continue;
+    //       delete (values as {[key: string]: any})[column.propertyPath];
+    //     }
+    //
+    //     const result = await repository.update(id, values);
+    //     if (result.affected === 1) {
+    //       return await this.createSelect().whereInIds(id).getOneOrFail();
+    //     }
+    //   }
+    //   catch (error) {
+    //     throw error;
+    //   }
+    //   throw new ServerException(404);
+    // }
+    //
+    // public static async performDelete(id: string) {
+    //   try {
+    //     const entity = await this.performSelect(id);
+    //     const result = await this.createDelete().andWhereInIds(id).execute();
+    //     if (result.affected === 1) return entity;
+    //   }
+    //   catch (error) {
+    //     throw error;
+    //   }
+    //   throw new ServerException(404);
+    // }
   }
+
+  Entity.defaultID = "00000000-0000-0000-0000-000000000000";
+
+  Entity.generateDataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~()'!@,;", 64);
+  Entity.generateShareHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 32);
+
+  Entity.regexDataHash = new RegExp("^[a-zA-Z0-9-._~()'!@,;]{64}$");
+  Entity.regexShareHash = new RegExp("^[a-zA-Z0-9-_]{32}$");
 
   return Entity;
 }
 
+export interface Entity {
+  instance: MikroORM;
+  manager: EntityManager;
+
+  defaultID: string;
+
+  generateDataHash: () => string;
+  generateShareHash: () => string;
+
+  regexDataHash: RegExp;
+  regexShareHash: RegExp;
+}
+
 type EntityID = string | string[]
+type Ordering = {[key: string]: Order}
 type EntityJSONObject = {[key: string]: EntityJSONPrimitives}
 type EntityJSONPrimitives = undefined | null | boolean | number | string | Date | EntityJSONPrimitives[] | {[key: string]: EntityJSONPrimitives}
-type Decorator = <T>(target: Constructor, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T> | void;
+type Decorator = <T>(target: DecoratorConstructor, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T> | void;
+type Populate<V> = keyof V | (keyof V)[] | { [K in keyof V]?: true | (V[K] extends Collection<infer R> ? Populate<R> : | Populate<V[K]>) }
+
+type CountOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy">
+type FindOneOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy" | "offset" | "limit"> & {populate?: Populate<E>, order?: Ordering}
+type FindManyOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy" | "offset"> & {populate?: Populate<E>, skip?: number, order?: Ordering}
 
 export interface Pagination {
   skip?: number
   limit?: number
-  order?: {[key: string]: "ASC" | "DESC"}
+  order?: Ordering
 }

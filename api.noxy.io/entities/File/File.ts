@@ -1,3 +1,4 @@
+import {Entity as DBEntity, PrimaryKey, Index, Unique, ManyToMany, Property, ManyToOne, Enum, Collection} from "@mikro-orm/core";
 import ADMZip from "adm-zip";
 import * as FS from "fs";
 import JWT from "jsonwebtoken";
@@ -17,74 +18,54 @@ import Server from "../../../common/services/Server";
 import FileExtension, {FileExtensionJSON} from "./FileExtension";
 import FileTag, {FileTagJSON} from "./FileTag";
 import User, {UserJSON} from "../User";
-import Page from "../Page/Page";
 import FileTypeName from "../../../common/enums/FileTypeName";
+import Database from "../../../common/services/Database";
 
-@TypeORM.Entity()
-@TypeORM.Index("time_created", ["time_created"] as (keyof File)[])
-@TypeORM.Index("time_updated", ["time_updated"] as (keyof File)[])
-@TypeORM.Unique("data_hash", ["data_hash"] as (keyof File)[])
-export default class File extends Entity<File>(TypeORM) {
+@DBEntity()
+@Unique({name: "data_hash", properties: ["data_hash"] as (keyof File)[]})
+@Index({name: "time_created", properties: ["time_created"] as (keyof File)[]})
+@Index({name: "time_updated", properties: ["time_updated"] as (keyof File)[]})
+export default class File extends Entity<File>() {
 
   //region    ----- Properties -----
 
-  @TypeORM.PrimaryGeneratedColumn("uuid")
-  public id: string;
+  @PrimaryKey({length: 36})
+  public id: string = v4();
 
-  @TypeORM.Column({type: "varchar", length: 128})
+  @Property({length: 128})
   public name: string;
 
-  @TypeORM.Column({type: "int"})
+  @Property()
   public size: number;
 
-  @TypeORM.Column({type: "enum", enum: Privacy})
+  @Enum(() => Privacy)
   public privacy: Privacy;
 
-  @TypeORM.Column({type: "varchar", length: 64})
+  @Property({length: 64})
   public data_hash: string;
 
-  @TypeORM.Column({type: "varchar", length: 32})
+  @Property({length: 32})
   public share_hash: string;
 
-  @TypeORM.Column({type: "boolean"})
+  @Property({type: "boolean"})
   public flag_public_tag: boolean;
 
-  @TypeORM.ManyToMany(() => FileTag, entity => entity.file_list)
-  @TypeORM.JoinTable({
-    name:              `jct/file-file_tag`,
-    joinColumn:        {name: "file_id", referencedColumnName: "id"},
-    inverseJoinColumn: {name: "file_tag_id", referencedColumnName: "id"},
-  })
-  public file_tag_list: FileTag[];
+  @ManyToMany(() => FileTag)
+  public file_tag_list: Collection<FileTag> = new Collection<FileTag>(this);
 
-  @TypeORM.ManyToOne(() => FileExtension, file_extension => file_extension.file_list, {nullable: false, onDelete: "RESTRICT", onUpdate: "CASCADE"})
-  @TypeORM.JoinColumn({name: "file_extension_id"})
+  @ManyToOne(() => FileExtension)
   public file_extension: FileExtension;
 
-  @TypeORM.Column({type: "varchar", length: 36})
-  public file_extension_id: string;
-
-  @TypeORM.ManyToOne(() => User, user => user.file_created_list, {nullable: false})
-  @TypeORM.JoinColumn({name: "user_created_id"})
+  @ManyToOne(() => User)
   public user_created: User;
 
-  @TypeORM.Column({type: "varchar", length: 36})
-  public user_created_id: string;
+  @Property()
+  public time_created: Date = new Date();
 
-  @TypeORM.CreateDateColumn()
-  public time_created: Date;
-
-  @TypeORM.UpdateDateColumn({nullable: true, default: null})
+  @Property({onUpdate: () => new Date()})
   public time_updated: Date;
 
   //endregion ----- Properties -----
-
-  //region    ----- Relations -----
-
-  @TypeORM.ManyToMany(() => Page, entity => entity.file_list)
-  public page_list: Page[];
-
-  //endregion ----- Relations -----
 
   //region    ----- Instance methods -----
 
@@ -97,39 +78,14 @@ export default class File extends Entity<File>(TypeORM) {
   }
 
   public hasAccess(user: User, share_hash?: string) {
-    if (!this.flag_public_tag && user?.id !== this.user_created.id) this.file_tag_list = [];
+    // TODO: Fix this
+    // if (!this.flag_public_tag && user?.id !== this.user_created.id) this.file_tag_list = [];
     return user?.id === this.user_created.id || this.privacy === Privacy.PUBLIC || this.privacy === Privacy.LINK && this.share_hash === share_hash;
-  }
-
-  public toJSON(): FileJSON {
-    return {
-      id:              this.id,
-      name:            this.name,
-      size:            this.size,
-      data_hash:       this.data_hash,
-      privacy:         this.privacy,
-      share_hash:      this.share_hash,
-      flag_public_tag: this.flag_public_tag,
-      file_extension:  this.file_extension?.toJSON() ?? this.file_extension_id,
-      file_tag_list:   this.file_tag_list?.map(entity => entity.toJSON()),
-      user_created:    this.user_created?.toJSON() ?? this.user_created_id,
-      time_created:    this.time_created,
-      time_updated:    this.time_updated,
-    };
   }
 
   //endregion ----- Instance methods -----
 
   //region    ----- Utility methods -----
-
-  public static createSelect() {
-    const query = TypeORM.createQueryBuilder(this);
-    this.join(query, "user_created");
-    this.join(query, "file_tag_list");
-    this.join(query, "file_tag_list", "user_created");
-    this.join(query, "file_extension");
-    return query;
-  }
 
   public static parseFileType(mime_type: string) {
     if (!mime_type) throw new ServerException(400, {mime_type});
@@ -144,166 +100,131 @@ export default class File extends Entity<File>(TypeORM) {
   //region    ----- Endpoint methods -----
 
   @File.get("/")
-  @File.bindParameter<Request.getFindMany>("name", ValidatorType.STRING, {max_length: 128})
-  @File.bindParameter<Request.getFindMany>("file_type_list", ValidatorType.UUID, {flag_array: true})
-  @File.bindParameter<Request.getFindMany>("file_tag_list", ValidatorType.UUID, {flag_array: true})
-  @File.bindParameter<Request.getFindMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
+  @File.bindParameter<Request.getMany>("name", ValidatorType.STRING, {max_length: 128})
+  @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.UUID, {flag_array: true})
+  @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {flag_array: true})
+  @File.bindParameter<Request.getMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
   @File.bindPagination(100, ["id", "name", "size", "time_created"])
-  public static async findMany({locals: {respond, user, parameters}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
-    const {skip, limit, order, name, file_tag_list, file_tag_set_operation} = parameters!;
-    const query = this.createPaginated({skip, limit, order});
-
-    this.addWildcardClause(query, "name", name);
-    this.addValueClause(query, "user_created", user?.id);
-    this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
-
-    try {
-      return respond?.(await query.getMany());
-    }
-    catch (error) {
-      return respond?.(error);
-    }
+  public static async getMany({locals: {respond, user, params: {name, file_tag_list, file_tag_set_operation, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
+    // TODO: Add missing check
+    // this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
+    return respond(await this.find({name, user_created: user}, {...pagination}));
   }
 
   @File.get("/count")
-  @File.bindParameter<Request.getFindMany>("name", ValidatorType.STRING, {max_length: 128})
-  @File.bindParameter<Request.getFindMany>("file_type_list", ValidatorType.UUID, {flag_array: true})
-  @File.bindParameter<Request.getFindMany>("file_tag_list", ValidatorType.UUID, {flag_array: true})
-  @File.bindParameter<Request.getFindMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
-  public static async count({locals: {respond, user, parameters}}: Server.Request<{}, Response.getCount, Request.getCount>) {
-    const {name, file_tag_list, file_tag_set_operation} = parameters!;
-    const query = this.createSelect();
-
-    this.addWildcardClause(query, "name", name);
-    this.addValueClause(query, "user_created", user?.id);
-    this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
-
-    try {
-      return respond?.(await query.getCount());
-    }
-    catch (error) {
-      return respond?.(error);
-    }
+  @File.bindParameter<Request.getMany>("name", ValidatorType.STRING, {max_length: 128})
+  @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.UUID, {flag_array: true})
+  @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {flag_array: true})
+  @File.bindParameter<Request.getMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
+  public static async getCount({locals: {respond, user, params: {name, file_tag_list, file_tag_set_operation}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
+    // TODO: Add missing check
+    // this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
+    return respond(await this.count({name, user_created: user}));
   }
 
   @File.get("/:id", {user: false})
-  @File.bindParameter<Request.getFindOne>("share_hash", ValidatorType.STRING, {max_length: 32})
-  public static async findOne({params: {id}, locals: {respond, user, parameters}}: Server.Request<{id: string}, Response.getFindOne, Request.getFindOne>) {
-    const {share_hash: share_hash} = parameters!;
-
-    try {
-      const file = await this.performSelect(id);
-      if (!file.hasAccess(user!, share_hash)) return respond?.(new ServerException(403, {id, share_hash: share_hash}));
-
-      return respond?.(file);
-    }
-    catch (error) {
-      if (error instanceof TypeORM.EntityNotFoundError) return respond?.(new ServerException(404, {id}));
-      return respond?.(error);
-    }
+  @File.bindParameter<Request.getOne>("share_hash", ValidatorType.STRING, {max_length: 32})
+  public static async getOne({params: {id}, locals: {respond, user, params: {share_hash}}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
+    const file = await this.findOne(
+      {id, $or: [{privacy: Privacy.PUBLIC}, {privacy: Privacy.LINK, share_hash}, {privacy: Privacy.PRIVATE, user_created: user}]},
+      {populate: "user_created"}
+    );
+    if (file.user_created.id === user?.id || file.flag_public_tag) await this.populate(file, "file_tag_list");
+    return respond(file);
   }
 
   @File.get("/data/:data_hash", {user: false})
-  public static async readOne({params: {data_hash}, locals: {respond, user}}: Server.Request<{data_hash: string}, Response.getReadOne, Request.getReadOne>, response: Server.Response) {
+  public static async getData({params: {data_hash}, locals: {respond, user}}: Server.Request<{data_hash: string}, Response.getData, Request.getData>, response: Server.Response) {
     try {
-      const query = this.createSelect();
-      this.addValueClause(query, "data_hash", data_hash);
-      const file = await query.getOneOrFail();
-
+      const file = await this.findOne({data_hash});
       response.setHeader("Content-Type", file.file_extension.mime_type);
       response.sendFile(Path.resolve(process.env.FILE_PATH!, file.data_hash));
     }
     catch (error) {
-      if (error instanceof TypeORM.EntityNotFoundError) return respond?.(new ServerException(404, {data_hash}));
-      return respond?.(error);
+      if (error instanceof TypeORM.EntityNotFoundError) return respond(new ServerException(404, {data_hash}));
+      return respond(error);
     }
   }
 
   @File.post("/")
-  @File.bindParameter<Request.postCreateOne>("file", ValidatorType.FILE)
-  @File.bindParameter<Request.postCreateOne>("file_tag_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
-  private static async createOne({locals: {respond, user, parameters}}: Server.Request<{}, Response.postCreateOne, Request.postCreateOne>) {
-    const {file, file_tag_list} = parameters!;
+  @File.bindParameter<Request.postOne>("data", ValidatorType.FILE)
+  @File.bindParameter<Request.postOne>("file_tag_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
+  private static async createOne({locals: {respond, user, params}}: Server.Request<{}, Response.postOne, Request.postOne>) {
+    const {data, file_tag_list} = params!;
 
-    if (file.originalname.length > 128) {
-      return respond?.(new ServerException(400, {name: file.originalname}, "File name can only by 128 characters long."));
+    if (data.originalname.length > 128) {
+      return respond(new ServerException(400, {name: data.originalname}, "File name can only by 128 characters long."));
     }
-
-    const entity = TypeORM.getRepository(File).create();
-    entity.id = v4();
-    entity.name = file.originalname;
-    entity.data_hash = File.generateDataHash();
-    entity.size = file.size;
-    entity.privacy = Privacy.PRIVATE;
-    entity.share_hash = File.generateShareHash();
-    entity.flag_public_tag = false;
-    entity.user_created = user!;
 
     try {
-      const where = {
-        name:      _.last(entity.name.split(".")),
-        type:      this.parseFileType(file.mimetype),
-        mime_type: file.mimetype,
-      };
-      entity.file_extension = await FileExtension.createSelect().where(where).getOneOrFail();
+      const file = Database.manager.create(File, {
+        id:              v4(),
+        name:            data.originalname,
+        size:            data.size,
+        privacy:         Privacy.PRIVATE,
+        data_hash:       File.generateDataHash(),
+        share_hash:      File.generateShareHash(),
+        flag_public_tag: false,
+        file_extension:  await Database.manager.findOneOrFail(FileExtension, {type: this.parseFileType(data.mimetype), mime_type: data.mimetype, name: _.last(data.originalname.split(".")) ?? ""}),
+        file_tag_list:   await Database.manager.find(FileTag, {id: file_tag_list, user_created: user?.id}),
+        user_created:    user,
+      });
+
+      FS.rename(data.path, file.getFilePath(), async error => {
+        if (error) return respond(new ServerException(500, {from: data.path, to: file.getFilePath()}, "Error while moving file"));
+
+        try {
+          await Database.manager.persistAndFlush(file);
+          return respond(file);
+        }
+        catch (error) {
+          return respond(error);
+        }
+      });
     }
     catch (error) {
-      if (error instanceof TypeORM.EntityNotFoundError) return respond?.(new ServerException(400, {mime_type: file.mimetype}, "File MIME type is not accepted"));
-      return respond?.(error);
+      if (error instanceof TypeORM.EntityNotFoundError) return respond(new ServerException(400, {mime_type: data.mimetype}, "File MIME type is not accepted"));
+      return respond(error);
     }
-
-    FS.rename(file.path, entity.getFilePath(), async error => {
-      if (error) return respond?.(new ServerException(500, {from: file.path, to: entity.getFilePath()}, "Error while moving file"));
-
-      try {
-        const inserted = await this.performInsert(entity);
-        inserted.file_tag_list = await FileTag.performSelect(file_tag_list ?? []);
-        await this.createRelation(File, "file_tag_list").of(inserted.id).add(inserted.file_tag_list);
-        return respond?.(inserted);
-      }
-      catch (error) {
-        return respond?.(error);
-      }
-    });
   }
 
   @File.post("/request-download")
-  @File.bindParameter<Request.postRequestDownload>("id", ValidatorType.UUID, {flag_array: true})
-  @File.bindParameter<Request.postRequestDownload>("share_hash", ValidatorType.STRING, {validator: File.regexShareHash}, {flag_array: true, flag_optional: true})
-  private static async requestDownload({locals: {respond, user, parameters}}: Server.Request<{}, Response.postRequestDownload, Request.postRequestDownload>) {
-    const {id, share_hash} = parameters!;
-    const files = await this.performSelect(id);
+  @File.bindParameter<Request.postDownloadRequest>("id", ValidatorType.UUID, {flag_array: true})
+  @File.bindParameter<Request.postDownloadRequest>("share_hash", ValidatorType.STRING, {validator: File.regexShareHash}, {flag_array: true, flag_optional: true})
+  private static async requestDownload({locals: {respond, user, params}}: Server.Request<{}, Response.postRequestDownload, Request.postDownloadRequest>) {
+    const {id, share_hash} = params!;
+    const file_list = await Database.manager.find(File, {id});
 
-    if (!_.every(files, file => file.hasAccess(user!, share_hash))) return respond?.(new ServerException(403, {id}));
+    if (!_.every(file_list, file => file.hasAccess(user!, share_hash))) return respond(new ServerException(403, {id}));
 
-    return respond?.(JWT.sign({id}, `${process.env["FILE_SECRET"]}:${id.join(":")}`, {algorithm: "HS256", expiresIn: "1m"}));
+    return respond(JWT.sign({id}, `${process.env["FILE_SECRET"]}:${id.join(":")}`, {algorithm: "HS256", expiresIn: "1m"}));
   }
 
   @File.post("/confirm-download", {user: false})
-  @File.bindParameter<Request.postConfirmDownload>("token", ValidatorType.STRING)
-  private static async confirmDownload({locals: {respond, parameters}}: Server.Request<{}, Response.postConfirmDownload, Request.postConfirmDownload>, response: Server.Response) {
-    const {token} = parameters!;
+  @File.bindParameter<Request.postDownloadConfirm>("token", ValidatorType.STRING)
+  private static async confirmDownload({locals: {respond, params}}: Server.Request<{}, Response.postConfirmDownload, Request.postDownloadConfirm>, response: Server.Response) {
+    const {token} = params!;
     const {id} = JWT.decode(token) as {id: string[]};
     try {
       JWT.verify(token, `${process.env["FILE_SECRET"]}:${id.join(":")}`);
 
-      const files = await this.performSelect(id);
-      if (files.length === 1) {
-        const path = Path.resolve(process.env.FILE_PATH!, files[0].getFilePath());
-        return response.download(path, files[0].getFullName(), err => err && respond?.(new ServerException(500, err)));
+      const file_list = await Database.manager.find(File, {id});
+      if (file_list.length === 1) {
+        const path = Path.resolve(process.env.FILE_PATH!, file_list[0].getFilePath());
+        return response.download(path, file_list[0].getFullName(), err => err && respond(new ServerException(500, err)));
       }
 
       const archive = new ADMZip();
-      for (let file of files) archive.addLocalFile(file.getFilePath(), "", file.getFullName());
+      for (let file of file_list) archive.addLocalFile(file.getFilePath(), "", file.getFullName());
 
       const name = `files_${Moment().format("YYYY_MM_DD_H_m_s")}.zip`;
       const path = Path.resolve(process.env.TEMP!, v4());
 
       archive.writeZip(path, error => {
-        if (error) return respond?.(new ServerException(500, error, error.message));
+        if (error) return respond(new ServerException(500, error, error.message));
 
         response.download(path, name, error => {
-          if (error) respond?.(new ServerException(500, error));
+          if (error) respond(new ServerException(500, error));
 
           FS.unlink(path, error => {
             if (!error || error.code === "ENOENT") return;
@@ -314,68 +235,66 @@ export default class File extends Entity<File>(TypeORM) {
       });
     }
     catch (error) {
-      respond?.(new ServerException(500, error));
+      respond(new ServerException(500, error));
     }
   }
 
   @File.put("/:id", {permission: PermissionLevel.FILE_UPDATE})
-  @File.bindParameter<Request.putUpdateOne>("name", ValidatorType.STRING, {min_length: 3}, {flag_optional: true})
-  @File.bindParameter<Request.putUpdateOne>("privacy", ValidatorType.ENUM, Privacy, {flag_optional: true})
-  @File.bindParameter<Request.putUpdateOne>("flag_public_tag", ValidatorType.BOOLEAN, {flag_optional: true})
-  @File.bindParameter<Request.putUpdateOne>("file_extension", ValidatorType.UUID, {flag_optional: true})
-  @File.bindParameter<Request.putUpdateOne>("file_tag_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
-  private static async updateOne({params: {id}, locals: {respond, user, parameters}}: Server.Request<{id: string}, Response.putUpdateOne, Request.putUpdateOne>) {
-    const {name, privacy, flag_public_tag, file_extension, file_tag_list} = parameters!;
-
-    try {
-      const entity = await this.performSelect(id);
-      if (entity.user_created.id !== user?.id) return respond?.(new ServerException(403));
-
-      if (file_tag_list) {
-        const file_tag_id_list = _.map(entity.file_tag_list, file_tag => file_tag.id);
-        const file_tag_add_list = _.differenceWith(file_tag_list, file_tag_id_list, (a, b) => a === b);
-        const file_tag_remove_list = _.differenceWith(file_tag_id_list, file_tag_list, (a, b) => a === b);
-
-        await this.createRelation(File, "file_tag_list").of(entity.id).remove(file_tag_remove_list);
-        await this.createRelation(File, "file_tag_list").of(entity.id).add(file_tag_add_list);
-      }
-
-      if (name !== undefined) entity.name = name;
-      if (file_extension !== undefined) entity.file_extension = await FileExtension.performSelect(file_extension);
-      if (flag_public_tag !== undefined) entity.flag_public_tag = flag_public_tag;
-      if (privacy !== undefined) entity.privacy = privacy;
-
-      respond?.(await this.performUpdate(entity.id, entity));
-    }
-    catch (error) {
-      respond?.(new ServerException(500, error));
-    }
+  @File.bindParameter<Request.putOne>("name", ValidatorType.STRING, {min_length: 3}, {flag_optional: true})
+  @File.bindParameter<Request.putOne>("privacy", ValidatorType.ENUM, Privacy, {flag_optional: true})
+  @File.bindParameter<Request.putOne>("flag_public_tag", ValidatorType.BOOLEAN, {flag_optional: true})
+  @File.bindParameter<Request.putOne>("file_extension", ValidatorType.UUID, {flag_optional: true})
+  @File.bindParameter<Request.putOne>("file_tag_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
+  private static async updateOne({params: {id}, locals: {respond, user, params}}: Server.Request<{id: string}, Response.putOne, Request.putOne>) {
+    // const {name, privacy, flag_public_tag, file_extension, file_tag_list} = params!;
+    //
+    // try {
+    //   const file = await Database.manager.findOneOrFail(File, {id}, ["file_extension", "user_created", "file_tag_list"]);
+    //   if (file.user_created.id !== user?.id) return respond(new ServerException(403));
+    //
+    //   if (file_tag_list) {
+    //     const file_tag_id_list = _.map(file.file_tag_list, file_tag => file_tag.id);
+    //     const file_tag_add_list = _.differenceWith(file_tag_list, file_tag_id_list, (a, b) => a === b);
+    //     const file_tag_remove_list = _.differenceWith(file_tag_id_list, file_tag_list, (a, b) => a === b);
+    //
+    //     await this.createRelation(File, "file_tag_list").of(file.id).remove(file_tag_remove_list);
+    //     await this.createRelation(File, "file_tag_list").of(file.id).add(file_tag_add_list);
+    //   }
+    //
+    //   if (name !== undefined) file.name = name;
+    //   if (file_extension !== undefined) file.file_extension = await FileExtension.performSelect(file_extension);
+    //   if (flag_public_tag !== undefined) file.flag_public_tag = flag_public_tag;
+    //   if (privacy !== undefined) file.privacy = privacy;
+    //   await Database.manager.persistAndFlush(file);
+    //
+    //   respond(file);
+    // }
+    // catch (error) {
+    //   respond(new ServerException(500, error));
+    // }
   }
 
   @File.delete("/:id", {permission: PermissionLevel.FILE_DELETE})
-  private static async deleteOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.deleteDeleteOne, Request.deleteDeleteOne>) {
-    const query = this.createSelect();
-    this.addValueClause(query, "id", id);
-
-    try {
-      const file = await query.getOneOrFail();
-      if (file.user_created.id !== user?.id) return respond?.(new ServerException(403));
-
-      FS.unlink(Path.resolve(process.env.FILE_PATH!, file.data_hash), async error => {
-        if (error) return respond?.(new ServerException(500, error));
-
-        try {
-          respond?.(await this.performDelete(file.id));
-        }
-        catch (error) {
-          respond?.(new ServerException(500, error));
-        }
-      });
-    }
-    catch (error) {
-      if (error instanceof TypeORM.EntityNotFoundError) return respond?.(new ServerException(404));
-      respond?.(new ServerException(500, error));
-    }
+  private static async deleteOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.deleteOne, Request.deleteOne>) {
+    // try {
+    //   const file = await Database.manager.findOneOrFail(File, {id});
+    //   if (file.user_created.id !== user?.id) return respond(new ServerException(403));
+    //
+    //   FS.unlink(Path.resolve(process.env.FILE_PATH!, file.data_hash), async error => {
+    //     if (error) return respond(new ServerException(500, error));
+    //
+    //     try {
+    //       respond(await this.performDelete(file.id));
+    //     }
+    //     catch (error) {
+    //       respond(new ServerException(500, error));
+    //     }
+    //   });
+    // }
+    // catch (error) {
+    //   if (error instanceof TypeORM.EntityNotFoundError) return respond(new ServerException(404));
+    //   respond(new ServerException(500, error));
+    // }
   }
 
   //endregion ----- Endpoint methods -----
@@ -393,33 +312,33 @@ export type FileJSON = {
   flag_public_tag: boolean
   file_extension: FileExtensionJSON
   file_tag_list?: FileTagJSON[]
-  user_created: UserJSON
+  user_created?: UserJSON
   time_created: Date
   time_updated: Date
 }
 
 namespace Request {
-  export type getFindMany = getCount & Pagination
+  export type getMany = getCount & Pagination
   export type getCount = {name?: string; file_type_list?: string[]; file_tag_list?: string[]; file_tag_set_operation?: SetOperation}
-  export type getFindOne = {share_hash?: string}
-  export type getReadOne = never
-  export type postCreateOne = {file: FileHandle; file_tag_list?: string[]}
+  export type getOne = {share_hash?: string}
+  export type getData = never
+  export type postOne = {data: FileHandle; file_tag_list?: string[]}
   export type postDownload = {id: string}
-  export type postRequestDownload = {id: string[], share_hash?: string}
-  export type postConfirmDownload = {token: string}
-  export type putUpdateOne = {name?: string; file_extension?: string; file_tag_list?: string[], privacy?: Privacy, flag_public_tag?: boolean}
-  export type deleteDeleteOne = never
+  export type postDownloadRequest = {id: string[], share_hash?: string}
+  export type postDownloadConfirm = {token: string}
+  export type putOne = {name?: string; file_extension?: string; file_tag_list?: string[], privacy?: Privacy, flag_public_tag?: boolean}
+  export type deleteOne = never
 }
 
 namespace Response {
-  export type getFindMany = File[] | ServerException
+  export type getMany = File[] | ServerException
   export type getCount = number | ServerException
-  export type getFindOne = File | ServerException
-  export type getReadOne = ServerException
-  export type postCreateOne = File | ServerException
+  export type getOne = File | ServerException
+  export type getData = ServerException
+  export type postOne = File | ServerException
   export type postDownload = never | ServerException
   export type postRequestDownload = string | ServerException
   export type postConfirmDownload = string | ServerException
-  export type putUpdateOne = File | ServerException
-  export type deleteDeleteOne = File | ServerException
+  export type putOne = File | ServerException
+  export type deleteOne = File | ServerException
 }

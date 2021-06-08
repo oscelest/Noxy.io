@@ -1,6 +1,7 @@
 import BodyParser from "body-parser";
 import Express from "express";
 import * as core from "express-serve-static-core";
+import {Locals} from "express-serve-static-core";
 import * as FS from "fs";
 import HTTP from "http";
 import _ from "lodash";
@@ -92,7 +93,7 @@ module Server {
 
 
   function attachHeaders(request: Express.Request, response: Express.Response, next: Express.NextFunction) {
-    request.locals = {};
+    request.locals = {} as Locals<{}, {}>;
     response.header("Access-Control-Allow-Origin", "*");
     response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, JSONP");
     response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Masquerade");
@@ -115,7 +116,7 @@ module Server {
     request.locals.path = request.route.path as string;
     request.locals.alias = alias_collection[`${request.locals.method}:${request.locals.path}`];
     request.locals.endpoint = route_collection[request.locals.alias.toString()];
-    request.locals.parameters = {};
+    request.locals.params = {};
     request.locals.time_created = new Date();
     request.locals.respond = respond.bind(request);
 
@@ -145,7 +146,7 @@ module Server {
   }
 
 
-  function attachParameters({files, query, body, locals: {respond, method, parameters, endpoint}}: Express.Request, response: Express.Response, next: Express.NextFunction) {
+  function attachParameters({files, query, body, locals: {respond, method, params, endpoint}}: Express.Request, response: Express.Response, next: Express.NextFunction) {
     if (!endpoint) return respond?.(new ServerException(404)) ?? response.send(404);
 
     const file_collection = _.reduce(files, (result, file, key) => _.set(result, key, file), {} as {[key: string]: File[]});
@@ -162,7 +163,7 @@ module Server {
             error_collection[name] = new ValidatorException(`'${name}' is a mandatory field.`);
           }
           else {
-            parameters[name] = flag_array ? file_collection?.[name] : _.first(file_collection?.[name]);
+            params[name] = flag_array ? file_collection?.[name] : _.first(file_collection?.[name]);
           }
         }
         else {
@@ -178,7 +179,7 @@ module Server {
             error_collection[name] = new ValidatorException(`Field '${name}' does not accept multiple values.`, received);
           }
           else {
-            parameters[name] = Validator.parseParameter(type, !flag_array || Array.isArray(received) ? received : [received], conditions);
+            params[name] = Validator.parseParameter(type, !flag_array || Array.isArray(received) ? received : [received], conditions);
           }
         }
       }
@@ -209,7 +210,7 @@ module Server {
     if (this.locals.endpoint?.upload?.length) {
       for (let i = 0; i < this.locals.endpoint.upload.length ?? 0; i++) {
         const {name} = this.locals.endpoint.upload[i];
-        const parameter: FileHandle[] = Array.isArray(this.locals.parameters[name]) ? this.locals.parameters[name] : [this.locals.parameters[name]];
+        const parameter: FileHandle[] = Array.isArray(this.locals.params[name]) ? this.locals.params[name] : [this.locals.params[name]];
 
         for (let i = 0; i < parameter.length; i++) {
           if (!parameter[i]) continue;

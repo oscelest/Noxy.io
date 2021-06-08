@@ -1,15 +1,17 @@
 /// <reference path="../common/Global.d.ts" />
 
 require("dotenv").config();
+
+import "reflect-metadata";
 import * as FS from "fs";
 import JSONWebToken from "jsonwebtoken";
 import _ from "lodash";
 import Path from "path";
-import * as TypeORM from "typeorm";
 import Alias from "../common/classes/Alias";
 import HTTPMethod from "../common/enums/HTTPMethod";
 import PermissionLevel from "../common/enums/PermissionLevel";
 import ServerException from "../common/exceptions/ServerException";
+import Database from "../common/services/Database";
 import Logger from "../common/services/Logger";
 import Server from "../common/services/Server";
 import APIKey from "./entities/APIKey";
@@ -33,19 +35,7 @@ import User from "./entities/User";
 
     Logger.write(Logger.Level.INFO, "Server starting!");
 
-    await TypeORM.createConnection({
-      type:        "mysql",
-      host:        process.env.DB_HOST,
-      port:        +(process.env.DB_PORT || 0),
-      username:    process.env.DB_USERNAME,
-      password:    process.env.DB_PASSWORD,
-      database:    process.env.DB_DATABASE,
-      synchronize: process.env.NODE_ENV !== "production",
-      // logging:     process.env.NODE_ENV === "production" ? [] : ["error"],
-      entities: [
-        Path.resolve(__dirname, "entities", "**/*.ts"),
-      ],
-    });
+    await Database.connect();
 
     Server.bindRoute(new Alias(), HTTPMethod.GET, "/", {user: false}, async ({locals: {respond}}) => {
       setTimeout(() => respond?.({}), Math.ceil(Math.random() * 95) + 5);
@@ -62,7 +52,7 @@ import User from "./entities/User";
       if (authorization) {
         try {
           const {id} = JSONWebToken.verify(authorization, process.env.JWT_SECRET!) as {id: string};
-          request.locals.api_key = await APIKey.performSelect(id);
+          request.locals.api_key = await APIKey.findOne({id}, {populate: "user"});
         }
         catch (error) {
           if (error instanceof JSONWebToken.TokenExpiredError) return request.locals.respond?.(new ServerException(401, {authorization}, "Authorization token has expired."));
@@ -82,7 +72,7 @@ import User from "./entities/User";
         }
 
         try {
-          request.locals.user = await User.performSelect(masquerade);
+          request.locals.user = await User.findOne({id: masquerade}, {populate: "api_key_list"});
         }
         catch (error) {
           if (error instanceof ServerException && error.code === 404) return request.locals.respond?.(new ServerException(404, {authorization}, "Authorization failed - User doesn't exist."));
@@ -101,6 +91,7 @@ import User from "./entities/User";
     Logger.write(Logger.Level.INFO, "Server started!");
   }
   catch ({message, stack}) {
+    console.log(message, stack);
     Logger.write(Logger.Level.ERROR, {message, stack});
     process.exit(0);
   }
@@ -112,3 +103,4 @@ declare module "express-serve-static-core" {
     user?: User
   }
 }
+

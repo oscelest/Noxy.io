@@ -1,64 +1,38 @@
-import * as TypeORM from "typeorm";
 import Entity from "../../../common/classes/Entity";
-import File from "./File";
 import FileTypeName from "../../../common/enums/FileTypeName";
+import {Entity as DBEntity, Enum, Unique, Index, Property, PrimaryKey} from "@mikro-orm/core";
+import {v4} from "uuid";
 
-@TypeORM.Entity()
-@TypeORM.Unique("name", ["name"])
-@TypeORM.Unique("mime_type", ["mime_type", "name"])
-@TypeORM.Index("time_created", ["time_created"])
-@TypeORM.Index("time_updated", ["time_updated"])
-export default class FileExtension extends Entity<FileExtension>(TypeORM) {
+@DBEntity()
+@Unique({name: "name", properties: ["name"] as (keyof FileExtension)[]})
+@Unique({name: "mime_type", properties: ["mime_type", "name"] as (keyof FileExtension)[]})
+@Index({name: "time_created", properties: ["time_created"] as (keyof FileExtension)[]})
+@Index({name: "time_updated", properties: ["time_updated"] as (keyof FileExtension)[]})
+export default class FileExtension extends Entity<FileExtension>() {
 
   //region    ----- Properties -----
 
-  @TypeORM.PrimaryGeneratedColumn("uuid")
-  public id: string;
+  @PrimaryKey({length: 36})
+  public id: string = v4();
 
-  @TypeORM.Column({type: "varchar", length: 16})
+  @Property({length: 16})
   public name: string;
 
-  @TypeORM.Column({type: "enum", enum: FileTypeName, nullable: false})
+  @Enum(() => FileTypeName)
   public type: FileTypeName;
 
-  @TypeORM.Column({type: "varchar", length: 128})
+  @Property({length: 128})
   public mime_type: string;
 
-  @TypeORM.CreateDateColumn()
-  public time_created: Date;
+  @Property()
+  public time_created: Date = new Date();
 
-  @TypeORM.UpdateDateColumn({nullable: true, select: false, default: null})
+  @Property({onUpdate: () => new Date()})
   public time_updated: Date;
 
   //endregion ----- Properties -----
 
-  //region    ----- Relations -----
-
-  @TypeORM.OneToMany(() => File, entity => entity.file_extension)
-  public file_list: File[];
-
-  //endregion ----- Relations -----
-
-  //region    ----- Instance methods -----
-
-  public toJSON(): FileExtensionJSON {
-    return {
-      id:           this.id,
-      name:         this.name,
-      type:         this.type,
-      mime_type:    this.mime_type,
-      time_created: this.time_created,
-      time_updated: this.time_updated,
-    };
-  }
-
-  //endregion ----- Instance methods -----
-
   //region    ----- Utility methods -----
-
-  public static createSelect() {
-    return TypeORM.createQueryBuilder(this);
-  }
 
   //endregion ----- Utility methods -----
 
