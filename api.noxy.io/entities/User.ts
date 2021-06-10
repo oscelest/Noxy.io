@@ -1,7 +1,6 @@
 import crypto from "crypto";
 import JSONWebToken from "jsonwebtoken";
 import JWT from "jsonwebtoken";
-import * as TypeORM from "typeorm";
 import Entity, {Pagination} from "../../common/classes/Entity";
 import ValidatorType from "../../common/enums/ValidatorType";
 import ServerException from "../../common/exceptions/ServerException";
@@ -12,6 +11,7 @@ import PermissionLevel from "../../common/enums/PermissionLevel";
 import {Entity as DBEntity} from "@mikro-orm/core/decorators/Entity";
 import {Unique, Index, PrimaryKey, Property, OneToMany, Collection} from "@mikro-orm/core";
 import {v4} from "uuid";
+import _ from "lodash";
 
 @DBEntity()
 @Unique({name: "email", properties: ["email"] as (keyof User)[]})
@@ -52,16 +52,28 @@ export default class User extends Entity<User>() {
 
   //region    ----- Utility methods -----
 
+  public secure(current_user?: boolean) {
+    if (current_user) return this;
+    const {api_key_list, ...entity} = this;
+    return Object.assign(new User(), entity, {api_key_list: new Collection<APIKey>({}, _.map(api_key_list.getItems(), entity => entity.secure(current_user)))} as Partial<Properties<User>>);
+  }
+
+  public toJSON(strict: boolean = true, strip: (keyof User)[] = []): UserJSON {
+    return {
+      id:           this.id,
+      email:        this.email,
+      username:     this.username,
+      api_key_list: !strip.includes("api_key_list")
+                      ? _.map(this.api_key_list.getItems(), entity => entity.toJSON(true, ["user"]))
+                      : _.map(this.api_key_list.getItems(), entity => entity.id),
+      time_created: this.time_created,
+      time_login:   this.time_login,
+    };
+  }
+
   //endregion ----- Utility methods -----
 
   //region    ----- Endpoint methods -----
-
-  @User.get("/", {permission: [PermissionLevel.USER_MASQUERADE]})
-  @User.bindParameter<Request.getMany>("email", ValidatorType.STRING, {min_length: 1})
-  @User.bindPagination(100, ["id", "email", "time_created"])
-  public static async getMany({locals: {respond, params: {email, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
-    return respond(await this.find({email: {$like: email}}, {...pagination, populate: "api_key_list"}));
-  }
 
   @User.get("/count", {permission: [PermissionLevel.USER_MASQUERADE]})
   @User.bindParameter<Request.getMany>("email", ValidatorType.STRING, {min_length: 1})
@@ -70,11 +82,19 @@ export default class User extends Entity<User>() {
     return respond(await this.count({email}));
   }
 
-  @User.get("/:id", {permission: [PermissionLevel.USER_MASQUERADE]})
-  public static async getOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
-    return respond(await this.findOne({id}, {populate: id === user?.id ? {api_key_list: "token"} : "api_key_list"}));
+  @User.get("/", {permission: [PermissionLevel.USER_MASQUERADE]})
+  @User.bindParameter<Request.getMany>("email", ValidatorType.STRING, {min_length: 1})
+  @User.bindPagination(100, ["id", "email", "time_created"])
+  public static async getMany({locals: {respond, current_user, params: {email, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
+    const entity_list = await this.find(email ? {email: {$like: `%${email}%`}} : {}, {...pagination, populate: "api_key_list"});
+    return respond(_.map(entity_list, entity => entity.secure(current_user)));
   }
 
+  @User.get("/:id", {permission: [PermissionLevel.USER_MASQUERADE]})
+  public static async getOne({params: {id}, locals: {respond, current_user}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
+    const entity = await this.findOne({id}, {populate: "api_key_list"});
+    return respond(entity.secure(current_user));
+  }
 
   @User.post("/", {user: false})
   @User.bindParameter<Request.postOne>("email", ValidatorType.EMAIL)
@@ -89,10 +109,9 @@ export default class User extends Entity<User>() {
     return respond(user);
   }
 
-
   @User.post("/login", {user: false})
-  @User.bindParameter<Request.postLogin>("email", ValidatorType.EMAIL, {flag_optional: true})
-  @User.bindParameter<Request.postLogin>("password", ValidatorType.STRING, {min_length: 12}, {flag_optional: true})
+  @User.bindParameter<Request.postLogin>("email", ValidatorType.EMAIL, {optional: true})
+  @User.bindParameter<Request.postLogin>("password", ValidatorType.STRING, {min_length: 12}, {optional: true})
   public static async postLogin({locals: {respond, user, api_key, params: {email, password}}}: Server.Request<{}, Response.postLogin, Request.postLogin>) {
     if (email && password) {
       user = await this.findOne({email});
@@ -110,7 +129,8 @@ export default class User extends Entity<User>() {
       for (let api_key of user.api_key_list.getItems()) {
         api_key.token = APIKey.generateToken(api_key.id);
       }
-      return respond(await this.persist({...user, time_login: new Date()}));
+
+      return respond(await this.persist(user, {time_login: new Date()}));
     }
 
     return respond(new ServerException(400));
@@ -163,7 +183,6 @@ export default class User extends Entity<User>() {
     catch (error) {
       if (error instanceof JSONWebToken.TokenExpiredError) return respond(new ServerException(410));
       if (error instanceof JSONWebToken.JsonWebTokenError) return respond(new ServerException(404));
-      if (error instanceof TypeORM.EntityNotFoundError) return respond(new ServerException(404));
       return respond(error);
     }
 
@@ -171,31 +190,14 @@ export default class User extends Entity<User>() {
   }
 
   @User.put("/:id")
-  @User.bindParameter<Request.putOne>("email", ValidatorType.EMAIL, {flag_optional: true})
-  @User.bindParameter<Request.putOne>("username", ValidatorType.STRING, {min_length: 3, max_length: 64}, {flag_optional: true})
-  @User.bindParameter<Request.putOne>("password", ValidatorType.PASSWORD, {flag_optional: true})
-  public static async putOne({params: {id}, locals: {respond, user, params}}: Server.Request<{id: string}, Response.putOne, Request.putOne>) {
-    // const {email, username, password} = params!;
-    //
-    // const user_entity = await User.performSelect(id);
-    // if (user?.id !== user_entity.id) {
-    //   return respond(new ServerException(403));
-    // }
-    //
-    // if (!_.some(params)) {
-    //   return respond(new ServerException(400));
-    // }
-    //
-    // return respond(await this.performUpdate(
-    //   user_entity.id,
-    //   {
-    //     username: username ?? user_entity.username,
-    //     email:    email ?? user_entity.email,
-    //     salt:     password?.salt ?? user_entity.salt,
-    //     hash:     password?.hash ?? user_entity.hash,
-    //   },
-    // ));
-    return respond(new ServerException(501));
+  @User.bindParameter<Request.putOne>("email", ValidatorType.EMAIL, {optional: true})
+  @User.bindParameter<Request.putOne>("username", ValidatorType.STRING, {min_length: 3, max_length: 64}, {optional: true})
+  @User.bindParameter<Request.putOne>("password", ValidatorType.PASSWORD, {optional: true})
+  public static async putOne({params: {id}, locals: {respond, user, current_user, params: {email, username, password: {salt, hash}}}}: Server.Request<{id: string}, Response.putOne, Request.putOne>) {
+    if (user?.id !== id) return respond(new ServerException(403));
+
+    const entity = await this.persist({...await this.findOne({id}), email, username, salt, hash});
+    return respond(entity.secure(current_user));
   }
 
   //endregion ----- Endpoint methods -----
@@ -205,7 +207,7 @@ export type UserJSON = {
   id: string
   email: string
   username: string
-  api_key_list?: APIKeyJSON[]
+  api_key_list?: (string | APIKeyJSON)[]
   time_login: Date
   time_created: Date
 }

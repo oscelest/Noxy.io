@@ -57,14 +57,14 @@ export default class Page extends Entity<Page>() {
   //region    ----- Endpoint methods -----
 
   @Page.get("/")
-  @Page.bindParameter<Request.getCount>("name", ValidatorType.STRING, {min_length: 1})
+  @Page.bindParameter<Request.getCount>("name", ValidatorType.STRING, {})
   @Page.bindPagination(100, ["id", "name", "time_created"])
   public static async getMany({locals: {respond, user, params: {name, ...pagination}}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
     return respond(await this.find({name: {$like: name}, user_created: user}, {...pagination, populate: {user_created: true, file_list: ["file_extension"]}}));
   }
 
   @Page.get("/count")
-  @Page.bindParameter<Request.getCount>("name", ValidatorType.STRING, {min_length: 0})
+  @Page.bindParameter<Request.getCount>("name", ValidatorType.STRING, {})
   public static async getCount({locals: {respond, user, params: {name}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
     return respond(await this.count({name: {$like: name}, user_created: user}));
   }
@@ -83,8 +83,8 @@ export default class Page extends Entity<Page>() {
   @Page.bindParameter<Request.postOne>("path", ValidatorType.STRING, {min_length: 1})
   @Page.bindParameter<Request.postOne>("name", ValidatorType.STRING, {min_length: 1})
   @Page.bindParameter<Request.postOne>("content", ValidatorType.STRING, {min_length: 1})
-  @Page.bindParameter<Request.postOne>("privacy", ValidatorType.ENUM, Privacy, {flag_optional: true})
-  @Page.bindParameter<Request.postOne>("file_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
+  @Page.bindParameter<Request.postOne>("privacy", ValidatorType.ENUM, Privacy, {optional: true})
+  @Page.bindParameter<Request.postOne>("file_list", ValidatorType.UUID, {array: true, optional: true})
   private static async postOne({locals: {respond, user, params: {name, path, content, privacy, file_list}}}: Server.Request<{}, Response.postOne, Request.postOne>) {
     return respond(await this.persist({
       name:         name,
@@ -98,15 +98,15 @@ export default class Page extends Entity<Page>() {
   }
 
   @Page.put("/:id")
-  @Page.bindParameter<Request.putOne>("path", ValidatorType.STRING, {min_length: 1}, {flag_optional: true})
-  @Page.bindParameter<Request.putOne>("name", ValidatorType.STRING, {min_length: 1}, {flag_optional: true})
-  @Page.bindParameter<Request.putOne>("content", ValidatorType.STRING, {min_length: 1}, {flag_optional: true})
-  @Page.bindParameter<Request.putOne>("privacy", ValidatorType.ENUM, Privacy, {flag_optional: true})
-  @Page.bindParameter<Request.putOne>("file_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
+  @Page.bindParameter<Request.putOne>("path", ValidatorType.STRING, {min_length: 1}, {optional: true})
+  @Page.bindParameter<Request.putOne>("name", ValidatorType.STRING, {min_length: 1}, {optional: true})
+  @Page.bindParameter<Request.putOne>("content", ValidatorType.STRING, {min_length: 1}, {optional: true})
+  @Page.bindParameter<Request.putOne>("privacy", ValidatorType.ENUM, Privacy, {optional: true})
+  @Page.bindParameter<Request.putOne>("file_list", ValidatorType.UUID, {array: true, optional: true})
   private static async putOne({params: {id}, locals: {respond, user, params: {name, path, content, privacy, file_list}}}: Server.Request<{id: string}, Response.putOne, Request.putOne>) {
     const page = await this.findOne({id, user_created: user?.id}, {populate: ["user_created"]});
     page.file_list.add(...await File.find({id: {$in: file_list}}));
-    return respond(await this.persist({...page, path, name, content, privacy}));
+    return respond(await this.persist(page, {path, name, content, privacy}));
   }
 
   //endregion ----- Endpoint methods -----

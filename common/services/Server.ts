@@ -156,30 +156,30 @@ module Server {
     for (let name in endpoint.parameter_list) {
       try {
         if (!endpoint.parameter_list.hasOwnProperty(name)) continue;
-        const {type, conditions, options: {flag_array, flag_optional}} = endpoint.parameter_list[name];
+        const {type, conditions, options: {array, optional}} = endpoint.parameter_list[name];
 
         if (type === ValidatorType.FILE) {
-          if (!file_collection?.[name].length && !flag_optional) {
+          if (!file_collection?.[name].length && !optional) {
             error_collection[name] = new ValidatorException(`'${name}' is a mandatory field.`);
           }
           else {
-            params[name] = flag_array ? file_collection?.[name] : _.first(file_collection?.[name]);
+            params[name] = array ? file_collection?.[name] : _.first(file_collection?.[name]);
           }
         }
         else {
           const received = received_parameter_list[name] as string | string[];
 
-          if (received === undefined) {
+          if (received === undefined || received === "") {
             // Intentional split "if" statement - If received value is undefined, it should not go through the validator
-            if (method === HTTPMethod.GET && flag_optional === false || method !== HTTPMethod.GET && flag_optional !== true) {
+            if (method === HTTPMethod.GET && optional === false || method !== HTTPMethod.GET && optional !== true) {
               error_collection[name] = new ValidatorException(`'${name}' is a mandatory field.`);
             }
           }
-          else if (!flag_array && Array.isArray(received)) {
+          else if (!array && Array.isArray(received)) {
             error_collection[name] = new ValidatorException(`Field '${name}' does not accept multiple values.`, received);
           }
           else {
-            params[name] = Validator.parseParameter(type, !flag_array || Array.isArray(received) ? received : [received], conditions);
+            params[name] = Validator.parseParameter(type, !array || Array.isArray(received) ? received : [received], conditions);
           }
         }
       }
@@ -191,21 +191,30 @@ module Server {
     _.size(error_collection) ? respond?.(new ServerException(400, error_collection)) : next();
   }
 
-  function respond(this: Express.Request<{[key: string]: string}, Server.ResponseBody>, value: any) {
+  function respond<T>(this: Express.Request<{[key: string]: string}, Server.ResponseBody<T>>, value: T) {
     const time_started = this.locals.time_created?.toISOString() ?? new Date().toISOString();
     const time_completed = new Date().toISOString();
 
+    let code: number;
+    const response = {time_started, time_completed} as ResponseBody<T>;
+
     if (value instanceof ServerException && value.code !== 500) {
-      this.res?.status(value.code).json({success: false, message: value.message, content: value.content, time_started, time_completed});
+      code = value.code;
+      Object.assign(response, {success: false, message: value.message, content: value.content} as ResponseBody);
     }
     else if (value instanceof Error) {
-      this.res?.status(500).json({success: false, message: HTTPStatusCode[500], content: {}, time_started, time_completed});
+      code = 500;
+      Object.assign(response, {success: false, message: HTTPStatusCode[500], content: {} as T} as ResponseBody);
+
       const {name, message, stack, ...error} = value;
       Logger.write(Logger.Level.ERROR, {name, message, ...error, stack});
     }
     else {
-      this.res?.status(200).json({success: true, message: HTTPStatusCode[200], content: value, time_started, time_completed});
+      code = 200;
+      Object.assign(response, {success: true, message: HTTPStatusCode[200], content: value} as ResponseBody);
     }
+
+    this.res?.status(code).json(response);
 
     if (this.locals.endpoint?.upload?.length) {
       for (let i = 0; i < this.locals.endpoint.upload.length ?? 0; i++) {
@@ -227,10 +236,10 @@ module Server {
 
   export interface Response<ResBody = any, Locals extends Record<string, any> = Record<string, any>> extends Express.Response<ResBody, Locals> {}
 
-  export interface ResponseBody {
+  export interface ResponseBody<T = any> {
     success: boolean
     message: string
-    content: {}
+    content: T
     time_started: string
     time_completed: string
   }
@@ -258,8 +267,8 @@ module Server {
   }
 
   export interface EndpointParameterOptions {
-    flag_array?: boolean
-    flag_optional?: boolean
+    array?: boolean
+    optional?: boolean
   }
 
   export type AliasCollection = {[path: string]: Alias}

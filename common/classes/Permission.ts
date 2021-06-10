@@ -78,8 +78,12 @@ export default class Permission {
     this[PermissionLevel.USER_ELEVATED] = value;
   }
 
-  constructor(initializer?: boolean | PermissionLevel[] | { [K in PermissionLevel]: boolean } | Permission) {
+  constructor(initializer?: boolean | string | PermissionLevel[] | { [K in PermissionLevel]: boolean } | Permission) {
     Object.seal(this);
+
+    if (typeof initializer === "string") {
+      initializer = JSON.parse(initializer) as PermissionLevel[];
+    }
 
     if (typeof initializer === "boolean") {
       for (let key in this) _.set(this, key, initializer);
@@ -95,14 +99,8 @@ export default class Permission {
     }
   }
 
-  public static getPermissionGroup(permission: PermissionLevel) {
-    const split = permission.split(".");
-
-    return split.length === 1 ? PermissionLevel.ADMIN : _.initial(split).join(".");
-  }
-
-  public toJSON(): PermissionLevel[] {
-    if (this[PermissionLevel.ADMIN]) return [PermissionLevel.ADMIN];
+  public toJSON(): string {
+    if (this[PermissionLevel.ADMIN]) return JSON.stringify([PermissionLevel.ADMIN]);
 
     /* ----- API KEY ----- */
 
@@ -148,7 +146,8 @@ export default class Permission {
       if (this[PermissionLevel.USER_MASQUERADE]) permission_list.push(PermissionLevel.USER_MASQUERADE);
     }
 
-    return permission_list;
+    return JSON.stringify(permission_list);
   }
 
 }
+

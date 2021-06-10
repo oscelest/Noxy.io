@@ -101,8 +101,8 @@ export default class File extends Entity<File>() {
 
   @File.get("/")
   @File.bindParameter<Request.getMany>("name", ValidatorType.STRING, {max_length: 128})
-  @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.UUID, {flag_array: true})
-  @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {flag_array: true})
+  @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.UUID, {array: true})
+  @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
   @File.bindPagination(100, ["id", "name", "size", "time_created"])
   public static async getMany({locals: {respond, user, params: {name, file_tag_list, file_tag_set_operation, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
@@ -113,8 +113,8 @@ export default class File extends Entity<File>() {
 
   @File.get("/count")
   @File.bindParameter<Request.getMany>("name", ValidatorType.STRING, {max_length: 128})
-  @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.UUID, {flag_array: true})
-  @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {flag_array: true})
+  @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.UUID, {array: true})
+  @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
   public static async getCount({locals: {respond, user, params: {name, file_tag_list, file_tag_set_operation}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
     // TODO: Add missing check
@@ -148,7 +148,7 @@ export default class File extends Entity<File>() {
 
   @File.post("/")
   @File.bindParameter<Request.postOne>("data", ValidatorType.FILE)
-  @File.bindParameter<Request.postOne>("file_tag_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
+  @File.bindParameter<Request.postOne>("file_tag_list", ValidatorType.UUID, {array: true, optional: true})
   private static async createOne({locals: {respond, user, params}}: Server.Request<{}, Response.postOne, Request.postOne>) {
     const {data, file_tag_list} = params!;
 
@@ -189,8 +189,8 @@ export default class File extends Entity<File>() {
   }
 
   @File.post("/request-download")
-  @File.bindParameter<Request.postDownloadRequest>("id", ValidatorType.UUID, {flag_array: true})
-  @File.bindParameter<Request.postDownloadRequest>("share_hash", ValidatorType.STRING, {validator: File.regexShareHash}, {flag_array: true, flag_optional: true})
+  @File.bindParameter<Request.postDownloadRequest>("id", ValidatorType.UUID, {array: true})
+  @File.bindParameter<Request.postDownloadRequest>("share_hash", ValidatorType.STRING, {validator: File.regexShareHash}, {array: true, optional: true})
   private static async requestDownload({locals: {respond, user, params}}: Server.Request<{}, Response.postRequestDownload, Request.postDownloadRequest>) {
     const {id, share_hash} = params!;
     const file_list = await Database.manager.find(File, {id});
@@ -240,11 +240,11 @@ export default class File extends Entity<File>() {
   }
 
   @File.put("/:id", {permission: PermissionLevel.FILE_UPDATE})
-  @File.bindParameter<Request.putOne>("name", ValidatorType.STRING, {min_length: 3}, {flag_optional: true})
-  @File.bindParameter<Request.putOne>("privacy", ValidatorType.ENUM, Privacy, {flag_optional: true})
-  @File.bindParameter<Request.putOne>("flag_public_tag", ValidatorType.BOOLEAN, {flag_optional: true})
-  @File.bindParameter<Request.putOne>("file_extension", ValidatorType.UUID, {flag_optional: true})
-  @File.bindParameter<Request.putOne>("file_tag_list", ValidatorType.UUID, {flag_array: true, flag_optional: true})
+  @File.bindParameter<Request.putOne>("name", ValidatorType.STRING, {min_length: 3}, {optional: true})
+  @File.bindParameter<Request.putOne>("privacy", ValidatorType.ENUM, Privacy, {optional: true})
+  @File.bindParameter<Request.putOne>("flag_public_tag", ValidatorType.BOOLEAN, {optional: true})
+  @File.bindParameter<Request.putOne>("file_extension", ValidatorType.UUID, {optional: true})
+  @File.bindParameter<Request.putOne>("file_tag_list", ValidatorType.UUID, {array: true, optional: true})
   private static async updateOne({params: {id}, locals: {respond, user, params}}: Server.Request<{id: string}, Response.putOne, Request.putOne>) {
     // const {name, privacy, flag_public_tag, file_extension, file_tag_list} = params!;
     //

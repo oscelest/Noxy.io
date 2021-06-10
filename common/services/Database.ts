@@ -22,6 +22,7 @@ module Database {
       password:       process.env.DB_PASSWORD,
       dbName:         process.env.DB_DATABASE,
       namingStrategy: NamingStrategy,
+      // debug:          ["query", "query-params"],
     });
 
     Database.instance = instance;

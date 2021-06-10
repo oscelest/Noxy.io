@@ -39,7 +39,7 @@ export default class FileTag extends Entity<FileTag>() {
 
   @FileTag.get("/count")
   @FileTag.bindParameter<Request.getCount>("name", ValidatorType.STRING, {max_length: 64})
-  @FileTag.bindParameter<Request.getCount>("exclude", ValidatorType.UUID, {flag_array: true})
+  @FileTag.bindParameter<Request.getCount>("exclude", ValidatorType.UUID, {array: true})
   @FileTag.bindPagination(100, ["id", "name", "time_created"])
   public static async getCount({locals: {respond, user, params: {name, exclude}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
     return respond(await this.count({id: {$nin: exclude}, name: {$like: name}, user_created: user}));
@@ -47,7 +47,7 @@ export default class FileTag extends Entity<FileTag>() {
 
   @FileTag.get("/")
   @FileTag.bindParameter<Request.getMany>("name", ValidatorType.STRING, {max_length: 64})
-  @FileTag.bindParameter<Request.getMany>("exclude", ValidatorType.UUID, {flag_array: true})
+  @FileTag.bindParameter<Request.getMany>("exclude", ValidatorType.UUID, {array: true})
   @FileTag.bindPagination(100, ["id", "name", "time_created"])
   public static async getMany({locals: {respond, user, params: {name, exclude, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
     return respond(await this.find({id: {$nin: exclude}, name: {$like: name}, user_created: user}, {...pagination, populate: "user_created"}));

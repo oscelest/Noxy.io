@@ -73,8 +73,6 @@ export default class PageEntity extends Entity {
     const result = await Axios.put<APIRequest<PageEntity>>(`${this.URL}/${id}`, new RequestData(parameters).toObject());
     return new this(result.data.content);
   }
-
-
 }
 
 export type PageEntitySearchParameters = {

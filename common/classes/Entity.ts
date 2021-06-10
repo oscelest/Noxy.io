@@ -86,7 +86,7 @@ export default function Entity<E>() {
         const alias = new Alias(constructor, method);
         Server.bindRouteParameter(alias, "skip", ValidatorType.INTEGER, {min: 0}, {});
         Server.bindRouteParameter(alias, "size", ValidatorType.INTEGER, {min: 1, max: limit}, {});
-        Server.bindRouteParameter(alias, "order", ValidatorType.ORDER, columns as string[], {flag_array: true});
+        Server.bindRouteParameter(alias, "order", ValidatorType.ORDER, columns as string[], {array: true});
       };
     }
 
@@ -118,9 +118,16 @@ export default function Entity<E>() {
       return await Database.manager.populate(entities, populate);
     }
 
-    public static async persist(object: Initializer<E>) {
+    public static async persist(object: Initializer<E>, values?: Initializer<E>) {
       try {
         if (!(object instanceof this)) object = Database.manager.create(this, object);
+        if (values) {
+          for (let key in values) {
+            if (values[key as keyof Initializer<E>] === undefined) continue;
+            object[key as keyof Initializer<E>] = values[key as keyof Initializer<E>];
+          }
+        }
+
         await Database.manager.persistAndFlush(object);
         return object as E;
       }

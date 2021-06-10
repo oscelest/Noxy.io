@@ -1,5 +1,4 @@
 import JWT from "jsonwebtoken";
-import * as TypeORM from "typeorm";
 import {v4} from "uuid";
 import Permission from "../../common/classes/Permission";
 import ValidatorType from "../../common/enums/ValidatorType";
@@ -10,6 +9,8 @@ import User, {UserJSON} from "./User";
 import Server from "../../common/services/Server";
 import {PrimaryKey, Property, ManyToOne, Index, Unique} from "@mikro-orm/core";
 import {Entity as DBEntity} from "@mikro-orm/core/decorators/Entity";
+import PermissionType from "../../common/type/PermissionType";
+import _ from "lodash";
 
 @DBEntity()
 @Unique({name: "token", properties: ["token"] as (keyof APIKey)[]})
@@ -22,11 +23,10 @@ export default class APIKey extends Entity<APIKey>() {
   @PrimaryKey({length: 36})
   public id: string = v4();
 
-  @Property({length: 230, lazy: true})
+  @Property({length: 230})
   public token: string = APIKey.generateToken(this.id);
 
-  // @Property({type: "json",  transformer: {to: (value: Permission) => value.toJSON(), from: (init: PermissionLevel[]) => new Permission(init)}})
-  @Property({type: "json"})
+  @Property({type: PermissionType})
   public permission: Permission = new Permission();
 
   @Property()
@@ -52,10 +52,23 @@ export default class APIKey extends Entity<APIKey>() {
     return JWT.sign({id}, process.env.JWT_SECRET!, {algorithm: "HS512", expiresIn: "7d"});
   }
 
-  public static createSelect() {
-    const query = TypeORM.createQueryBuilder(this);
-    this.join(query, "user");
-    return query;
+  public secure(current_user?: boolean) {
+    if (current_user) return this;
+    const {token, ...entity} = this;
+    return Object.assign(new APIKey(), entity, {token: undefined} as Initializer<User>);
+  }
+
+  public toJSON(strict: boolean = true, strip: (keyof Initializer<APIKey>)[] = []): APIKeyJSON {
+    return {
+      id:                   this.id,
+      user:                 !strip.includes("user") ? this.user?.toJSON(true, ["api_key_list"]) : this.user?.id,
+      limit_per_decasecond: this.limit_per_decasecond,
+      limit_per_minute:     this.limit_per_minute,
+      permission:           this.permission.toJSON(),
+      time_updated:         this.time_updated,
+      token:                this.token,
+      time_created:         this.time_created,
+    };
   }
 
   //endregion ----- Utility methods -----
@@ -70,79 +83,43 @@ export default class APIKey extends Entity<APIKey>() {
 
   @APIKey.get("/", {permission: PermissionLevel.API_KEY_VIEW})
   @APIKey.bindPagination(100, ["id", "time_created"])
-  public static async getMany({locals: {respond, user, api_key, params: pagination}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
-    return respond(await this.find({user: user?.id}, {...pagination, populate: api_key?.user?.id === user?.id ? ["token"] : []}));
+  public static async getMany({locals: {respond, user, current_user, params: pagination}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
+    const entity = await this.find({user: user?.id}, {...pagination});
+    return respond(_.map(entity, entity => entity.secure(current_user)));
   }
-
 
   @APIKey.get("/:id", {permission: PermissionLevel.API_KEY_VIEW})
-  public static async getOne({params: {id}, locals: {respond, user, api_key}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
-    return respond(await this.findOne({id, user: user?.id}, {populate: api_key?.user?.id === user?.id ? ["token"] : []}));
+  public static async getOne({params: {id}, locals: {respond, user, current_user}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
+    const entity = await this.findOne({id, user: user?.id});
+    return respond(entity.secure(current_user));
   }
 
-  @APIKey.post("/", {permission: [PermissionLevel.USER_ELEVATED, PermissionLevel.API_KEY_CREATE]})
-  @APIKey.bindParameter<Request.postOne>("user", ValidatorType.UUID)
+  @APIKey.post("/", {permission: [PermissionLevel.API_KEY_CREATE]})
   @APIKey.bindParameter<Request.postOne>("permission", ValidatorType.STRING)
   @APIKey.bindParameter<Request.postOne>("limit_per_decasecond", ValidatorType.INTEGER, {min: 0})
   @APIKey.bindParameter<Request.postOne>("limit_per_minute", ValidatorType.INTEGER, {min: 0})
-  private static async postOne({locals: {respond, user, api_key, params}}: Server.Request<{}, Response.postOne, Request.postOne>) {
-    // const {user: user_id, permission: permission_json, limit_per_decasecond, limit_per_minute} = params!;
-    // const permission = new Permission(JSON.parse(permission_json));
-    // const entity = this.manager.getRepository(APIKey).create({permission, limit_per_decasecond, limit_per_minute});
-    //
-    // try {
-    //   entity.user = await User.performSelect(user_id);
-    // }
-    // catch (error) {
-    //   respond?.(error);
-    // }
-    //
-    // try {
-    //   const inserted = await this.performInsert(entity);
-    //   if (api_key?.user !== user) _.unset(inserted, "token" as keyof APIKey);
-    //   respond?.(inserted);
-    // }
-    // catch (error) {
-    //   respond?.(error);
-    // }
+  private static async postOne({locals: {respond, user, current_user, params: {permission, limit_per_decasecond, limit_per_minute}}}: Server.Request<{}, Response.postOne, Request.postOne>) {
+    const entity = await this.persist({user, limit_per_decasecond, limit_per_minute, permission: new Permission(JSON.parse(permission))});
+    return respond(entity.secure(current_user));
   }
 
   @APIKey.put("/:id", {permission: PermissionLevel.API_KEY_UPDATE})
   @APIKey.bindParameter<Request.putOne>("permission", ValidatorType.STRING)
   @APIKey.bindParameter<Request.putOne>("limit_per_decasecond", ValidatorType.INTEGER, {min: 0})
   @APIKey.bindParameter<Request.putOne>("limit_per_minute", ValidatorType.INTEGER, {min: 0})
-  private static async putOne({params: {id}, locals: {respond, user, api_key, params}}: Server.Request<{id: string}, Response.putOne, Request.putOne>) {
-    // const {permission: permission_json, limit_per_decasecond, limit_per_minute} = params!;
-    //
-    // try {
-    //   const permission = new Permission(JSON.parse(permission_json));
-    //   const updated = await this.performUpdate(id, {permission, limit_per_decasecond, limit_per_minute});
-    //   if (api_key?.user !== user) _.unset(updated, "token" as keyof APIKey);
-    //   respond?.(updated);
-    // }
-    // catch (error) {
-    //   respond?.(error);
-    // }
+  private static async putOne({params: {id}, locals: {respond, user, current_user, params}}: Server.Request<{id: string}, Response.putOne, Request.putOne>) {
+    const {permission, limit_per_decasecond, limit_per_minute} = params;
+    const entity = await this.persist(await this.findOne({id, user}), {user, limit_per_decasecond, limit_per_minute, permission: new Permission(JSON.parse(permission))});
+    return respond(entity.secure(current_user));
   }
 
   @APIKey.delete("/:id", {permission: PermissionLevel.API_KEY_DELETE})
-  private static async deleteOne({params: {id}, locals: {respond, api_key, user}}: Server.Request<{id: string}, Response.deleteOne, Request.deleteOne>) {
-    // const entity = await this.performSelect(id);
-    // if (entity.user?.id !== user?.id) {
-    //   return respond?.(new ServerException(403, {}, "Forbidden from deleting an API Key with the same or higher access level as your own."));
-    // }
-    //
-    // const count = await this.addValueClause(this.createSelect(), "user", entity.user?.id).getCount();
-    // if (count <= 1) {
-    //   return respond?.(new ServerException(400, {}, "A user must always have at least one API Key, please create a new one before deleting this."));
-    // }
-    //
-    // try {
-    //   respond?.(await this.performDelete(id));
-    // }
-    // catch (error) {
-    //   respond?.(error);
-    // }
+  private static async deleteOne({params: {id}, locals: {respond, user, current_user}}: Server.Request<{id: string}, Response.deleteOne, Request.deleteOne>) {
+    const count = await this.count({user});
+    if (count === 1) return respond(new ServerException(400, {}, "A user must always have at least one API Key, please create a new one before deleting this."));
+
+    const entity = await this.remove({id, user});
+    return respond(entity.secure(current_user));
   }
 
   //endregion ----- Endpoint methods -----
@@ -152,10 +129,10 @@ export default class APIKey extends Entity<APIKey>() {
 export type APIKeyJSON = {
   id: string
   token: string
-  permission: PermissionLevel[]
+  permission: string
   limit_per_decasecond: number
   limit_per_minute: number
-  user?: UserJSON
+  user?: string | UserJSON
   time_created: Date
   time_updated: Date
 }
