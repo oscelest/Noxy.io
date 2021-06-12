@@ -15,7 +15,7 @@ export default class PageEntity extends Entity {
   public privacy: Privacy;
   public share_hash: string;
   public file_list: FileEntity[];
-  public user_created: UserEntity;
+  public user: UserEntity;
   public time_created: Date;
   public time_updated: Date;
 
@@ -29,7 +29,7 @@ export default class PageEntity extends Entity {
     this.content = entity?.content ?? "";
     this.privacy = entity?.privacy ?? Privacy.PRIVATE;
     this.file_list = FileEntity.instantiate(entity?.file_list);
-    this.user_created = new UserEntity(entity?.user_created);
+    this.user = new UserEntity(entity?.user);
     this.time_created = new Date(entity?.time_created ?? 0);
     this.time_updated = new Date(entity?.time_updated ?? 0);
   }

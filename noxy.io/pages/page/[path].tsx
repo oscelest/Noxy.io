@@ -62,7 +62,7 @@ export default class PageIDPage extends React.Component<PageIDPageProps, State> 
           <Placeholder show={!!this.state.placeholder} text={this.state.placeholder}>
             <PageHeader title={this.state.entity.name}>
               <Masquerade className={Style.Masquerade}/>
-              <Conditional condition={this.context.isCurrentUser(this.state.entity.user_created)}>
+              <Conditional condition={this.context.isCurrentUser(this.state.entity.user)}>
                 <Redirect href={`/page/${this.state.entity.id}/edit`}>
                   <Button icon={IconType.UI_EDIT}>Edit</Button>
                 </Redirect>

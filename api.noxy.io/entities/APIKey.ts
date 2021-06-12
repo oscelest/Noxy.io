@@ -81,19 +81,19 @@ export default class APIKey extends Entity<APIKey>() {
   @APIKey.get("/count", {permission: PermissionLevel.API_KEY_VIEW})
   @APIKey.bindParameter("name", ValidatorType.STRING, {max_length: 64})
   private static async getCount({locals: {respond, user}}: Server.Request<{}, Response.getCount, Request.getCount>) {
-    return respond(await this.count({user: user?.id}));
+    return respond(await this.count({user}));
   }
 
   @APIKey.get("/", {permission: PermissionLevel.API_KEY_VIEW})
   @APIKey.bindPagination(100, ["id", "time_created"])
   public static async getMany({locals: {respond, user, api_key, params: pagination}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
-    const entity = await this.find({user: user?.id}, {...pagination});
+    const entity = await this.find({user}, {...pagination});
     return respond(_.map(entity, entity => entity.secure(entity.user?.id === api_key?.user?.id)));
   }
 
   @APIKey.get("/:id", {permission: PermissionLevel.API_KEY_VIEW})
   public static async getOne({params: {id}, locals: {respond, user, api_key}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
-    const entity = await this.findOne({id, user: user?.id});
+    const entity = await this.findOne({id, user});
     return respond(entity.secure(entity.user?.id === api_key?.user?.id));
   }
 
@@ -118,8 +118,7 @@ export default class APIKey extends Entity<APIKey>() {
 
   @APIKey.delete("/:id", {permission: PermissionLevel.API_KEY_DELETE})
   private static async deleteOne({params: {id}, locals: {respond, user, api_key}}: Server.Request<{id: string}, Response.deleteOne, Request.deleteOne>) {
-    const count = await this.count({user});
-    if (count === 1) return respond(new ServerException(400, {}, "A user must always have at least one API Key, please create a new one before deleting this."));
+    if (await this.count({user}) === 1) return respond(new ServerException(400, {}, "A user must always have at least one API Key, please create a new one before deleting this."));
 
     const entity = await this.remove({id, user});
     return respond(entity.secure(entity.user?.id === api_key?.user?.id));

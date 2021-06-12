@@ -88,7 +88,7 @@ export default class User extends Entity<User>() {
   @User.bindParameter<Request.getMany>("email", ValidatorType.STRING, {min_length: 1})
   @User.bindPagination(100, ["id", "email", "time_created"])
   public static async getMany({locals: {respond, api_key, params: {email, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
-    const entity_list = await this.find(new WhereCondition(this).andWildcard({email}), {...pagination, populate: "api_key_list"});
+    const entity_list = await this.find(this.where().andWildcard({email}), {...pagination, populate: "api_key_list"});
     return respond(_.map(entity_list, entity => entity.secure(entity.id === api_key?.user?.id)));
   }
 

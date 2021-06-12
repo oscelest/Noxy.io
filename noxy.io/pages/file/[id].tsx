@@ -71,7 +71,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
       this.setState({file, file_loading: false});
 
       const next_state = {} as State;
-      const isOwner = file && this.context.isCurrentUser(file.user_created)
+      const isOwner = file && this.context.isCurrentUser(file.user)
 
       next_state.tag_selected_list = file.file_tag_list;
       next_state.file_privacy = {
@@ -103,7 +103,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     const {file, file_element, file_loading, file_privacy} = this.state;
     const {tag_privacy, tag_selected_list, tag_available_list} = this.state;
     const loading_sidebar = _.includes([FileTypeName.AUDIO, FileTypeName.IMAGE, FileTypeName.VIDEO], file?.getFileType()) && !file_element;
-    const isOwner = file && this.context.isCurrentUser(file.user_created)
+    const isOwner = file && this.context.isCurrentUser(file.user)
 
     return (
       <Loader size={Size.LARGE} show={file_loading}>

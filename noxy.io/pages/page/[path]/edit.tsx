@@ -55,7 +55,7 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
       }
       next_state.value = next_state.entity.content;
 
-      const isOwner = this.context.isCurrentUser(next_state.entity.user_created);
+      const isOwner = this.context.isCurrentUser(next_state.entity.user);
       next_state.privacy = {
         [Privacy.PRIVATE]: RadioButton.createElement(Privacy.PRIVATE, "Private", next_state.entity.privacy === Privacy.PRIVATE, !isOwner),
         [Privacy.LINK]:    RadioButton.createElement(Privacy.LINK, "With link", next_state.entity.privacy === Privacy.LINK, !isOwner),

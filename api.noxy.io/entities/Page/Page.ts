@@ -42,7 +42,7 @@ export default class Page extends Entity<Page>() {
   public file_list: Collection<File> = new Collection<File>(this);
 
   @ManyToOne(() => User)
-  public user_created: User;
+  public user: User;
 
   @Property()
   public time_created: Date = new Date();
@@ -65,7 +65,7 @@ export default class Page extends Entity<Page>() {
       file_list:    !strip.includes("file_list")
                       ? _.map(this.file_list.getItems(), entity => entity.toJSON())
                       : _.map(this.file_list.getItems(), entity => entity.id),
-      user_created: !strip.includes("user_created") ? this.user_created.toJSON() : this.user_created.id,
+      user:         !strip.includes("user") ? this.user.toJSON() : this.user.id,
       time_created: this.time_created,
       time_updated: this.time_updated,
     };
@@ -78,7 +78,7 @@ export default class Page extends Entity<Page>() {
   @Page.get("/count")
   @Page.bindParameter<Request.getCount>("name", ValidatorType.STRING, {})
   public static async getCount({locals: {respond, params: {name}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
-    return respond(await this.count(new WhereCondition(this).andWildcard({name})));
+    return respond(await this.count(this.where().andWildcard({name})));
   }
 
   @Page.get("/")
@@ -86,19 +86,19 @@ export default class Page extends Entity<Page>() {
   @Page.bindPagination(100, ["id", "name", "time_created"])
   public static async getMany({locals: {respond, user, params: {name, ...pagination}}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
     return respond(await this.find(
-      new WhereCondition(this, {user_created: user}).andWildcard({name}),
-      {...pagination, populate: {user_created: true, file_list: ["file_extension"]}}),
+      new WhereCondition(this, {user}).andWildcard({name}),
+      {...pagination, populate: {user: true, file_list: ["file_extension"]}}),
     );
   }
 
   @Page.get("/:id")
   public static async getOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
-    return respond(await this.findOne({id, user_created: user}));
+    return respond(await this.findOne({id, user}));
   }
 
   @Page.get("/by-path/:path")
   public static async getOneByPath({params: {path}, locals: {respond, user}}: Server.Request<{path: string}, Response.getOne, Request.getOne>) {
-    return respond(await this.findOne({path, user_created: user}));
+    return respond(await this.findOne({path, user}));
   }
 
   @Page.post("/")
@@ -109,13 +109,13 @@ export default class Page extends Entity<Page>() {
   @Page.bindParameter<Request.postOne>("file_list", ValidatorType.UUID, {array: true, optional: true})
   private static async postOne({locals: {respond, user, params: {name, path, content, privacy, file_list}}}: Server.Request<{}, Response.postOne, Request.postOne>) {
     return respond(await this.persist({
-      name:         name,
-      path:         path,
-      content:      content,
-      privacy:      privacy ?? Privacy.PRIVATE,
-      share_hash:   File.generateShareHash(),
-      user_created: user!,
-      file_list:    new Collection<File>(file_list ? await Database.manager.find(File, {id: file_list}) : []),
+      name:       name,
+      path:       path,
+      content:    content,
+      privacy:    privacy ?? Privacy.PRIVATE,
+      share_hash: File.generateShareHash(),
+      user:       user!,
+      file_list:  new Collection<File>(file_list ? await Database.manager.find(File, {id: file_list}) : []),
     }));
   }
 
@@ -126,7 +126,7 @@ export default class Page extends Entity<Page>() {
   @Page.bindParameter<Request.putOne>("privacy", ValidatorType.ENUM, Privacy, {optional: true})
   @Page.bindParameter<Request.putOne>("file_list", ValidatorType.UUID, {array: true, optional: true})
   private static async putOne({params: {id}, locals: {respond, user, params: {name, path, content, privacy, file_list}}}: Server.Request<{id: string}, Response.putOne, Request.putOne>) {
-    const page = await this.findOne({id, user_created: user?.id}, {populate: ["user_created"]});
+    const page = await this.findOne({id, user}, {populate: ["user"]});
     page.file_list.add(...await File.find({id: {$in: file_list}}));
     return respond(await this.persist(page, {path, name, content, privacy}));
   }
@@ -143,7 +143,7 @@ export type PageJSON = {
   privacy: Privacy
   share_hash: string
   file_list: string[] | FileJSON[]
-  user_created: string | UserJSON
+  user: string | UserJSON
   time_created: Date
   time_updated: Date
 }
