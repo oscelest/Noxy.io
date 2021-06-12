@@ -56,7 +56,7 @@ export default class File extends Entity<File>() {
   public file_tag_list: Collection<FileTag> = new Collection<FileTag>(this);
 
   @ManyToOne(() => User)
-  public user_created: User;
+  public user: User;
 
   @Property()
   public time_created: Date = new Date();
@@ -78,8 +78,8 @@ export default class File extends Entity<File>() {
 
   public hasAccess(user: User, share_hash?: string) {
     // TODO: Fix this
-    // if (!this.flag_public_tag && user?.id !== this.user_created.id) this.file_tag_list = [];
-    return user?.id === this.user_created.id || this.privacy === Privacy.PUBLIC || this.privacy === Privacy.LINK && this.share_hash === share_hash;
+    // if (!this.flag_public_tag && user?.id !== this.user.id) this.file_tag_list = [];
+    return user?.id === this.user.id || this.privacy === Privacy.PUBLIC || this.privacy === Privacy.LINK && this.share_hash === share_hash;
   }
 
   public toJSON(strict: boolean = true, strip: (keyof File)[] = []): FileJSON {
@@ -95,7 +95,7 @@ export default class File extends Entity<File>() {
       file_tag_list:   !strip.includes("file_tag_list")
                          ? _.map(this.file_tag_list.getItems(), entity => entity.toJSON())
                          : _.map(this.file_tag_list.getItems(), entity => entity.id),
-      user_created:    !strip.includes("user_created") ? this.user_created.toJSON() : this.user_created.id,
+      user:            !strip.includes("user") ? this.user.toJSON() : this.user.id,
       time_created:    this.time_created,
       time_updated:    this.time_updated,
     };
@@ -125,7 +125,7 @@ export default class File extends Entity<File>() {
   public static async getCount({locals: {respond, user, params: {name, file_tag_list, file_tag_set_operation}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
     // TODO: Add missing check
     // this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
-    return respond(await this.count(this.where({user_created: user?.id}).andWildcard({name})));
+    return respond(await this.count(this.where({user}).andWildcard({name})));
   }
 
   @File.get("/")
@@ -137,7 +137,7 @@ export default class File extends Entity<File>() {
   public static async getMany({locals: {respond, user, params: {name, file_tag_list, file_tag_set_operation, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
     // TODO: Add missing check
     // this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
-    return respond(await this.find(this.where({user_created: user?.id}).andWildcard({name}), {...pagination}));
+    return respond(await this.find(this.where({user}).andWildcard({name}), {...pagination}));
   }
 
   @File.get("/:id", {user: false})
@@ -147,12 +147,11 @@ export default class File extends Entity<File>() {
       this.where({id}).andOr(
         {privacy: Privacy.PUBLIC},
         {privacy: Privacy.LINK, share_hash},
-        {privacy: Privacy.PRIVATE, user_created: user?.id ?? this.defaultID},
+        {privacy: Privacy.PRIVATE, user},
       ),
-      {populate: "user_created"},
+      {populate: "user"},
     );
-
-    if (file.user_created.id === user?.id || file.flag_public_tag) await this.populate(file, "file_tag_list");
+    if (file.user.id === user?.id || file.flag_public_tag) await this.populate(file, "file_tag_list");
     return respond(file);
   }
 
@@ -182,8 +181,8 @@ export default class File extends Entity<File>() {
       share_hash:      File.generateShareHash(),
       flag_public_tag: false,
       file_extension:  await FileExtension.findOne({type: this.parseFileType(data.mimetype), mime_type: data.mimetype, name: _.last(data.originalname.split(".")) ?? ""}),
-      file_tag_list:   new Collection<FileTag>(await FileTag.find({id: file_tag_list, user_created: user?.id})),
-      user_created:    user,
+      file_tag_list:   new Collection<FileTag>(await FileTag.find({id: file_tag_list, user: user?.id})),
+      user:            user,
     });
 
     FS.rename(data.path, file.getFilePath(), async error => {
@@ -254,8 +253,8 @@ export default class File extends Entity<File>() {
     // const {name, privacy, flag_public_tag, file_extension, file_tag_list} = params!;
     //
     // try {
-    //   const file = await Database.manager.findOneOrFail(File, {id}, ["file_extension", "user_created", "file_tag_list"]);
-    //   if (file.user_created.id !== user?.id) return respond(new ServerException(403));
+    //   const file = await Database.manager.findOneOrFail(File, {id}, ["file_extension", "user", "file_tag_list"]);
+    //   if (file.user.id !== user?.id) return respond(new ServerException(403));
     //
     //   if (file_tag_list) {
     //     const file_tag_id_list = _.map(file.file_tag_list, file_tag => file_tag.id);
@@ -283,7 +282,7 @@ export default class File extends Entity<File>() {
   private static async deleteOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.deleteOne, Request.deleteOne>) {
     // try {
     //   const file = await Database.manager.findOneOrFail(File, {id});
-    //   if (file.user_created.id !== user?.id) return respond(new ServerException(403));
+    //   if (file.user.id !== user?.id) return respond(new ServerException(403));
     //
     //   FS.unlink(Path.resolve(process.env.FILE_PATH!, file.data_hash), async error => {
     //     if (error) return respond(new ServerException(500, error));
@@ -317,7 +316,7 @@ export type FileJSON = {
   flag_public_tag: boolean
   file_extension: string | FileExtensionJSON
   file_tag_list: string[] | FileTagJSON[]
-  user_created: string | UserJSON
+  user: string | UserJSON
   time_created: Date
   time_updated: Date
 }

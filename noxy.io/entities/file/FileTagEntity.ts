@@ -8,7 +8,7 @@ export default class FileTagEntity extends Entity {
 
   public id: string;
   public name: string;
-  public user_created: UserEntity;
+  public user: UserEntity;
   public time_created: Date;
 
   public static URL = `${Entity.domainAPI}/file-tag`;
@@ -17,7 +17,7 @@ export default class FileTagEntity extends Entity {
     super();
     this.id = entity?.id ?? Entity.defaultID;
     this.name = entity?.name ?? "";
-    this.user_created = new UserEntity(entity?.user_created);
+    this.user = new UserEntity(entity?.user);
     this.time_created = new Date(entity?.time_created ?? 0);
   }
 

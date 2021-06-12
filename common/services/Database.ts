@@ -1,5 +1,6 @@
 import {MikroORM, EntityManager} from "@mikro-orm/core";
 import NamingStrategy from "../classes/NamingStrategy";
+import DBConfig from "../../api.noxy.io/mikro-orm.config";
 
 if (!process.env.DB_HOST) throw new Error("DB_HOST environmental value must be defined.");
 if (!process.env.DB_PORT) throw new Error("DB_PORT environmental value must be defined.");
@@ -13,18 +14,7 @@ module Database {
   export let manager: EntityManager;
 
   export async function connect() {
-    const instance = await MikroORM.init({
-      entities:       ["./entities/**"],
-      type:           "mysql",
-      host:           process.env.DB_HOST,
-      port:           Number(process.env.DB_PORT),
-      user:           process.env.DB_USERNAME,
-      password:       process.env.DB_PASSWORD,
-      dbName:         process.env.DB_DATABASE,
-      namingStrategy: NamingStrategy,
-      // debug:          ["query", "query-params"],
-    });
-
+    const instance = await MikroORM.init(DBConfig);
     Database.instance = instance;
     Database.manager = instance.em;
 

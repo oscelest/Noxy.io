@@ -80,7 +80,7 @@ export default class PageIndexPage extends React.Component<PageIndexPageProps, S
         </ColumnText>
 
         <ColumnText className={Style.UserCreated} title={"Created by"}>
-          {entity.user_created.username}
+          {entity.user.username}
         </ColumnText>
 
         <Redirect className={Style.Redirect} href={`/page/${entity.id}`}>

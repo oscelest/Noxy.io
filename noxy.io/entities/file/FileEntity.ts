@@ -21,7 +21,7 @@ export default class FileEntity extends Entity {
   public flag_public_tag: boolean;
   public file_tag_list: FileTagEntity[];
   public file_extension: FileExtensionEntity;
-  public user_created: UserEntity;
+  public user: UserEntity;
   public time_created: Date;
 
   public static URL = `${Entity.domainAPI}/file`;
@@ -37,7 +37,7 @@ export default class FileEntity extends Entity {
     this.flag_public_tag = entity?.flag_public_tag ?? false;
     this.file_tag_list = FileTagEntity.instantiate(entity?.file_tag_list);
     this.file_extension = new FileExtensionEntity(entity?.file_extension);
-    this.user_created = new UserEntity(entity?.user_created);
+    this.user = new UserEntity(entity?.user);
     this.time_created = new Date(entity?.time_created ?? 0);
   }
 

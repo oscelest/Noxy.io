@@ -8,7 +8,7 @@ import Server from "../../../common/services/Server";
 import WhereCondition from "../../../common/classes/WhereCondition";
 
 @DBEntity()
-@Unique({name: "file_tag", properties: ["name", "user_created"] as (keyof FileTag)[]})
+@Unique({name: "file_tag", properties: ["name", "user"] as (keyof FileTag)[]})
 @Index({name: "time_created", properties: ["time_created"] as (keyof FileTag)[]})
 @Index({name: "time_updated", properties: ["time_updated"] as (keyof FileTag)[]})
 export default class FileTag extends Entity<FileTag>() {
@@ -22,7 +22,7 @@ export default class FileTag extends Entity<FileTag>() {
   public name: string;
 
   @ManyToOne(() => User)
-  public user_created: User;
+  public user: User;
 
   @Property()
   public time_created: Date = new Date();
@@ -38,7 +38,7 @@ export default class FileTag extends Entity<FileTag>() {
     return {
       id:           this.id,
       name:         this.name,
-      user_created: !strip.includes("user_created") ? this.user_created.toJSON() : this.user_created.id,
+      user:         !strip.includes("user") ? this.user.toJSON() : this.user.id,
       time_created: this.time_created,
       time_updated: this.time_updated,
     };
@@ -57,9 +57,7 @@ export default class FileTag extends Entity<FileTag>() {
   @FileTag.bindParameter<Request.getCount>("exclude", ValidatorType.UUID, {array: true})
   @FileTag.bindPagination(100, ["id", "name", "time_created"])
   public static async getCount({locals: {respond, user, params: {name, exclude}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
-    return respond(await this.count(
-      new WhereCondition(FileTag).andExclusion({id: exclude}).andWildcard({name}).andValue({user_created: user!.id}),
-    ));
+    return respond(await this.count(this.where({user}).andExclusion({id: exclude}).andWildcard({name})));
   }
 
   @FileTag.get("/")
@@ -67,34 +65,28 @@ export default class FileTag extends Entity<FileTag>() {
   @FileTag.bindParameter<Request.getMany>("exclude", ValidatorType.UUID, {array: true})
   @FileTag.bindPagination(100, ["id", "name", "time_created"])
   public static async getMany({locals: {respond, user, params: {name, exclude, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
-    return respond(await this.find(
-      new WhereCondition(FileTag).andExclusion({id: exclude}).andWildcard({name}).andValue({user_created: user!.id}),
-      {...pagination, populate: "user_created"},
-    ));
+    return respond(await this.find(this.where({user}).andExclusion({id: exclude}).andWildcard({name}), {...pagination, populate: "user"}));
   }
 
   @FileTag.get("/:id")
   public static async getOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
-    return respond(await this.findOne(
-      new WhereCondition(FileTag).andValue({id}).andValue({user_created: user!.id}),
-      {populate: "user_created"},
-    ));
+    return respond(await this.findOne(this.where({id, user}), {populate: "user"}));
   }
 
   @FileTag.get("/by-name/:name")
   public static async getOneByName({params: {name}, locals: {respond, user}}: Server.Request<{name: string}, Response.getOne, Request.getOne>) {
-    return respond(await this.findOne({name, user_created: user}, {populate: "user_created"}));
+    return respond(await this.findOne({name, user}, {populate: "user"}));
   }
 
   @FileTag.post("/")
   @FileTag.bindParameter<Request.postOne>("name", ValidatorType.STRING, {min_length: 3, max_length: 64})
   private static async postOne({locals: {respond, user, params: {name}}}: Server.Request<{}, Response.postOne, Request.postOne>) {
-    return respond(await this.persist({name, user_created: user}));
+    return respond(await this.persist({name, user}));
   }
 
   @FileTag.delete("/:id")
   private static async deleteOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.deleteOne, Request.deleteOne>) {
-    return respond(await this.remove({id, user_created: user}, {populate: "user_created"}));
+    return respond(await this.remove({id, user}, {populate: "user"}));
   }
 
   //endregion ----- Endpoint methods -----
@@ -104,7 +96,7 @@ export default class FileTag extends Entity<FileTag>() {
 export type FileTagJSON = {
   id: string
   name: string
-  user_created: string | UserJSON
+  user: string | UserJSON
   time_created: Date
   time_updated: Date
 }
