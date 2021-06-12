@@ -151,6 +151,7 @@ export default class File extends Entity<File>() {
       ),
       {populate: "user_created"},
     );
+
     if (file.user_created.id === user?.id || file.flag_public_tag) await this.populate(file, "file_tag_list");
     return respond(file);
   }
