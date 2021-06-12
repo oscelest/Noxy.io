@@ -82,6 +82,7 @@ import User from "./entities/User";
       else {
         request.locals.user = request.locals.api_key?.user;
       }
+
       request.locals.current_user = request.locals.user && request.locals.api_key && request.locals.user?.id === request.locals.api_key?.user?.id;
 
       next();

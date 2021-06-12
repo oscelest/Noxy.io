@@ -9,6 +9,8 @@ import {PrimaryKey, Property, Enum, ManyToOne, ManyToMany, Unique, Filter, Colle
 import {v4} from "uuid";
 import {Entity as DBEntity} from "@mikro-orm/core/decorators/Entity";
 import Database from "../../../common/services/Database";
+import _ from "lodash";
+import WhereCondition from "../../../common/classes/WhereCondition";
 
 @DBEntity()
 @Unique({name: "name", properties: ["name"] as (keyof Page)[]})
@@ -52,21 +54,41 @@ export default class Page extends Entity<Page>() {
 
   //region    ----- Utility methods -----
 
+  public toJSON(strict: boolean = true, strip: (keyof Page)[] = []): PageJSON {
+    return {
+      id:           this.id,
+      path:         this.path,
+      name:         this.name,
+      content:      this.content,
+      privacy:      this.privacy,
+      share_hash:   this.share_hash,
+      file_list:    !strip.includes("file_list")
+                      ? _.map(this.file_list.getItems(), entity => entity.toJSON())
+                      : _.map(this.file_list.getItems(), entity => entity.id),
+      user_created: !strip.includes("user_created") ? this.user_created.toJSON() : this.user_created.id,
+      time_created: this.time_created,
+      time_updated: this.time_updated,
+    };
+  }
+
   //endregion ----- Utility methods -----
 
   //region    ----- Endpoint methods -----
+
+  @Page.get("/count")
+  @Page.bindParameter<Request.getCount>("name", ValidatorType.STRING, {})
+  public static async getCount({locals: {respond, params: {name}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
+    return respond(await this.count(new WhereCondition(this).andWildcard({name})));
+  }
 
   @Page.get("/")
   @Page.bindParameter<Request.getCount>("name", ValidatorType.STRING, {})
   @Page.bindPagination(100, ["id", "name", "time_created"])
   public static async getMany({locals: {respond, user, params: {name, ...pagination}}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
-    return respond(await this.find({name: {$like: name}, user_created: user}, {...pagination, populate: {user_created: true, file_list: ["file_extension"]}}));
-  }
-
-  @Page.get("/count")
-  @Page.bindParameter<Request.getCount>("name", ValidatorType.STRING, {})
-  public static async getCount({locals: {respond, user, params: {name}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
-    return respond(await this.count({name: {$like: name}, user_created: user}));
+    return respond(await this.find(
+      new WhereCondition(this, {user_created: user}).andWildcard({name}),
+      {...pagination, populate: {user_created: true, file_list: ["file_extension"]}}),
+    );
   }
 
   @Page.get("/:id")
@@ -119,9 +141,9 @@ export type PageJSON = {
   name: string
   content: string
   privacy: Privacy
-  file_list?: FileJSON[]
   share_hash: string
-  user_created?: UserJSON
+  file_list: string[] | FileJSON[]
+  user_created: string | UserJSON
   time_created: Date
   time_updated: Date
 }

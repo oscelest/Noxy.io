@@ -5,7 +5,6 @@ import JWT from "jsonwebtoken";
 import _ from "lodash";
 import Moment from "moment";
 import Path from "path";
-import * as TypeORM from "typeorm";
 import {v4} from "uuid";
 import Entity, {Pagination} from "../../../common/classes/Entity";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
@@ -20,6 +19,7 @@ import FileTag, {FileTagJSON} from "./FileTag";
 import User, {UserJSON} from "../User";
 import FileTypeName from "../../../common/enums/FileTypeName";
 import Database from "../../../common/services/Database";
+import WhereCondition from "../../../common/classes/WhereCondition";
 
 @DBEntity()
 @Unique({name: "data_hash", properties: ["data_hash"] as (keyof File)[]})
@@ -50,11 +50,11 @@ export default class File extends Entity<File>() {
   @Property({type: "boolean"})
   public flag_public_tag: boolean;
 
-  @ManyToMany(() => FileTag)
-  public file_tag_list: Collection<FileTag> = new Collection<FileTag>(this);
-
   @ManyToOne(() => FileExtension)
   public file_extension: FileExtension;
+
+  @ManyToMany(() => FileTag)
+  public file_tag_list: Collection<FileTag> = new Collection<FileTag>(this);
 
   @ManyToOne(() => User)
   public user_created: User;
@@ -83,6 +83,25 @@ export default class File extends Entity<File>() {
     return user?.id === this.user_created.id || this.privacy === Privacy.PUBLIC || this.privacy === Privacy.LINK && this.share_hash === share_hash;
   }
 
+  public toJSON(strict: boolean = true, strip: (keyof File)[] = []): FileJSON {
+    return {
+      id:              this.id,
+      name:            this.name,
+      size:            this.size,
+      privacy:         this.privacy,
+      data_hash:       this.data_hash,
+      share_hash:      this.share_hash,
+      flag_public_tag: this.flag_public_tag,
+      file_extension:  !strip.includes("file_extension") ? this.file_extension.toJSON() : this.file_extension.id,
+      file_tag_list:   !strip.includes("file_tag_list")
+                         ? _.map(this.file_tag_list.getItems(), entity => entity.toJSON())
+                         : _.map(this.file_tag_list.getItems(), entity => entity.id),
+      user_created:    !strip.includes("user_created") ? this.user_created.toJSON() : this.user_created.id,
+      time_created:    this.time_created,
+      time_updated:    this.time_updated,
+    };
+  }
+
   //endregion ----- Instance methods -----
 
   //region    ----- Utility methods -----
@@ -99,6 +118,17 @@ export default class File extends Entity<File>() {
 
   //region    ----- Endpoint methods -----
 
+  @File.get("/count")
+  @File.bindParameter<Request.getMany>("name", ValidatorType.STRING, {max_length: 128})
+  @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.UUID, {array: true})
+  @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {array: true})
+  @File.bindParameter<Request.getMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
+  public static async getCount({locals: {respond, user, params: {name, file_tag_list, file_tag_set_operation}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
+    // TODO: Add missing check
+    // this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
+    return respond(await this.count(this.where({user_created: user?.id}).andWildcard({name})));
+  }
+
   @File.get("/")
   @File.bindParameter<Request.getMany>("name", ValidatorType.STRING, {max_length: 128})
   @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.UUID, {array: true})
@@ -108,26 +138,19 @@ export default class File extends Entity<File>() {
   public static async getMany({locals: {respond, user, params: {name, file_tag_list, file_tag_set_operation, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
     // TODO: Add missing check
     // this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
-    return respond(await this.find({name, user_created: user}, {...pagination}));
-  }
-
-  @File.get("/count")
-  @File.bindParameter<Request.getMany>("name", ValidatorType.STRING, {max_length: 128})
-  @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.UUID, {array: true})
-  @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {array: true})
-  @File.bindParameter<Request.getMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
-  public static async getCount({locals: {respond, user, params: {name, file_tag_list, file_tag_set_operation}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
-    // TODO: Add missing check
-    // this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
-    return respond(await this.count({name, user_created: user}));
+    return respond(await this.find(this.where({user_created: user?.id}).andWildcard({name}), {...pagination}));
   }
 
   @File.get("/:id", {user: false})
-  @File.bindParameter<Request.getOne>("share_hash", ValidatorType.STRING, {max_length: 32})
+  @File.bindParameter<Request.getOne>("share_hash", ValidatorType.STRING, {min_length: 32, max_length: 32})
   public static async getOne({params: {id}, locals: {respond, user, params: {share_hash}}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
     const file = await this.findOne(
-      {id, $or: [{privacy: Privacy.PUBLIC}, {privacy: Privacy.LINK, share_hash}, {privacy: Privacy.PRIVATE, user_created: user}]},
-      {populate: "user_created"}
+      this.where({id}).andOr(
+        {privacy: Privacy.PUBLIC},
+        {privacy: Privacy.LINK, share_hash},
+        {privacy: Privacy.PRIVATE, user_created: user?.id ?? this.defaultID},
+      ),
+      {populate: "user_created"},
     );
     if (file.user_created.id === user?.id || file.flag_public_tag) await this.populate(file, "file_tag_list");
     return respond(file);
@@ -135,15 +158,9 @@ export default class File extends Entity<File>() {
 
   @File.get("/data/:data_hash", {user: false})
   public static async getData({params: {data_hash}, locals: {respond, user}}: Server.Request<{data_hash: string}, Response.getData, Request.getData>, response: Server.Response) {
-    try {
-      const file = await this.findOne({data_hash});
-      response.setHeader("Content-Type", file.file_extension.mime_type);
-      response.sendFile(Path.resolve(process.env.FILE_PATH!, file.data_hash));
-    }
-    catch (error) {
-      if (error instanceof TypeORM.EntityNotFoundError) return respond(new ServerException(404, {data_hash}));
-      return respond(error);
-    }
+    const file = await this.findOne(new WhereCondition(this, {data_hash}));
+    response.setHeader("Content-Type", file.file_extension.mime_type);
+    response.sendFile(Path.resolve(process.env.FILE_PATH!, file.data_hash));
   }
 
   @File.post("/")
@@ -156,36 +173,24 @@ export default class File extends Entity<File>() {
       return respond(new ServerException(400, {name: data.originalname}, "File name can only by 128 characters long."));
     }
 
-    try {
-      const file = Database.manager.create(File, {
-        id:              v4(),
-        name:            data.originalname,
-        size:            data.size,
-        privacy:         Privacy.PRIVATE,
-        data_hash:       File.generateDataHash(),
-        share_hash:      File.generateShareHash(),
-        flag_public_tag: false,
-        file_extension:  await Database.manager.findOneOrFail(FileExtension, {type: this.parseFileType(data.mimetype), mime_type: data.mimetype, name: _.last(data.originalname.split(".")) ?? ""}),
-        file_tag_list:   await Database.manager.find(FileTag, {id: file_tag_list, user_created: user?.id}),
-        user_created:    user,
-      });
+    const file = this.create({
+      id:              v4(),
+      name:            data.originalname,
+      size:            data.size,
+      privacy:         Privacy.PRIVATE,
+      data_hash:       File.generateDataHash(),
+      share_hash:      File.generateShareHash(),
+      flag_public_tag: false,
+      file_extension:  await FileExtension.findOne({type: this.parseFileType(data.mimetype), mime_type: data.mimetype, name: _.last(data.originalname.split(".")) ?? ""}),
+      file_tag_list:   new Collection<FileTag>(await FileTag.find({id: file_tag_list, user_created: user?.id})),
+      user_created:    user,
+    });
 
-      FS.rename(data.path, file.getFilePath(), async error => {
-        if (error) return respond(new ServerException(500, {from: data.path, to: file.getFilePath()}, "Error while moving file"));
+    FS.rename(data.path, file.getFilePath(), async error => {
+      if (error) return respond(new ServerException(500, {from: data.path, to: file.getFilePath()}, "Error while moving file"));
 
-        try {
-          await Database.manager.persistAndFlush(file);
-          return respond(file);
-        }
-        catch (error) {
-          return respond(error);
-        }
-      });
-    }
-    catch (error) {
-      if (error instanceof TypeORM.EntityNotFoundError) return respond(new ServerException(400, {mime_type: data.mimetype}, "File MIME type is not accepted"));
-      return respond(error);
-    }
+      return respond(await this.persist(file));
+    });
   }
 
   @File.post("/request-download")
@@ -193,7 +198,7 @@ export default class File extends Entity<File>() {
   @File.bindParameter<Request.postDownloadRequest>("share_hash", ValidatorType.STRING, {validator: File.regexShareHash}, {array: true, optional: true})
   private static async requestDownload({locals: {respond, user, params}}: Server.Request<{}, Response.postRequestDownload, Request.postDownloadRequest>) {
     const {id, share_hash} = params!;
-    const file_list = await Database.manager.find(File, {id});
+    const file_list = await this.find(this.where({id}));
 
     if (!_.every(file_list, file => file.hasAccess(user!, share_hash))) return respond(new ServerException(403, {id}));
 
@@ -310,9 +315,9 @@ export type FileJSON = {
   data_hash: string
   share_hash: string
   flag_public_tag: boolean
-  file_extension: FileExtensionJSON
-  file_tag_list?: FileTagJSON[]
-  user_created?: UserJSON
+  file_extension: string | FileExtensionJSON
+  file_tag_list: string[] | FileTagJSON[]
+  user_created: string | UserJSON
   time_created: Date
   time_updated: Date
 }
