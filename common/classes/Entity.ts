@@ -100,7 +100,7 @@ export default function Entity<E>() {
       return await Database.manager.count(this, where, {...options}) as number;
     }
 
-    public static async find(where: NonNullable<Query<Constructor<E>>>, options: FindManyOptions<E> = {}) {
+    public static async find(where: NonNullable<Query<E>>, options: FindManyOptions<E> = {}) {
       return await Database.manager.find(this, where, {...options, limit: options.limit, offset: options.skip, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E[];
     }
 

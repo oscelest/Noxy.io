@@ -18,7 +18,6 @@ import FileExtension, {FileExtensionJSON} from "./FileExtension";
 import FileTag, {FileTagJSON} from "./FileTag";
 import User, {UserJSON} from "../User";
 import FileTypeName from "../../../common/enums/FileTypeName";
-import Database from "../../../common/services/Database";
 import WhereCondition from "../../../common/classes/WhereCondition";
 
 @DBEntity()
@@ -213,7 +212,7 @@ export default class File extends Entity<File>() {
     try {
       JWT.verify(token, `${process.env["FILE_SECRET"]}:${id.join(":")}`);
 
-      const file_list = await Database.manager.find(File, {id});
+      const file_list = await this.find({id});
       if (file_list.length === 1) {
         const path = Path.resolve(process.env.FILE_PATH!, file_list[0].getFilePath());
         return response.download(path, file_list[0].getFullName(), err => err && respond(new ServerException(500, err)));
