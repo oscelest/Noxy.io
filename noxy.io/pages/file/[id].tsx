@@ -30,7 +30,7 @@ import Style from "./[id].module.scss";
 export default class FileAliasPage extends React.Component<FileAliasPageProps, State> {
 
   public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+  declare public context: Global.Context;
 
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): FileAliasPageProps {

@@ -96,7 +96,7 @@ export default function Entity<E>() {
       return new WhereCondition(this, where);
     }
 
-    public static async count(where: NonNullable<Query<Constructor<E>>>, options: CountOptions<E> = {}) {
+    public static async count(where: NonNullable<Query<E>>, options: CountOptions<E> = {}) {
       return await Database.manager.count(this, where, {...options}) as number;
     }
 
@@ -104,7 +104,7 @@ export default function Entity<E>() {
       return await Database.manager.find(this, where, {...options, limit: options.limit, offset: options.skip, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E[];
     }
 
-    public static async findOne(where: NonNullable<Query<Constructor<E>>>, options: FindOneOptions<E> = {}) {
+    public static async findOne(where: NonNullable<Query<E>>, options: FindOneOptions<E> = {}) {
       try {
         return await Database.manager.findOneOrFail(this, where, {...options, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E;
       }
@@ -122,7 +122,7 @@ export default function Entity<E>() {
         if (!(object instanceof this)) object = Database.manager.create(this, object);
         if (values) {
           for (let key in values) {
-            if (values[key as keyof Initializer<E>] === undefined) continue;
+            if (!values.hasOwnProperty(key)) continue;
             object[key as keyof Initializer<E>] = values[key as keyof Initializer<E>];
           }
         }
@@ -136,7 +136,7 @@ export default function Entity<E>() {
       }
     }
 
-    public static async remove(where: FilterQuery<Constructor<E>>, options: FindOneOptions<E> = {}) {
+    public static async remove(where: NonNullable<Query<E>>, options: FindOneOptions<E> = {}) {
       const entity = await this.findOne(where, options);
       await Database.manager.removeAndFlush(entity);
       return entity;

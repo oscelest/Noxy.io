@@ -81,7 +81,7 @@ export default class User extends Entity<User>() {
   @User.bindParameter<Request.getMany>("email", ValidatorType.STRING, {min_length: 1})
   @User.bindPagination(100, ["id", "email", "time_created"])
   public static async getCount({locals: {respond, params: {email}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
-    return respond(await this.count(new WhereCondition(this).andWildcard({email})));
+    return respond(await this.count(this.where().andWildcard({email})));
   }
 
   @User.get("/", {permission: [PermissionLevel.USER_MASQUERADE]})
@@ -94,7 +94,7 @@ export default class User extends Entity<User>() {
 
   @User.get("/:id", {permission: [PermissionLevel.USER_MASQUERADE]})
   public static async getOne({params: {id}, locals: {respond, api_key}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
-    const entity = await this.findOne(new WhereCondition(this, {id}), {populate: "api_key_list"});
+    const entity = await this.findOne({id}, {populate: "api_key_list"});
     return respond(entity.secure(entity.id === api_key?.user?.id));
   }
 
