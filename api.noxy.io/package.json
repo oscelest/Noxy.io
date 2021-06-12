@@ -21,8 +21,15 @@
       "ts": "ts-node"
     }
   },
+  "mikro-orm": {
+    "useTsNode": true,
+    "configPaths": [
+      "./mikro-orm.config.ts"
+    ]
+  },
   "dependencies":    {
-    "@mikro-orm/core": "^4.5.6",
+    "@mikro-orm/cli":   "^4.5.6",
+    "@mikro-orm/core":  "^4.5.6",
     "@mikro-orm/mysql": "^4.5.6",
     "adm-zip":          "^0.5.5",
     "dotenv":           "^10.0.0",
@@ -44,7 +51,7 @@
     "@types/jsonwebtoken":              "^8.5.1",
     "@types/lodash":                    "^4.14.170",
     "@types/mime-types":                "^2.1.0",
-    "@types/node": "^15.12.2",
+    "@types/node":                      "^15.12.2",
     "@types/uuid":                      "^8.3.0",
     "nodemon":                          "^2.0.7",
     "reflect-metadata":                 "^0.1.13"
