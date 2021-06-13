@@ -34,16 +34,16 @@ export default class FileExtension extends Entity<FileExtension>() {
 
   //region    ----- Instance methods -----
 
-  public toJSON(strict: boolean = true, strip: (keyof FileExtension)[] = []): FileExtensionJSON {
-    return {
-      id:           this.id,
-      name:         this.name,
-      type:         this.type,
-      mime_type:    this.mime_type,
-      time_created: this.time_created,
-      time_updated: this.time_updated,
-    };
-  }
+  // public toJSON(strict: boolean = true, strip: (keyof FileExtension)[] = []): FileExtensionJSON {
+  //   return {
+  //     id:           this.id,
+  //     name:         this.name,
+  //     type:         this.type,
+  //     mime_type:    this.mime_type,
+  //     time_created: this.time_created,
+  //     time_updated: this.time_updated,
+  //   };
+  // }
 
   //endregion ----- Instance methods -----
 

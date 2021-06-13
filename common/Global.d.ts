@@ -29,7 +29,7 @@ declare global {
 
   export type DecoratorConstructor = {new(...args: any[]): any}
 
-  export interface FileHandle extends File {
+  export interface File {
     fieldname: string
     originalname: string
     encoding: string

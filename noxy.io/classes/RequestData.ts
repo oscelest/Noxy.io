@@ -58,7 +58,7 @@ export default class RequestData {
 
   public toFormData() {
     const data = new FormData();
-    for (let key in this.#file_list) data.append("file", this.#file_list[key]);
+    for (let key in this.#file_list) data.append("data", this.#file_list[key]);
     for (let key in this.#parameter_collection) {
       if (!this.#parameter_collection.hasOwnProperty(key)) continue;
       const parameter = this.#parameter_collection[key];

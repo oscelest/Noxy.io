@@ -53,18 +53,18 @@ export default class APIKey extends Entity<APIKey>() {
     return Object.assign(new APIKey(), this, {token: undefined} as Initializer<User>);
   }
 
-  public toJSON(strict: boolean = true, strip: (keyof Initializer<APIKey>)[] = []): APIKeyJSON {
-    return {
-      id:                   this.id,
-      token:                this.token,
-      permission:           this.permission.toJSON(),
-      limit_per_decasecond: this.limit_per_decasecond,
-      limit_per_minute:     this.limit_per_minute,
-      user:                 !strip.includes("user") ? this.user.toJSON(true, ["api_key_list"]) : this.user.id,
-      time_updated:         this.time_updated,
-      time_created:         this.time_created,
-    };
-  }
+  // public toJSON(parent: string = "content", strip: (keyof Initializer<APIKey>)[] = []) {
+  //   return {
+  //     id:                   this.id,
+  //     token:                this.token,
+  //     permission:           this.permission.toJSON(),
+  //     limit_per_decasecond: this.limit_per_decasecond,
+  //     limit_per_minute:     this.limit_per_minute,
+  //     user:                 !strip.includes("user") ? this.user.toJSON(APIKey.name, ["api_key_list"]) : this.user.id,
+  //     time_updated:         this.time_updated,
+  //     time_created:         this.time_created,
+  //   };
+  // }
 
   //endregion ----- Instance methods -----
 

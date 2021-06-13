@@ -17,8 +17,8 @@ import Server from "../../../common/services/Server";
 import FileExtension, {FileExtensionJSON} from "./FileExtension";
 import FileTag, {FileTagJSON} from "./FileTag";
 import User, {UserJSON} from "../User";
-import FileTypeName from "../../../common/enums/FileTypeName";
 import WhereCondition from "../../../common/classes/WhereCondition";
+import FileHandle from "../../../common/classes/FileHandle";
 
 @DBEntity()
 @Unique({name: "data_hash", properties: ["data_hash"] as (keyof File)[]})
@@ -62,7 +62,7 @@ export default class File extends Entity<File>() {
   public time_created: Date = new Date();
 
   @Property({onUpdate: () => new Date()})
-  public time_updated: Date;
+  public time_updated: Date = new Date();
 
   //endregion ----- Properties -----
 
@@ -82,36 +82,9 @@ export default class File extends Entity<File>() {
     return user?.id === this.user.id || this.privacy === Privacy.PUBLIC || this.privacy === Privacy.LINK && this.share_hash === share_hash;
   }
 
-  public toJSON(strict: boolean = true, strip: (keyof File)[] = []): FileJSON {
-    return {
-      id:              this.id,
-      name:            this.name,
-      size:            this.size,
-      privacy:         this.privacy,
-      data_hash:       this.data_hash,
-      share_hash:      this.share_hash,
-      flag_public_tag: this.flag_public_tag,
-      file_extension:  !strip.includes("file_extension") ? this.file_extension.toJSON() : this.file_extension.id,
-      file_tag_list:   !strip.includes("file_tag_list")
-                         ? _.map(this.file_tag_list.getItems(), entity => entity.toJSON())
-                         : _.map(this.file_tag_list.getItems(), entity => entity.id),
-      user:            !strip.includes("user") ? this.user.toJSON() : this.user.id,
-      time_created:    this.time_created,
-      time_updated:    this.time_updated,
-    };
-  }
-
   //endregion ----- Instance methods -----
 
   //region    ----- Utility methods -----
-
-  public static parseFileType(mime_type: string) {
-    if (!mime_type) throw new ServerException(400, {mime_type});
-    const file_type_name = mime_type.split("/")[0];
-    const file_type = _.find(FileTypeName, name => name === file_type_name);
-    if (!file_type) throw new ServerException(400, {mime_type});
-    return file_type as FileTypeName;
-  }
 
   //endregion ----- Utility methods -----
 
@@ -168,20 +141,20 @@ export default class File extends Entity<File>() {
   private static async createOne({locals: {respond, user, params}}: Server.Request<{}, Response.postOne, Request.postOne>) {
     const {data, file_tag_list} = params!;
 
-    if (data.originalname.length > 128) {
-      return respond(new ServerException(400, {name: data.originalname}, "File name can only by 128 characters long."));
+    if (data.name.length > 128) {
+      return respond(new ServerException(400, {name: data.name}, "File name can only by 128 characters long."));
     }
 
     const file = this.create({
       id:              v4(),
-      name:            data.originalname,
+      name:            data.name,
       size:            data.size,
       privacy:         Privacy.PRIVATE,
       data_hash:       File.generateDataHash(),
       share_hash:      File.generateShareHash(),
       flag_public_tag: false,
-      file_extension:  await FileExtension.findOne({type: this.parseFileType(data.mimetype), mime_type: data.mimetype, name: _.last(data.originalname.split(".")) ?? ""}),
-      file_tag_list:   new Collection<FileTag>(await FileTag.find({id: file_tag_list, user: user?.id})),
+      file_extension:  await FileExtension.findOne({name: data.extension, mime_type: data.mime_type, type: data.file_type}),
+      file_tag_list:   new Collection<FileTag>(await FileTag.find(this.where({user}).andValue({id: file_tag_list}))),
       user:            user,
     });
 
@@ -327,7 +300,6 @@ namespace Request {
   export type getOne = {share_hash?: string}
   export type getData = never
   export type postOne = {data: FileHandle; file_tag_list?: string[]}
-  export type postDownload = {id: string}
   export type postDownloadRequest = {id: string[], share_hash?: string}
   export type postDownloadConfirm = {token: string}
   export type putOne = {name?: string; file_extension?: string; file_tag_list?: string[], privacy?: Privacy, flag_public_tag?: boolean}
@@ -340,7 +312,6 @@ namespace Response {
   export type getOne = File | ServerException
   export type getData = ServerException
   export type postOne = File | ServerException
-  export type postDownload = never | ServerException
   export type postRequestDownload = string | ServerException
   export type postConfirmDownload = string | ServerException
   export type putOne = File | ServerException

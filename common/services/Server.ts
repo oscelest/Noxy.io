@@ -19,6 +19,7 @@ import ServerException from "../exceptions/ServerException";
 import ValidatorException from "../exceptions/ValidatorException";
 import Logger from "./Logger";
 import Validator from "./Validator";
+import FileHandle from "../classes/FileHandle";
 
 if (!process.env.PORT) throw new Error("PORT environmental value must be defined.");
 if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");
@@ -137,9 +138,9 @@ module Server {
     middleware.fields(request.locals.endpoint.upload)(request, response, (error: Multer.MulterError | string) => {
       if (error && error instanceof Error) {
         if (error.code === "LIMIT_UNEXPECTED_FILE") {
-          return response.locals.respond(new ServerException(400, {field: error.field}, "File count limit exceeded."));
+          return request.locals.respond(new ServerException(400, {field: error.field}, "File count limit exceeded."));
         }
-        return request.locals.respond?.(error);
+        return request.locals.respond(error);
       }
       next();
     });
@@ -149,9 +150,13 @@ module Server {
   function attachParameters({files, query, body, locals: {respond, method, params, endpoint}}: Express.Request, response: Express.Response, next: Express.NextFunction) {
     if (!endpoint) return respond?.(new ServerException(404)) ?? response.send(404);
 
-    const file_collection = _.reduce(files, (result, file, key) => _.set(result, key, file), {} as {[key: string]: File[]});
     const error_collection = {} as {[key: string]: ValidatorException};
     const received_parameter_list = method === HTTPMethod.GET ? query : body;
+    const file_collection = _.reduce(
+      files,
+      (result, file, key) => _.set(result, key, Array.isArray(file) ? _.map(file, value => new FileHandle(value)) : [new FileHandle(file as File)]),
+      {} as {[key: string]: FileHandle[]},
+    );
 
     for (let name in endpoint.parameter_list) {
       try {
@@ -200,6 +205,7 @@ module Server {
 
     if (value instanceof ServerException && value.code !== 500) {
       code = value.code;
+      if (code === 404) value.content.params = _.reduce(this.locals.params, (result, value, key) => value instanceof FileHandle ? {...result, ...value.toJSON()} : {...result, [key]: value}, {});
       Object.assign(response, {success: false, message: value.message, content: value.content} as ResponseBody);
     }
     else if (value instanceof Error) {

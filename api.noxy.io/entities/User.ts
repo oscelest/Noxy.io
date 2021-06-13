@@ -10,7 +10,6 @@ import PermissionLevel from "../../common/enums/PermissionLevel";
 import ServerException from "../../common/exceptions/ServerException";
 import Email from "../../common/services/Email";
 import Server from "../../common/services/Server";
-import WhereCondition from "../../common/classes/WhereCondition";
 
 @DBEntity()
 @Unique({name: "email", properties: ["email"] as (keyof User)[]})
@@ -54,19 +53,6 @@ export default class User extends Entity<User>() {
   public secure(current_user?: boolean) {
     if (current_user) return this;
     return Object.assign(new User(), this, {api_key_list: new Collection<APIKey>({}, _.map(this.api_key_list.getItems(), entity => entity.secure(current_user)))} as Initializer<User>);
-  }
-
-  public toJSON(strict: boolean = true, strip: (keyof User)[] = []): UserJSON {
-    return {
-      id:           this.id,
-      email:        this.email,
-      username:     this.username,
-      api_key_list: !strip.includes("api_key_list")
-                      ? _.map(this.api_key_list.getItems(), entity => entity.toJSON(true, ["user"]))
-                      : _.map(this.api_key_list.getItems(), entity => entity.id),
-      time_created: this.time_created,
-      time_login:   this.time_login,
-    };
   }
 
   //endregion ----- Instance methods -----
@@ -209,7 +195,7 @@ export type UserJSON = {
   id: string
   email: string
   username: string
-  api_key_list?: string[] | APIKeyJSON[]
+  api_key_list?: (string | APIKeyJSON)[]
   time_login: Date
   time_created: Date
 }

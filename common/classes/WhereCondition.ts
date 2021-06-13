@@ -1,19 +1,16 @@
-import {Query, NonFunctionPropertyNames, ExpandProperty, FilterValue, Scalar, OperatorMap} from "@mikro-orm/core/typings";
+import {Query, NonFunctionPropertyNames, ExpandProperty, FilterValue, Scalar, OperatorMap, PlainObject} from "@mikro-orm/core/typings";
+import _ from "lodash";
+import BaseEntity from "./BaseEntity";
 
-export default class WhereCondition<E extends {new(): any}, I extends Properties<InstanceType<E>> = Properties<InstanceType<E>>> {
-
-  #entity: E;
-
-  public $or?: Query<I>[];
-  public $and?: Query<I>[];
+export default class WhereCondition<E extends {new(): any}, I extends Properties<InstanceType<E>> = Properties<InstanceType<E>>> extends PlainObject {
 
   [key: string]: undefined | OperatorMap<Scalar | Scalar[]> | Query<I> | Query<I>[] | Function
 
   constructor(entity: E, filter?: Query<I>) {
-    this.#entity = entity;
+    super();
 
     if (filter) {
-      Object.assign(this, filter);
+      Object.assign(this, WhereCondition.parseValue(filter));
     }
   }
 
@@ -21,27 +18,21 @@ export default class WhereCondition<E extends {new(): any}, I extends Properties
     for (let key in filter) {
       const value = filter[key];
       if (value === undefined || Array.isArray(value) && value.length === 0) continue;
-      this[key as string] = Array.isArray(value) ? {$in: value} : {$eq: value};
+      this[key as string] = Array.isArray(value) ? {$in: WhereCondition.parseValue(value)} : {$eq: WhereCondition.parseValue(value)};
     }
 
     return this;
   }
 
   public andWildcard(filter: Property<I>) {
-    for (let key in filter) {
-      const value = filter[key];
-      if (value === undefined || Array.isArray(value) && value.length === 0) continue;
-      this[key as string] = {$like: `%${value}%`};
-    }
-
-    return this;
+    return _.reduce(filter, (result, value, key) => value === undefined ? result : _.set(result, key, {$like: `%${WhereCondition.parseValue(value)}%`}), this);
   }
 
   public andExclusion(filter: PropertyArray<I>) {
     for (let key in filter) {
       const value = filter.hasOwnProperty(key) ? filter[key] : undefined;
       if (value === undefined || Array.isArray(value) && value.length === 0) continue;
-      this[key as string] = Array.isArray(value) ? {$nin: value} : {$ne: value};
+      this[key as string] = Array.isArray(value) ? {$nin: WhereCondition.parseValue(value)} : {$ne: WhereCondition.parseValue(value)};
     }
 
     return this;
@@ -57,6 +48,13 @@ export default class WhereCondition<E extends {new(): any}, I extends Properties
     this.$and = filter_list;
 
     return this;
+  }
+
+  private static parseValue(value: any): any {
+    if (Array.isArray(value)) return _.map(value, v => v instanceof BaseEntity ? v.getPrimaryKey() : v);
+    if (value instanceof BaseEntity) return value.getPrimaryKey();
+    if (typeof value === "object") return _.mapValues(value, v => this.parseValue(v));
+    return value;
   }
 
   // public static addBooleanClause(qb: TypeORM.SelectQueryBuilder<E>, key: Key<E>, flag?: boolean) {

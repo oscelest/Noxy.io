@@ -47,12 +47,12 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
       this.props.onFileUpload?.(entity);
     }
     catch (exception) {
-      const error = exception as AxiosError<APIRequest<{mime_type: string}>>;
+      const error = exception as AxiosError<APIRequest<any>>;
 
       if (error.isAxiosError) {
-        if (error.response?.status === 400) {
-          if (error.response?.data.content.mime_type) {
-            return this.failFileTransfer(transfer, `"${error.response.data.content.mime_type}" is not supported.`, true);
+        if (error.response?.status === 404) {
+          if (error.response?.data.content.entity === "FileExtension") {
+            return this.failFileTransfer(transfer, `"${error.response.data.content.params.mime_type}" is not supported.`, true);
           }
         }
       }

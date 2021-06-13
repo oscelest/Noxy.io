@@ -1,5 +1,4 @@
 import {MikroORM, EntityManager} from "@mikro-orm/core";
-import NamingStrategy from "../classes/NamingStrategy";
 import DBConfig from "../../api.noxy.io/mikro-orm.config";
 
 if (!process.env.DB_HOST) throw new Error("DB_HOST environmental value must be defined.");

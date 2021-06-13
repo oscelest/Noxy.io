@@ -5,7 +5,6 @@ import Entity, {Pagination} from "../../../common/classes/Entity";
 import ValidatorType from "../../../common/enums/ValidatorType";
 import ServerException from "../../../common/exceptions/ServerException";
 import Server from "../../../common/services/Server";
-import WhereCondition from "../../../common/classes/WhereCondition";
 
 @DBEntity()
 @Unique({name: "file_tag", properties: ["name", "user"] as (keyof FileTag)[]})
@@ -34,15 +33,15 @@ export default class FileTag extends Entity<FileTag>() {
 
   //region    ----- Instance methods -----
 
-  public toJSON(strict: boolean = true, strip: (keyof FileTag)[] = []): FileTagJSON {
-    return {
-      id:           this.id,
-      name:         this.name,
-      user:         !strip.includes("user") ? this.user.toJSON() : this.user.id,
-      time_created: this.time_created,
-      time_updated: this.time_updated,
-    };
-  }
+  // public toJSON(strict: boolean = true, strip: (keyof FileTag)[] = []): FileTagJSON {
+  //   return {
+  //     id:           this.id,
+  //     name:         this.name,
+  //     user:         !strip.includes("user") ? this.user.toJSON() : this.user.id,
+  //     time_created: this.time_created,
+  //     time_updated: this.time_updated,
+  //   };
+  // }
 
   //endregion ----- Instance methods -----
 

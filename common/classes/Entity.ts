@@ -5,30 +5,21 @@ import Validator from "../services/Validator";
 import ValidatorType from "../enums/ValidatorType";
 import ServerException from "../exceptions/ServerException";
 import Server from "../services/Server";
-import {customAlphabet} from "nanoid";
 import {EntityManager, MikroORM, Constructor, FindOptions, Collection} from "@mikro-orm/core";
-import {FilterQuery, Query} from "@mikro-orm/core/typings";
+import {Query} from "@mikro-orm/core/typings";
 import Order from "../enums/Order";
 import Database from "../services/Database";
 import WhereCondition from "./WhereCondition";
+import BaseEntity from "./BaseEntity";
+
 
 export default function Entity<E>() {
 
-  class Entity {
-
-    public static defaultID: string;
-
-    public static generateDataHash: () => string;
-    public static generateShareHash: () => string;
-
-    public static regexDataHash: RegExp;
-    public static regexShareHash: RegExp;
+  class Entity extends BaseEntity {
 
     // ----------
     // Decorators
     // ----------
-
-
 
     public static [HTTPMethod.GET](path: string, options?: Server.EndpointOptions) {
       return this.bindRoute(HTTPMethod.GET, path, options);
@@ -88,27 +79,28 @@ export default function Entity<E>() {
 
     //region    ----- Query methods -----
 
-    public static create(values: Initializer<E>) {
-      return Database.manager.create(this, values) as E;
+    public static create(values: Initializer<E>): E {
+      return Database.manager.create(this, values) as unknown as E;
     }
 
     public static where(where?: Query<E>) {
       return new WhereCondition(this, where);
     }
 
-    public static async count(where: NonNullable<Query<E>>, options: CountOptions<E> = {}) {
+    public static async count(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: CountOptions<E> = {}) {
       return await Database.manager.count(this, where, {...options}) as number;
     }
 
-    public static async find(where: NonNullable<Query<E>>, options: FindManyOptions<E> = {}) {
+    public static async find(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: FindManyOptions<E> = {}) {
       return await Database.manager.find(this, where, {...options, limit: options.limit, offset: options.skip, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E[];
     }
 
-    public static async findOne(where: NonNullable<Query<E>>, options: FindOneOptions<E> = {}) {
+    public static async findOne(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: FindOneOptions<E> = {}) {
       try {
         return await Database.manager.findOneOrFail(this, where, {...options, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E;
       }
       catch (error) {
+        if (error.name === "NotFoundError") throw new ServerException(404, {entity: this.name});
         throw error;
       }
     }
@@ -119,7 +111,7 @@ export default function Entity<E>() {
 
     public static async persist(object: Initializer<E>, values?: Initializer<E>) {
       try {
-        if (!(object instanceof this)) object = Database.manager.create(this, object);
+        if (!(object instanceof this)) object = this.create(object);
         if (values) {
           for (let key in values) {
             if (!values.hasOwnProperty(key)) continue;
@@ -136,7 +128,7 @@ export default function Entity<E>() {
       }
     }
 
-    public static async remove(where: NonNullable<Query<E>>, options: FindOneOptions<E> = {}) {
+    public static async remove(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: FindOneOptions<E> = {}) {
       const entity = await this.findOne(where, options);
       await Database.manager.removeAndFlush(entity);
       return entity;
@@ -153,14 +145,6 @@ export default function Entity<E>() {
     //endregion ----- Query methods -----
 
   }
-
-  Entity.defaultID = "00000000-0000-0000-0000-000000000000";
-
-  Entity.generateDataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~()'!@,;", 64);
-  Entity.generateShareHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 32);
-
-  Entity.regexDataHash = new RegExp("^[a-zA-Z0-9-._~()'!@,;]{64}$");
-  Entity.regexShareHash = new RegExp("^[a-zA-Z0-9-_]{32}$");
 
   return Entity;
 }
