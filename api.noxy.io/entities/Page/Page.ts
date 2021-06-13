@@ -2,9 +2,9 @@ import Entity, {Pagination} from "../../../common/classes/Entity";
 import ValidatorType from "../../../common/enums/ValidatorType";
 import Server from "../../../common/services/Server";
 import ServerException from "../../../common/exceptions/ServerException";
-import User, {UserJSON} from "../User";
+import User from "../User";
 import Privacy from "../../../common/enums/Privacy";
-import File, {FileJSON} from "../File/File";
+import File from "../File/File";
 import {PrimaryKey, Property, Enum, ManyToOne, ManyToMany, Unique, Filter, Collection} from "@mikro-orm/core";
 import {v4} from "uuid";
 import {Entity as DBEntity} from "@mikro-orm/core/decorators/Entity";
@@ -114,19 +114,6 @@ export default class Page extends Entity<Page>() {
 
   //endregion ----- Endpoint methods -----
 
-}
-
-export type PageJSON = {
-  id: string
-  path: string
-  name: string
-  content: string
-  privacy: Privacy
-  share_hash: string
-  file_list: string[] | FileJSON[]
-  user: string | UserJSON
-  time_created: Date
-  time_updated: Date
 }
 
 namespace Request {

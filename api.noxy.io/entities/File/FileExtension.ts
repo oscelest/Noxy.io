@@ -55,12 +55,3 @@ export default class FileExtension extends Entity<FileExtension>() {
 
   //endregion ----- Endpoint methods -----
 }
-
-export type FileExtensionJSON = {
-  id: string
-  name: string,
-  type: FileTypeName
-  mime_type: string
-  time_created: Date
-  time_updated: Date
-}

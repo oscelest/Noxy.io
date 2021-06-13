@@ -1,6 +1,6 @@
 import {Entity as DBEntity, PrimaryKey, Property, Index, Unique, ManyToOne} from "@mikro-orm/core";
 import {v4} from "uuid";
-import User, {UserJSON} from "../User";
+import User from "../User";
 import Entity, {Pagination} from "../../../common/classes/Entity";
 import ValidatorType from "../../../common/enums/ValidatorType";
 import ServerException from "../../../common/exceptions/ServerException";
@@ -32,16 +32,6 @@ export default class FileTag extends Entity<FileTag>() {
   //endregion ----- Properties -----
 
   //region    ----- Instance methods -----
-
-  // public toJSON(strict: boolean = true, strip: (keyof FileTag)[] = []): FileTagJSON {
-  //   return {
-  //     id:           this.id,
-  //     name:         this.name,
-  //     user:         !strip.includes("user") ? this.user.toJSON() : this.user.id,
-  //     time_created: this.time_created,
-  //     time_updated: this.time_updated,
-  //   };
-  // }
 
   //endregion ----- Instance methods -----
 
@@ -90,14 +80,6 @@ export default class FileTag extends Entity<FileTag>() {
 
   //endregion ----- Endpoint methods -----
 
-}
-
-export type FileTagJSON = {
-  id: string
-  name: string
-  user: string | UserJSON
-  time_created: Date
-  time_updated: Date
 }
 
 namespace Request {

@@ -14,9 +14,9 @@ import ValidatorType from "../../../common/enums/ValidatorType";
 import ServerException from "../../../common/exceptions/ServerException";
 import Logger from "../../../common/services/Logger";
 import Server from "../../../common/services/Server";
-import FileExtension, {FileExtensionJSON} from "./FileExtension";
-import FileTag, {FileTagJSON} from "./FileTag";
-import User, {UserJSON} from "../User";
+import FileExtension from "./FileExtension";
+import FileTag from "./FileTag";
+import User from "../User";
 import WhereCondition from "../../../common/classes/WhereCondition";
 import FileHandle from "../../../common/classes/FileHandle";
 
@@ -276,22 +276,6 @@ export default class File extends Entity<File>() {
 
   //endregion ----- Endpoint methods -----
 
-}
-
-
-export type FileJSON = {
-  id: string
-  name: string
-  size: number
-  privacy: string
-  data_hash: string
-  share_hash: string
-  flag_public_tag: boolean
-  file_extension: string | FileExtensionJSON
-  file_tag_list: string[] | FileTagJSON[]
-  user: string | UserJSON
-  time_created: Date
-  time_updated: Date
 }
 
 namespace Request {

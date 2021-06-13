@@ -3,7 +3,7 @@ import crypto from "crypto";
 import JWT from "jsonwebtoken";
 import _ from "lodash";
 import {v4} from "uuid";
-import APIKey, {APIKeyJSON} from "./APIKey";
+import APIKey from "./APIKey";
 import Entity, {Pagination} from "../../common/classes/Entity";
 import ValidatorType from "../../common/enums/ValidatorType";
 import PermissionLevel from "../../common/enums/PermissionLevel";
@@ -189,15 +189,6 @@ export default class User extends Entity<User>() {
   }
 
   //endregion ----- Endpoint methods -----
-}
-
-export type UserJSON = {
-  id: string
-  email: string
-  username: string
-  api_key_list?: (string | APIKeyJSON)[]
-  time_login: Date
-  time_created: Date
 }
 
 namespace Request {

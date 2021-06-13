@@ -5,7 +5,7 @@ import ValidatorType from "../../common/enums/ValidatorType";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import Entity, {Pagination} from "../../common/classes/Entity";
 import ServerException from "../../common/exceptions/ServerException";
-import User, {UserJSON} from "./User";
+import User from "./User";
 import Server from "../../common/services/Server";
 import {PrimaryKey, Property, ManyToOne, Index, Unique} from "@mikro-orm/core";
 import {Entity as DBEntity} from "@mikro-orm/core/decorators/Entity";
@@ -126,17 +126,6 @@ export default class APIKey extends Entity<APIKey>() {
 
   //endregion ----- Endpoint methods -----
 
-}
-
-export type APIKeyJSON = {
-  id: string
-  token: string
-  permission: string
-  limit_per_decasecond: number
-  limit_per_minute: number
-  user?: string | UserJSON
-  time_created: Date
-  time_updated: Date
 }
 
 namespace Request {
