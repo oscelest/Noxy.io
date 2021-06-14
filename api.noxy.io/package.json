@@ -21,8 +21,8 @@
       "ts": "ts-node"
     }
   },
-  "mikro-orm": {
-    "useTsNode": true,
+  "mikro-orm":       {
+    "useTsNode":   true,
     "configPaths": [
       "./mikro-orm.config.ts"
     ]
