@@ -27,7 +27,7 @@ export default class FileTag extends Entity<FileTag>() {
   public time_created: Date = new Date();
 
   @Property({onUpdate: () => new Date()})
-  public time_updated: Date;
+  public time_updated: Date = new Date();
 
   //endregion ----- Properties -----
 

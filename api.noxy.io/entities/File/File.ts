@@ -78,7 +78,6 @@ export default class File extends Entity<File>() {
 
   public hasAccess(user: User, share_hash?: string) {
     // TODO: Fix this
-    // if (!this.flag_public_tag && user?.id !== this.user.id) this.file_tag_list = [];
     return user?.id === this.user.id || this.privacy === Privacy.PUBLIC || this.privacy === Privacy.LINK && this.share_hash === share_hash;
   }
 
@@ -110,7 +109,7 @@ export default class File extends Entity<File>() {
   public static async getMany({locals: {respond, user, params: {name, file_tag_list, file_tag_set_operation, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
     // TODO: Add missing check
     // this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
-    return respond(await this.find(this.where({user}).andWildcard({name}), {...pagination}));
+    return respond(await this.find(this.where({user}).andWildcard({name}), {...pagination, populate: ["file_extension", "file_tag_list", "user"]}));
   }
 
   @File.get("/:id", {user: false})

@@ -16,8 +16,12 @@ export default class BaseEntity {
   public static regexDataHash = new RegExp("^[a-zA-Z0-9-._~()'!@,;]{64}$");
   public static regexShareHash = new RegExp("^[a-zA-Z0-9-_]{32}$");
 
+  public getPrimaryID() {
+    return _.join(_.values(_.pick(this, Database.instance.getMetadata().get(this.constructor.name).primaryKeys)), ";");
+  }
+
   public getPrimaryKey() {
-    return _.join(_.values(_.pick(this, Database.instance.getMetadata().get(this.constructor.name).primaryKeys)), "-");
+    return _.pick(this, Database.instance.getMetadata().get(this.constructor.name).primaryKeys);
   }
 
   public toJSON(parent: string = "content", simplify: string[] = []): {[key: string]: any} {

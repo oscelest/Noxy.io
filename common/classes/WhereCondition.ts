@@ -52,7 +52,7 @@ export default class WhereCondition<E extends {new(): any}, I extends Properties
 
   private static parseValue(value: any): any {
     if (Array.isArray(value)) return _.map(value, v => v instanceof BaseEntity ? v.getPrimaryKey() : v);
-    if (value instanceof BaseEntity) return value.getPrimaryKey();
+    if (value instanceof BaseEntity) return value.getPrimaryID();
     if (typeof value === "object") return _.mapValues(value, v => this.parseValue(v));
     return value;
   }
