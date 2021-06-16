@@ -15,6 +15,7 @@ import PageEntity from "../../entities/page/PageEntity";
 import Style from "./index.module.scss";
 import Dialog from "../../components/Application/Dialog";
 import PageCreateForm from "../../forms/entities/PageCreateForm";
+import EllipsisText from "../../components/Text/EllipsisText";
 
 export default class PageIndexPage extends React.Component<PageIndexPageProps, State> {
 
@@ -74,6 +75,14 @@ export default class PageIndexPage extends React.Component<PageIndexPageProps, S
           {entity.name}
         </ColumnText>
 
+        <ColumnText className={Style.Path} title={"Path"}>
+          <Redirect href={`${location.href}/${entity.path}`}>
+            <EllipsisText>
+              {`/${entity.path}`}
+            </EllipsisText>
+          </Redirect>
+        </ColumnText>
+
         <ColumnText className={Style.TimeUpdated} title={"Last updated"}>
           {Moment(entity.time_updated).format("DD-MM-YYYY HH:mm:ss")}
         </ColumnText>
@@ -94,10 +103,11 @@ export default class PageIndexPage extends React.Component<PageIndexPageProps, S
   };
 
   private readonly eventCreate = async (name: string) => {
-    Dialog.show(<PageCreateForm initial={new PageEntity({name})} onSubmit={this.eventCreateSubmit}/>, {title: "Create new page"});
+    this.setState({dialog: Dialog.show(<PageCreateForm initial={new PageEntity({name})} onSubmit={this.eventCreateSubmit}/>, {title: "Create new page"})});
   };
 
   private readonly eventCreateSubmit = async () => {
+    Dialog.close(this.state.dialog);
     this.setState({loading: true});
     await this.eventSearch();
   };
@@ -141,6 +151,8 @@ interface State {
   size: number
   order: SortableCollection<PageIndexPageOrder>
   search: string
+
+  dialog?: string
 
   list: PageEntity[]
   count: number

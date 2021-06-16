@@ -1,9 +1,7 @@
-import {Entity as DBEntity} from "@mikro-orm/core/decorators/Entity";
+import {Collection, Entity as DBEntity} from "@mikro-orm/core";
 import {customAlphabet} from "nanoid";
 import _ from "lodash";
 import Database from "../services/Database";
-import {Collection} from "@mikro-orm/core";
-import ServerException from "../exceptions/ServerException";
 
 @DBEntity({abstract: true})
 export default class BaseEntity {
@@ -45,11 +43,8 @@ export default class BaseEntity {
   }
 
   public toJSONList(field: keyof this, simplify: string[]) {
-    if (!(this[field] instanceof Collection)) throw new ServerException(500);
-
     const collection: Collection<BaseEntity> = this[field] as any;
-    if (!collection.isInitialized()) return [];
 
-    return _.map(collection.getItems(), entity => entity.toJSON(this.constructor.name, simplify));
+    return collection.isInitialized() ? _.map(collection.getItems(), entity => entity.toJSON(this.constructor.name, simplify)) : [];
   }
 }

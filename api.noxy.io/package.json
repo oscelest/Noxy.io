@@ -3,9 +3,13 @@
   "version":         "1.0.0",
   "description":     "Main API Server.",
   "scripts":         {
-    "start":  "ts-node ./app.ts",
-    "dev":    "nodemon ./app.ts",
-    "update": "npm update && npm outdated"
+    "start":     "ts-node ./app.ts",
+    "dev":       "nodemon ./app.ts",
+    "update":    "npm outdated && npm update --save",
+    "db-create": "npx mikro-orm schema:create -r",
+    "db-update": "npx mikro-orm schema:update -r",
+    "db-delete": "npx mikro-orm schema:drop -r",
+    "db-reset":  "npm run db-delete && npm run db-create"
   },
   "nodemonConfig":   {
     "watch":   [

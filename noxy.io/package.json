@@ -5,7 +5,7 @@
     "build":  "next build",
     "start":  "next start -p 40080",
     "dev":    "next -p 40080",
-    "update": "npm update && npm outdated"
+    "update": "npm outdated && npm update --save"
   },
   "dependencies":    {
     "axios":        "^0.21.1",

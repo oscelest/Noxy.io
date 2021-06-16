@@ -1,4 +1,4 @@
-import {Entity as DBEntity, Unique, Index, PrimaryKey, Property, OneToMany, Collection} from "@mikro-orm/core";
+import {Entity as DBEntity, Unique, Index, PrimaryKey, Property, OneToMany, Collection, Cascade} from "@mikro-orm/core";
 import crypto from "crypto";
 import JWT from "jsonwebtoken";
 import _ from "lodash";
@@ -34,7 +34,7 @@ export default class User extends Entity<User>() {
   @Property({hidden: true})
   public hash: Buffer;
 
-  @OneToMany(() => APIKey, entity => entity.user)
+  @OneToMany(() => APIKey, entity => entity.user, {cascade: [Cascade.ALL]})
   public api_key_list: Collection<APIKey> = new Collection<APIKey>(this);
 
   @Property()

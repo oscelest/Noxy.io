@@ -11,7 +11,6 @@ import {Entity as DBEntity} from "@mikro-orm/core/decorators/Entity";
 import Database from "../../../common/services/Database";
 
 @DBEntity()
-@Unique({name: "name", properties: ["name"] as (keyof Page)[]})
 @Unique({name: "path", properties: ["path"] as (keyof Page)[]})
 @Filter({name: "find", cond: args => args.name ? {name: {$like: args.name}, user_created: args.user} : {user_created: args.user}})
 export default class Page extends Entity<Page>() {
@@ -34,19 +33,19 @@ export default class Page extends Entity<Page>() {
   public privacy: Privacy;
 
   @Property({length: 32})
-  public share_hash: string;
+  public share_hash: string = Page.generateShareHash();
 
   @ManyToMany(() => File)
   public file_list: Collection<File> = new Collection<File>(this);
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, {onDelete: "cascade"})
   public user: User;
 
   @Property()
   public time_created: Date = new Date();
 
   @Property({onUpdate: () => new Date()})
-  public time_updated: Date;
+  public time_updated: Date = new Date();
 
   //endregion ----- Properties -----
 
@@ -83,20 +82,19 @@ export default class Page extends Entity<Page>() {
   }
 
   @Page.post("/")
-  @Page.bindParameter<Request.postOne>("path", ValidatorType.STRING, {min_length: 1})
   @Page.bindParameter<Request.postOne>("name", ValidatorType.STRING, {min_length: 1})
+  @Page.bindParameter<Request.postOne>("path", ValidatorType.STRING, {validator: /^[a-z0-9_+-]+$/})
   @Page.bindParameter<Request.postOne>("content", ValidatorType.STRING, {}, {optional: true})
   @Page.bindParameter<Request.postOne>("privacy", ValidatorType.ENUM, Privacy, {optional: true})
   @Page.bindParameter<Request.postOne>("file_list", ValidatorType.UUID, {array: true, optional: true})
   private static async postOne({locals: {respond, user, params: {name, path, content, privacy, file_list}}}: Server.Request<{}, Response.postOne, Request.postOne>) {
     return respond(await this.persist({
-      name:       name,
-      path:       path,
-      content:    content,
-      privacy:    privacy ?? Privacy.PRIVATE,
-      share_hash: File.generateShareHash(),
-      user:       user!,
-      file_list:  new Collection<File>(file_list ? await Database.manager.find(File, {id: file_list}) : []),
+      name:      name,
+      path:      path,
+      content:   content ?? "",
+      privacy:   privacy ?? Privacy.PRIVATE,
+      user:      user!,
+      file_list: new Collection<File>(file_list ? await Database.manager.find(File, {id: file_list}) : []),
     }));
   }
 

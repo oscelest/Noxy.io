@@ -60,6 +60,9 @@ export default class LogInForm extends React.Component<LogInFormProps, State> {
         if (response?.status === 400) {
           next_state.error = new Error("Incorrect email and/or password");
         }
+        else if (response?.status === 404) {
+          next_state.error = new Error("Email does not exist");
+        }
         else {
           next_state.error = new Error("Unexpected server error occurred.");
         }

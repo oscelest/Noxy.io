@@ -35,7 +35,7 @@ export default class APIKey extends Entity<APIKey>() {
   @Property()
   public limit_per_minute: number;
 
-  @ManyToOne(() => User, {length: 36})
+  @ManyToOne(() => User, {length: 36, onDelete: "cascade"})
   public user: User;
 
   @Property()

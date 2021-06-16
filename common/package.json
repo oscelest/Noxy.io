@@ -2,6 +2,9 @@
   "name":            "@noxy.io/common",
   "version":         "1.0.0",
   "private":         true,
+  "scripts":         {
+    "update": "npm outdated && npm update --save"
+  },
   "dependencies":    {
     "@aws-sdk/client-ses":       "^3.18.0",
     "@mikro-orm/core":           "^4.5.6",
