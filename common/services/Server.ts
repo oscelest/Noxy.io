@@ -206,6 +206,7 @@ module Server {
     if (value instanceof ServerException && value.code !== 500) {
       code = value.code;
       if (code === 404) value.content.params = _.reduce(this.locals.params, (result, value, key) => value instanceof FileHandle ? {...result, ...value.toJSON()} : {...result, [key]: value}, {});
+      console.log(value);
       Object.assign(response, {success: false, message: value.message, content: value.content} as ResponseBody);
     }
     else if (value instanceof Error) {

@@ -13,6 +13,8 @@ import IconType from "../../enums/IconType";
 import Order from "../../../common/enums/Order";
 import PageEntity from "../../entities/page/PageEntity";
 import Style from "./index.module.scss";
+import Dialog from "../../components/Application/Dialog";
+import PageCreateForm from "../../forms/entities/PageCreateForm";
 
 export default class PageIndexPage extends React.Component<PageIndexPageProps, State> {
 
@@ -43,8 +45,9 @@ export default class PageIndexPage extends React.Component<PageIndexPageProps, S
       },
       search: props[PageIndexPageQuery.SEARCH],
 
-      list:  [],
-      count: 0,
+      list:    [],
+      count:   0,
+      loading: false,
     };
   }
 
@@ -91,13 +94,16 @@ export default class PageIndexPage extends React.Component<PageIndexPageProps, S
   };
 
   private readonly eventCreate = async (name: string) => {
-    if (!name) return;
-    await PageEntity.createOne({name});
+    Dialog.show(<PageCreateForm initial={new PageEntity({name})} onSubmit={this.eventCreateSubmit}/>, {title: "Create new page"});
+  };
+
+  private readonly eventCreateSubmit = async () => {
+    this.setState({loading: true});
     await this.eventSearch();
   };
 
   private readonly eventChange = ({search, size, page, order}: DataTableFilter<PageIndexPageOrder>) => {
-    this.setState({search, size, page, order});
+    this.setState({search, size, page, order, loading: true});
   };
 
   private readonly eventSearch = async () => {
@@ -109,7 +115,7 @@ export default class PageIndexPage extends React.Component<PageIndexPageProps, S
     const count = await PageEntity.count(params);
     const list = await PageEntity.findMany(params, {order, skip, limit});
 
-    this.setState({count, list});
+    this.setState({count, list, loading: false});
   };
 
 }
@@ -136,6 +142,7 @@ interface State {
   order: SortableCollection<PageIndexPageOrder>
   search: string
 
-  count: number
   list: PageEntity[]
+  count: number
+  loading: boolean
 }

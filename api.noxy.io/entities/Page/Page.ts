@@ -85,7 +85,7 @@ export default class Page extends Entity<Page>() {
   @Page.post("/")
   @Page.bindParameter<Request.postOne>("path", ValidatorType.STRING, {min_length: 1})
   @Page.bindParameter<Request.postOne>("name", ValidatorType.STRING, {min_length: 1})
-  @Page.bindParameter<Request.postOne>("content", ValidatorType.STRING, {min_length: 1})
+  @Page.bindParameter<Request.postOne>("content", ValidatorType.STRING, {}, {optional: true})
   @Page.bindParameter<Request.postOne>("privacy", ValidatorType.ENUM, Privacy, {optional: true})
   @Page.bindParameter<Request.postOne>("file_list", ValidatorType.UUID, {array: true, optional: true})
   private static async postOne({locals: {respond, user, params: {name, path, content, privacy, file_list}}}: Server.Request<{}, Response.postOne, Request.postOne>) {

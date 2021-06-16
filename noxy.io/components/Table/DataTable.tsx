@@ -37,13 +37,11 @@ export default class DataTable<K extends string> extends React.Component<DataTab
     const order = filter.order ?? this.props.order;
 
     this.props.onChange({search, size, page, order});
-    this.setState({loading: true});
     this.searchInternal();
   };
 
   private readonly searchInternal = _.debounce(async () => {
     await this.props.onSearch();
-    this.setState({loading: false});
   }, 500);
 
   public readonly componentDidMount = () => {
@@ -51,8 +49,9 @@ export default class DataTable<K extends string> extends React.Component<DataTab
   };
 
   public render() {
-    const {count, page, size, search, order, placeholder, children, onCreate} = this.props;
-    const {page_size_list, page_size_index, page_size_input, loading} = this.state;
+    const {count, page, size, search, order, loading, placeholder, children, onCreate} = this.props;
+    const {page_size_list, page_size_index, page_size_input} = this.state;
+
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
 
@@ -154,6 +153,7 @@ export interface DataTableProps<K extends string> {
   search?: string
   order: SortableCollection<K>
 
+  loading?: string
   className?: string
   placeholder?: string
 

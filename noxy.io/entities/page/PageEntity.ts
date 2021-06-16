@@ -63,8 +63,8 @@ export default class PageEntity extends Entity {
     return new this(result.data.content);
   }
 
-  public static async createOne(parameters: PageEntityCreateParameters) {
-    const result = await Axios.post<APIRequest<PageEntity>>(this.URL, new RequestData(parameters).toObject());
+  public static async createOne({name, path}: PageEntity) {
+    const result = await Axios.post<APIRequest<PageEntity>>(this.URL, new RequestData({name, path}).toObject());
     return new this(result.data.content);
   }
 
