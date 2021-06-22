@@ -42,9 +42,14 @@ export default class PageCreateForm extends React.Component<PageCreateFormProps,
         next_state.entity = new PageEntity();
       }
       catch (error) {
-        const response = error.response as AxiosResponse<APIRequest<unknown>>;
+        const response = error.response as AxiosResponse<APIRequest<any>>;
 
-        if (response?.status === 409) {
+        if (response?.status === 400) {
+          if (response.data.content.path) {
+            next_state.field_errors.path = new Error("Must be alphanumeric or dashes");
+          }
+        }
+        else if (response?.status === 409) {
           next_state.error = new Error("Path already exists");
         }
         else {
@@ -71,10 +76,8 @@ export default class PageCreateForm extends React.Component<PageCreateFormProps,
     return (
       <Form className={classes.join(" ")} loading={loading} error={error} onSubmit={this.submit}>
         <div className={Style.InputList}>
-          <Input className={Style.ComboBox} type={InputType.NUMBER} label={"Name *"} value={name} error={field_errors.name}
-                 onChange={this.eventNameChange}/>
-          <Input className={Style.ComboBox} type={InputType.NUMBER} label={"Path *"} value={path} error={field_errors.path}
-                 onChange={this.eventPathChange}/>
+          <Input className={Style.ComboBox} type={InputType.NUMBER} label={"Name"} value={name} error={field_errors.name} required={true} onChange={this.eventNameChange}/>
+          <Input className={Style.ComboBox} type={InputType.NUMBER} label={"Path"} value={path} error={field_errors.path} required={true} onChange={this.eventPathChange}/>
         </div>
       </Form>
     );

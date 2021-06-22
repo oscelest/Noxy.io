@@ -9,7 +9,6 @@ import Dropdown from "../Base/Dropdown";
 import Select from "../Base/Select";
 import Style from "./Input.module.scss";
 
-
 export default class Input<T extends string | number = string> extends React.Component<InputProps<T>, State> {
 
   constructor(props: InputProps<T>) {
@@ -90,7 +89,7 @@ export default class Input<T extends string | number = string> extends React.Com
       default:
         return "";
     }
-  }
+  };
 
   public render = () => {
     const {ref_input, focus, hover, dropdown} = this.state;
@@ -112,7 +111,12 @@ export default class Input<T extends string | number = string> extends React.Com
     return (
       <div className={classes.join(" ")} datatype={type} data-active={active} data-hover={hover} data-focus={focus} onMouseEnter={this.eventMouseEnter} onMouseLeave={this.eventMouseLeave}>
         <label className={Style.Wrapper}>
-          <div className={label_classes.join(" ")}>{label}</div>
+          <div className={label_classes.join(" ")}>
+            <Conditional condition={this.props.required}>
+              <span className={Style.Required}>*</span>
+            </Conditional>
+            {label}
+          </div>
           <input ref={ref_input} className={Style.Value} type={type} value={value} autoComplete={autoComplete} size={size}
                  onChange={this.eventInputChange} onBlur={this.eventInputBlur} onFocus={this.eventInputFocus} onKeyDown={this.eventKeyDown}/>
         </label>
@@ -208,6 +212,7 @@ export interface InputProps<T extends string | number = string> {
   placeholder?: string
 
   size?: number
+  required?: boolean
   className?: string
   autoComplete?: string
 

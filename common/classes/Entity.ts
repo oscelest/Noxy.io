@@ -113,9 +113,11 @@ export default function Entity<E>() {
       try {
         if (!(object instanceof this)) object = this.create(object);
         if (values) {
+          console.log(values)
           for (let key in values) {
-            if (!values.hasOwnProperty(key)) continue;
-            object[key as keyof Initializer<E>] = values[key as keyof Initializer<E>];
+            const property = key as keyof Initializer<E>;
+            if (!values.hasOwnProperty(property) || values[property] === undefined) continue;
+            object[property] = values[property];
           }
         }
 

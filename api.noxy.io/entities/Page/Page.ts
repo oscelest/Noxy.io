@@ -38,7 +38,7 @@ export default class Page extends Entity<Page>() {
   @ManyToMany(() => File)
   public file_list: Collection<File> = new Collection<File>(this);
 
-  @ManyToOne(() => User, {onDelete: "cascade"})
+  @ManyToOne(() => User)
   public user: User;
 
   @Property()
@@ -106,7 +106,7 @@ export default class Page extends Entity<Page>() {
   @Page.bindParameter<Request.putOne>("file_list", ValidatorType.UUID, {array: true, optional: true})
   private static async putOne({params: {id}, locals: {respond, user, params: {name, path, content, privacy, file_list}}}: Server.Request<{id: string}, Response.putOne, Request.putOne>) {
     const page = await this.findOne({id, user}, {populate: ["user"]});
-    page.file_list.add(...await File.find({id: {$in: file_list}}));
+    if (file_list && file_list.length) page.file_list.add(...await File.find({id: {$in: file_list}}));
     return respond(await this.persist(page, {path, name, content, privacy}));
   }
 

@@ -95,7 +95,7 @@ export default class PageIndexPage extends React.Component<PageIndexPageProps, S
           {entity.user.username}
         </ColumnText>
 
-        <Redirect className={Style.Redirect} href={`/page/${entity.id}`}>
+        <Redirect className={Style.Redirect} href={`/page/${entity.id}/edit`}>
           <Button icon={IconType.EXTERNAL_LINK}/>
         </Redirect>
       </div>
