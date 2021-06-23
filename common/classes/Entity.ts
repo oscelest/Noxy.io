@@ -8,10 +8,9 @@ import Server from "../services/Server";
 import {EntityManager, MikroORM, Constructor, FindOptions, Collection} from "@mikro-orm/core";
 import {Query} from "@mikro-orm/core/typings";
 import Order from "../enums/Order";
-import Database from "../services/Database";
 import WhereCondition from "./WhereCondition";
 import BaseEntity from "./BaseEntity";
-
+import Database from "../services/Database";
 
 export default function Entity<E>() {
 
@@ -113,7 +112,6 @@ export default function Entity<E>() {
       try {
         if (!(object instanceof this)) object = this.create(object);
         if (values) {
-          console.log(values)
           for (let key in values) {
             const property = key as keyof Initializer<E>;
             if (!values.hasOwnProperty(property) || values[property] === undefined) continue;

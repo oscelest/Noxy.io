@@ -26,7 +26,7 @@ export default class APIKeyUpdateForm extends React.Component<APIKeyUpdateFormPr
 
     try {
       const entity = await APIKeyEntity.update(id, {permission, limit_per_decasecond, limit_per_minute});
-      return entity.getPrimaryKey() === this.context.state.user?.getCurrentAPIKey().getPrimaryKey() ? this.context.refreshLogIn() : this.setState({entity});
+      return entity.getPrimaryID() === this.context.state.user?.getCurrentAPIKey().getPrimaryID() ? this.context.refreshLogIn() : this.setState({entity});
     }
     catch (error) {
       console.error(error);
@@ -38,7 +38,7 @@ export default class APIKeyUpdateForm extends React.Component<APIKeyUpdateFormPr
   }
 
   public componentDidUpdate(prevProps: Readonly<APIKeyUpdateFormProps>, prevState: Readonly<State>, snapshot?: any) {
-    if (this.props.entity.getPrimaryKey() !== prevProps.entity.getPrimaryKey()) {
+    if (this.props.entity.getPrimaryID() !== prevProps.entity.getPrimaryID()) {
       this.setState({entity: new APIKeyEntity(this.props.entity)});
     }
   }

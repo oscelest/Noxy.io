@@ -7,6 +7,10 @@ namespace Helper {
 
   export const Canvas = process.browser ? document.createElement("canvas") : null;
 
+  export function getAPIPath(...segment: string[]) {
+    return process.browser ? `${location.protocol}//api.${location.hostname}/${segment.join("/")}` : "";
+  }
+
   export function renderJSON(content: JSONObject) {
     return typeof content === "string" ? content : JSON.stringify(content, undefined, 2);
   }

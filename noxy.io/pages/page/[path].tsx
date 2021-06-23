@@ -2,7 +2,6 @@ import React from "react";
 import {NextPageContext} from "next";
 import Global from "../../Global";
 import Helper from "../../Helper";
-import Entity from "../../classes/Entity";
 import Redirect from "../../components/Application/Redirect";
 import Conditional from "../../components/Application/Conditional";
 import Button from "../../components/Form/Button";
@@ -14,6 +13,7 @@ import PageEntity from "../../entities/page/PageEntity";
 import IconType from "../../enums/IconType";
 import Style from "./[path].module.scss";
 import {Masquerade} from "../../components/Application/Masquerade";
+import BaseEntity from "../../../common/classes/BaseEntity";
 
 // noinspection JSUnusedGlobalSymbols
 export default class PageIDPage extends React.Component<PageIDPageProps, State> {
@@ -24,7 +24,7 @@ export default class PageIDPage extends React.Component<PageIDPageProps, State> 
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): PageIDPageProps {
     return {
-      [PageIDPageQuery.PATH]: Helper.getQueryProp(context.query[PageIDPageQuery.PATH], Entity.defaultID),
+      [PageIDPageQuery.PATH]: Helper.getQueryProp(context.query[PageIDPageQuery.PATH], BaseEntity.defaultID),
     };
   }
 
@@ -41,7 +41,7 @@ export default class PageIDPage extends React.Component<PageIDPageProps, State> 
     next_state.loading = false;
 
     try {
-      if (Entity.regexID.exec(this.props[PageIDPageQuery.PATH])) {
+      if (BaseEntity.regexUUID.exec(this.props[PageIDPageQuery.PATH])) {
         next_state.entity = await PageEntity.findOne(this.props[PageIDPageQuery.PATH]) as State["entity"];
       }
       else {

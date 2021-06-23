@@ -2,15 +2,15 @@ import Axios, {Canceler} from "axios";
 import Order from "../../../common/enums/Order";
 import Privacy from "../../../common/enums/Privacy";
 import SetOperation from "../../../common/enums/SetOperation";
-import Entity from "../../classes/Entity";
 import RequestData from "../../classes/RequestData";
 import Helper from "../../Helper";
 import FileExtensionEntity from "./FileExtensionEntity";
 import FileTagEntity from "./FileTagEntity";
 import UserEntity from "../UserEntity";
 import FileTypeName from "../../../common/enums/FileTypeName";
+import BaseEntity from "../../../common/classes/BaseEntity";
 
-export default class FileEntity extends Entity {
+export default class FileEntity extends BaseEntity {
 
   public id: string;
   public name: string;
@@ -24,11 +24,11 @@ export default class FileEntity extends Entity {
   public user: UserEntity;
   public time_created: Date;
 
-  public static URL = `${Entity.domainAPI}/file`;
+  public static URL = "file";
 
   constructor(entity?: Initializer<FileEntity>) {
     super();
-    this.id = entity?.id ?? Entity.defaultID;
+    this.id = entity?.id ?? BaseEntity.defaultID;
     this.name = entity?.name ?? "";
     this.data_hash = entity?.data_hash ?? "";
     this.size = entity?.size ?? 0;
@@ -41,11 +41,7 @@ export default class FileEntity extends Entity {
     this.time_created = new Date(entity?.time_created ?? 0);
   }
 
-  public toString() {
-    return this.name;
-  }
-
-  public getPrimaryKey() {
+  public getPrimaryID(): string {
     return this.id;
   }
 
@@ -62,18 +58,17 @@ export default class FileEntity extends Entity {
   }
 
   public static async count(search: FileEntitySearchParameters = {}) {
-    const result = await Axios.get<APIRequest<number>>(`${this.URL}/count?${new RequestData(search)}`);
+    const result = await Axios.get<APIRequest<number>>(Helper.getAPIPath(this.URL, "count?", new RequestData(search).toString()));
     return result.data.content;
   }
 
   public static async findMany(search: FileEntitySearchParameters = {}, pagination: RequestPagination<FileEntity> = {skip: 0, limit: 10, order: {name: Order.ASC}}) {
-    const result = await Axios.get<APIRequest<FileEntity[]>>(`${this.URL}?${new RequestData(search).paginate(pagination)}`);
+    const result = await Axios.get<APIRequest<FileEntity[]>>(Helper.getAPIPath(this.URL, "?", new RequestData(search).paginate(pagination).toString()));
     return this.instantiate(result.data.content);
   }
 
   public static async getByID(id: string | FileEntity, share_hash?: string) {
-    id = typeof id === "string" ? id : id.getPrimaryKey();
-    const result = await Axios.get<APIRequest<FileEntity>>(`${this.URL}/${id}?${new RequestData({share_hash})}`);
+    const result = await Axios.get<APIRequest<FileEntity>>(Helper.getAPIPath(this.URL, id.toString(), "?", new RequestData({share_hash}).toString()));
     return new this(result.data.content);
   }
 
@@ -84,12 +79,12 @@ export default class FileEntity extends Entity {
 
   public static async create(file: File, parameters: FileEntityCreateParameters, onUploadProgress?: (progress: ProgressEvent) => void, cancel?: (cancel: Canceler) => void) {
     const cancelToken = cancel ? new Axios.CancelToken(cancel) : undefined;
-    const result = await Axios.post<APIRequest<FileEntity>>(this.URL, new RequestData(parameters).appendFile(file).toFormData(), {onUploadProgress, cancelToken});
+    const result = await Axios.post<APIRequest<FileEntity>>(Helper.getAPIPath(this.URL), new RequestData(parameters).appendFile(file).toFormData(), {onUploadProgress, cancelToken});
     return new this(result.data.content);
   }
 
   public static async requestDownload(id: string | FileEntity | (string | FileEntity)[]) {
-    const result = await Axios.post<APIRequest<string>>(`${this.URL}/request-download`, new RequestData({id}).toObject());
+    const result = await Axios.post<APIRequest<string>>(Helper.getAPIPath(this.URL, "request-download"), new RequestData({id}).toObject());
     return result.data.content;
   }
 
@@ -98,14 +93,12 @@ export default class FileEntity extends Entity {
   }
 
   public static async updateOne(id: string | FileEntity, data: Properties<FileEntity>) {
-    id = typeof id === "string" ? id : id.getPrimaryKey();
-    const result = await Axios.put<APIRequest<FileEntity>>(`${this.URL}/${id}`, new RequestData(data).toObject());
+    const result = await Axios.put<APIRequest<FileEntity>>(Helper.getAPIPath(this.URL, id.toString()), new RequestData(data).toObject());
     return new this(result.data.content);
   }
 
-  public static async deleteOne(id_or_alias: string | FileEntity) {
-    id_or_alias = typeof id_or_alias === "string" ? id_or_alias : id_or_alias.getPrimaryKey();
-    const result = await Axios.delete<APIRequest<FileEntity>>(`${this.URL}/${id_or_alias}`);
+  public static async deleteOne(id: string | FileEntity) {
+    const result = await Axios.delete<APIRequest<FileEntity>>(Helper.getAPIPath(this.URL, id.toString()));
     return new this(result.data.content);
   }
 

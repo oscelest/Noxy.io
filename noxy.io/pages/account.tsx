@@ -291,7 +291,7 @@ export default class AccountPage extends React.Component<AccountPageProps, State
 
   private readonly eventAPIKeyFormCreateSubmit = (value: APIKeyEntity) => {
     Dialog.close(this.state.dialog);
-    return value.user?.getPrimaryKey() === this.context.state.user?.getPrimaryKey() ? this.context.refreshLogIn() : this.search();
+    return value.user?.getPrimaryID() === this.context.state.user?.getPrimaryID() ? this.context.refreshLogIn() : this.search();
   };
 
   private readonly eventCheckboxChange = (value: CheckboxCollection<{[key: string]: string}>) => this.select(_.values(value)[0].value);

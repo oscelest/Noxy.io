@@ -6,13 +6,18 @@ export default class Permission {
   /* ----- ADMIN ----- */
 
   public get [PermissionLevel.ADMIN]() {
-    return this[PermissionLevel.API_KEY] && this[PermissionLevel.FILE] && this[PermissionLevel.FILE_TAG] && this[PermissionLevel.USER];
+    return this[PermissionLevel.API_KEY] 
+      && this[PermissionLevel.FILE] 
+      && this[PermissionLevel.FILE_TAG]
+      && this[PermissionLevel.PAGE]
+      && this[PermissionLevel.USER];
   }
 
   public set [PermissionLevel.ADMIN](value: boolean) {
     this[PermissionLevel.API_KEY] = value;
     this[PermissionLevel.FILE] = value;
     this[PermissionLevel.FILE_TAG] = value;
+    this[PermissionLevel.PAGE] = value;
     this[PermissionLevel.USER] = value;
   }
 
@@ -62,6 +67,22 @@ export default class Permission {
   public set [PermissionLevel.FILE_TAG](value: boolean) {
     this[PermissionLevel.FILE_TAG_CREATE] = value;
     this[PermissionLevel.FILE_TAG_DELETE] = value;
+  }
+
+  /* ----- PAGE ----- */
+
+  public [PermissionLevel.PAGE_CREATE]: boolean = false;
+  public [PermissionLevel.PAGE_UPDATE]: boolean = false;
+  public [PermissionLevel.PAGE_DELETE]: boolean = false;
+
+  public get [PermissionLevel.PAGE]() {
+    return this[PermissionLevel.PAGE_CREATE] && this[PermissionLevel.PAGE_UPDATE] && this[PermissionLevel.PAGE_DELETE];
+  }
+
+  public set [PermissionLevel.PAGE](value: boolean) {
+    this[PermissionLevel.PAGE_CREATE] = value;
+    this[PermissionLevel.PAGE_UPDATE] = value;
+    this[PermissionLevel.PAGE_DELETE] = value;
   }
 
   /* ----- USER ----- */
@@ -136,6 +157,17 @@ export default class Permission {
       if (this[PermissionLevel.FILE_TAG_DELETE]) permission_list.push(PermissionLevel.FILE_TAG_DELETE);
     }
 
+    /* ----- PAGE ----- */
+
+    if (this[PermissionLevel.PAGE]) {
+      permission_list.push(PermissionLevel.PAGE);
+    }
+    else {
+      if (this[PermissionLevel.PAGE_CREATE]) permission_list.push(PermissionLevel.PAGE_CREATE);
+      if (this[PermissionLevel.PAGE_UPDATE]) permission_list.push(PermissionLevel.PAGE_UPDATE);
+      if (this[PermissionLevel.PAGE_DELETE]) permission_list.push(PermissionLevel.PAGE_DELETE);
+    }
+    
     /* ----- USER ----- */
 
     if (this[PermissionLevel.USER]) {

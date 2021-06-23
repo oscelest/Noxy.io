@@ -61,12 +61,12 @@ export default class Page extends Entity<Page>() {
     return respond(await this.count(this.where({user}).andWildcard({name})));
   }
 
-  @Page.get("/")
+  @Page.get("/", {user: false})
   @Page.bindParameter<Request.getCount>("name", ValidatorType.STRING, {})
   @Page.bindPagination(100, ["id", "name", "time_created"])
-  public static async getMany({locals: {respond, user, params: {name, ...pagination}}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
+  public static async getMany({locals: {respond, params: {name, ...pagination}}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
     return respond(await this.find(
-      this.where({user}).andWildcard({name}),
+      this.where({privacy: Privacy.PUBLIC}).andWildcard({name}),
       {...pagination, populate: {user: true, file_list: ["file_extension"]}}),
     );
   }

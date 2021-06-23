@@ -7,6 +7,11 @@ enum PermissionLevel {
   API_KEY_UPDATE = "api_key.update",
   API_KEY_DELETE = "api_key.delete",
 
+  PAGE = "page",
+  PAGE_CREATE = "page.create",
+  PAGE_UPDATE = "page.update",
+  PAGE_DELETE = "page.delete",
+
   FILE = "file",
   FILE_CREATE = "file.create",
   FILE_UPDATE = "file.update",

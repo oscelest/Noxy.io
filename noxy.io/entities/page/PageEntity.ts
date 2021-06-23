@@ -1,12 +1,13 @@
-import Entity from "../../classes/Entity";
 import UserEntity from "../UserEntity";
 import Axios from "axios";
 import RequestData from "../../classes/RequestData";
 import Order from "../../../common/enums/Order";
 import Privacy from "../../../common/enums/Privacy";
 import FileEntity from "../file/FileEntity";
+import Helper from "../../Helper";
+import BaseEntity from "../../../common/classes/BaseEntity";
 
-export default class PageEntity extends Entity {
+export default class PageEntity extends BaseEntity {
 
   public id: string;
   public path: string;
@@ -19,11 +20,11 @@ export default class PageEntity extends Entity {
   public time_created: Date;
   public time_updated: Date;
 
-  public static URL = `${Entity.domainAPI}/page`;
+  public static URL = "page";
 
   constructor(entity?: Initializer<PageEntity>) {
     super();
-    this.id = entity?.id ?? Entity.defaultID;
+    this.id = entity?.id ?? BaseEntity.defaultID;
     this.path = entity?.path ?? "";
     this.name = entity?.name ?? "";
     this.content = entity?.content ?? "";
@@ -34,43 +35,37 @@ export default class PageEntity extends Entity {
     this.time_updated = new Date(entity?.time_updated ?? 0);
   }
 
-  public toString() {
-    return this.name;
-  }
-
-  public getPrimaryKey(): string {
+  public getPrimaryID(): string {
     return this.id;
   }
 
   public static async count(search: PageEntitySearchParameters = {}) {
-    const result = await Axios.get<APIRequest<number>>(`${this.URL}/count?${new RequestData(search)}`);
+    const result = await Axios.get<APIRequest<number>>(Helper.getAPIPath(this.URL, "count?", new RequestData(search).toString()));
     return result.data.content;
   }
 
   public static async findMany(search: PageEntitySearchParameters = {}, pagination: RequestPagination<PageEntity> = {skip: 0, limit: 10, order: {time_created: Order.ASC}}) {
-    const result = await Axios.get<APIRequest<PageEntity[]>>(`${this.URL}?${new RequestData(search).paginate(pagination)}`);
+    const result = await Axios.get<APIRequest<PageEntity[]>>(Helper.getAPIPath(this.URL, "?", new RequestData(search).paginate(pagination).toString()));
     return this.instantiate(result.data.content);
   }
 
-  public static async findOne(entity: string | PageEntity) {
-    const id = entity instanceof PageEntity ? entity.id : entity;
-    const result = await Axios.get<APIRequest<PageEntity>>(`${this.URL}/${id}`);
+  public static async findOne(id: string | PageEntity) {
+    const result = await Axios.get<APIRequest<PageEntity>>(Helper.getAPIPath(this.URL, id.toString()));
     return new this(result.data.content);
   }
 
-  public static async findOneByPath(entity: string | PageEntity) {
-    const result = await Axios.get<APIRequest<PageEntity>>(`${this.URL}/by-path/${entity instanceof PageEntity ? entity.id : entity}`);
+  public static async findOneByPath(id: string | PageEntity) {
+    const result = await Axios.get<APIRequest<PageEntity>>(Helper.getAPIPath(this.URL, "by-path", id.toString()));
     return new this(result.data.content);
   }
 
   public static async createOne({name, path}: PageEntity) {
-    const result = await Axios.post<APIRequest<PageEntity>>(this.URL, new RequestData({name, path}).toObject());
+    const result = await Axios.post<APIRequest<PageEntity>>(Helper.getAPIPath(this.URL), new RequestData({name, path}).toObject());
     return new this(result.data.content);
   }
 
-  public static async updateOne(entity: string | PageEntity, parameters: PageEntityUpdateParameters) {
-    const id = entity instanceof Entity ? entity.id : entity;
-    const result = await Axios.put<APIRequest<PageEntity>>(`${this.URL}/${id}`, new RequestData(parameters).toObject());
+  public static async updateOne(id: string | PageEntity, parameters: PageEntityUpdateParameters) {
+    const result = await Axios.put<APIRequest<PageEntity>>(Helper.getAPIPath(this.URL, id.toString()), new RequestData(parameters).toObject());
     return new this(result.data.content);
   }
 }

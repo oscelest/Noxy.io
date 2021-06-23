@@ -42,7 +42,7 @@ namespace Global {
     };
 
     public isCurrentUser = (user?: UserEntity) => {
-      return this.state.user && this.state.user.exists() && user && user.exists() && this.state.user.getPrimaryKey() === user.getPrimaryKey();
+      return this.state.user && this.state.user.exists() && user && user.exists() && this.state.user.getPrimaryID() === user.getPrimaryID();
     }
 
     public performSignUp = async (email: string, username: string, password: string) => {

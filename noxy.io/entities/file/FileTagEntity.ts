@@ -1,52 +1,47 @@
 import Axios, {AxiosError} from "axios";
 import Order from "../../../common/enums/Order";
-import Entity from "../../classes/Entity";
 import RequestData from "../../classes/RequestData";
 import UserEntity from "../UserEntity";
+import Helper from "../../Helper";
+import BaseEntity from "../../../common/classes/BaseEntity";
 
-export default class FileTagEntity extends Entity {
+export default class FileTagEntity extends BaseEntity {
 
   public id: string;
   public name: string;
   public user: UserEntity;
   public time_created: Date;
 
-  public static URL = `${Entity.domainAPI}/file-tag`;
+  public static URL = "file-tag";
 
   constructor(entity?: Initializer<FileTagEntity>) {
     super();
-    this.id = entity?.id ?? Entity.defaultID;
+    this.id = entity?.id ?? BaseEntity.defaultID;
     this.name = entity?.name ?? "";
     this.user = new UserEntity(entity?.user);
     this.time_created = new Date(entity?.time_created ?? 0);
   }
 
-  public toString() {
-    return this.name;
-  }
-
-  public getPrimaryKey(): string {
+  public getPrimaryID(): string {
     return this.id;
   }
 
   public static async count(search: TagEntitySearchParameter = {}) {
-    return await Axios.get<APIRequest<number>>(`${this.URL}/count?${new RequestData(search)}`);
+    return await Axios.get<APIRequest<number>>(Helper.getAPIPath(this.URL, "count?", new RequestData(search).toString()));
   }
 
   public static async findMany(search: TagEntitySearchParameter = {}, pagination: RequestPagination<FileTagEntity> = {skip: 0, limit: 10, order: {name: Order.ASC}}) {
-    const result = await Axios.get<APIRequest<FileTagEntity[]>>(`${this.URL}?${new RequestData(search).paginate(pagination)}`);
+    const result = await Axios.get<APIRequest<FileTagEntity[]>>(Helper.getAPIPath(this.URL, "?", new RequestData(search).paginate(pagination).toString()));
     return this.instantiate(result.data.content);
   }
 
   public static async findOne(id: string | FileTagEntity) {
-    id = typeof id === "string" ? id : id.getPrimaryKey();
-    const result = await Axios.get<APIRequest<FileTagEntity>>(`${this.URL}/${id}`);
+    const result = await Axios.get<APIRequest<FileTagEntity>>(Helper.getAPIPath(this.URL, id.toString()));
     return new this(result.data.content);
   }
 
-  public static async findOneByName(name: string | FileTagEntity) {
-    name = typeof name === "string" ? name : name.name;
-    const result = await Axios.get<APIRequest<FileTagEntity>>(`${this.URL}/by-name/${name}`);
+  public static async findOneByName(name: string) {
+    const result = await Axios.get<APIRequest<FileTagEntity>>(Helper.getAPIPath(this.URL, "/by-name/", name));
     return new this(result.data.content);
   }
 
@@ -81,8 +76,7 @@ export default class FileTagEntity extends Entity {
   }
 
   public static async deleteOne(id: string | FileTagEntity) {
-    id = typeof id === "string" ? id : id.getPrimaryKey();
-    const result = await Axios.delete<APIRequest<FileTagEntity>>(`${this.URL}/${id}`);
+    const result = await Axios.delete<APIRequest<FileTagEntity>>(Helper.getAPIPath(this.URL, id.toString()));
     return new this(result.data.content);
   }
 

@@ -9,7 +9,6 @@ import Global from "../../../Global";
 import Style from "./edit.module.scss";
 import Button from "../../../components/Form/Button";
 import IconType from "../../../enums/IconType";
-import Entity from "../../../classes/Entity";
 import {Masquerade} from "../../../components/Application/Masquerade";
 import Router from "next/router";
 import FatalException from "../../../exceptions/FatalException";
@@ -19,6 +18,7 @@ import Privacy from "../../../../common/enums/Privacy";
 import FileEntity from "../../../entities/file/FileEntity";
 import EllipsisText from "../../../components/Text/EllipsisText";
 import Preview from "../../../components/UI/Preview";
+import BaseEntity from "../../../../common/classes/BaseEntity";
 
 // noinspection JSUnusedGlobalSymbols
 export default class PageIDEditPage extends React.Component<PageIDEditPageProps, State> {
@@ -29,7 +29,7 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): PageIDEditPageProps {
     return {
-      [PageIDEditPageQuery.PATH]: Helper.getQueryProp(context.query[PageIDEditPageQuery.PATH], new PageEntity().getPrimaryKey()),
+      [PageIDEditPageQuery.PATH]: Helper.getQueryProp(context.query[PageIDEditPageQuery.PATH], new PageEntity().getPrimaryID()),
     };
   }
 
@@ -47,7 +47,7 @@ export default class PageIDEditPage extends React.Component<PageIDEditPageProps,
     next_state.loading = false;
 
     try {
-      if (Entity.regexID.exec(this.props[PageIDEditPageQuery.PATH])) {
+      if (BaseEntity.regexUUID.exec(this.props[PageIDEditPageQuery.PATH])) {
         next_state.entity = await PageEntity.findOne(this.props[PageIDEditPageQuery.PATH]) as State["entity"];
       }
       else {

@@ -208,12 +208,12 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
 
     this.closeDialog();
     tag = await FileTagEntity.deleteOne(tag);
-    this.state.file.file_tag_list = _.filter(this.state.tag_selected_list, value => value.getPrimaryKey() !== tag.getPrimaryKey());
+    this.state.file.file_tag_list = _.filter(this.state.tag_selected_list, value => value.getPrimaryID() !== tag.getPrimaryID());
     this.setState({
       dialog:             undefined,
       file:               this.state.file,
       tag_selected_list:  this.state.file.file_tag_list,
-      tag_available_list: _.filter(this.state.tag_available_list, value => value.getPrimaryKey() !== tag.getPrimaryKey()),
+      tag_available_list: _.filter(this.state.tag_available_list, value => value.getPrimaryID() !== tag.getPrimaryID()),
     });
   };
 

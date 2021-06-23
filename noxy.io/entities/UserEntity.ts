@@ -3,11 +3,12 @@ import _ from "lodash";
 import Order from "../../common/enums/Order";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import RequestHeader from "../../common/enums/RequestHeader";
-import Entity from "../classes/Entity";
 import RequestData from "../classes/RequestData";
 import APIKeyEntity from "./APIKeyEntity";
+import BaseEntity from "../../common/classes/BaseEntity";
+import Helper from "../Helper";
 
-export default class UserEntity extends Entity {
+export default class UserEntity extends BaseEntity {
 
   public id: string;
   public email: string;
@@ -16,11 +17,11 @@ export default class UserEntity extends Entity {
   public time_created: Date;
   public time_login?: Date;
 
-  public static URL = `${Entity.domainAPI}/user`;
+  public static URL = "user";
 
   constructor(entity?: Initializer<UserEntity>) {
     super();
-    this.id = entity?.id ?? Entity.defaultID;
+    this.id = entity?.id ?? BaseEntity.defaultID;
     this.email = entity?.email ?? "";
     this.username = entity?.username ?? "";
     this.api_key_list = APIKeyEntity.instantiate(entity?.api_key_list);
@@ -28,11 +29,7 @@ export default class UserEntity extends Entity {
     this.time_login = new Date(entity?.time_login ?? 0);
   }
 
-  public toString() {
-    return this.email;
-  }
-
-  public getPrimaryKey(): string {
+  public getPrimaryID(): string {
     return this.id;
   }
 
@@ -53,39 +50,37 @@ export default class UserEntity extends Entity {
   }
 
   public static async findMany(search: UserEntityGetParameters = {}, pagination: RequestPagination<UserEntity> = {skip: 0, limit: 10, order: {email: Order.ASC}}) {
-    const response = await Axios.get<APIRequest<UserEntity[]>>(`${this.URL}?${new RequestData(search).paginate(pagination)}`);
+    const response = await Axios.get<APIRequest<UserEntity[]>>(Helper.getAPIPath(this.URL, "?", new RequestData(search).paginate(pagination).toString()));
     return this.instantiate(response.data.content);
   }
 
-  public static async findOneByID(search: string | UserEntity) {
-    const id = search instanceof UserEntity ? search.id : search;
-    const response = await Axios.get<APIRequest<UserEntity>>(`${this.URL}/${id}`);
+  public static async findOneByID(id: string | UserEntity) {
+    const response = await Axios.get<APIRequest<UserEntity>>(Helper.getAPIPath(this.URL, id.toString()));
     return new this(response.data.content);
   }
 
-
   public static async create(params: UserEntityCreateParameters) {
-    const {data: {content}} = await Axios.post<APIRequest<UserEntity>>(`${UserEntity.URL}`, new RequestData(params).toObject());
+    const {data: {content}} = await Axios.post<APIRequest<UserEntity>>(Helper.getAPIPath(this.URL), new RequestData(params).toObject());
     return new this(content);
   }
 
   public static async logIn(params?: UserEntityLogInParameters) {
-    const {data: {content}} = await Axios.post<APIRequest<UserEntity>>(`${UserEntity.URL}/login`, new RequestData(params).toObject());
+    const {data: {content}} = await Axios.post<APIRequest<UserEntity>>(Helper.getAPIPath(this.URL, "login"), new RequestData(params).toObject());
     return new this(content);
   }
 
   public static async requestPasswordReset(email: string) {
-    const {data: {content}} = await Axios.post<APIRequest<UserEntity>>(`${UserEntity.URL}/request-reset`, new RequestData({email}).toObject());
+    const {data: {content}} = await Axios.post<APIRequest<UserEntity>>(Helper.getAPIPath(this.URL, "request-reset"), new RequestData({email}).toObject());
     return new this(content);
   }
 
   public static async confirmPasswordReset(token: string, password: string) {
-    const {data: {content}} = await Axios.post<APIRequest<UserEntity>>(`${UserEntity.URL}/confirm-reset`, new RequestData({token, password}).toObject());
+    const {data: {content}} = await Axios.post<APIRequest<UserEntity>>(Helper.getAPIPath(this.URL, "confirm-reset"), new RequestData({token, password}).toObject());
     return new this(content);
   }
 
-  public static async put(id: string, params: UserEntityPutParameters) {
-    const {data: {content}} = await Axios.put<APIRequest<UserEntity>>(`${this.URL}/${id}`, new RequestData(params).toObject());
+  public static async put(id: string | UserEntity, params: UserEntityPutParameters) {
+    const {data: {content}} = await Axios.put<APIRequest<UserEntity>>(Helper.getAPIPath(this.URL, id.toString()), new RequestData(params).toObject());
     return new this(content);
   }
 

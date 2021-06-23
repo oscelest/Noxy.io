@@ -1,13 +1,13 @@
 import _ from "lodash";
 import Order from "../../common/enums/Order";
-import Entity from "./Entity";
+import BaseEntity from "../../common/classes/BaseEntity";
 
 export default class RequestData {
 
   readonly #parameter_collection: RequestDataCollection;
   readonly #file_list: File[];
 
-  constructor(data?: Partial<RequestDataCollection> | Entity) {
+  constructor(data?: Partial<RequestDataCollection> | BaseEntity) {
     this.#parameter_collection = _.pickBy(data ?? {}, value => value !== undefined) as RequestDataCollection;
     this.#file_list = [];
   }
@@ -94,7 +94,7 @@ export default class RequestData {
     if (value === null) return "NULL";
     if (typeof value === "string") return value;
     if (typeof value === "boolean") return value ? "1" : "0";
-    if (value instanceof Entity) return value.getPrimaryKey();
+    if (value instanceof BaseEntity) return value.getPrimaryID();
 
     const string = value?.toString() ?? "";
     if (string === "[object Object]") {
@@ -106,5 +106,5 @@ export default class RequestData {
 
 type RequestDataCollection = {[key: string]: RequestDataParameter}
 type RequestDataParameter = RequestDataPrimitive | RequestDataPrimitive[]
-type RequestDataPrimitive = null | boolean | number | string | object | Date | Entity
+type RequestDataPrimitive = null | boolean | number | string | object | Date | BaseEntity
 

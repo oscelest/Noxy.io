@@ -32,9 +32,7 @@ export default class PageHeader extends React.Component<PageHeaderProps, State> 
           {this.props.title}
         </div>
         <Conditional condition={this.props.children}>
-          <div className={Style.Content}>
-            {this.props.children}
-          </div>
+          {this.props.children}
         </Conditional>
       </div>
     );

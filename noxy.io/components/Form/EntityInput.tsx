@@ -1,11 +1,11 @@
 import _ from "lodash";
 import React from "react";
-import Entity from "../../classes/Entity";
 import Global from "../../Global";
 import Input from "./Input";
 import Style from "./EntityInput.module.scss";
+import BaseEntity from "../../../common/classes/BaseEntity";
 
-export default class EntityInput<E extends Entity, K extends EntityStringPropertyKeys<E>> extends React.Component<EntityInputProps<E, K>, State<E, K>> {
+export default class EntityInput<E extends BaseEntity, K extends EntityStringPropertyKeys<E>> extends React.Component<EntityInputProps<E, K>, State<E, K>> {
 
   public static contextType = Global?.Context ?? React.createContext({});
   public context: Global.Context;
@@ -58,7 +58,7 @@ export default class EntityInput<E extends Entity, K extends EntityStringPropert
   public componentDidUpdate(prevProps: Readonly<EntityInputProps<E, K>>, prevState: Readonly<State<E, K>>) {
     const next_state = {} as State<E, K>;
 
-    if (this.props.value?.getPrimaryKey() !== prevProps.value?.getPrimaryKey()) {
+    if (this.props.value?.getPrimaryID() !== prevProps.value?.getPrimaryID()) {
       if (this.props.value) {
         next_state.input = this.getValue();
         next_state.list = [this.props.value];
@@ -112,9 +112,9 @@ export default class EntityInput<E extends Entity, K extends EntityStringPropert
 
 }
 
-type EntityStringPropertyKeys<E extends Entity> = { [key in keyof E]: E[key] extends string ? (E[key] extends Function ? never : key) : never }[keyof E]
+type EntityStringPropertyKeys<E extends BaseEntity> = { [key in keyof E]: E[key] extends string ? (E[key] extends Function ? never : key) : never }[keyof E]
 
-export interface EntityInputProps<E extends Entity, K extends EntityStringPropertyKeys<E>> {
+export interface EntityInputProps<E extends BaseEntity, K extends EntityStringPropertyKeys<E>> {
   label: string
   error?: Error
   value?: E
@@ -128,7 +128,7 @@ export interface EntityInputProps<E extends Entity, K extends EntityStringProper
   onChange(entity?: E): void
 }
 
-interface State<E extends Entity, K extends EntityStringPropertyKeys<E>> {
+interface State<E extends BaseEntity, K extends EntityStringPropertyKeys<E>> {
   error?: Error
   index: number
   input: string
