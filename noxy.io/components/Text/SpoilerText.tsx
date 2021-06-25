@@ -1,7 +1,8 @@
 import React from "react";
 import Style from "./SpoilerText.module.scss";
+import Component from "../Application/Component";
 
-export default class SpoilerText extends React.Component<SpoilerTextProps, State> {
+export default class SpoilerText extends Component<SpoilerTextProps, State> {
 
   constructor(props: SpoilerTextProps) {
     super(props);

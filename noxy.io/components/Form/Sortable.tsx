@@ -6,8 +6,9 @@ import Helper from "../../Helper";
 import Icon from "./Icon";
 import Button from "./Button";
 import Style from "./Sortable.module.scss";
+import Component from "../Application/Component";
 
-export default class Sortable<V extends string> extends React.Component<SortableProps<V>, State<V>> {
+export default class Sortable<V extends string> extends Component<SortableProps<V>, State<V>> {
 
   constructor(props: SortableProps<V>) {
     super(props);

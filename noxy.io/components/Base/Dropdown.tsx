@@ -3,8 +3,9 @@ import Size from "../../enums/Size";
 import Loader from "../UI/Loader";
 import Placeholder from "../UI/Placeholder";
 import Style from "./Dropdown.module.scss";
+import Component from "../Application/Component";
 
-export default class Dropdown extends React.Component<DropdownProps, State> {
+export default class Dropdown extends Component<DropdownProps, State> {
   
   constructor(props: DropdownProps) {
     super(props);

@@ -8,8 +8,9 @@ import Conditional from "../Application/Conditional";
 import Dropdown from "../Base/Dropdown";
 import Select from "../Base/Select";
 import Style from "./Input.module.scss";
+import Component from "../Application/Component";
 
-export default class Input<T extends string | number = string> extends React.Component<InputProps<T>, State> {
+export default class Input<T extends string | number = string> extends Component<InputProps<T>, State> {
 
   constructor(props: InputProps<T>) {
     super(props);

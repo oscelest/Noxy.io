@@ -1,7 +1,8 @@
 import React from "react";
 import Style from "./EllipsisText.module.scss";
+import Component from "../Application/Component";
 
-export default class EllipsisText extends React.Component<EllipsisTextProps, State> {
+export default class EllipsisText extends Component<EllipsisTextProps, State> {
 
   constructor(props: EllipsisTextProps) {
     super(props);

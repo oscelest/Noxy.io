@@ -11,8 +11,9 @@ import FileEntity from "../../entities/file/FileEntity";
 import FatalException from "../../exceptions/FatalException";
 import Helper from "../../Helper";
 import Style from "./FileRenameForm.module.scss";
+import Component from "../../components/Application/Component";
 
-export default class FileRenameForm extends React.Component<FileRenameFormProps, State> {
+export default class FileRenameForm extends Component<FileRenameFormProps, State> {
 
   constructor(props: FileRenameFormProps) {
     super(props);

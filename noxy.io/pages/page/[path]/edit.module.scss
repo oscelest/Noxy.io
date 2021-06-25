@@ -2,15 +2,67 @@
   flex:         1 1 auto;
   flex-flow:    column;
   grid-row-gap: 10px;
+  overflow:     auto;
 
   .Container {
     flex:            1 1 auto;
-    width:           100%;
     grid-column-gap: 15px;
+    overflow:        auto;
 
-    .Editor {
-      flex:   1 1 auto;
-      resize: none;
+    .Content {
+      flex:         1 1 auto;
+      flex-flow:    column;
+      grid-row-gap: 10px;
+      overflow:     auto;
+
+      .Info {
+        flex:            0 0 auto;
+        flex-flow:       row wrap;
+        grid-row-gap:    10px;
+        grid-column-gap: 10px;
+
+        .Name {
+          flex:      1 0 auto;
+          width:     calc(50% - 5px);
+          min-width: 300px;
+        }
+
+        .Path {
+          flex:      1 0 auto;
+          width:     calc(50% - 5px);
+          min-width: 300px;
+        }
+      }
+
+      .Text {
+        flex:            1 1 auto;
+        flex-flow:       row wrap;
+        grid-row-gap:    10px;
+        grid-column-gap: 10px;
+        overflow:        auto;
+
+        .Summary {
+          flex:       1 1 auto;
+          resize:     none;
+          min-width:  500px;
+          min-height: calc(33% - 10px);
+          overflow:   auto;
+        }
+
+        .Editor {
+          flex:       1 1 auto;
+          resize:     none;
+          min-width:  500px;
+          min-height: calc(66% - 10px);
+          overflow:   auto;
+        }
+      }
+
+      .Action {
+        flex:            0 0 auto;
+        flex-flow:       row;
+        grid-column-gap: 10px;
+      }
     }
 
     .Sidebar {

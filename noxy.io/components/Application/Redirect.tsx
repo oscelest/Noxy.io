@@ -2,8 +2,9 @@ import Link, {LinkProps} from "next/link";
 import Router from "next/router";
 import React from "react";
 import Style from "./Redirect.module.scss";
+import Component from "./Component";
 
-export default class Redirect extends React.Component<RedirectProps, State> {
+export default class Redirect extends Component<RedirectProps, State> {
 
   constructor(props: RedirectProps) {
     super(props);

@@ -10,8 +10,9 @@ import DragDrop from "../UI/DragDrop";
 import Conditional from "./Conditional";
 import Style from "./Dialog.module.scss";
 import Helper from "../../Helper";
+import Component from "./Component";
 
-export default class Dialog extends React.Component<DialogProps, State> {
+export default class Dialog extends Component<DialogProps, State> {
 
   public static id = v4();
   public static dialog_listener_collection: {[key: string]: Dialog[]};

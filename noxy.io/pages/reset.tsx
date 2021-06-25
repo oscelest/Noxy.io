@@ -2,14 +2,11 @@ import {NextPageContext} from "next";
 import React from "react";
 import PasswordResetConfirmForm from "../forms/PasswordResetConfirmForm";
 import PasswordResetRequestForm from "../forms/PasswordResetRequestForm";
-import Global from "../Global";
 import Style from "./reset.module.scss";
+import Component from "../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
-export default class ResetPage extends React.Component<ResetPageProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class ResetPage extends Component<ResetPageProps, State> {
 
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): ResetPageProps {

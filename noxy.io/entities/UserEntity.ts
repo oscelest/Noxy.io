@@ -29,6 +29,10 @@ export default class UserEntity extends BaseEntity {
     this.time_login = new Date(entity?.time_login ?? 0);
   }
 
+  public toString() {
+    return this.getPrimaryID();
+  }
+
   public getPrimaryID(): string {
     return this.id;
   }
@@ -49,37 +53,37 @@ export default class UserEntity extends BaseEntity {
     return this.getCurrentAPIKey().hasPermission(...permission_list);
   }
 
-  public static async findMany(search: UserEntityGetParameters = {}, pagination: RequestPagination<UserEntity> = {skip: 0, limit: 10, order: {email: Order.ASC}}) {
-    const response = await Axios.get<APIRequest<UserEntity[]>>(Helper.getAPIPath(this.URL, "?", new RequestData(search).paginate(pagination).toString()));
-    return this.instantiate(response.data.content);
+  public static async getMany(search: UserEntityGetParameters = {}, pagination: RequestPagination<UserEntity> = {skip: 0, limit: 10, order: {email: Order.ASC}}) {
+    const result = await Axios.get<APIRequest<UserEntity[]>>(Helper.getAPIPath(`${this.URL}?${new RequestData(search).paginate(pagination).toString()}`));
+    return this.instantiate(result.data.content);
   }
 
-  public static async findOneByID(id: string | UserEntity) {
+  public static async getOne(id: string | UserEntity) {
     const response = await Axios.get<APIRequest<UserEntity>>(Helper.getAPIPath(this.URL, id.toString()));
     return new this(response.data.content);
   }
 
-  public static async create(params: UserEntityCreateParameters) {
+  public static async postOne(params: UserEntityCreateParameters) {
     const {data: {content}} = await Axios.post<APIRequest<UserEntity>>(Helper.getAPIPath(this.URL), new RequestData(params).toObject());
     return new this(content);
   }
 
-  public static async logIn(params?: UserEntityLogInParameters) {
+  public static async postLogIn(params?: UserEntityLogInParameters) {
     const {data: {content}} = await Axios.post<APIRequest<UserEntity>>(Helper.getAPIPath(this.URL, "login"), new RequestData(params).toObject());
     return new this(content);
   }
 
-  public static async requestPasswordReset(email: string) {
+  public static async postRequestPasswordReset(email: string) {
     const {data: {content}} = await Axios.post<APIRequest<UserEntity>>(Helper.getAPIPath(this.URL, "request-reset"), new RequestData({email}).toObject());
     return new this(content);
   }
 
-  public static async confirmPasswordReset(token: string, password: string) {
+  public static async postConfirmPasswordReset(token: string, password: string) {
     const {data: {content}} = await Axios.post<APIRequest<UserEntity>>(Helper.getAPIPath(this.URL, "confirm-reset"), new RequestData({token, password}).toObject());
     return new this(content);
   }
 
-  public static async put(id: string | UserEntity, params: UserEntityPutParameters) {
+  public static async putOne(id: string | UserEntity, params: UserEntityPutParameters) {
     const {data: {content}} = await Axios.put<APIRequest<UserEntity>>(Helper.getAPIPath(this.URL, id.toString()), new RequestData(params).toObject());
     return new this(content);
   }

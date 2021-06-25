@@ -8,8 +8,9 @@ import Style from "./FileUpload.module.scss";
 import Input from "./Input";
 import ProgressBar from "./ProgressBar";
 import Conditional from "../Application/Conditional";
+import Component from "../Application/Component";
 
-export default class FileUpload extends React.Component<FileUploadProps, State> {
+export default class FileUpload extends Component<FileUploadProps, State> {
 
   constructor(props: FileUploadProps) {
     super(props);

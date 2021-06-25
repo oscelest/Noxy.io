@@ -30,10 +30,6 @@ export default class BaseEntity {
     return _.pick(this, (this.constructor as typeof BaseEntity).database.instance.getMetadata().get(this.constructor.name).primaryKeys);
   }
 
-  public toString(): string {
-    return this.getPrimaryID();
-  }
-
   public toJSON(parent: string = "content", simplify: string[] = []): {[key: string]: any} {
     if (!(this.constructor as typeof BaseEntity).database) throw new Error("Cannot convert entity to JSON - No database instance found");
     const type = (this.constructor as typeof BaseEntity).database.instance.getMetadata().get(this.constructor.name);

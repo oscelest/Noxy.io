@@ -1,10 +1,10 @@
-import {Query, NonFunctionPropertyNames, ExpandProperty, FilterValue, Scalar, OperatorMap, PlainObject} from "@mikro-orm/core/typings";
+import {Query, Scalar, OperatorMap, PlainObject} from "@mikro-orm/core/typings";
 import _ from "lodash";
 import BaseEntity from "./BaseEntity";
 
 export default class WhereCondition<E extends {new(): any}, I extends Properties<InstanceType<E>> = Properties<InstanceType<E>>> extends PlainObject {
 
-  [key: string]: undefined | OperatorMap<Scalar | Scalar[]> | Query<I> | Query<I>[] | Function
+  [key: string]: undefined | OperatorMap<Scalar | Scalar[]> | Query<Initializer<I>> | Query<Initializer<I>>[] | Function
 
   constructor(entity: E, filter?: Query<I>) {
     super();
@@ -38,13 +38,13 @@ export default class WhereCondition<E extends {new(): any}, I extends Properties
     return this;
   }
 
-  public andOr(...filter_list: Query<I>[]) {
+  public andOr(...filter_list: Query<Initializer<I>>[]) {
     this.$or = filter_list;
 
     return this;
   }
 
-  public and(...filter_list: Query<I>[]) {
+  public and(...filter_list: Query<Initializer<I>>[]) {
     this.$and = filter_list;
 
     return this;
@@ -87,10 +87,6 @@ export default class WhereCondition<E extends {new(): any}, I extends Properties
 
 }
 
-type Property<I extends {}> = { [K in keyof I]?: undefined | Scalar }
+type Property<I extends {}> = { [K in keyof Properties<I>]?: undefined | Scalar }
 type PropertyArray<I extends {}> = { [K in keyof I]?: undefined | Scalar | Scalar[] }
 
-
-type ExpandObject<U> = {
-  [K in NonFunctionPropertyNames<U>]?: Query<ExpandProperty<U[K]>> | FilterValue<ExpandProperty<U[K]>> | null;
-}

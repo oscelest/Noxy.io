@@ -1,7 +1,8 @@
 import React from "react";
 import Style from "./ErrorText.module.scss";
+import Component from "../Application/Component";
 
-export default class ErrorText extends React.Component<ErrorTextProps, State> {
+export default class ErrorText extends Component<ErrorTextProps, State> {
   
   constructor(props: ErrorTextProps) {
     super(props);

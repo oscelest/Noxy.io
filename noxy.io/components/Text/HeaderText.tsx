@@ -1,7 +1,8 @@
 import React from "react";
 import Style from "./HeaderText.module.scss";
+import Component from "../Application/Component";
 
-export default class HeaderText extends React.Component<HeaderTextProps, State> {
+export default class HeaderText extends Component<HeaderTextProps, State> {
   
   constructor(props: HeaderTextProps) {
     super(props);

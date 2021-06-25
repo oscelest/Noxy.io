@@ -10,8 +10,9 @@ import Sortable, {SortableCollection} from "../Form/Sortable";
 import Style from "./DataTable.module.scss";
 import Pagination from "./Pagination";
 import Conditional from "../Application/Conditional";
+import Component from "../Application/Component";
 
-export default class DataTable<K extends string> extends React.Component<DataTableProps<K>, State> {
+export default class DataTable<K extends string> extends Component<DataTableProps<K>, State> {
 
   public static defaultPageSize = [10, 25, 50, 100];
 

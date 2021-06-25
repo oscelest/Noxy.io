@@ -2,7 +2,6 @@ import _ from "lodash";
 import React from "react";
 import {NextPageContext} from "next";
 import Moment from "moment";
-import Global from "../../Global";
 import Helper from "../../Helper";
 import Button from "../../components/Form/Button";
 import Redirect from "../../components/Application/Redirect";
@@ -16,11 +15,9 @@ import Style from "./index.module.scss";
 import Dialog from "../../components/Application/Dialog";
 import PageCreateForm from "../../forms/entities/PageCreateForm";
 import EllipsisText from "../../components/Text/EllipsisText";
+import Component from "../../components/Application/Component";
 
-export default class PageIndexPage extends React.Component<PageIndexPageProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class PageIndexPage extends Component<PageIndexPageProps, State> {
 
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): PageIndexPageProps {
@@ -122,8 +119,8 @@ export default class PageIndexPage extends React.Component<PageIndexPageProps, S
     const limit = skip + this.state.size;
     const order = _.mapValues(this.state.order, value => value.order);
 
-    const count = await PageEntity.count(params);
-    const list = await PageEntity.findMany(params, {order, skip, limit});
+    const count = await PageEntity.getCount(params);
+    const list = await PageEntity.getMany(params, {order, skip, limit});
 
     this.setState({count, list, loading: false});
   };

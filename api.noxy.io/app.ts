@@ -101,9 +101,9 @@ import User from "./entities/User";
 
 declare module "express-serve-static-core" {
   interface Locals<ResBody = any, ReqBody = any> {
-    user?: User
-    api_key?: APIKey
-    current_user?: boolean
+    user: User
+    api_key: APIKey
+    current_user: boolean
   }
 }
 

@@ -6,7 +6,7 @@
     "update": "npm outdated && npm update --save"
   },
   "dependencies":    {
-    "@aws-sdk/client-ses":       "^3.18.0",
+    "@aws-sdk/client-ses":       "^3.19.0",
     "@mikro-orm/core":           "^4.5.6",
     "@mikro-orm/mysql":          "^4.5.6",
     "express":                   "^4.17.1",

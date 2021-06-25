@@ -7,8 +7,9 @@ import Icon from "./Icon";
 import Loader from "../UI/Loader";
 import Style from "./Button.module.scss";
 import Conditional from "../Application/Conditional";
+import Component from "../Application/Component";
 
-export default class Button<V> extends React.Component<EventProps | ValueProps<V>, State> {
+export default class Button<V> extends Component<EventProps | ValueProps<V>, State> {
 
   constructor(props: EventProps | ValueProps<V>) {
     super(props);

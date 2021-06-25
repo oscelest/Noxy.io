@@ -1,6 +1,6 @@
-import React from "react";
+import Component from "./Component";
 
-export default class Conditional extends React.Component<ConditionalProps, State> {
+export default class Conditional extends Component<ConditionalProps, State> {
 
   render() {
     return !this.props.condition ? null : this.props.children;

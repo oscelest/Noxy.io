@@ -3,8 +3,9 @@ import Style from "./Markdown.module.scss";
 import FatalException from "../../exceptions/FatalException";
 import _ from "lodash";
 import SpoilerText from "../Text/SpoilerText";
+import Component from "../Application/Component";
 
-export default class Markdown extends React.Component<MarkdownProps, State> {
+export default class Markdown extends Component<MarkdownProps, State> {
 
   private static readonly PatternMap: {[key: string]: {width: number, value: number, pattern: RegExp}} = {
     "||":  {width: 2, value: 32, pattern: /(?<!\|)\|\|.+?\|\|(?!\|)/g},

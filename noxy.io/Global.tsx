@@ -46,11 +46,11 @@ namespace Global {
     }
 
     public performSignUp = async (email: string, username: string, password: string) => {
-      return this.assignUser(await UserEntity.create({email, username, password}));
+      return this.assignUser(await UserEntity.postOne({email, username, password}));
     };
 
     public performLogIn = async (email: string, password: string) => {
-      return this.assignUser(await UserEntity.logIn({email, password}));
+      return this.assignUser(await UserEntity.postLogIn({email, password}));
     };
 
     public refreshLogIn = async () => {
@@ -62,11 +62,11 @@ namespace Global {
 
       if (localStorage[RequestHeader.MASQUERADE]) {
         Axios.defaults.headers.common[RequestHeader.MASQUERADE] = localStorage[RequestHeader.MASQUERADE];
-        this.setState({masquerade: await UserEntity.findOneByID(localStorage[RequestHeader.MASQUERADE])});
+        this.setState({masquerade: await UserEntity.getOne(localStorage[RequestHeader.MASQUERADE])});
       }
 
       try {
-        return this.assignUser(await UserEntity.logIn());
+        return this.assignUser(await UserEntity.postLogIn());
       }
       catch (error) {
         this.performLogOut();
@@ -80,8 +80,8 @@ namespace Global {
       Router.reload();
     };
 
-    public updateLogIn = async (id: string, params: Parameters<typeof UserEntity["put"]>["1"]) => {
-      return this.assignUser(await UserEntity.put(id, params));
+    public updateLogIn = async (id: string, params: Parameters<typeof UserEntity["putOne"]>["1"]) => {
+      return this.assignUser(await UserEntity.putOne(id, params));
     };
 
     private assignUser = (user: UserEntity) => {

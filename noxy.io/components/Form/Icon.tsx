@@ -2,8 +2,9 @@ import React from "react";
 import IconType from "../../enums/IconType";
 import Style from "./Icon.module.scss";
 import Helper from "../../Helper";
+import Component from "../Application/Component";
 
-export default class Icon<V = any> extends React.Component<IconProps<V>, State> {
+export default class Icon<V = any> extends Component<IconProps<V>, State> {
 
   constructor(props: IconProps) {
     super(props);

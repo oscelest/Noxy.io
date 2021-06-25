@@ -11,6 +11,7 @@ import Size from "../enums/Size";
 import Global from "../Global";
 import "../global.scss";
 import Style from "./_app.module.scss";
+import Component from "../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
 export default class Application extends App {
@@ -63,10 +64,7 @@ export default class Application extends App {
   }
 }
 
-class Header extends React.Component {
-
-  public static contextType = Global.Context;
-  public context: Global.Context;
+class Header extends Component {
 
   public render() {
     return (
@@ -91,10 +89,7 @@ class Header extends React.Component {
   }
 }
 
-class Content extends React.Component<{}, {permission?: PermissionLevel | null}> {
-
-  public static contextType = Global.Context;
-  public context: Global.Context;
+class Content extends Component<{}, {permission?: PermissionLevel | null}> {
 
   constructor(props: {}) {
     super(props);

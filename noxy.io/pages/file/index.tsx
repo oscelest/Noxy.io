@@ -5,14 +5,11 @@ import Authorized from "../../components/Application/Authorized";
 import FileExplorer from "../../components/Application/FileExplorer";
 import {Masquerade} from "../../components/Application/Masquerade";
 import PageHeader from "../../components/UI/PageHeader";
-import Global from "../../Global";
 import Style from "./index.module.scss";
+import Component from "../../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
-export default class FilePage extends React.Component<FilePageProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class FilePage extends Component<FilePageProps, State> {
 
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): FilePageProps {

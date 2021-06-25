@@ -22,15 +22,12 @@ import QueuePosition from "../../enums/QueuePosition";
 import Size from "../../enums/Size";
 import FatalException from "../../exceptions/FatalException";
 import ConfirmForm from "../../forms/ConfirmForm";
-import Global from "../../Global";
 import Helper from "../../Helper";
 import Style from "./[id].module.scss";
+import Component from "../../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
-export default class FileAliasPage extends React.Component<FileAliasPageProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class FileAliasPage extends Component<FileAliasPageProps, State> {
 
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): FileAliasPageProps {
@@ -67,11 +64,11 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
 
   public async componentDidMount() {
     try {
-      const file = await FileEntity.getByID(this.props[FileAliasPageQuery.ID], this.props[FileAliasPageQuery.SHARE_HASH]);
+      const file = await FileEntity.getOne(this.props[FileAliasPageQuery.ID], this.props[FileAliasPageQuery.SHARE_HASH]);
       this.setState({file, file_loading: false});
 
       const next_state = {} as State;
-      const isOwner = file && this.context.isCurrentUser(file.user)
+      const isOwner = file && this.context.isCurrentUser(file.user);
 
       next_state.tag_selected_list = file.file_tag_list;
       next_state.file_privacy = {
@@ -82,7 +79,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
 
       switch (file.getFileType()) {
         case FileTypeName.TEXT:
-          return this.setState({...next_state, data_loading: false, data: await FileEntity.getByDataHash(file.data_hash)});
+          return this.setState({...next_state, data_loading: false, data: await FileEntity.getData(file.data_hash)});
         case FileTypeName.AUDIO:
         case FileTypeName.VIDEO:
           return this.setState({...next_state, data_loading: false, data: file.getDataPath()});
@@ -103,7 +100,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     const {file, file_element, file_loading, file_privacy} = this.state;
     const {tag_privacy, tag_selected_list, tag_available_list} = this.state;
     const loading_sidebar = _.includes([FileTypeName.AUDIO, FileTypeName.IMAGE, FileTypeName.VIDEO], file?.getFileType()) && !file_element;
-    const isOwner = file && this.context.isCurrentUser(file.user)
+    const isOwner = file && this.context.isCurrentUser(file.user);
 
     return (
       <Loader size={Size.LARGE} show={file_loading}>
@@ -242,11 +239,11 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     }
 
     this.setState({tag_selected_list, tag_available_list});
-    return FileEntity.updateOne(this.state.file, {...this.state.file, file_tag_list: tag_selected_list});
+    return FileEntity.putOne(this.state.file, {...this.state.file, file_tag_list: tag_selected_list});
   };
 
   private readonly eventTagSearch = async (name: string) => {
-    this.setState({tag_available_list: await FileTagEntity.findMany({name, exclude: this.state.tag_selected_list})});
+    this.setState({tag_available_list: await FileTagEntity.getMany({name, exclude: this.state.tag_selected_list})});
   };
 
   private readonly eventTagCreate = async (name: string) => {
@@ -261,7 +258,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
     this.setState({file_privacy});
     this.state.file.privacy = _.find(file_privacy, item => !!item.checked)?.value ?? this.state.file.privacy;
 
-    const file = await FileEntity.updateOne(this.props[FileAliasPageQuery.ID], this.state.file);
+    const file = await FileEntity.putOne(this.props[FileAliasPageQuery.ID], this.state.file);
     this.setState({file});
 
     if (file_privacy.link.checked) {
@@ -277,7 +274,7 @@ export default class FileAliasPage extends React.Component<FileAliasPageProps, S
   };
 
   private readonly eventDownload = async () => {
-    await FileEntity.confirmDownload(await FileEntity.requestDownload(this.props[FileAliasPageQuery.ID]));
+    await FileEntity.postConfirmDownload(await FileEntity.postRequestDownload(this.props[FileAliasPageQuery.ID]));
   };
 
 }

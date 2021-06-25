@@ -3,9 +3,9 @@
 .Component {
   flex:            0 0 auto;
   align-items:     center;
-  justify-content: space-between;
   grid-row-gap:    15px;
   grid-column-gap: 15px;
+  width:           100%;
   min-height:      38px;
 
   > .Title {

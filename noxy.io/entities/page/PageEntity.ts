@@ -35,36 +35,40 @@ export default class PageEntity extends BaseEntity {
     this.time_updated = new Date(entity?.time_updated ?? 0);
   }
 
+  public toString() {
+    return this.getPrimaryID();
+  }
+
   public getPrimaryID(): string {
     return this.id;
   }
 
-  public static async count(search: PageEntitySearchParameters = {}) {
-    const result = await Axios.get<APIRequest<number>>(Helper.getAPIPath(this.URL, "count?", new RequestData(search).toString()));
+  public static async getCount(search: PageEntitySearchParameters = {}) {
+    const result = await Axios.get<APIRequest<number>>(Helper.getAPIPath(this.URL, `count?${new RequestData(search).toString()}`));
     return result.data.content;
   }
 
-  public static async findMany(search: PageEntitySearchParameters = {}, pagination: RequestPagination<PageEntity> = {skip: 0, limit: 10, order: {time_created: Order.ASC}}) {
-    const result = await Axios.get<APIRequest<PageEntity[]>>(Helper.getAPIPath(this.URL, "?", new RequestData(search).paginate(pagination).toString()));
+  public static async getMany(search: PageEntitySearchParameters = {}, pagination: RequestPagination<PageEntity> = {skip: 0, limit: 10, order: {time_created: Order.ASC}}) {
+    const result = await Axios.get<APIRequest<PageEntity[]>>(Helper.getAPIPath(`${this.URL}?${new RequestData(search).paginate(pagination).toString()}`));
     return this.instantiate(result.data.content);
   }
 
-  public static async findOne(id: string | PageEntity) {
+  public static async getOne(id: string | PageEntity) {
     const result = await Axios.get<APIRequest<PageEntity>>(Helper.getAPIPath(this.URL, id.toString()));
     return new this(result.data.content);
   }
 
-  public static async findOneByPath(id: string | PageEntity) {
+  public static async getOneByPath(id: string | PageEntity) {
     const result = await Axios.get<APIRequest<PageEntity>>(Helper.getAPIPath(this.URL, "by-path", id.toString()));
     return new this(result.data.content);
   }
 
-  public static async createOne({name, path}: PageEntity) {
+  public static async postOne({name, path}: PageEntity) {
     const result = await Axios.post<APIRequest<PageEntity>>(Helper.getAPIPath(this.URL), new RequestData({name, path}).toObject());
     return new this(result.data.content);
   }
 
-  public static async updateOne(id: string | PageEntity, parameters: PageEntityUpdateParameters) {
+  public static async putOne(id: string | PageEntity, parameters: PageEntityUpdateParameters) {
     const result = await Axios.put<APIRequest<PageEntity>>(Helper.getAPIPath(this.URL, id.toString()), new RequestData(parameters).toObject());
     return new this(result.data.content);
   }

@@ -1,6 +1,5 @@
 import React from "react";
 import {NextPageContext} from "next";
-import Global from "../../Global";
 import Helper from "../../Helper";
 import Redirect from "../../components/Application/Redirect";
 import Conditional from "../../components/Application/Conditional";
@@ -14,12 +13,10 @@ import IconType from "../../enums/IconType";
 import Style from "./[path].module.scss";
 import {Masquerade} from "../../components/Application/Masquerade";
 import BaseEntity from "../../../common/classes/BaseEntity";
+import Component from "../../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
-export default class PageIDPage extends React.Component<PageIDPageProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class PageIDPage extends Component<PageIDPageProps, State> {
 
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): PageIDPageProps {
@@ -42,10 +39,10 @@ export default class PageIDPage extends React.Component<PageIDPageProps, State> 
 
     try {
       if (BaseEntity.regexUUID.exec(this.props[PageIDPageQuery.PATH])) {
-        next_state.entity = await PageEntity.findOne(this.props[PageIDPageQuery.PATH]) as State["entity"];
+        next_state.entity = await PageEntity.getOne(this.props[PageIDPageQuery.PATH]) as State["entity"];
       }
       else {
-        next_state.entity = await PageEntity.findOneByPath(this.props[PageIDPageQuery.PATH]) as State["entity"];
+        next_state.entity = await PageEntity.getOneByPath(this.props[PageIDPageQuery.PATH]) as State["entity"];
       }
     }
     catch (error) {

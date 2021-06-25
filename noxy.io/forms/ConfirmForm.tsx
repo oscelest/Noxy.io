@@ -1,12 +1,9 @@
 import React from "react";
 import Button from "../components/Form/Button";
-import Global from "../Global";
 import Style from "./ConfirmForm.module.scss";
+import Component from "../components/Application/Component";
 
-export default class ConfirmForm<V> extends React.Component<ConfirmFormProps<V>, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class ConfirmForm<V> extends Component<ConfirmFormProps<V>, State> {
 
   constructor(props: ConfirmFormProps<V>) {
     super(props);

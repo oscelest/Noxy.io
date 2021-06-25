@@ -1,14 +1,11 @@
 import _ from "lodash";
 import React from "react";
-import Global from "../../Global";
 import Input from "./Input";
 import Style from "./EntityInput.module.scss";
 import BaseEntity from "../../../common/classes/BaseEntity";
+import Component from "../Application/Component";
 
-export default class EntityInput<E extends BaseEntity, K extends EntityStringPropertyKeys<E>> extends React.Component<EntityInputProps<E, K>, State<E, K>> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class EntityInput<E extends BaseEntity, K extends EntityStringPropertyKeys<E>> extends Component<EntityInputProps<E, K>, State<E, K>> {
 
   constructor(props: EntityInputProps<E, K>) {
     super(props);

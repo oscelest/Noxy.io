@@ -8,8 +8,9 @@ import FatalException from "../../exceptions/FatalException";
 import Helper from "../../Helper";
 import ContextMenu, {ContextMenuCollection} from "./ContextMenu";
 import Style from "./ElementBrowser.module.scss";
+import Component from "../Application/Component";
 
-export default class ElementBrowser extends React.Component<ElementBrowserProps, State> {
+export default class ElementBrowser extends Component<ElementBrowserProps, State> {
 
   private static scrollCoefficient = 4;
 

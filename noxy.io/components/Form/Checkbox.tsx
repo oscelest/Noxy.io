@@ -4,8 +4,9 @@ import EventKey from "../../enums/EventKey";
 import Helper from "../../Helper";
 import Conditional from "../Application/Conditional";
 import Style from "./Checkbox.module.scss";
+import Component from "../Application/Component";
 
-export default class Checkbox<V, O extends {[key: string]: V}, C extends CheckboxCollection<O>> extends React.Component<CheckboxProps<V, O, C>, State> {
+export default class Checkbox<V, O extends {[key: string]: V}, C extends CheckboxCollection<O>> extends Component<CheckboxProps<V, O, C>, State> {
 
   constructor(props: CheckboxProps<V, O, C>) {
     super(props);

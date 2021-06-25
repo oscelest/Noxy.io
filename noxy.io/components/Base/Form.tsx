@@ -5,8 +5,9 @@ import Button from "../Form/Button";
 import ErrorText from "../Text/ErrorText";
 import Style from "./Form.module.scss";
 import Helper from "../../Helper";
+import Component from "../Application/Component";
 
-export default class Form extends React.Component<FormProps, State> {
+export default class Form extends Component<FormProps, State> {
 
   constructor(props: FormProps) {
     super(props);

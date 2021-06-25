@@ -1,7 +1,6 @@
 import _ from "lodash";
 import Router from "next/router";
 import React from "react";
-import Global from "../../Global";
 import Helper from "../../Helper";
 import Dialog from "./Dialog";
 import Authorized from "./Authorized";
@@ -35,12 +34,10 @@ import SetOperation from "../../../common/enums/SetOperation";
 import FileTypeName from "../../../common/enums/FileTypeName";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Style from "./FileExplorer.module.scss";
+import Component from "./Component";
 
 // noinspection JSUnusedGlobalSymbols
-export default class FileExplorer extends React.Component<FileBrowserProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class FileExplorer extends Component<FileBrowserProps, State> {
 
   private static defaultOrder = {
     name:         {order: undefined, text: "File name", icon: IconType.TEXT_HEIGHT},
@@ -102,7 +99,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
       };
 
       try {
-        const count = await FileEntity.count(params);
+        const count = await FileEntity.getCount(params);
         next_state.pagination_total = Helper.getPageTotal(count, this.state.pagination_size);
         next_state.pagination_current = _.clamp(this.state.pagination_current, 1, next_state.pagination_total);
 
@@ -110,7 +107,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
         const limit = next_state.pagination_current * this.state.pagination_size;
         const order = _.mapValues(this.state.file_order, value => value.order);
 
-        next_state.file_list = await FileEntity.findMany(params, {skip, limit, order});
+        next_state.file_list = await FileEntity.getMany(params, {skip, limit, order});
       }
       catch (error) {
         console.error(error);
@@ -243,7 +240,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   private readonly eventFileNameChange = async (file_list: FileEntity[]) => {
     Dialog.close(this.state.dialog);
-    await Promise.all(_.map(file_list, async (value, i) => value ? await FileEntity.updateOne(file_list[i], file_list[i]) : false));
+    await Promise.all(_.map(file_list, async (value, i) => value ? await FileEntity.putOne(file_list[i], file_list[i]) : false));
     this.searchFile();
   };
 
@@ -252,7 +249,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private readonly eventFileTagChange = async (file_tag_list: FileTagEntity[]) => {
-    await Promise.all(_.map(this.state.file_selected, async (value, i) => value ? await FileEntity.updateOne(this.state.file_list[i], {...this.state.file_list[i], file_tag_list}) : false));
+    await Promise.all(_.map(this.state.file_selected, async (value, i) => value ? await FileEntity.putOne(this.state.file_list[i], {...this.state.file_list[i], file_tag_list}) : false));
     this.closeDialog();
     this.searchFile();
     this.state.ref_entity_picker.current?.search();
@@ -286,7 +283,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
 
   private readonly eventTagSearch = async (name: string) => {
-    this.setState({tag_available_list: await FileTagEntity.findMany({name, exclude: this.state.tag_selected_list})});
+    this.setState({tag_available_list: await FileTagEntity.getMany({name, exclude: this.state.tag_selected_list})});
   };
 
   private readonly eventTagCreate = async (name: string) => {
@@ -380,7 +377,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private readonly eventContextMenuDownload = async () => {
-    await FileEntity.confirmDownload(await FileEntity.requestDownload(_.filter(this.state.file_list, (file, key) => this.state.file_selected[key])));
+    await FileEntity.postConfirmDownload(await FileEntity.postRequestDownload(_.filter(this.state.file_list, (file, key) => this.state.file_selected[key])));
   };
 
   // endregion ----- Event handlers ----- endregion //

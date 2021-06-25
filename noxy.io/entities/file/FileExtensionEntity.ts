@@ -24,18 +24,17 @@ export default class FileExtensionEntity extends BaseEntity {
     this.time_created = new Date(entity?.time_created ?? 0);
   }
 
+  public toString() {
+    return this.getPrimaryID();
+  }
+
   public getPrimaryID(): string {
     return this.id;
   }
 
-  public static async findMany(search: ExtensionEntitySearchParameter = {}, pagination: RequestPagination<FileExtensionEntity> = {skip: 0, limit: 10, order: {name: Order.ASC}}) {
-    try {
-      const result = await Axios.get<APIRequest<FileExtensionEntity[]>>(Helper.getAPIPath(this.URL, "?", new RequestData(search).paginate(pagination).toString()));
-      return this.instantiate(result.data.content);
-    }
-    catch (error) {
-      throw error;
-    }
+  public static async getMany(search: ExtensionEntitySearchParameter = {}, pagination: RequestPagination<FileExtensionEntity> = {skip: 0, limit: 10, order: {name: Order.ASC}}) {
+    const result = await Axios.get<APIRequest<FileExtensionEntity[]>>(Helper.getAPIPath(`${this.URL}?${new RequestData(search).paginate(pagination).toString()}`));
+    return this.instantiate(result.data.content);
   }
 
 }

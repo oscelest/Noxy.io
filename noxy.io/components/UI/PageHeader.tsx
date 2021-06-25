@@ -1,8 +1,9 @@
 import React from "react";
 import Style from "./PageHeader.module.scss";
 import Conditional from "../Application/Conditional";
+import Component from "../Application/Component";
 
-export default class PageHeader extends React.Component<PageHeaderProps, State> {
+export default class PageHeader extends Component<PageHeaderProps, State> {
 
   constructor(props: PageHeaderProps) {
     super(props);

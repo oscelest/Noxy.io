@@ -22,30 +22,35 @@ export default class FileTagEntity extends BaseEntity {
     this.time_created = new Date(entity?.time_created ?? 0);
   }
 
+  public toString() {
+    return this.getPrimaryID();
+  }
+
   public getPrimaryID(): string {
     return this.id;
   }
 
-  public static async count(search: TagEntitySearchParameter = {}) {
-    return await Axios.get<APIRequest<number>>(Helper.getAPIPath(this.URL, "count?", new RequestData(search).toString()));
+  public static async getCount(search: TagEntitySearchParameter = {}) {
+    const result = await Axios.get<APIRequest<number>>(Helper.getAPIPath(this.URL, `count?${new RequestData(search).toString()}`));
+    return result.data.content;
   }
 
-  public static async findMany(search: TagEntitySearchParameter = {}, pagination: RequestPagination<FileTagEntity> = {skip: 0, limit: 10, order: {name: Order.ASC}}) {
-    const result = await Axios.get<APIRequest<FileTagEntity[]>>(Helper.getAPIPath(this.URL, "?", new RequestData(search).paginate(pagination).toString()));
+  public static async getMany(search: TagEntitySearchParameter = {}, pagination: RequestPagination<FileTagEntity> = {skip: 0, limit: 10, order: {name: Order.ASC}}) {
+    const result = await Axios.get<APIRequest<FileTagEntity[]>>(Helper.getAPIPath(`${this.URL}?${new RequestData(search).paginate(pagination).toString()}`));
     return this.instantiate(result.data.content);
   }
 
-  public static async findOne(id: string | FileTagEntity) {
+  public static async getOne(id: string | FileTagEntity) {
     const result = await Axios.get<APIRequest<FileTagEntity>>(Helper.getAPIPath(this.URL, id.toString()));
     return new this(result.data.content);
   }
 
-  public static async findOneByName(name: string) {
+  public static async getOneByName(name: string) {
     const result = await Axios.get<APIRequest<FileTagEntity>>(Helper.getAPIPath(this.URL, "/by-name/", name));
     return new this(result.data.content);
   }
 
-  public static async createOne(parameters: FileTagEntityCreateParameters, ... caches: FileTagEntity[][]) {
+  public static async createOne(parameters: FileTagEntityCreateParameters, ...caches: FileTagEntity[][]) {
     let result: FileTagEntity | undefined = undefined;
 
     try {
@@ -63,14 +68,14 @@ export default class FileTagEntity extends BaseEntity {
 
       if (result === undefined) {
         const response = await Axios.post<APIRequest<FileTagEntity>>(this.URL, new RequestData(parameters).toObject());
-        result = new this(response.data.content)
+        result = new this(response.data.content);
       }
 
       return result;
     }
     catch (error) {
       const exception = error as AxiosError;
-      if (exception.response?.status === 409) return await FileTagEntity.findOneByName(parameters.name);
+      if (exception.response?.status === 409) return await FileTagEntity.getOneByName(parameters.name);
       throw exception;
     }
   }

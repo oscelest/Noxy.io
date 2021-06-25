@@ -2,15 +2,12 @@ import React from "react";
 import Order from "../../../common/enums/Order";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import UserEntity from "../../entities/UserEntity";
-import Global from "../../Global";
 import EntityInput from "../Form/EntityInput";
 import Authorized from "./Authorized";
 import Style from "./Masquerade.module.scss";
+import Component from "./Component";
 
-export class Masquerade extends React.Component<UserComboBoxProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export class Masquerade extends Component<UserComboBoxProps, State> {
 
   constructor(props: UserComboBoxProps) {
     super(props);
@@ -38,7 +35,7 @@ export class Masquerade extends React.Component<UserComboBoxProps, State> {
 
   private readonly eventSearch = async (email: string) => {
     if (!email) return [];
-    return await UserEntity.findMany({email}, {skip: 0, limit: 10, order: {email: Order.ASC}});
+    return await UserEntity.getMany({email}, {skip: 0, limit: 10, order: {email: Order.ASC}});
   };
 
   private readonly eventChange = (user?: UserEntity) => {

@@ -1,18 +1,14 @@
-import React from "react";
+import React, {Component} from "react";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Size from "../../enums/Size";
 import LogInForm from "../../forms/LogInForm";
 import SignUpForm from "../../forms/SignUpForm";
-import Global from "../../Global";
 import TitleText from "../Text/TitleText";
 import Loader from "../UI/Loader";
 import Placeholder from "../UI/Placeholder";
 import Style from "./Authorized.module.scss";
 
-export default class Authorized extends React.Component<AuthorizedProps, State> {
-
-  public static contextType = Global.Context;
-  public context: Global.Context;
+export default class Authorized extends Component<AuthorizedProps, State> {
 
   constructor(props: AuthorizedProps) {
     super(props);

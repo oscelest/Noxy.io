@@ -31,6 +31,10 @@ export default class APIKeyEntity extends BaseEntity {
     this.time_created = new Date(entity?.time_created ?? 0);
   }
 
+  public toString() {
+    return this.getPrimaryID();
+  }
+
   public getPrimaryID(): string {
     return this.id;
   }
@@ -48,12 +52,12 @@ export default class APIKeyEntity extends BaseEntity {
   }
 
   public static async count(search: APIKeyEntitySearchParameters = {}) {
-    const result = await Axios.get<APIRequest<number>>(Helper.getAPIPath(this.URL, "count?", new RequestData(search).toString()));
+    const result = await Axios.get<APIRequest<number>>(Helper.getAPIPath(this.URL, `count?${new RequestData(search).toString()}`));
     return result.data.content;
   }
 
   public static async get(search: APIKeyEntitySearchParameters = {}, pagination: RequestPagination<APIKeyEntity> = {skip: 0, limit: 10, order: {time_created: Order.DESC}}) {
-    const result = await Axios.get<APIRequest<APIKeyEntity[]>>(Helper.getAPIPath(this.URL, "?", new RequestData(search).paginate(pagination).toString()));
+    const result = await Axios.get<APIRequest<APIKeyEntity[]>>(Helper.getAPIPath(`${this.URL}?${new RequestData(search).paginate(pagination).toString()}`));
     return this.instantiate(result.data.content);
   }
 

@@ -3,8 +3,9 @@ import IconType from "../../enums/IconType";
 import Button from "../Form/Button";
 import EllipsisText from "../Text/EllipsisText";
 import Style from "./Copy.module.scss";
+import Component from "../Application/Component";
 
-export default class Copy extends React.Component<CopyProps, State> {
+export default class Copy extends Component<CopyProps, State> {
 
   constructor(props: CopyProps) {
     super(props);

@@ -2,8 +2,9 @@ import React from "react";
 import Size from "../../enums/Size";
 import Style from "./Loader.module.scss";
 import Conditional from "../Application/Conditional";
+import Component from "../Application/Component";
 
-export default class Loader extends React.Component<LoaderProps, State> {
+export default class Loader extends Component<LoaderProps, State> {
   
   constructor(props: LoaderProps) {
     super(props);

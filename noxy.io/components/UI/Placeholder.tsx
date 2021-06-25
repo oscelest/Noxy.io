@@ -1,7 +1,8 @@
 import React from "react";
 import Style from "./Placeholder.module.scss";
+import Component from "../Application/Component";
 
-export default class Placeholder extends React.Component<PlaceholderProps, State> {
+export default class Placeholder extends Component<PlaceholderProps, State> {
   
   constructor(props: PlaceholderProps) {
     super(props);

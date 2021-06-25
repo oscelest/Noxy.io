@@ -24,14 +24,11 @@ import UserEntity from "../entities/UserEntity";
 import IconType from "../enums/IconType";
 import InputType from "../enums/InputType";
 import APIKeyCreateForm from "../forms/entities/APIKeyCreateForm";
-import Global from "../Global";
 import Style from "./account.module.scss";
+import Component from "../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
-export default class AccountPage extends React.Component<AccountPageProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class AccountPage extends Component<AccountPageProps, State> {
 
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): AccountPageProps {
@@ -74,8 +71,8 @@ export default class AccountPage extends React.Component<AccountPageProps, State
     const page = filter.page ?? this.state.page;
     const order = filter.order ?? this.state.order;
 
-    this.setState({size,  page, order});
-  }
+    this.setState({size, page, order});
+  };
 
   public readonly search = () => {
     const {order, page, size} = this.state;

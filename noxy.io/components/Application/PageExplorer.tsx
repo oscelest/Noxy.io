@@ -11,15 +11,12 @@ import Sortable, {SortableCollection} from "../Form/Sortable";
 import Order from "../../../common/enums/Order";
 import Input from "../Form/Input";
 import PageHeader from "../UI/PageHeader";
-import Global from "../../Global";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Redirect from "./Redirect";
 import BaseEntity from "../../../common/classes/BaseEntity";
+import Component from "./Component";
 
-export default class PageExplorer extends React.Component<PageExplorerProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class PageExplorer extends Component<PageExplorerProps, State> {
 
   constructor(props: PageExplorerProps) {
     super(props);
@@ -40,7 +37,7 @@ export default class PageExplorer extends React.Component<PageExplorerProps, Sta
   }
 
   public async componentDidMount() {
-    const page_list = await PageEntity.findMany();
+    const page_list = await PageEntity.getMany();
     this.setState({page_list, loading: false});
   }
 

@@ -6,13 +6,10 @@ import Input from "../components/Form/Input";
 import Form from "../components/Base/Form";
 import UserEntity from "../entities/UserEntity";
 import InputType from "../enums/InputType";
-import Global from "../Global";
 import Style from "./PasswordResetConfirmForm.module.scss";
+import Component from "../components/Application/Component";
 
-export default class PasswordResetConfirmForm extends React.Component<PasswordResetConfirmFormProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class PasswordResetConfirmForm extends Component<PasswordResetConfirmFormProps, State> {
 
   constructor(props: PasswordResetConfirmFormProps) {
     super(props);
@@ -47,7 +44,7 @@ export default class PasswordResetConfirmForm extends React.Component<PasswordRe
       next_state.loading = true;
       try {
         this.setState(next_state);
-        await UserEntity.confirmPasswordReset(this.props.token, password);
+        await UserEntity.postConfirmPasswordReset(this.props.token, password);
         await this.props.onSubmit?.(this.props.token, password);
         return Router.push("/account");
       }

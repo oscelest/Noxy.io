@@ -5,12 +5,9 @@ import PermissionExplorer from "../../components/Application/PermissionExplorer"
 import Form from "../../components/Base/Form";
 import APIKeyEntity from "../../entities/APIKeyEntity";
 import Style from "./APIKeyUpdateForm.module.scss";
-import Global from "../../Global";
+import Component from "../../components/Application/Component";
 
-export default class APIKeyUpdateForm extends React.Component<APIKeyUpdateFormProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class APIKeyUpdateForm extends Component<APIKeyUpdateFormProps, State> {
 
   constructor(props: APIKeyUpdateFormProps) {
     super(props);

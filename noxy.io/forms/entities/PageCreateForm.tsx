@@ -5,14 +5,11 @@ import Input from "../../components/Form/Input";
 import Form from "../../components/Base/Form";
 import InputType from "../../enums/InputType";
 import FatalException from "../../exceptions/FatalException";
-import Global from "../../Global";
 import Style from "./PageCreateForm.module.scss";
 import PageEntity from "../../entities/page/PageEntity";
+import Component from "../../components/Application/Component";
 
-export default class PageCreateForm extends React.Component<PageCreateFormProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class PageCreateForm extends Component<PageCreateFormProps, State> {
 
   constructor(props: PageCreateFormProps) {
     super(props);
@@ -36,7 +33,7 @@ export default class PageCreateForm extends React.Component<PageCreateFormProps,
       next_state.loading = true;
       try {
         this.setState(next_state);
-        const api_key = await PageEntity.createOne(this.state.entity);
+        const api_key = await PageEntity.postOne(this.state.entity);
         setTimeout(() => this.props.onSubmit?.(api_key));
 
         next_state.entity = new PageEntity();

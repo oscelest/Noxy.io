@@ -1,13 +1,10 @@
 import {NextPageContext} from "next";
 import React from "react";
-import Global from "../Global";
 import PageExplorer from "../components/Application/PageExplorer";
+import Component from "../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
-export default class IndexPage extends React.Component<PageProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class IndexPage extends Component<PageProps, State> {
 
   public static getInitialProps(context: NextPageContext): PageProps {
     return {permission: null};

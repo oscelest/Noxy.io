@@ -7,8 +7,9 @@ import FatalException from "../../exceptions/FatalException";
 import Helper from "../../Helper";
 import Icon from "../Form/Icon";
 import Style from "./ContextMenu.module.scss";
+import Component from "../Application/Component";
 
-export default class ContextMenu extends React.Component<ContextMenuProps, State> {
+export default class ContextMenu extends Component<ContextMenuProps, State> {
 
   constructor(props: ContextMenuProps) {
     super(props);

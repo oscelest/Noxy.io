@@ -4,8 +4,9 @@ import FileEntity from "../../entities/file/FileEntity";
 import IconType from "../../enums/IconType";
 import Icon from "../Form/Icon";
 import Style from "./Preview.module.scss";
+import Component from "../Application/Component";
 
-export default class Preview extends React.Component<PreviewProps, State> {
+export default class Preview extends Component<PreviewProps, State> {
 
   constructor(props: PreviewProps) {
     super(props);

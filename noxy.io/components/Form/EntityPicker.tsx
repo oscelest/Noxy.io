@@ -10,8 +10,9 @@ import Loader from "../UI/Loader";
 import Button from "./Button";
 import Style from "./EntityPicker.module.scss";
 import Input from "./Input";
+import Component from "../Application/Component";
 
-export default class EntityPicker<V extends {toString(): string}> extends React.Component<EntityPickerProps<V>, State> {
+export default class EntityPicker<V extends {toString(): string}> extends Component<EntityPickerProps<V>, State> {
 
   constructor(props: EntityPickerProps<V>) {
     super(props);

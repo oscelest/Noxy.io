@@ -9,6 +9,7 @@ import {PrimaryKey, Property, Enum, ManyToOne, ManyToMany, Unique, Filter, Colle
 import {v4} from "uuid";
 import {Entity as DBEntity} from "@mikro-orm/core/decorators/Entity";
 import Database from "../../../common/services/Database";
+import BaseEntity from "../../../common/classes/BaseEntity";
 
 @DBEntity()
 @Unique({name: "path", properties: ["path"] as (keyof Page)[]})
@@ -25,6 +26,9 @@ export default class Page extends Entity<Page>() {
 
   @Property({length: 64})
   public name: string;
+
+  @Property({length: 1024})
+  public summary: string;
 
   @Property({type: "text"})
   public content: string;
@@ -72,13 +76,21 @@ export default class Page extends Entity<Page>() {
   }
 
   @Page.get("/:id")
-  public static async getOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
-    return respond(await this.findOne({id, user}));
+  @Page.bindParameter<Request.getOne>("share_hash", ValidatorType.STRING, {validator: BaseEntity.regexShareHash})
+  public static async getOne({params: {id}, locals: {respond, user, params: {share_hash}}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
+    return respond(await this.findOne(
+      this.where({id}).andOr({privacy: Privacy.PRIVATE, user}, {privacy: Privacy.PUBLIC}, {privacy: Privacy.LINK, share_hash}),
+      {populate: {user: true, file_list: ["file_extension"]}},
+    ));
   }
 
   @Page.get("/by-path/:path")
-  public static async getOneByPath({params: {path}, locals: {respond, user}}: Server.Request<{path: string}, Response.getOne, Request.getOne>) {
-    return respond(await this.findOne({path, user}));
+  @Page.bindParameter<Request.getOne>("share_hash", ValidatorType.STRING, {validator: BaseEntity.regexShareHash})
+  public static async getOneByPath({params: {path}, locals: {respond, user, params: {share_hash}}}: Server.Request<{path: string}, Response.getOne, Request.getOne>) {
+    return respond(await this.findOne(
+      this.where({path}).andOr({privacy: Privacy.PRIVATE, user}, {privacy: Privacy.PUBLIC}, {privacy: Privacy.LINK, share_hash}),
+      {populate: {user: true, file_list: ["file_extension"]}},
+    ));
   }
 
   @Page.post("/")
@@ -117,7 +129,7 @@ export default class Page extends Entity<Page>() {
 namespace Request {
   export type getCount = {name?: string}
   export type getFindMany = getCount & Pagination
-  export type getOne = never
+  export type getOne = {share_hash?: string}
   export type postOne = {path: string; name: string; content: string; privacy?: Privacy; file_list?: string[]}
   export type putOne = {path?: string; name?: string; content?: string; privacy?: Privacy; file_list?: string[]}
 }
