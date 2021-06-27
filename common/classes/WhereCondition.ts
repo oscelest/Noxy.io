@@ -15,6 +15,8 @@ export default class WhereCondition<E extends {new(): any}, I extends Properties
   }
 
   public andValue(filter: PropertyArray<I>) {
+    // This should go deeper and check for values and other things.
+
     for (let key in filter) {
       const value = filter[key];
       if (value === undefined || Array.isArray(value) && value.length === 0) continue;

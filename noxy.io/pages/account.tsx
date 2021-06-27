@@ -269,6 +269,7 @@ export default class AccountPage extends Component<AccountPageProps, State> {
 
   private readonly eventPasswordChange = (password: string) => this.setState({password});
   private readonly eventConfirmChange = (confirm: string) => this.setState({confirm});
+
   private readonly eventPasswordSubmit = async () => {
     try {
       // Raise notification

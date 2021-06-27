@@ -2,6 +2,7 @@ import React from "react";
 import Style from "./PageHeader.module.scss";
 import Conditional from "../Application/Conditional";
 import Component from "../Application/Component";
+import Loader from "./Loader";
 
 export default class PageHeader extends Component<PageHeaderProps, State> {
 
@@ -29,12 +30,14 @@ export default class PageHeader extends Component<PageHeaderProps, State> {
 
     return (
       <div className={classes.join(" ")}>
-        <div className={Style.Title}>
-          {this.props.title}
-        </div>
-        <Conditional condition={this.props.children}>
-          {this.props.children}
-        </Conditional>
+        <Loader className={Style.Loader} show={this.props.loading} text={"Loading..."}>
+          <div className={Style.Title}>
+            {this.props.title}
+          </div>
+          <Conditional condition={this.props.children}>
+            {this.props.children}
+          </Conditional>
+        </Loader>
       </div>
     );
   };
@@ -44,6 +47,7 @@ export default class PageHeader extends Component<PageHeaderProps, State> {
 export interface PageHeaderProps {
   title: string
 
+  loading?: boolean
   className?: string
 }
 

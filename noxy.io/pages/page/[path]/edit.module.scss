@@ -9,7 +9,7 @@
     grid-column-gap: 15px;
     overflow:        auto;
 
-    .Content {
+    .Main {
       flex:         1 1 auto;
       flex-flow:    column;
       grid-row-gap: 10px;
@@ -49,7 +49,7 @@
           overflow:   auto;
         }
 
-        .Editor {
+        .Content {
           flex:       1 1 auto;
           resize:     none;
           min-width:  500px;

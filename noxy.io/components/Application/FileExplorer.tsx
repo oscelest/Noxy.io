@@ -184,7 +184,7 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
             </Switch>
 
             <EntityPicker ref={this.state.ref_entity_picker} selected={tag_selected_list} available={tag_available_list}
-                          onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
+                          onRender={this.eventTagRender} onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
           </div>
 
         </div>
@@ -281,6 +281,10 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
 
   // region    ----- Event handlers -----    region //
 
+
+  private readonly eventTagRender = (tag: FileTagEntity) => {
+    return tag.name;
+  }
 
   private readonly eventTagSearch = async (name: string) => {
     this.setState({tag_available_list: await FileTagEntity.getMany({name, exclude: this.state.tag_selected_list})});

@@ -41,7 +41,7 @@
       overflow-x: hidden;
 
       .Loader {
-        flex: 1 1 auto;
+        flex:            1 1 auto;
       }
 
       .Browser {
@@ -83,15 +83,15 @@
               height:         0;
               padding-bottom: calc(50% - 3px);
               padding-top:    calc(50% - 3px);
-              border: $border-width solid $border-color;
+              border:         $border-width solid $border-color;
               border-radius:  $border-radius;
               background:     $background-secondary-color;
 
               img {
-                user-select:         none;
-                -ms-user-select:     none;
-                -moz-user-select:    none;
-                -webkit-user-drag:   none;
+                user-select:       none;
+                -ms-user-select:   none;
+                -moz-user-select:  none;
+                -webkit-user-drag: none;
               }
             }
 

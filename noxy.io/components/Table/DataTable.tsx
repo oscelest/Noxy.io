@@ -141,8 +141,6 @@ export default class DataTable<K extends string> extends Component<DataTableProp
   private readonly eventSizeIndexChange = (page_size_index: number) => {
     this.setState({page_size_index});
   };
-
-
 }
 
 export type DataTableFilter<K extends string> = Pick<Required<DataTableProps<K>>, "search" | "size" | "page" | "order">;
@@ -154,7 +152,7 @@ export interface DataTableProps<K extends string> {
   search?: string
   order: SortableCollection<K>
 
-  loading?: string
+  loading?: boolean
   className?: string
   placeholder?: string
 

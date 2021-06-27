@@ -1,4 +1,4 @@
-import React, {Component} from "react";
+import React from "react";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Size from "../../enums/Size";
 import LogInForm from "../../forms/LogInForm";
@@ -7,6 +7,7 @@ import TitleText from "../Text/TitleText";
 import Loader from "../UI/Loader";
 import Placeholder from "../UI/Placeholder";
 import Style from "./Authorized.module.scss";
+import Component from "./Component";
 
 export default class Authorized extends Component<AuthorizedProps, State> {
 
@@ -15,9 +16,9 @@ export default class Authorized extends Component<AuthorizedProps, State> {
   }
 
   public render() {
-    if (this.context.state.loading) return this.renderLoader();
+    if (this.context.state?.loading) return this.renderLoader();
     if (this.props.permission === null) return this.props.children;
-    if (!this.context.state.user) return this.renderForm();
+    if (!this.context.state?.user) return this.renderForm();
     if (this.props.permission && !this.context.hasPermission(this.props.permission)) return this.renderError();
 
     return this.props.children;

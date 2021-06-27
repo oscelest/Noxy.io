@@ -54,11 +54,12 @@ export default class PageIndexPage extends Component<PageIndexPageProps, State> 
   }
 
   public render() {
-    const {count, page, list, order, search, size} = this.state;
+    const {count, page, list, order, search, size, loading} = this.state;
 
     return (
       <div className={Style.Component}>
-        <DataTable className={Style.Table} count={count} page={page} size={size} order={order} search={search} onCreate={this.eventCreate} onChange={this.eventChange} onSearch={this.eventSearch}>
+        <DataTable className={Style.Table} count={count} page={page} size={size} order={order} search={search} loading={loading}
+                   onCreate={this.eventCreate} onChange={this.eventChange} onSearch={this.eventSearch}>
           {_.map(list, this.renderRow)}
         </DataTable>
       </div>

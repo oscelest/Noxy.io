@@ -50,11 +50,11 @@ export default class FileEntity extends BaseEntity {
   }
 
   public getDataPath() {
-    return `${FileEntity.URL}/data/${this.data_hash}`;
+    return Helper.getAPIPath(FileEntity.URL, "data", this.data_hash);
   }
 
   public getFilePath() {
-    return `${FileEntity.URL}/file/${this.id}`;
+    return Helper.getAPIPath(FileEntity.URL, "file", this.id);
   }
 
   public getFileType() {
@@ -77,7 +77,7 @@ export default class FileEntity extends BaseEntity {
   }
 
   public static async getData(data_hash: string) {
-    const result = await Axios.get<string>(`${this.URL}/data/${data_hash}`);
+    const result = await Axios.get<string>(Helper.getAPIPath(this.URL, "data", data_hash));
     return result.data;
   }
 

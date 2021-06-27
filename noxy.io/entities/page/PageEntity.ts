@@ -12,6 +12,7 @@ export default class PageEntity extends BaseEntity {
   public id: string;
   public path: string;
   public name: string;
+  public summary: string;
   public content: string;
   public privacy: Privacy;
   public share_hash: string;
@@ -27,6 +28,7 @@ export default class PageEntity extends BaseEntity {
     this.id = entity?.id ?? BaseEntity.defaultID;
     this.path = entity?.path ?? "";
     this.name = entity?.name ?? "";
+    this.summary = entity?.summary ?? "";
     this.content = entity?.content ?? "";
     this.privacy = entity?.privacy ?? Privacy.PRIVATE;
     this.file_list = FileEntity.instantiate(entity?.file_list);
@@ -86,5 +88,6 @@ export type PageEntityCreateParameters = {
 export type PageEntityUpdateParameters = {
   name?: string
   privacy?: Privacy
+  summary?: string
   content?: string
 }

@@ -4,7 +4,7 @@ import JWT from "jsonwebtoken";
 import _ from "lodash";
 import {v4} from "uuid";
 import APIKey from "./APIKey";
-import Entity, {Pagination} from "../../common/classes/Entity";
+import Entity, {Pagination, Populate} from "../../common/classes/Entity";
 import ValidatorType from "../../common/enums/ValidatorType";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import ServerException from "../../common/exceptions/ServerException";
@@ -57,9 +57,11 @@ export default class User extends Entity<User>() {
 
   //endregion ----- Instance methods -----
 
-  //region    ----- Utility methods -----
+  //region    ----- Static properties -----
 
-  //endregion ----- Utility methods -----
+  public static columnPopulate: Populate<User> = "api_key_list";
+
+  //endregion ----- Static properties -----
 
   //region    ----- Endpoint methods -----
 
@@ -74,14 +76,17 @@ export default class User extends Entity<User>() {
   @User.bindParameter<Request.getMany>("email", ValidatorType.STRING, {min_length: 1})
   @User.bindPagination(100, ["id", "email", "time_created"])
   public static async getMany({locals: {respond, api_key, params: {email, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
-    const entity_list = await this.find(this.where().andWildcard({email}), {...pagination, populate: "api_key_list"});
-    return respond(_.map(entity_list, entity => entity.secure(entity.id === api_key?.user?.id)));
+    const entity_list = await this.find(
+      this.where().andWildcard({email}),
+      {...pagination, populate: this.columnPopulate}
+    );
+    return respond(_.map(entity_list, entity => entity.secure(entity.id === api_key.user.id)));
   }
 
   @User.get("/:id", {permission: [PermissionLevel.USER_MASQUERADE]})
   public static async getOne({params: {id}, locals: {respond, api_key}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
-    const entity = await this.findOne({id}, {populate: "api_key_list"});
-    return respond(entity.secure(entity.id === api_key?.user?.id));
+    const entity = await this.findOne({id}, {populate: this.columnPopulate});
+    return respond(entity.secure(entity.id === api_key.user.id));
   }
 
   @User.post("/", {user: false})
@@ -92,9 +97,7 @@ export default class User extends Entity<User>() {
     const user = this.create({email, username, salt, hash});
     const api_key = APIKey.create({user, limit_per_decasecond: 10, limit_per_minute: 30});
     user.api_key_list = new Collection<APIKey>(user, [api_key]);
-    await this.persist(user);
-
-    return respond(user);
+    return respond(await this.persist(user));
   }
 
   @User.post("/login", {user: false})
@@ -102,7 +105,7 @@ export default class User extends Entity<User>() {
   @User.bindParameter<Request.postLogin>("password", ValidatorType.STRING, {min_length: 12}, {optional: true})
   public static async postLogin({locals: {respond, user, api_key, params: {email, password}}}: Server.Request<{}, Response.postLogin, Request.postLogin>) {
     if (email && password) {
-      user = await this.findOne({email});
+      user = await this.findOne({email}, {populate: this.columnPopulate});
 
       if (!crypto.pbkdf2Sync(password, user.salt, 10000, 255, "sha512").equals(user.hash)) {
         return respond(new ServerException(400));
@@ -128,7 +131,7 @@ export default class User extends Entity<User>() {
   @User.post("/request-reset", {user: false})
   @User.bindParameter<Request.postRequestReset>("email", ValidatorType.EMAIL)
   public static async postResetRequest({locals: {respond, params: {email}}}: Server.Request<{}, Response.postRequestReset, Request.postRequestReset>) {
-    const user = await this.findOne({email});
+    const user = await this.findOne({email}, {populate: this.columnPopulate});
     const token = JWT.sign({id: user.id}, user.salt.toString(), {algorithm: "HS512", expiresIn: "15m"});
     await Email.send({
       Source:      "support@noxy.io",
@@ -163,10 +166,10 @@ export default class User extends Entity<User>() {
   @User.bindParameter<Request.postConfirmReset>("token", ValidatorType.STRING)
   public static async postResetConfirm({locals: {respond, params: {password: {salt, hash}, token}}}: Server.Request<{}, Response.postConfirmReset, Request.postConfirmReset>) {
     const {id} = JWT.decode(token) as {id: string} ?? {};
-    const user = await this.findOne({id});
+    const user = await this.findOne({id}, {populate: this.columnPopulate});
 
     try {
-      JWT.verify(token, user.salt.toString(), {algorithms: ["HS512"]});
+      await JWT.verify(token, user.salt.toString(), {algorithms: ["HS512"]});
     }
     catch (error) {
       if (error instanceof JWT.TokenExpiredError) return respond(new ServerException(410));

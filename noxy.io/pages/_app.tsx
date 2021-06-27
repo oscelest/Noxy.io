@@ -1,3 +1,4 @@
+/// <reference path="../../common/Global.d.ts" />
 import App from "next/app";
 import Head from "next/head";
 import router, {Router} from "next/router";
@@ -76,7 +77,6 @@ class Header extends Component {
           <Authorized size={Size.SMALL} permission={null}>
             <Authorized>
               <Redirect className={Style.Link} href={"/page"}><span>Pages</span></Redirect>
-              <Redirect className={Style.Link} href={"/kanban"}>Kanban</Redirect>
               <Redirect className={Style.Link} href={"/file"}>Files</Redirect>
             </Authorized>
             <Redirect className={Style.Link} href={"/account"}>
@@ -114,7 +114,7 @@ class Content extends Component<{}, {permission?: PermissionLevel | null}> {
   public render() {
     return (
       <div className={Style.Content}>
-        <Authorized permission={this.state.permission} form={true}>
+        <Authorized permission={this.state.permission} size={Size.LARGE} form={true}>
           <div className={Style.Page}>{this.props.children}</div>
         </Authorized>
       </div>

@@ -20,6 +20,7 @@ import Preview from "../../../components/UI/Preview";
 import BaseEntity from "../../../../common/classes/BaseEntity";
 import Input from "../../../components/Form/Input";
 import Component from "../../../components/Application/Component";
+import UserEntity from "../../../entities/UserEntity";
 
 // noinspection JSUnusedGlobalSymbols
 export default class PageIDEditPage extends Component<PageIDEditPageProps, State> {
@@ -56,11 +57,11 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
         next_state.entity = await PageEntity.getOneByPath(this.props[PageIDEditPageQuery.PATH]) as State["entity"];
       }
 
-      const isOwner = this.context.isCurrentUser(next_state.entity.user);
+      next_state.owner = this.context.isCurrentUser(next_state.entity.user);
       next_state.privacy = {
-        [Privacy.PRIVATE]: RadioButton.createElement(Privacy.PRIVATE, "Private", next_state.entity.privacy === Privacy.PRIVATE, !isOwner),
-        [Privacy.LINK]:    RadioButton.createElement(Privacy.LINK, "With link", next_state.entity.privacy === Privacy.LINK, !isOwner),
-        [Privacy.PUBLIC]:  RadioButton.createElement(Privacy.PUBLIC, "Public", next_state.entity.privacy === Privacy.PUBLIC, !isOwner),
+        [Privacy.PRIVATE]: RadioButton.createElement(Privacy.PRIVATE, "Private", next_state.entity.privacy === Privacy.PRIVATE, !next_state.owner),
+        [Privacy.LINK]:    RadioButton.createElement(Privacy.LINK, "With link", next_state.entity.privacy === Privacy.LINK, !next_state.owner),
+        [Privacy.PUBLIC]:  RadioButton.createElement(Privacy.PUBLIC, "Public", next_state.entity.privacy === Privacy.PUBLIC, !next_state.owner),
       };
       next_state.value = next_state.entity.content;
     }
@@ -76,21 +77,24 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
 
     return (
       <div className={Style.Component}>
-        <Loader show={this.state.loading}>
-          <Placeholder show={!!this.state.placeholder} text={this.state.placeholder}>
-            <PageHeader className={Style.Header} title={title}>
-              <Masquerade className={Style.Masquerade}/>
-            </PageHeader>
-            <div className={Style.Container}>
-              <div className={Style.Content}>
+
+        <PageHeader className={Style.Header} title={title} loading={this.state.loading}>
+          <Masquerade className={Style.Masquerade} onChange={this.eventMasqueradeChange}/>
+        </PageHeader>
+
+        <div className={Style.Container}>
+          <Loader show={this.state.loading}>
+            <Placeholder show={!!this.state.placeholder} text={this.state.placeholder}>
+
+              <div className={Style.Main}>
                 <div className={Style.Info}>
-                  <Input className={Style.Name} label={"Page name"} value={this.state.entity.name} onChange={this.eventNameChange}/>
-                  <Input className={Style.Path} label={"Page url"} value={this.state.entity.path} onChange={this.eventPathChange}/>
+                  <Input className={Style.Name} label={"Title"} value={this.state.entity.name} onChange={this.eventNameChange}/>
+                  <Input className={Style.Path} label={"URL"} value={this.state.entity.path} onChange={this.eventPathChange}/>
                 </div>
 
                 <div className={Style.Text}>
-                  <textarea className={Style.Summary} value={this.state.entity.name} onChange={this.eventValueChange}/>
-                  <textarea className={Style.Editor} value={this.state.value} onChange={this.eventValueChange}/>
+                  {/*<Textarea className={Style.Summary} label={"Summary"} value={this.state.entity.summary} onChange={this.eventSummaryChange}/>*/}
+                  {/*<Textarea className={Style.Content} label={"Content"} value={this.state.entity.content} onChange={this.eventContentChange}/>*/}
                 </div>
 
                 <div className={Style.Action}>
@@ -98,6 +102,7 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
                   <Button icon={IconType.SAVE} onClick={this.eventSaveAndClose}>Save & Close</Button>
                 </div>
               </div>
+
               <div className={Style.Sidebar}>
                 <RadioButton className={Style.Privacy} onChange={this.eventFilePrivacyChange}>
                   {this.state.privacy}
@@ -107,9 +112,10 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
                   {_.map(this.state.entity.file_list, this.renderReference)}
                 </div>
               </div>
-            </div>
-          </Placeholder>
-        </Loader>
+
+            </Placeholder>
+          </Loader>
+        </div>
       </div>
     );
   }
@@ -135,22 +141,13 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
     this.setState({entity: new PageEntity({...this.state.entity, path})});
   };
 
-  private readonly eventSave = async () => {
-    if (this.state.entity.content === this.state.value) return;
-    await PageEntity.putOne(this.state.entity.id, {content: this.state.value});
-  };
+  // private readonly eventSummaryChange = (summary: string, event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  //   this.setState({entity: new PageEntity({...this.state.entity, summary})});
+  // };
 
-  private readonly eventSaveAndClose = async () => {
-    if (this.state.entity.content !== this.state.value) {
-      await PageEntity.putOne(this.state.entity.id, {content: this.state.value});
-    }
-    return Router.push(`/page/${this.props[PageIDEditPageQuery.PATH]}`);
-  };
-
-  private readonly eventValueChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    this.setState({value: event.target.value});
-  };
-
+  // private readonly eventContentChange = (content: string, event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  //   this.setState({entity: new PageEntity({...this.state.entity, content})});
+  // };
 
   private readonly eventFilePrivacyChange = async (privacy: RadioButtonCollection<Privacy>) => {
     if (!this.state.entity) {
@@ -169,6 +166,23 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
     else {
       await Router.replace({pathname: location.origin + location.pathname});
     }
+  };
+
+  private readonly eventSave = async () => {
+    if (this.state.entity.content === this.state.value) return;
+    await PageEntity.putOne(this.state.entity.id, {content: this.state.value});
+  };
+
+  private readonly eventSaveAndClose = async () => {
+    if (this.state.entity.content !== this.state.value) {
+      await PageEntity.putOne(this.state.entity.id, {content: this.state.value});
+    }
+    return Router.push(`/page/${this.state.entity.path}`);
+  };
+
+
+  private readonly eventMasqueradeChange = (user: UserEntity) => {
+    Router.reload();
   };
 
 }

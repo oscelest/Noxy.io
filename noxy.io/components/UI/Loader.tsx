@@ -14,10 +14,12 @@ export default class Loader extends Component<LoaderProps, State> {
     switch (this.props.size) {
       case Size.LARGE:
         return Style.Large;
+      case Size.NORMAL:
+        return Style.Normal;
       case Size.SMALL:
         return Style.Small;
       default:
-        return Style.Normal;
+        return Style.Auto;
     }
   };
   

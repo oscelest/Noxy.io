@@ -87,7 +87,7 @@ export default function Entity<E>() {
     }
 
     public static async count(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: CountOptions<E> = {}) {
-      return await Database.manager.count(this, where, {...options}) as number;
+      return await Database.manager.count(this, where, options) as number;
     }
 
     public static async find(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: FindManyOptions<E> = {}) {
@@ -162,16 +162,13 @@ export interface Entity {
   regexShareHash: RegExp;
 }
 
-type EntityID = string | string[]
 type Ordering = {[key: string]: Order}
-type EntityJSONObject = {[key: string]: EntityJSONPrimitives}
-type EntityJSONPrimitives = undefined | null | boolean | number | string | Date | EntityJSONPrimitives[] | {[key: string]: EntityJSONPrimitives}
 type Decorator = <T>(target: DecoratorConstructor, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T> | void;
-type Populate<V> = keyof V | (keyof V)[] | { [K in keyof V]?: true | (V[K] extends Collection<infer R> ? Populate<R> : | Populate<V[K]>) }
 
-type CountOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy">
-type FindOneOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy" | "offset" | "limit"> & {populate?: Populate<E>, order?: Ordering}
-type FindManyOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy" | "offset"> & {populate?: Populate<E>, skip?: number, order?: Ordering}
+export type Populate<V> = keyof V | (keyof V)[] | { [K in keyof V]?: true | (V[K] extends Collection<infer R> ? Populate<R> : | Populate<V[K]>) }
+export type CountOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy">
+export type FindOneOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy" | "offset" | "limit"> & {populate?: Populate<E>, order?: Ordering}
+export type FindManyOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy" | "offset"> & {populate?: Populate<E>, skip?: number, order?: Ordering}
 
 export interface Pagination {
   skip?: number

@@ -1,4 +1,4 @@
-import Entity, {Pagination} from "../../../common/classes/Entity";
+import Entity, {Pagination, Populate} from "../../../common/classes/Entity";
 import ValidatorType from "../../../common/enums/ValidatorType";
 import Server from "../../../common/services/Server";
 import ServerException from "../../../common/exceptions/ServerException";
@@ -53,9 +53,11 @@ export default class Page extends Entity<Page>() {
 
   //endregion ----- Properties -----
 
-  //region    ----- Utility methods -----
+  //region    ----- Static properties -----
 
-  //endregion ----- Utility methods -----
+  public static columnPopulate: Populate<Page> = {user: true, file_list: ["file_extension"]};
+
+  //endregion ----- Static properties -----
 
   //region    ----- Endpoint methods -----
 
@@ -71,7 +73,7 @@ export default class Page extends Entity<Page>() {
   public static async getMany({locals: {respond, params: {name, ...pagination}}}: Server.Request<{}, Response.getFindMany, Request.getFindMany>) {
     return respond(await this.find(
       this.where({privacy: Privacy.PUBLIC}).andWildcard({name}),
-      {...pagination, populate: {user: true, file_list: ["file_extension"]}}),
+      {...pagination, populate: this.columnPopulate}),
     );
   }
 
@@ -80,7 +82,7 @@ export default class Page extends Entity<Page>() {
   public static async getOne({params: {id}, locals: {respond, user, params: {share_hash}}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
     return respond(await this.findOne(
       this.where({id}).andOr({privacy: Privacy.PRIVATE, user}, {privacy: Privacy.PUBLIC}, {privacy: Privacy.LINK, share_hash}),
-      {populate: {user: true, file_list: ["file_extension"]}},
+      {populate: this.columnPopulate},
     ));
   }
 
@@ -89,7 +91,7 @@ export default class Page extends Entity<Page>() {
   public static async getOneByPath({params: {path}, locals: {respond, user, params: {share_hash}}}: Server.Request<{path: string}, Response.getOne, Request.getOne>) {
     return respond(await this.findOne(
       this.where({path}).andOr({privacy: Privacy.PRIVATE, user}, {privacy: Privacy.PUBLIC}, {privacy: Privacy.LINK, share_hash}),
-      {populate: {user: true, file_list: ["file_extension"]}},
+      {populate: this.columnPopulate},
     ));
   }
 
@@ -117,7 +119,7 @@ export default class Page extends Entity<Page>() {
   @Page.bindParameter<Request.putOne>("privacy", ValidatorType.ENUM, Privacy, {optional: true})
   @Page.bindParameter<Request.putOne>("file_list", ValidatorType.UUID, {array: true, optional: true})
   private static async putOne({params: {id}, locals: {respond, user, params: {name, path, content, privacy, file_list}}}: Server.Request<{id: string}, Response.putOne, Request.putOne>) {
-    const page = await this.findOne({id, user}, {populate: ["user"]});
+    const page = await this.findOne({id, user}, {populate: this.columnPopulate});
     if (file_list && file_list.length) page.file_list.add(...await File.find({id: {$in: file_list}}));
     return respond(await this.persist(page, {path, name, content, privacy}));
   }

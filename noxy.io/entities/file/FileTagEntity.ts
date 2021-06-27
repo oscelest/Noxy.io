@@ -67,7 +67,7 @@ export default class FileTagEntity extends BaseEntity {
       }
 
       if (result === undefined) {
-        const response = await Axios.post<APIRequest<FileTagEntity>>(this.URL, new RequestData(parameters).toObject());
+        const response = await Axios.post<APIRequest<FileTagEntity>>(Helper.getAPIPath(this.URL), new RequestData(parameters).toObject());
         result = new this(response.data.content);
       }
 

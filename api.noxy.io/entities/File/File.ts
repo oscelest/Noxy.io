@@ -6,7 +6,7 @@ import _ from "lodash";
 import Moment from "moment";
 import Path from "path";
 import {v4} from "uuid";
-import Entity, {Pagination} from "../../../common/classes/Entity";
+import Entity, {Pagination, FindManyOptions, CountOptions, Populate} from "../../../common/classes/Entity";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Privacy from "../../../common/enums/Privacy";
 import SetOperation from "../../../common/enums/SetOperation";
@@ -17,8 +17,9 @@ import Server from "../../../common/services/Server";
 import FileExtension from "./FileExtension";
 import FileTag from "./FileTag";
 import User from "../User";
-import WhereCondition from "../../../common/classes/WhereCondition";
 import FileHandle from "../../../common/classes/FileHandle";
+import FileTypeName from "../../../common/enums/FileTypeName";
+import Database from "../../../common/services/Database";
 
 @DBEntity()
 @Unique({name: "data_hash", properties: ["data_hash"] as (keyof File)[]})
@@ -83,9 +84,11 @@ export default class File extends Entity<File>() {
 
   //endregion ----- Instance methods -----
 
-  //region    ----- Utility methods -----
+  //region    ----- Static properties -----
 
-  //endregion ----- Utility methods -----
+  public static columnPopulate: Populate<File> = ["file_extension", "file_tag_list", "user"];
+
+  //endregion ----- Static properties -----
 
   //region    ----- Endpoint methods -----
 
@@ -94,42 +97,60 @@ export default class File extends Entity<File>() {
   @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.UUID, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
-  public static async getCount({locals: {respond, user, params: {name, file_tag_list, file_tag_set_operation}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
-    // TODO: Add missing check
-    // this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
-    return respond(await this.count(this.where({user}).andWildcard({name})));
+  public static async getCount({locals: {respond, user, params: {name, file_type_list, file_tag_list, file_tag_set_operation}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
+    const options: CountOptions<File> = {};
+
+    if (file_tag_set_operation === SetOperation.INTERSECTION) {
+      options.groupBy = `(${Database.manager.getMetadata().get(this.name).properties["file_tag_list" as keyof File].joinColumns.join("), (")})`;
+      options.having = `COUNT(*) = ${file_tag_list.length}`;
+    }
+
+    return respond(await this.count(
+      this.where({user, file_extension: {type: file_type_list}, file_tag_list: {id: file_tag_list}}).andWildcard({name}),
+      options,
+    ));
   }
 
   @File.get("/")
   @File.bindParameter<Request.getMany>("name", ValidatorType.STRING, {max_length: 128})
-  @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.UUID, {array: true})
+  @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.ENUM, FileTypeName, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
   @File.bindPagination(100, ["id", "name", "size", "time_created"])
-  public static async getMany({locals: {respond, user, params: {name, file_tag_list, file_tag_set_operation, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
-    // TODO: Add missing check
-    // this.addRelationSetClause(query, file_tag_set_operation ?? SetOperation.UNION, "file_tag_list", "id", file_tag_list);
-    return respond(await this.find(this.where({user}).andWildcard({name}), {...pagination, populate: ["file_extension", "file_tag_list", "user"]}));
+  public static async getMany({locals: {respond, user, params: {name, file_type_list, file_tag_list, file_tag_set_operation, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
+    const options: FindManyOptions<File> = {...pagination, populate: this.columnPopulate};
+
+    if (file_tag_set_operation === SetOperation.INTERSECTION) {
+      options.groupBy = `(${Database.manager.getMetadata().get(this.name).properties["file_tag_list" as keyof File].joinColumns.join("), (")})`;
+      options.having = `COUNT(*) = ${file_tag_list.length}`;
+    }
+
+    return respond(await this.find(
+      this.where({user, file_extension: {type: file_type_list}, file_tag_list: {id: file_tag_list}}).andWildcard({name}),
+      options,
+    ));
   }
 
   @File.get("/:id", {user: false})
   @File.bindParameter<Request.getOne>("share_hash", ValidatorType.STRING, {min_length: 32, max_length: 32})
   public static async getOne({params: {id}, locals: {respond, user, params: {share_hash}}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
     const file = await this.findOne(
-      this.where({id}).andOr(
+      this.where({id})
+      .andOr(
         {privacy: Privacy.PUBLIC},
         {privacy: Privacy.LINK, share_hash},
         {privacy: Privacy.PRIVATE, user},
       ),
-      {populate: "user"},
+      {populate: this.columnPopulate}
     );
-    if (file.user.id === user?.id || file.flag_public_tag) await this.populate(file, "file_tag_list");
+
+    if (file.user.id === user?.id || file.flag_public_tag) file.file_tag_list = new Collection<FileTag>(FileTag, [], true);
     return respond(file);
   }
 
   @File.get("/data/:data_hash", {user: false})
   public static async getData({params: {data_hash}, locals: {respond, user}}: Server.Request<{data_hash: string}, Response.getData, Request.getData>, response: Server.Response) {
-    const file = await this.findOne(new WhereCondition(this, {data_hash}));
+    const file = await this.findOne({data_hash}, {populate: this.columnPopulate});
     response.setHeader("Content-Type", file.file_extension.mime_type);
     response.sendFile(Path.resolve(process.env.FILE_PATH!, file.data_hash));
   }
@@ -182,7 +203,7 @@ export default class File extends Entity<File>() {
     const {token} = params!;
     const {id} = JWT.decode(token) as {id: string[]};
     try {
-      JWT.verify(token, `${process.env["FILE_SECRET"]}:${id.join(":")}`);
+      await JWT.verify(token, `${process.env["FILE_SECRET"]}:${id.join(":")}`);
 
       const file_list = await this.find({id});
       if (file_list.length === 1) {
@@ -216,61 +237,31 @@ export default class File extends Entity<File>() {
   }
 
   @File.put("/:id", {permission: PermissionLevel.FILE_UPDATE})
-  @File.bindParameter<Request.putOne>("name", ValidatorType.STRING, {min_length: 3}, {optional: true})
+  @File.bindParameter<Request.putOne>("name", ValidatorType.STRING, {}, {optional: true})
   @File.bindParameter<Request.putOne>("privacy", ValidatorType.ENUM, Privacy, {optional: true})
   @File.bindParameter<Request.putOne>("flag_public_tag", ValidatorType.BOOLEAN, {optional: true})
   @File.bindParameter<Request.putOne>("file_extension", ValidatorType.UUID, {optional: true})
   @File.bindParameter<Request.putOne>("file_tag_list", ValidatorType.UUID, {array: true, optional: true})
   private static async updateOne({params: {id}, locals: {respond, user, params}}: Server.Request<{id: string}, Response.putOne, Request.putOne>) {
-    // const {name, privacy, flag_public_tag, file_extension, file_tag_list} = params!;
-    //
-    // try {
-    //   const file = await Database.manager.findOneOrFail(File, {id}, ["file_extension", "user", "file_tag_list"]);
-    //   if (file.user.id !== user?.id) return respond(new ServerException(403));
-    //
-    //   if (file_tag_list) {
-    //     const file_tag_id_list = _.map(file.file_tag_list, file_tag => file_tag.id);
-    //     const file_tag_add_list = _.differenceWith(file_tag_list, file_tag_id_list, (a, b) => a === b);
-    //     const file_tag_remove_list = _.differenceWith(file_tag_id_list, file_tag_list, (a, b) => a === b);
-    //
-    //     await this.createRelation(File, "file_tag_list").of(file.id).remove(file_tag_remove_list);
-    //     await this.createRelation(File, "file_tag_list").of(file.id).add(file_tag_add_list);
-    //   }
-    //
-    //   if (name !== undefined) file.name = name;
-    //   if (file_extension !== undefined) file.file_extension = await FileExtension.performSelect(file_extension);
-    //   if (flag_public_tag !== undefined) file.flag_public_tag = flag_public_tag;
-    //   if (privacy !== undefined) file.privacy = privacy;
-    //   await Database.manager.persistAndFlush(file);
-    //
-    //   respond(file);
-    // }
-    // catch (error) {
-    //   respond(new ServerException(500, error));
-    // }
+    const {name, privacy, flag_public_tag, file_extension, file_tag_list} = params!;
+    const file = await this.findOne({id, user}, {populate: this.columnPopulate});
+
+    if (name !== undefined) file.name = name;
+    if (privacy !== undefined) file.privacy = privacy;
+    if (flag_public_tag !== undefined) file.flag_public_tag = flag_public_tag;
+    if (file_extension !== undefined) file.file_extension = await FileExtension.findOne(file_extension);
+    if (file_tag_list) file.file_tag_list = new Collection<FileTag>(file, await FileTag.find({id: file_tag_list}));
+
+    return respond(await this.persist(file));
   }
 
   @File.delete("/:id", {permission: PermissionLevel.FILE_DELETE})
   private static async deleteOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.deleteOne, Request.deleteOne>) {
-    // try {
-    //   const file = await Database.manager.findOneOrFail(File, {id});
-    //   if (file.user.id !== user?.id) return respond(new ServerException(403));
-    //
-    //   FS.unlink(Path.resolve(process.env.FILE_PATH!, file.data_hash), async error => {
-    //     if (error) return respond(new ServerException(500, error));
-    //
-    //     try {
-    //       respond(await this.performDelete(file.id));
-    //     }
-    //     catch (error) {
-    //       respond(new ServerException(500, error));
-    //     }
-    //   });
-    // }
-    // catch (error) {
-    //   if (error instanceof TypeORM.EntityNotFoundError) return respond(new ServerException(404));
-    //   respond(new ServerException(500, error));
-    // }
+    const file = await this.findOne({id, user}, {populate: this.columnPopulate});
+
+    FS.unlink(Path.resolve(process.env.FILE_PATH!, file.data_hash), async error => {
+      return respond(error ? new ServerException(500, error) : await this.remove(file));
+    });
   }
 
   //endregion ----- Endpoint methods -----
@@ -279,7 +270,7 @@ export default class File extends Entity<File>() {
 
 namespace Request {
   export type getMany = getCount & Pagination
-  export type getCount = {name?: string; file_type_list?: string[]; file_tag_list?: string[]; file_tag_set_operation?: SetOperation}
+  export type getCount = {name?: string; file_type_list: string[]; file_tag_list: string[]; file_tag_set_operation?: SetOperation}
   export type getOne = {share_hash?: string}
   export type getData = never
   export type postOne = {data: FileHandle; file_tag_list?: string[]}

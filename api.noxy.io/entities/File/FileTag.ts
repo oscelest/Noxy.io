@@ -1,7 +1,7 @@
 import {Entity as DBEntity, PrimaryKey, Property, Index, Unique, ManyToOne} from "@mikro-orm/core";
 import {v4} from "uuid";
 import User from "../User";
-import Entity, {Pagination} from "../../../common/classes/Entity";
+import Entity, {Pagination, Populate} from "../../../common/classes/Entity";
 import ValidatorType from "../../../common/enums/ValidatorType";
 import ServerException from "../../../common/exceptions/ServerException";
 import Server from "../../../common/services/Server";
@@ -35,9 +35,11 @@ export default class FileTag extends Entity<FileTag>() {
 
   //endregion ----- Instance methods -----
 
-  //region    ----- Utility methods -----
+  //region    ----- Static properties -----
 
-  //endregion ----- Utility methods -----
+  public static columnPopulate: Populate<FileTag> = ["user"];
+
+  //endregion ----- Static properties -----
 
   //region    ----- Endpoint methods -----
 
@@ -54,17 +56,17 @@ export default class FileTag extends Entity<FileTag>() {
   @FileTag.bindParameter<Request.getMany>("exclude", ValidatorType.UUID, {array: true})
   @FileTag.bindPagination(100, ["id", "name", "time_created"])
   public static async getMany({locals: {respond, user, params: {name, exclude, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
-    return respond(await this.find(this.where({user}).andExclusion({id: exclude}).andWildcard({name}), {...pagination, populate: "user"}));
+    return respond(await this.find(this.where({user}).andExclusion({id: exclude}).andWildcard({name}), {...pagination, populate: this.columnPopulate}));
   }
 
   @FileTag.get("/:id")
   public static async getOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
-    return respond(await this.findOne(this.where({id, user}), {populate: "user"}));
+    return respond(await this.findOne(this.where({id, user}), {populate: this.columnPopulate}));
   }
 
   @FileTag.get("/by-name/:name")
   public static async getOneByName({params: {name}, locals: {respond, user}}: Server.Request<{name: string}, Response.getOne, Request.getOne>) {
-    return respond(await this.findOne({name, user}, {populate: "user"}));
+    return respond(await this.findOne({name, user}, {populate: this.columnPopulate}));
   }
 
   @FileTag.post("/")
@@ -75,7 +77,7 @@ export default class FileTag extends Entity<FileTag>() {
 
   @FileTag.delete("/:id")
   private static async deleteOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.deleteOne, Request.deleteOne>) {
-    return respond(await this.remove({id, user}, {populate: "user"}));
+    return respond(await this.remove({id, user}, {populate: this.columnPopulate}));
   }
 
   //endregion ----- Endpoint methods -----

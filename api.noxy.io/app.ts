@@ -51,7 +51,7 @@ import User from "./entities/User";
 
       if (authorization) {
         try {
-          const {id} = JSONWebToken.verify(authorization, process.env.JWT_SECRET!) as {id: string};
+          const {id} = await JSONWebToken.verify(authorization, process.env.JWT_SECRET!) as {id: string};
           request.locals.api_key = await APIKey.findOne({id}, {populate: "user"});
         }
         catch (error) {
