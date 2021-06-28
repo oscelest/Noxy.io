@@ -6,13 +6,18 @@ export default class Permission {
   /* ----- ADMIN ----- */
 
   public get [PermissionLevel.ADMIN]() {
-    return this[PermissionLevel.API_KEY] && this[PermissionLevel.FILE] && this[PermissionLevel.FILE_TAG] && this[PermissionLevel.USER];
+    return this[PermissionLevel.API_KEY] 
+      && this[PermissionLevel.FILE] 
+      && this[PermissionLevel.FILE_TAG]
+      && this[PermissionLevel.PAGE]
+      && this[PermissionLevel.USER];
   }
 
   public set [PermissionLevel.ADMIN](value: boolean) {
     this[PermissionLevel.API_KEY] = value;
     this[PermissionLevel.FILE] = value;
     this[PermissionLevel.FILE_TAG] = value;
+    this[PermissionLevel.PAGE] = value;
     this[PermissionLevel.USER] = value;
   }
 
@@ -64,6 +69,22 @@ export default class Permission {
     this[PermissionLevel.FILE_TAG_DELETE] = value;
   }
 
+  /* ----- PAGE ----- */
+
+  public [PermissionLevel.PAGE_CREATE]: boolean = false;
+  public [PermissionLevel.PAGE_UPDATE]: boolean = false;
+  public [PermissionLevel.PAGE_DELETE]: boolean = false;
+
+  public get [PermissionLevel.PAGE]() {
+    return this[PermissionLevel.PAGE_CREATE] && this[PermissionLevel.PAGE_UPDATE] && this[PermissionLevel.PAGE_DELETE];
+  }
+
+  public set [PermissionLevel.PAGE](value: boolean) {
+    this[PermissionLevel.PAGE_CREATE] = value;
+    this[PermissionLevel.PAGE_UPDATE] = value;
+    this[PermissionLevel.PAGE_DELETE] = value;
+  }
+
   /* ----- USER ----- */
 
   public [PermissionLevel.USER_MASQUERADE]: boolean = false;
@@ -78,8 +99,12 @@ export default class Permission {
     this[PermissionLevel.USER_ELEVATED] = value;
   }
 
-  constructor(initializer?: boolean | PermissionLevel[] | { [K in PermissionLevel]: boolean } | Permission) {
+  constructor(initializer?: boolean | string | PermissionLevel[] | { [K in PermissionLevel]: boolean } | Permission) {
     Object.seal(this);
+
+    if (typeof initializer === "string") {
+      initializer = JSON.parse(initializer) as PermissionLevel[];
+    }
 
     if (typeof initializer === "boolean") {
       for (let key in this) _.set(this, key, initializer);
@@ -95,14 +120,8 @@ export default class Permission {
     }
   }
 
-  public static getPermissionGroup(permission: PermissionLevel) {
-    const split = permission.split(".");
-
-    return split.length === 1 ? PermissionLevel.ADMIN : _.initial(split).join(".");
-  }
-
-  public toJSON(): PermissionLevel[] {
-    if (this[PermissionLevel.ADMIN]) return [PermissionLevel.ADMIN];
+  public toJSON(): string {
+    if (this[PermissionLevel.ADMIN]) return JSON.stringify([PermissionLevel.ADMIN]);
 
     /* ----- API KEY ----- */
 
@@ -138,6 +157,17 @@ export default class Permission {
       if (this[PermissionLevel.FILE_TAG_DELETE]) permission_list.push(PermissionLevel.FILE_TAG_DELETE);
     }
 
+    /* ----- PAGE ----- */
+
+    if (this[PermissionLevel.PAGE]) {
+      permission_list.push(PermissionLevel.PAGE);
+    }
+    else {
+      if (this[PermissionLevel.PAGE_CREATE]) permission_list.push(PermissionLevel.PAGE_CREATE);
+      if (this[PermissionLevel.PAGE_UPDATE]) permission_list.push(PermissionLevel.PAGE_UPDATE);
+      if (this[PermissionLevel.PAGE_DELETE]) permission_list.push(PermissionLevel.PAGE_DELETE);
+    }
+    
     /* ----- USER ----- */
 
     if (this[PermissionLevel.USER]) {
@@ -148,7 +178,8 @@ export default class Permission {
       if (this[PermissionLevel.USER_MASQUERADE]) permission_list.push(PermissionLevel.USER_MASQUERADE);
     }
 
-    return permission_list;
+    return JSON.stringify(permission_list);
   }
 
 }
+

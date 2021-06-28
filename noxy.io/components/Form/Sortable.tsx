@@ -3,12 +3,12 @@ import React from "react";
 import Order from "../../../common/enums/Order";
 import IconType from "../../enums/IconType";
 import Helper from "../../Helper";
-import Icon from "../Base/Icon";
+import Icon from "./Icon";
 import Button from "./Button";
 import Style from "./Sortable.module.scss";
-import Conditional from "../Application/Conditional";
+import Component from "../Application/Component";
 
-export default class Sortable<V extends {} = {}> extends React.Component<SortableProps<V>, State<V>> {
+export default class Sortable<V extends string> extends Component<SortableProps<V>, State<V>> {
 
   constructor(props: SortableProps<V>) {
     super(props);
@@ -40,6 +40,7 @@ export default class Sortable<V extends {} = {}> extends React.Component<Sortabl
     const active = this.state.active ?? this.getActive();
     const order = active == this.state.active ? this.getNextOrder(active) : active?.order;
 
+    const width = Helper.getWidestText(_.map(this.getData(), item => item.text ?? ""));
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
 
@@ -47,12 +48,10 @@ export default class Sortable<V extends {} = {}> extends React.Component<Sortabl
       <div className={classes.join(" ")}>
         <div className={Style.Header}>
           <span className={Style.Text}>Sorting</span>
-          <Conditional condition={active}>
-            <div className={Style.Value}>
-              <span className={Style.Name} style={{width: Helper.getWidestText(_.map(this.getData(), item => item.text ?? ""))}}>{active?.text}</span>
-              <Icon type={order === Order.ASC ? IconType.CARET_UP : IconType.CARET_DOWN}/>
-            </div>
-          </Conditional>
+          <div className={Style.Value}>
+            <span className={Style.Name} style={{width}}>{active?.text}</span>
+            <Icon type={order === Order.ASC ? IconType.CARET_UP : IconType.CARET_DOWN}/>
+          </div>
         </div>
         <div className={Style.List}>
           {_.map(this.getData(), this.renderItem)}
@@ -93,9 +92,9 @@ export interface SortableItem {
   disabled?: boolean
 }
 
-export type SortableCollection<V extends {} = {}> = { [K in keyof V]: SortableItem }
+export type SortableCollection<K extends string> = { [Key in K]: SortableItem }
 
-interface SortableProps<V extends {} = {}> {
+interface SortableProps<V extends string> {
   className?: string
   children: SortableCollection<V>
 

@@ -2,15 +2,12 @@ import React from "react";
 import Permission from "../../../common/classes/Permission";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import PermissionExplorer from "../../components/Application/PermissionExplorer";
-import Form from "../../components/UI/Form";
+import Form from "../../components/Base/Form";
 import APIKeyEntity from "../../entities/APIKeyEntity";
 import Style from "./APIKeyUpdateForm.module.scss";
-import Global from "../../Global";
+import Component from "../../components/Application/Component";
 
-export default class APIKeyUpdateForm extends React.Component<APIKeyUpdateFormProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class APIKeyUpdateForm extends Component<APIKeyUpdateFormProps, State> {
 
   constructor(props: APIKeyUpdateFormProps) {
     super(props);
@@ -26,7 +23,7 @@ export default class APIKeyUpdateForm extends React.Component<APIKeyUpdateFormPr
 
     try {
       const entity = await APIKeyEntity.update(id, {permission, limit_per_decasecond, limit_per_minute});
-      return entity.getPrimaryKey() === this.context.state.user?.getCurrentAPIKey().getPrimaryKey() ? this.context.refreshLogIn() : this.setState({entity});
+      return entity.getPrimaryID() === this.context.state.user?.getCurrentAPIKey().getPrimaryID() ? this.context.refreshLogIn() : this.setState({entity});
     }
     catch (error) {
       console.error(error);
@@ -38,7 +35,7 @@ export default class APIKeyUpdateForm extends React.Component<APIKeyUpdateFormPr
   }
 
   public componentDidUpdate(prevProps: Readonly<APIKeyUpdateFormProps>, prevState: Readonly<State>, snapshot?: any) {
-    if (this.props.entity.getPrimaryKey() !== prevProps.entity.getPrimaryKey()) {
+    if (this.props.entity.getPrimaryID() !== prevProps.entity.getPrimaryID()) {
       this.setState({entity: new APIKeyEntity(this.props.entity)});
     }
   }

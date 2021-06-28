@@ -3,8 +3,9 @@ import React from "react";
 import Loader from "../UI/Loader";
 import Placeholder from "../UI/Placeholder";
 import Style from "./Select.module.scss";
+import Component from "../Application/Component";
 
-export default class Select extends React.Component<SelectProps, State> {
+export default class Select extends Component<SelectProps, State> {
 
   constructor(props: SelectProps) {
     super(props);

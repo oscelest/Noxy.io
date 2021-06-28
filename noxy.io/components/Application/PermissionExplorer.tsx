@@ -3,14 +3,11 @@ import React from "react";
 import Permission from "../../../common/classes/Permission";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Checkbox, {CheckboxCollection} from "../../components/Form/Checkbox";
-import Global from "../../Global";
 import Style from "./PermissionExplorer.module.scss";
 import Conditional from "./Conditional";
+import Component from "./Component";
 
-export default class PermissionExplorer extends React.Component<PermissionExplorerProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class PermissionExplorer extends Component<PermissionExplorerProps, State> {
 
   constructor(props: PermissionExplorerProps) {
     super(props);

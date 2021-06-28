@@ -4,7 +4,6 @@ import HTTPStatusCodes from "../../common/enums/HTTPStatusCode";
 export default class ServerException extends Exception {
   
   public code: keyof typeof HTTPStatusCodes;
-  public message: string;
   public content: any;
   
   constructor(code: keyof typeof HTTPStatusCodes, content: any = {}, message: string = HTTPStatusCodes[code]) {

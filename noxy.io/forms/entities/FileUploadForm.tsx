@@ -7,18 +7,15 @@ import Button from "../../components/Form/Button";
 import EntityPicker from "../../components/Form/EntityPicker";
 import FilePicker from "../../components/Form/FilePicker";
 import FileUpload from "../../components/Form/FileUpload";
-import FileEntity from "../../entities/FileEntity";
-import FileTagEntity from "../../entities/FileTagEntity";
+import FileEntity from "../../entities/file/FileEntity";
+import FileTagEntity from "../../entities/file/FileTagEntity";
 import QueuePosition from "../../enums/QueuePosition";
-import Global from "../../Global";
 import ConfirmForm from "../ConfirmForm";
 import Style from "./FileUploadForm.module.scss";
-import Form from "../../components/UI/Form";
+import Form from "../../components/Base/Form";
+import Component from "../../components/Application/Component";
 
-export default class FileUploadForm extends React.Component<FileUploadFormProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class FileUploadForm extends Component<FileUploadFormProps, State> {
 
   constructor(props: FileUploadFormProps) {
     super(props);
@@ -37,7 +34,7 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
     if (!transfer.name) return transfer.fail("Field cannot be empty");
 
     try {
-      const entity = await FileEntity.create(
+      const entity = await FileEntity.postOne(
         new File([transfer.file.slice(0, transfer.file.size, transfer.file.type)], transfer.name, {type: transfer.file.type}),
         {file_tag_list: this.state.tag_available_list},
         (event: ProgressEvent) => this.advanceFileTransfer(transfer, {error: undefined, progress: +(event.loaded / event.total * 100).toFixed(2)}),
@@ -47,12 +44,12 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
       this.props.onFileUpload?.(entity);
     }
     catch (exception) {
-      const error = exception as AxiosError<APIRequest<{mime_type: string}>>;
+      const error = exception as AxiosError<APIRequest<any>>;
 
       if (error.isAxiosError) {
-        if (error.response?.status === 400) {
-          if (error.response?.data.content.mime_type) {
-            return this.failFileTransfer(transfer, `"${error.response.data.content.mime_type}" is not supported.`, true);
+        if (error.response?.status === 404) {
+          if (error.response?.data.content.entity === "FileExtension") {
+            return this.failFileTransfer(transfer, `"${error.response.data.content.params.mime_type}" is not supported.`, true);
           }
         }
       }
@@ -71,7 +68,7 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
 
   private readonly closeDialog = () => {
     Dialog.close(this.state.dialog);
-  }
+  };
 
   public componentDidUpdate(prevProps: Readonly<FileUploadFormProps>, prevState: Readonly<State>, snapshot?: any): void {
     if (prevProps.file_list !== this.props.file_list) {
@@ -132,7 +129,7 @@ export default class FileUploadForm extends React.Component<FileUploadFormProps,
   };
 
   private readonly eventTagSearch = async (name: string) => {
-    this.setState({tag_available_list: await FileTagEntity.findMany({name, exclude: this.state.tag_selected_list})});
+    this.setState({tag_available_list: await FileTagEntity.getMany({name, exclude: this.state.tag_selected_list})});
   };
 
   private readonly eventTagCreate = async (name: string) => {

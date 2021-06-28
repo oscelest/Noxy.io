@@ -3,15 +3,12 @@ import IsEmail from "isemail";
 import _ from "lodash";
 import React from "react";
 import Input from "../components/Form/Input";
-import Form from "../components/UI/Form";
+import Form from "../components/Base/Form";
 import InputType from "../enums/InputType";
-import Global from "../Global";
 import Style from "./SignUpForm.module.scss";
+import Component from "../components/Application/Component";
 
-export default class LogInForm extends React.Component<SignUpFormProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class LogInForm extends Component<SignUpFormProps, State> {
 
   constructor(props: SignUpFormProps) {
     super(props);

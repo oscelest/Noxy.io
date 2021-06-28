@@ -1,11 +1,27 @@
 import React from "react";
 import Style from "./PageHeader.module.scss";
 import Conditional from "../Application/Conditional";
+import Component from "../Application/Component";
+import Loader from "./Loader";
 
-export default class PageHeader extends React.Component<PageHeaderProps, State> {
+export default class PageHeader extends Component<PageHeaderProps, State> {
 
   constructor(props: PageHeaderProps) {
     super(props);
+  }
+
+  public componentDidMount(): void {
+    document.title = `${this.props.title} | Noxy.io`;
+  }
+
+  public componentDidUpdate(prevProps: Readonly<PageHeaderProps>) {
+    if (prevProps.title !== this.props.title) {
+      document.title = `${this.props.title} | Noxy.io`;
+    }
+  }
+
+  public componentWillUnmount(): void {
+    document.title = `Noxy.io`;
   }
 
   public render() {
@@ -14,14 +30,14 @@ export default class PageHeader extends React.Component<PageHeaderProps, State> 
 
     return (
       <div className={classes.join(" ")}>
-        <div className={Style.Title}>
-          {this.props.title}
-        </div>
-        <Conditional condition={this.props.children}>
-          <div className={Style.Content}>
-            {this.props.children}
+        <Loader className={Style.Loader} show={this.props.loading} text={"Loading..."}>
+          <div className={Style.Title}>
+            {this.props.title}
           </div>
-        </Conditional>
+          <Conditional condition={this.props.children}>
+            {this.props.children}
+          </Conditional>
+        </Loader>
       </div>
     );
   };
@@ -31,6 +47,7 @@ export default class PageHeader extends React.Component<PageHeaderProps, State> 
 export interface PageHeaderProps {
   title: string
 
+  loading?: boolean
   className?: string
 }
 

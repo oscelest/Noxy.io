@@ -2,8 +2,9 @@ import React from "react";
 import {v4} from "uuid";
 import Dialog from "../Application/Dialog";
 import Style from "./DragDrop.module.scss";
+import Component from "../Application/Component";
 
-export default class DragDrop<C extends typeof React.Component, I extends InstanceType<C>> extends React.Component<DragDropProps<C, I>, State> {
+export default class DragDrop<C extends typeof Component, I extends InstanceType<C>> extends Component<DragDropProps<C, I>, State> {
 
   constructor(props: DragDropProps<C, I>) {
     super(props);
@@ -63,7 +64,7 @@ export default class DragDrop<C extends typeof React.Component, I extends Instan
   }
 }
 
-export interface DragDropProps<C extends typeof React.Component, I extends InstanceType<C>> {
+export interface DragDropProps<C extends typeof Component, I extends InstanceType<C>> {
   className?: string
 
   title: string

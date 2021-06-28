@@ -2,13 +2,14 @@ import React from "react";
 import Dialog from "../../components/Application/Dialog";
 import Button from "../../components/Form/Button";
 import EntityPicker from "../../components/Form/EntityPicker";
-import FileTagEntity from "../../entities/FileTagEntity";
+import FileTagEntity from "../../entities/file/FileTagEntity";
 import Helper from "../../Helper";
 import ConfirmForm from "../ConfirmForm";
 import Style from "./FileTagSelectForm.module.scss";
-import Form from "../../components/UI/Form";
+import Form from "../../components/Base/Form";
+import Component from "../../components/Application/Component";
 
-export default class FileTagSelectForm extends React.Component<FileSetTagListFormProps, State> {
+export default class FileTagSelectForm extends Component<FileSetTagListFormProps, State> {
 
   constructor(props: FileSetTagListFormProps) {
     super(props);
@@ -41,7 +42,7 @@ export default class FileTagSelectForm extends React.Component<FileSetTagListFor
   }
 
   private readonly eventTagSearch = async (name: string) => {
-    this.setState({available: await FileTagEntity.findMany({name, exclude: this.state.selected})});
+    this.setState({available: await FileTagEntity.getMany({name, exclude: this.state.selected})});
   };
 
   private readonly eventTagCreate = async (name: string) => {

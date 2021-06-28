@@ -5,15 +5,15 @@
   flex-flow:  column;
   overflow-y: auto;
 
-  > .Loader {
+  .Loader {
 
   }
 
-  > .Placeholder {
+  .Placeholder {
 
   }
 
-  > .Row {
+  .Row {
     flex:          0 0 auto;
     flex-flow:     row;
     align-self:    flex-start;
@@ -21,7 +21,5 @@
     margin:        5px 0;
     border:        2px solid $background-secondary-color;
     border-radius: $border-radius;
-
-    //background: $background-secondary-color;
   }
 }

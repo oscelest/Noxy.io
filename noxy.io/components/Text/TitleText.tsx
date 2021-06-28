@@ -1,7 +1,8 @@
 import React from "react";
 import Style from "./TitleText.module.scss";
+import Component from "../Application/Component";
 
-export default class TitleText extends React.Component<TitleTextProps, State> {
+export default class TitleText extends Component<TitleTextProps, State> {
   
   constructor(props: TitleTextProps) {
     super(props);

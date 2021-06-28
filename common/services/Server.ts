@@ -1,6 +1,7 @@
 import BodyParser from "body-parser";
 import Express from "express";
 import * as core from "express-serve-static-core";
+import {Locals} from "express-serve-static-core";
 import * as FS from "fs";
 import HTTP from "http";
 import _ from "lodash";
@@ -18,6 +19,7 @@ import ServerException from "../exceptions/ServerException";
 import ValidatorException from "../exceptions/ValidatorException";
 import Logger from "./Logger";
 import Validator from "./Validator";
+import FileHandle from "../classes/FileHandle";
 
 if (!process.env.PORT) throw new Error("PORT environmental value must be defined.");
 if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");
@@ -92,7 +94,7 @@ module Server {
 
 
   function attachHeaders(request: Express.Request, response: Express.Response, next: Express.NextFunction) {
-    request.locals = {};
+    request.locals = {} as Locals<{}, {}>;
     response.header("Access-Control-Allow-Origin", "*");
     response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, JSONP");
     response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Masquerade");
@@ -115,7 +117,7 @@ module Server {
     request.locals.path = request.route.path as string;
     request.locals.alias = alias_collection[`${request.locals.method}:${request.locals.path}`];
     request.locals.endpoint = route_collection[request.locals.alias.toString()];
-    request.locals.parameters = {};
+    request.locals.params = {};
     request.locals.time_created = new Date();
     request.locals.respond = respond.bind(request);
 
@@ -136,49 +138,53 @@ module Server {
     middleware.fields(request.locals.endpoint.upload)(request, response, (error: Multer.MulterError | string) => {
       if (error && error instanceof Error) {
         if (error.code === "LIMIT_UNEXPECTED_FILE") {
-          return response.locals.respond(new ServerException(400, {field: error.field}, "File count limit exceeded."));
+          return request.locals.respond(new ServerException(400, {field: error.field}, "File count limit exceeded."));
         }
-        return request.locals.respond?.(error);
+        return request.locals.respond(error);
       }
       next();
     });
   }
 
 
-  function attachParameters({files, query, body, locals: {respond, method, parameters, endpoint}}: Express.Request, response: Express.Response, next: Express.NextFunction) {
+  function attachParameters({files, query, body, locals: {respond, method, params, endpoint}}: Express.Request, response: Express.Response, next: Express.NextFunction) {
     if (!endpoint) return respond?.(new ServerException(404)) ?? response.send(404);
 
-    const file_collection = _.reduce(files, (result, file, key) => _.set(result, key, file), {} as {[key: string]: File[]});
     const error_collection = {} as {[key: string]: ValidatorException};
     const received_parameter_list = method === HTTPMethod.GET ? query : body;
+    const file_collection = _.reduce(
+      files,
+      (result, file, key) => _.set(result, key, Array.isArray(file) ? _.map(file, value => new FileHandle(value)) : [new FileHandle(file as File)]),
+      {} as {[key: string]: FileHandle[]},
+    );
 
     for (let name in endpoint.parameter_list) {
       try {
         if (!endpoint.parameter_list.hasOwnProperty(name)) continue;
-        const {type, conditions, options: {flag_array, flag_optional}} = endpoint.parameter_list[name];
+        const {type, conditions, options: {array, optional}} = endpoint.parameter_list[name];
 
         if (type === ValidatorType.FILE) {
-          if (!file_collection?.[name].length && !flag_optional) {
+          if (!file_collection?.[name].length && !optional) {
             error_collection[name] = new ValidatorException(`'${name}' is a mandatory field.`);
           }
           else {
-            parameters[name] = flag_array ? file_collection?.[name] : _.first(file_collection?.[name]);
+            params[name] = array ? file_collection?.[name] : _.first(file_collection?.[name]);
           }
         }
         else {
           const received = received_parameter_list[name] as string | string[];
 
-          if (received === undefined) {
+          if (received === undefined || received === "") {
             // Intentional split "if" statement - If received value is undefined, it should not go through the validator
-            if (method === HTTPMethod.GET && flag_optional === false || method !== HTTPMethod.GET && flag_optional !== true) {
+            if (method === HTTPMethod.GET && optional === false || method !== HTTPMethod.GET && optional !== true) {
               error_collection[name] = new ValidatorException(`'${name}' is a mandatory field.`);
             }
           }
-          else if (!flag_array && Array.isArray(received)) {
+          else if (!array && Array.isArray(received)) {
             error_collection[name] = new ValidatorException(`Field '${name}' does not accept multiple values.`, received);
           }
           else {
-            parameters[name] = Validator.parseParameter(type, !flag_array || Array.isArray(received) ? received : [received], conditions);
+            params[name] = Validator.parseParameter(type, !array || Array.isArray(received) ? received : [received], conditions);
           }
         }
       }
@@ -190,26 +196,37 @@ module Server {
     _.size(error_collection) ? respond?.(new ServerException(400, error_collection)) : next();
   }
 
-  function respond(this: Express.Request<{[key: string]: string}, Server.ResponseBody>, value: any) {
+  function respond<T>(this: Express.Request<{[key: string]: string}, Server.ResponseBody<T>>, value: T) {
     const time_started = this.locals.time_created?.toISOString() ?? new Date().toISOString();
     const time_completed = new Date().toISOString();
 
+    let code: number;
+    const response = {time_started, time_completed} as ResponseBody<T>;
+
     if (value instanceof ServerException && value.code !== 500) {
-      this.res?.status(value.code).json({success: false, message: value.message, content: value.content, time_started, time_completed});
+      code = value.code;
+      if (code === 404) value.content.params = _.reduce(this.locals.params, (result, value, key) => value instanceof FileHandle ? {...result, ...value.toJSON()} : {...result, [key]: value}, {});
+      console.log(value);
+      Object.assign(response, {success: false, message: value.message, content: value.content} as ResponseBody);
     }
     else if (value instanceof Error) {
-      this.res?.status(500).json({success: false, message: HTTPStatusCode[500], content: {}, time_started, time_completed});
+      code = 500;
+      Object.assign(response, {success: false, message: HTTPStatusCode[500], content: {} as T} as ResponseBody);
+
       const {name, message, stack, ...error} = value;
       Logger.write(Logger.Level.ERROR, {name, message, ...error, stack});
     }
     else {
-      this.res?.status(200).json({success: true, message: HTTPStatusCode[200], content: value, time_started, time_completed});
+      code = 200;
+      Object.assign(response, {success: true, message: HTTPStatusCode[200], content: value} as ResponseBody);
     }
+
+    this.res?.status(code).json(response);
 
     if (this.locals.endpoint?.upload?.length) {
       for (let i = 0; i < this.locals.endpoint.upload.length ?? 0; i++) {
         const {name} = this.locals.endpoint.upload[i];
-        const parameter: FileHandle[] = Array.isArray(this.locals.parameters[name]) ? this.locals.parameters[name] : [this.locals.parameters[name]];
+        const parameter: FileHandle[] = Array.isArray(this.locals.params[name]) ? this.locals.params[name] : [this.locals.params[name]];
 
         for (let i = 0; i < parameter.length; i++) {
           if (!parameter[i]) continue;
@@ -226,10 +243,10 @@ module Server {
 
   export interface Response<ResBody = any, Locals extends Record<string, any> = Record<string, any>> extends Express.Response<ResBody, Locals> {}
 
-  export interface ResponseBody {
+  export interface ResponseBody<T = any> {
     success: boolean
     message: string
-    content: {}
+    content: T
     time_started: string
     time_completed: string
   }
@@ -257,8 +274,8 @@ module Server {
   }
 
   export interface EndpointParameterOptions {
-    flag_array?: boolean
-    flag_optional?: boolean
+    array?: boolean
+    optional?: boolean
   }
 
   export type AliasCollection = {[path: string]: Alias}

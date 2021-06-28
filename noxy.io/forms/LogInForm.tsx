@@ -6,17 +6,14 @@ import Dialog from "../components/Application/Dialog";
 import Button from "../components/Form/Button";
 import Input from "../components/Form/Input";
 import TitleText from "../components/Text/TitleText";
-import Form from "../components/UI/Form";
+import Form from "../components/Base/Form";
 import IconType from "../enums/IconType";
 import InputType from "../enums/InputType";
-import Global from "../Global";
 import Style from "./LogInForm.module.scss";
 import PasswordResetRequestForm from "./PasswordResetRequestForm";
+import Component from "../components/Application/Component";
 
-export default class LogInForm extends React.Component<LogInFormProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class LogInForm extends Component<LogInFormProps, State> {
 
   constructor(props: LogInFormProps) {
     super(props);
@@ -59,6 +56,9 @@ export default class LogInForm extends React.Component<LogInFormProps, State> {
 
         if (response?.status === 400) {
           next_state.error = new Error("Incorrect email and/or password");
+        }
+        else if (response?.status === 404) {
+          next_state.error = new Error("Email does not exist");
         }
         else {
           next_state.error = new Error("Unexpected server error occurred.");

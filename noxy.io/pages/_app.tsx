@@ -1,3 +1,4 @@
+/// <reference path="../../common/Global.d.ts" />
 import App from "next/app";
 import Head from "next/head";
 import router, {Router} from "next/router";
@@ -5,12 +6,13 @@ import * as React from "react";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import Authorized from "../components/Application/Authorized";
 import Dialog from "../components/Application/Dialog";
-import Redirect from "../components/UI/Redirect";
+import Redirect from "../components/Application/Redirect";
 import DialogListenerName from "../enums/DialogListenerName";
 import Size from "../enums/Size";
 import Global from "../Global";
 import "../global.scss";
 import Style from "./_app.module.scss";
+import Component from "../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
 export default class Application extends App {
@@ -44,7 +46,7 @@ export default class Application extends App {
               // "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-SemiBold.ttf); font-weight: 600;}\n" +
               // "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-SemiBoldItalic.ttf); font-style: italic; font-weight: 600;}\n" +
               "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-Bold.ttf); font-weight: 700;}\n" +
-              // "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-BoldItalic.ttf); font-style: italic; font-weight: 700;}\n" +
+              "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-BoldItalic.ttf); font-style: italic; font-weight: 700;}\n" +
               // "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-ExtraBold.ttf); font-weight: 800;}\n" +
               // "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-ExtraBoldItalic.ttf); font-style: italic; font-weight: 800;}\n" +
               // "@font-face {font-family: Nunito; src: url(/static/fonts/NunitoSans-Black.ttf); font-weight: 900;}\n" +
@@ -63,10 +65,7 @@ export default class Application extends App {
   }
 }
 
-class Header extends React.Component {
-
-  public static contextType = Global.Context;
-  public context: Global.Context;
+class Header extends Component {
 
   public render() {
     return (
@@ -77,6 +76,7 @@ class Header extends React.Component {
         <div className={Style.Navigation}>
           <Authorized size={Size.SMALL} permission={null}>
             <Authorized>
+              <Redirect className={Style.Link} href={"/page"}><span>Pages</span></Redirect>
               <Redirect className={Style.Link} href={"/file"}>Files</Redirect>
             </Authorized>
             <Redirect className={Style.Link} href={"/account"}>
@@ -89,10 +89,7 @@ class Header extends React.Component {
   }
 }
 
-class Content extends React.Component<{}, {permission?: PermissionLevel | null}> {
-
-  public static contextType = Global.Context;
-  public context: Global.Context;
+class Content extends Component<{}, {permission?: PermissionLevel | null}> {
 
   constructor(props: {}) {
     super(props);
@@ -117,7 +114,7 @@ class Content extends React.Component<{}, {permission?: PermissionLevel | null}>
   public render() {
     return (
       <div className={Style.Content}>
-        <Authorized permission={this.state.permission} form={true}>
+        <Authorized permission={this.state.permission} size={Size.LARGE} form={true}>
           <div className={Style.Page}>{this.props.children}</div>
         </Authorized>
       </div>

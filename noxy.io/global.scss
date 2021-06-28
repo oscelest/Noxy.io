@@ -4,8 +4,7 @@ html {
   width:      100%;
   height:     100%;
   font-size:  10px;
-  //background: #743EAE;
-  background: linear-gradient(to top, #7e3ca1, #7c3ca4, #7a3da7, #773dab, #743eae);
+  background: $background-gradiant;
 
   body {
     width:   100%;
@@ -24,12 +23,20 @@ html {
   }
 }
 
+a {
+  color: $link-color;
+
+  &:visited {
+    color: $link-color-visited;
+  }
+}
+
 p {
   margin:      0;
   line-height: 18px;
 }
 
-html, body, div, img, button, input, span, select, label {
+html, body, div, img, button, input, span, select, label, a {
   display:    flex;
   position:   relative;
   box-sizing: border-box;

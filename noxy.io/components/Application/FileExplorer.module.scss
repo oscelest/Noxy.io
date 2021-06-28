@@ -41,7 +41,7 @@
       overflow-x: hidden;
 
       .Loader {
-        flex: 1 1 auto;
+        flex:            1 1 auto;
       }
 
       .Browser {
@@ -54,19 +54,14 @@
         grid-column-gap: var(--grid-gap);
 
         .File {
-          flex:                0 0 auto;
+          flex:              0 0 auto;
+          flex-flow:         column;
+          width:             calc(100% / var(--parts) - (var(--grid-gap) * (var(--parts) - 1) / var(--parts)));
 
-          flex-flow:           column;
-          width:               calc(100% / var(--parts) - (var(--grid-gap) * (var(--parts) - 1) / var(--parts)));
-
-
-          user-drag:           none;
-          user-select:         none;
-          -moz-user-select:    none;
-          -webkit-user-drag:   none;
-          -webkit-user-select: none;
-          -ms-user-select:     none;
-
+          user-select:       none;
+          -ms-user-select:   none;
+          -moz-user-select:  none;
+          -webkit-user-drag: none;
 
           &[data-selected] .Redirect .FilePreview {
             border: $border-width solid $focus-color;
@@ -81,30 +76,29 @@
             grid-row-gap: 10px;
             width:        100%;
             height:       100%;
+            color:        white;
 
             .FilePreview {
               width:          100%;
               height:         0;
+              padding-bottom: calc(50% - 3px);
+              padding-top:    calc(50% - 3px);
               border:         $border-width solid $border-color;
               border-radius:  $border-radius;
               background:     $background-secondary-color;
-              padding-bottom: calc(50% - 3px);
-              padding-top:    calc(50% - 3px);
 
               img {
-                user-drag:           none;
-                user-select:         none;
-                -ms-user-select:     none;
-                -moz-user-select:    none;
-                -webkit-user-drag:   none;
-                -webkit-user-select: none;
+                user-select:       none;
+                -ms-user-select:   none;
+                -moz-user-select:  none;
+                -webkit-user-drag: none;
               }
             }
 
             .FileName {
+              align-self:      center;
               align-items:     center;
               justify-content: center;
-              align-self:      center;
               height:          20px;
               padding:         0 2px;
               border-bottom:   $border-width solid transparent;
@@ -196,7 +190,7 @@
         }
 
         .TagContainer {
-          flex: 1 1 auto;
+          flex:            1 1 auto;
           grid-column-gap: 5px;
 
           &:hover {

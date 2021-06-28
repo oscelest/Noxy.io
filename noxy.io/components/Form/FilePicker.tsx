@@ -1,8 +1,9 @@
 import React from "react";
 import Button from "./Button";
 import Style from "./FilePicker.module.scss";
+import Component from "../Application/Component";
 
-export default class FilePicker extends React.Component<FileBrowserProps, State> {
+export default class FilePicker extends Component<FileBrowserProps, State> {
   
   constructor(props: FileBrowserProps) {
     super(props);

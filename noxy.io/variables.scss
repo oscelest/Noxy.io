@@ -2,7 +2,10 @@ $text-font:                  normal normal 400 14px/14px Nunito, sans-serif;
 
 $border-radius:              4px;
 $border-color:               #482772;
-$border-width:               3px;
+$border-width:               2px;
+
+$link-color:                 #ffcc58;
+$link-color-visited:         #d3d3d3;
 
 $focus-color:                #f4b82e;
 $disabled-color:             #8a8a8a;
@@ -11,37 +14,34 @@ $background-primary-color:   #743EAE;
 $background-secondary-color: #5A318E;
 $background-gradiant:        linear-gradient(to top, #7e3ca1, #7c3ca4, #7a3da7, #773dab, #743eae);
 
-$dialog-outer-width: 350px;
-$dialog-inner-width: 300px;
+$dialog-outer-width:         350px;
+$dialog-inner-width:         300px;
 
 
+$overlay-background-color:   #00000066;
 
+$text-color-error-dark:      #ff5c61;
+$text-color-error-light:     #e00606;
 
+$text-color-regular:         #FFFFFF;
+$text-color-inverse:         #000000;
+$text-color-muted:           #767676;
 
-$overlay-background-color: #00000066;
+$disabled-primary-color:     #3F4044;
+$disabled-highlight-color:   #8F929C;
 
-$text-color-error-dark: #ff5c61;
-$text-color-error-light: #e00606;
+$info-primary-color:         #4368DB;
+$info-muted-color:           #344A8C;
+$info-highlight-color:       #25A4D4;
 
-$text-color-regular: #FFFFFF;
-$text-color-inverse: #000000;
-$text-color-muted: #767676;
+$success-primary-color:      #039161;
+$success-muted-color:        #0A6518;
+$success-highlight-color:    #04C382;
 
-$disabled-primary-color: #3F4044;
-$disabled-highlight-color: #8F929C;
+$warning-primary-color:      #C7700B;
+$warning-muted-color:        #754712;
+$warning-highlight-color:    #E89C29;
 
-$info-primary-color: #4368DB;
-$info-muted-color: #344A8C;
-$info-highlight-color: #25A4D4;
-
-$success-primary-color: #039161;
-$success-muted-color: #0A6518;
-$success-highlight-color: #04C382;
-
-$warning-primary-color: #C7700B;
-$warning-muted-color: #754712;
-$warning-highlight-color: #E89C29;
-
-$danger-primary-color: #AD3124;
-$danger-muted-color: #6F1818;
-$danger-highlight-color: #EA5252;
+$danger-primary-color:       #AD3124;
+$danger-muted-color:         #6F1818;
+$danger-highlight-color:     #EA5252;

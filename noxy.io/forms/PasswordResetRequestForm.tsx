@@ -5,16 +5,13 @@ import React from "react";
 import Conditional from "../components/Application/Conditional";
 import Input from "../components/Form/Input";
 import ErrorText from "../components/Text/ErrorText";
-import Form from "../components/UI/Form";
+import Form from "../components/Base/Form";
 import UserEntity from "../entities/UserEntity";
 import InputType from "../enums/InputType";
-import Global from "../Global";
 import Style from "./PasswordResetRequestForm.module.scss";
+import Component from "../components/Application/Component";
 
-export default class PasswordResetRequestForm extends React.Component<PasswordResetRequestFormProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class PasswordResetRequestForm extends Component<PasswordResetRequestFormProps, State> {
 
   constructor(props: PasswordResetRequestFormProps) {
     super(props);
@@ -41,8 +38,7 @@ export default class PasswordResetRequestForm extends React.Component<PasswordRe
       next_state.loading = true;
       try {
         this.setState(next_state);
-        await UserEntity.requestPasswordReset(email);
-        await this.props.onSubmit?.(email);
+        await UserEntity.postRequestPasswordReset(email);
         next_state.error = new Error("An email has been sent.");
       }
       catch (error) {

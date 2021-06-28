@@ -4,14 +4,15 @@ import IconType from "../../enums/IconType";
 import FatalException from "../../exceptions/FatalException";
 import Helper from "../../Helper";
 import Conditional from "../Application/Conditional";
-import Icon from "../Base/Icon";
+import Icon from "./Icon";
 import EllipsisText from "../Text/EllipsisText";
 import Loader from "../UI/Loader";
 import Button from "./Button";
 import Style from "./EntityPicker.module.scss";
 import Input from "./Input";
+import Component from "../Application/Component";
 
-export default class EntityPicker<V extends {toString(): string}> extends React.Component<EntityPickerProps<V>, State> {
+export default class EntityPicker<V extends {toString(): string}> extends Component<EntityPickerProps<V>, State> {
 
   constructor(props: EntityPickerProps<V>) {
     super(props);
@@ -108,7 +109,7 @@ export default class EntityPicker<V extends {toString(): string}> extends React.
               {_.map(selected, this.renderSelected)}
             </div>
           </Conditional>
-          <Loader show={loading}>
+          <Loader className={Style.Loader} show={loading}>
             <div className={Style.Available}>
               {_.map(available, this.renderAvailable)}
             </div>

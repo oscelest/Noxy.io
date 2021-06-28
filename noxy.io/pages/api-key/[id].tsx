@@ -7,14 +7,11 @@ import Placeholder from "../../components/UI/Placeholder";
 import APIKeyEntity from "../../entities/APIKeyEntity";
 import Size from "../../enums/Size";
 import APIKeyUpdateForm from "../../forms/entities/APIKeyUpdateForm";
-import Global from "../../Global";
 import Style from "./[id].module.scss";
+import Component from "../../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
-export default class APIKeyIDPage extends React.Component<APIKeyIDPageProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class APIKeyIDPage extends Component<APIKeyIDPageProps, State> {
 
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): APIKeyIDPageProps {

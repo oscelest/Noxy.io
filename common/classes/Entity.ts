@@ -1,22 +1,20 @@
 import _ from "lodash";
-import TypeORM from "typeorm";
 import Alias from "./Alias";
 import HTTPMethod from "../enums/HTTPMethod";
-import SetOperation from "../enums/SetOperation";
 import Validator from "../services/Validator";
 import ValidatorType from "../enums/ValidatorType";
 import ServerException from "../exceptions/ServerException";
 import Server from "../services/Server";
+import {EntityManager, MikroORM, Constructor, FindOptions, Collection} from "@mikro-orm/core";
+import {Query} from "@mikro-orm/core/typings";
+import Order from "../enums/Order";
+import WhereCondition from "./WhereCondition";
+import BaseEntity from "./BaseEntity";
+import Database from "../services/Database";
 
-export default function Entity<E>(service: typeof TypeORM) {
+export default function Entity<E>() {
 
-  abstract class Entity {
-
-    // ----------------
-    // Abstract methods
-    // ----------------
-
-    public abstract toJSON(): EntityJSONObject
+  class Entity extends BaseEntity {
 
     // ----------
     // Decorators
@@ -39,7 +37,7 @@ export default function Entity<E>(service: typeof TypeORM) {
     }
 
     private static bindRoute(http_method: HTTPMethod, path: string, options: Server.EndpointOptions = {}) {
-      return function (constructor: Constructor, method: string, descriptor: PropertyDescriptor) {
+      return function (constructor: DecoratorConstructor, method: string, descriptor: PropertyDescriptor) {
         Server.bindRoute(new Alias(constructor, method), http_method, [_.kebabCase(constructor.name), path], options, descriptor.value.bind(constructor));
       };
     }
@@ -56,7 +54,7 @@ export default function Entity<E>(service: typeof TypeORM) {
     public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.ORDER, conditions?: Validator.OrderParameterConditions, options?: Server.EndpointParameterOptions): Decorator
     public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.STRING, conditions?: Validator.StringParameterConditions, options?: Server.EndpointParameterOptions): Decorator
     public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType, conditions: any = {}, options: Server.EndpointParameterOptions = {}): Decorator {
-      return (constructor: Constructor, method: string) => {
+      return (constructor: DecoratorConstructor, method: string) => {
         switch (type) {
           case ValidatorType.BOOLEAN:
           case ValidatorType.EMAIL:
@@ -70,179 +68,110 @@ export default function Entity<E>(service: typeof TypeORM) {
     }
 
     public static bindPagination<K extends Key<E>>(limit: number, columns: K[]) {
-      return function (constructor: Constructor, method: string) {
+      return function (constructor: DecoratorConstructor, method: string) {
         const alias = new Alias(constructor, method);
         Server.bindRouteParameter(alias, "skip", ValidatorType.INTEGER, {min: 0}, {});
-        Server.bindRouteParameter(alias, "limit", ValidatorType.INTEGER, {min: 1, max: limit}, {});
-        Server.bindRouteParameter(alias, "order", ValidatorType.ORDER, columns as string[], {flag_array: true});
+        Server.bindRouteParameter(alias, "size", ValidatorType.INTEGER, {min: 1, max: limit}, {});
+        Server.bindRouteParameter(alias, "order", ValidatorType.ORDER, columns as string[], {array: true});
       };
     }
 
-    // ---------------
-    // Utility methods
-    // ---------------
+    //region    ----- Query methods -----
 
-    public static getRelationColumn<K extends Key<E>>(key: K): string
-    public static getRelationColumn<K extends Key<E>>(key: K, relation_key: Key<E[K]>): string
-    public static getRelationColumn<K extends Key<E>>(key: K, relation_key?: Key<E[K]>): string {
-      return relation_key ? `${key}.${relation_key}` : `${this.name}.${key}`;
+    public static create(values: Initializer<E>): E {
+      return Database.manager.create(this, values) as unknown as E;
     }
 
-    public static getRelationAlias<K extends Key<E>>(key: K): string
-    public static getRelationAlias<K extends Key<E>>(key: K, relation_key: Key<E[K]>): string
-    public static getRelationAlias<K extends Key<E>>(key: K, relation_key?: Key<E[K]>): string {
-      return relation_key ? `join_${key}_${relation_key}` : key;
+    public static where(where?: Query<E>) {
+      return new WhereCondition(this, where);
     }
 
-    public static merge(entity: Entity & E, values: TypeORM.DeepPartial<Entity & E>): E {
-      return service.getRepository(this).merge(entity, values) as unknown as E;
+    public static async count(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: CountOptions<E> = {}) {
+      return await Database.manager.count(this, where, options) as number;
     }
 
-    public static join<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, key: K): TypeORM.SelectQueryBuilder<E>
-    public static join<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, key: K, relation_key: Key<E[K]>): TypeORM.SelectQueryBuilder<E>
-    public static join<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, key: K, relation_key?: Key<E[K]>): TypeORM.SelectQueryBuilder<E> {
-      return  qb.leftJoinAndSelect(this.getRelationColumn(key, relation_key!), this.getRelationAlias(key, relation_key!));
+    public static async find(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: FindManyOptions<E> = {}) {
+      return await Database.manager.find(this, where, {...options, limit: options.limit, offset: options.skip, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E[];
     }
 
-    public static countRelation<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, column: Key<E>, key: K): TypeORM.SelectQueryBuilder<E>
-    public static countRelation<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, column: Key<E>, key: K, relation_key: Key<E[K]>): TypeORM.SelectQueryBuilder<E>
-    public static countRelation<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, column: Key<E>, key: K, relation_key?: Key<E[K]>): TypeORM.SelectQueryBuilder<E> {
-      return  qb.loadRelationCountAndMap(`${this.name}.${column}`, this.getRelationColumn(key, relation_key!), this.getRelationAlias(key, relation_key!));
-    }
-
-    // ----------------
-    // Where conditions
-    // ----------------
-
-    public static addValueClause<Q extends TypeORM.SelectQueryBuilder<E> | TypeORM.UpdateQueryBuilder<E> | TypeORM.DeleteQueryBuilder<E>>(qb: Q, key: Key<E>, value?: EntityID): Q {
-      return (value?.length ? qb.andWhere(`${this.name}.${key} IN (:${key})`, {[key]: value}) : qb) as Q;
-    }
-
-    public static addExclusionClause(qb: TypeORM.SelectQueryBuilder<E>, key: Key<E>, value?: EntityID) {
-      return value?.length ? qb.andWhere(`${this.name}.${key} NOT IN (:${key})`, {[key]: value}) : qb;
-    }
-
-    public static addBooleanClause(qb: TypeORM.SelectQueryBuilder<E>, key: Key<E>, flag?: boolean) {
-      return flag !== undefined ? qb.andWhere(`${this.name}.${key} = :${key}`, {[key]: flag}) : qb;
-    }
-
-    public static addWildcardClause(qb: TypeORM.SelectQueryBuilder<E>, key: Key<E>, value?: string) {
-      return value ? qb.andWhere(`${this.name}.${key} LIKE :${key}`, {[key]: `%${value}%`}) : qb;
-    }
-
-    public static addRelationClause<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, key: K, relation_key: Key<E[K]>, value?: EntityID) {
-      return value?.length ? qb.andWhere(`${key}.${relation_key} IN (:${relation_key}_${key})`, {[`${relation_key}_${key}`]: value}) : qb;
-    }
-
-    public static addRelationWildcardClause<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, key: K, relation_key: Key<E[K]>, value?: string) {
-      return value?.length ? qb.andWhere(`${key}.${relation_key} LIKE :${relation_key}_${key}`, {[`${relation_key}_${key}`]: `%${value}%`}) : qb;
-    }
-
-    public static addRelationSetClause<K extends Key<E>>(qb: TypeORM.SelectQueryBuilder<E>, op: SetOperation, key: K, relation_key: Key<E[K]>, value?: EntityID) {
-      if (!value?.length) return qb;
-
-      this.addRelationClause(qb, key, relation_key, value);
-
-      switch (op) {
-        case SetOperation.UNION:
-          return qb;
-        case SetOperation.INTERSECTION:
-          const parameter_key = `${key}_${relation_key}`;
-          return qb.groupBy(`${this.name}.id`).having(`COUNT(DISTINCT ${key}.${relation_key}) = :${parameter_key}`, {[parameter_key]: Array.isArray(value) ? value.length : 1});
-        default:
-          throw new ServerException(400, {op}, "Set operation is invalid.");
-      }
-    }
-
-    public static createRelation(relation: typeof Entity, path: Key<E> & string): TypeORM.RelationQueryBuilder<Entity & E> {
-      return service.getRepository(this).createQueryBuilder().relation(relation, path) as TypeORM.RelationQueryBuilder<Entity & E>;
-    }
-
-    // --------------
-    // Query builders
-    // --------------
-
-    public static createSelect(): TypeORM.SelectQueryBuilder<Entity & E> {
-      return service.getRepository(this).createQueryBuilder().select() as TypeORM.SelectQueryBuilder<Entity & E>;
-    }
-
-    public static createPaginated({skip, limit, order}: Pagination): TypeORM.SelectQueryBuilder<E> {
-      const query = this.createSelect();
-      if (skip) query.skip(skip);
-      if (limit) query.take(limit);
-      if (order) query.orderBy(_.mapKeys(order, (sort, column) => !column.match(/\w+\.\w+/) ? `${this.name}.${column}` : column));
-      return query as TypeORM.SelectQueryBuilder<E>;
-    }
-
-    public static createInsert(): TypeORM.InsertQueryBuilder<Entity & E> {
-      return service.getRepository(this).createQueryBuilder().insert() as TypeORM.InsertQueryBuilder<Entity & E>;
-    }
-
-    public static createUpdate(): TypeORM.UpdateQueryBuilder<Entity & E> {
-      return service.getRepository(this).createQueryBuilder().update() as TypeORM.UpdateQueryBuilder<Entity & E>;
-    }
-
-    public static createDelete(): TypeORM.DeleteQueryBuilder<Entity & E> {
-      return service.getRepository(this).createQueryBuilder().delete() as TypeORM.DeleteQueryBuilder<Entity & E>;
-    }
-
-    public static async performSelect(id: string): Promise<Entity & E>
-    public static async performSelect(id: string[]): Promise<(Entity & E)[]>
-    public static async performSelect(id: string | string[]): Promise<(Entity & E) | (Entity & E)[]> {
+    public static async findOne(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: FindOneOptions<E> = {}) {
       try {
-        return Array.isArray(id)
-          ? await this.createSelect().whereInIds(id).getMany()
-          : await this.createSelect().whereInIds(id).getOneOrFail();
+        return await Database.manager.findOneOrFail(this, where, {...options, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E;
       }
       catch (error) {
+        if (error.name === "NotFoundError") throw new ServerException(404, {entity: this.name});
         throw error;
       }
     }
 
-    public static async performInsert(values: TypeORM.DeepPartial<Entity & E>) {
-      const result = await this.createInsert().values(values).execute();
-      if (result.raw && result.raw.affectedRows === 0) {
-        throw new ServerException(500);
-      }
-      return await this.createSelect().where(result.identifiers).getOne() as Entity & E;
+    public static async populate(entities: E | E[], populate: Populate<E>) {
+      return await Database.manager.populate(entities, populate);
     }
 
-    public static async performUpdate(id: string, values: TypeORM.DeepPartial<E>) {
+    public static async persist(object: Initializer<E>, values?: Initializer<E>) {
       try {
-        const result = await service.getRepository(this).update(id, values);
-        if (result.affected === 1) {
-          return await this.createSelect().whereInIds(id).getOneOrFail();
+        if (!(object instanceof this)) object = this.create(object);
+        if (values) {
+          for (let key in values) {
+            const property = key as keyof Initializer<E>;
+            if (!values.hasOwnProperty(property) || values[property] === undefined) continue;
+            object[property] = values[property];
+          }
         }
+
+        await Database.manager.persistAndFlush(object);
+        return object as E;
       }
       catch (error) {
+        if (error.code === "ER_DUP_ENTRY") throw new ServerException(409);
         throw error;
       }
-      throw new ServerException(404);
     }
 
-    public static async performDelete(id: string) {
-      try {
-        const entity = await this.performSelect(id);
-        const result = await this.createDelete().andWhereInIds(id).execute();
-        if (result.affected === 1) return entity;
-      }
-      catch (error) {
-        throw error;
-      }
-      throw new ServerException(404);
+    public static async remove(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: FindOneOptions<E> = {}) {
+      const entity = await this.findOne(where, options);
+      await Database.manager.removeAndFlush(entity);
+      return entity;
     }
+
+    private static resolvePopulate(object?: Populate<E>, prefix?: string): string[] {
+      if (!object) return [];
+      if (typeof object === "boolean") return object && prefix ? [prefix] : [];
+      if (typeof object !== "object") return [prefix ? `${prefix}.${object}` : object.toString()];
+      if (Array.isArray(object)) return _.map(object as string[], value => prefix ? `${prefix}.${value}` : value);
+      return _.reduce(object, (result, value: any, key: string) => _.concat(result, this.resolvePopulate(value, prefix ? `${prefix}.${key}` : key)), [] as string[]);
+    }
+
+    //endregion ----- Query methods -----
+
   }
 
   return Entity;
 }
 
-type EntityID = string | string[]
-type EntityJSONObject = {[key: string]: EntityJSONPrimitives}
-type EntityJSONPrimitives = undefined | null | boolean | number | string | Date | EntityJSONPrimitives[] | {[key: string]: EntityJSONPrimitives}
-type Decorator = <T>(target: Constructor, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T> | void;
+export interface Entity {
+  instance: MikroORM;
+  manager: EntityManager;
+
+  defaultID: string;
+
+  generateDataHash: () => string;
+  generateShareHash: () => string;
+
+  regexDataHash: RegExp;
+  regexShareHash: RegExp;
+}
+
+type Ordering = {[key: string]: Order}
+type Decorator = <T>(target: DecoratorConstructor, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T> | void;
+
+export type Populate<V> = keyof V | (keyof V)[] | { [K in keyof V]?: true | (V[K] extends Collection<infer R> ? Populate<R> : | Populate<V[K]>) }
+export type CountOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy">
+export type FindOneOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy" | "offset" | "limit"> & {populate?: Populate<E>, order?: Ordering}
+export type FindManyOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy" | "offset"> & {populate?: Populate<E>, skip?: number, order?: Ordering}
 
 export interface Pagination {
   skip?: number
   limit?: number
-  order?: {[key: string]: "ASC" | "DESC"}
+  order?: Ordering
 }

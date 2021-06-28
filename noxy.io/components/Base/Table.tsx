@@ -4,8 +4,9 @@ import Size from "../../enums/Size";
 import Loader from "../UI/Loader";
 import Placeholder from "../UI/Placeholder";
 import Style from "./Table.module.scss";
+import Component from "../Application/Component";
 
-export default class Table extends React.Component<TableProps, State> {
+export default class Table extends Component<TableProps, State> {
   
   constructor(props: TableProps) {
     super(props);

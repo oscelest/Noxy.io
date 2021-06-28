@@ -1,14 +1,12 @@
 import _ from "lodash";
 import Router from "next/router";
 import React from "react";
-import Global from "../../Global";
 import Helper from "../../Helper";
 import Dialog from "./Dialog";
 import Authorized from "./Authorized";
 import Conditional from "./Conditional";
-import FileEntity, {FileEntitySearchParameters} from "../../entities/FileEntity";
-import FileTagEntity from "../../entities/FileTagEntity";
-import FileTypeEntity from "../../entities/FileTypeEntity";
+import FileEntity, {FileEntitySearchParameters} from "../../entities/file/FileEntity";
+import FileTagEntity from "../../entities/file/FileTagEntity";
 import ConfirmForm from "../../forms/ConfirmForm";
 import FileUploadForm from "../../forms/entities/FileUploadForm";
 import FileRenameForm from "../../forms/entities/FileRenameForm";
@@ -25,7 +23,7 @@ import EllipsisText from "../Text/EllipsisText";
 import Loader from "../UI/Loader";
 import Preview from "../UI/Preview";
 import DragDrop from "../UI/DragDrop";
-import Redirect from "../UI/Redirect";
+import Redirect from "./Redirect";
 import ElementBrowser from "../UI/ElementBrowser";
 import {ContextMenuItem} from "../UI/ContextMenu";
 import Size from "../../enums/Size";
@@ -36,12 +34,10 @@ import SetOperation from "../../../common/enums/SetOperation";
 import FileTypeName from "../../../common/enums/FileTypeName";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Style from "./FileExplorer.module.scss";
+import Component from "./Component";
 
 // noinspection JSUnusedGlobalSymbols
-export default class FileExplorer extends React.Component<FileBrowserProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class FileExplorer extends Component<FileBrowserProps, State> {
 
   private static defaultOrder = {
     name:         {order: undefined, text: "File name", icon: IconType.TEXT_HEIGHT},
@@ -71,8 +67,14 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
       tag_selected_list:  [],
       tag_available_list: [],
 
-      type_selected_list:       [],
-      type_tickable_collection: {},
+      type_tickable_collection: {
+        AUDIO:       Checkbox.createElement(FileTypeName.AUDIO, "Audio"),
+        APPLICATION: Checkbox.createElement(FileTypeName.APPLICATION, "Application"),
+        FONT:        Checkbox.createElement(FileTypeName.FONT, "Font"),
+        IMAGE:       Checkbox.createElement(FileTypeName.IMAGE, "Image"),
+        TEXT:        Checkbox.createElement(FileTypeName.TEXT, "Text"),
+        VIDEO:       Checkbox.createElement(FileTypeName.VIDEO, "Video"),
+      },
 
       pagination_current: 1,
       pagination_total:   1,
@@ -91,13 +93,13 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
       const params: FileEntitySearchParameters = {
         name:                   this.state.file_search,
-        file_type_list:         this.state.type_selected_list,
+        file_type_list:         _.reduce(this.state.type_tickable_collection, (result, value) => value.checked ? [...result, value.value] : result, [] as FileTypeName[]),
         file_tag_list:          this.state.tag_selected_list,
         file_tag_set_operation: this.state.tag_set_operation,
       };
 
       try {
-        const count = await FileEntity.count(params);
+        const count = await FileEntity.getCount(params);
         next_state.pagination_total = Helper.getPageTotal(count, this.state.pagination_size);
         next_state.pagination_current = _.clamp(this.state.pagination_current, 1, next_state.pagination_total);
 
@@ -105,7 +107,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
         const limit = next_state.pagination_current * this.state.pagination_size;
         const order = _.mapValues(this.state.file_order, value => value.order);
 
-        next_state.file_list = await FileEntity.findMany(params, {skip, limit, order});
+        next_state.file_list = await FileEntity.getMany(params, {skip, limit, order});
       }
       catch (error) {
         console.error(error);
@@ -125,10 +127,6 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   public async componentDidMount() {
-    const file_type_list = await FileTypeEntity.findMany();
-    const type_tickable_collection = _.reduce(file_type_list, (r, v) => v.name !== FileTypeName.UNKNOWN ? _.set(r, v.id, Checkbox.createElement(v, v.toString())) : r, {} as TypeCheckbox);
-
-    this.setState({type_tickable_collection});
     this.searchFile();
   }
 
@@ -186,7 +184,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
             </Switch>
 
             <EntityPicker ref={this.state.ref_entity_picker} selected={tag_selected_list} available={tag_available_list}
-                          onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
+                          onRender={this.eventTagRender} onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
           </div>
 
         </div>
@@ -242,7 +240,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
 
   private readonly eventFileNameChange = async (file_list: FileEntity[]) => {
     Dialog.close(this.state.dialog);
-    await Promise.all(_.map(file_list, async (value, i) => value ? await FileEntity.updateOne(file_list[i], file_list[i]) : false));
+    await Promise.all(_.map(file_list, async (value, i) => value ? await FileEntity.putOne(file_list[i], file_list[i]) : false));
     this.searchFile();
   };
 
@@ -251,7 +249,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private readonly eventFileTagChange = async (file_tag_list: FileTagEntity[]) => {
-    await Promise.all(_.map(this.state.file_selected, async (value, i) => value ? await FileEntity.updateOne(this.state.file_list[i], {...this.state.file_list[i], file_tag_list}) : false));
+    await Promise.all(_.map(this.state.file_selected, async (value, i) => value ? await FileEntity.putOne(this.state.file_list[i], {...this.state.file_list[i], file_tag_list}) : false));
     this.closeDialog();
     this.searchFile();
     this.state.ref_entity_picker.current?.search();
@@ -284,8 +282,12 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   // region    ----- Event handlers -----    region //
 
 
+  private readonly eventTagRender = (tag: FileTagEntity) => {
+    return tag.name;
+  }
+
   private readonly eventTagSearch = async (name: string) => {
-    this.setState({tag_available_list: await FileTagEntity.findMany({name, exclude: this.state.tag_selected_list})});
+    this.setState({tag_available_list: await FileTagEntity.getMany({name, exclude: this.state.tag_selected_list})});
   };
 
   private readonly eventTagCreate = async (name: string) => {
@@ -317,10 +319,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private readonly eventTypeChange = (type_tickable_collection: TypeCheckbox) => {
-    this.searchFile({
-      type_tickable_collection,
-      type_selected_list: _.reduce(type_tickable_collection, (result, item) => (item.checked ? [...result, item.value] : result), [] as FileTypeEntity[]),
-    });
+    this.searchFile({type_tickable_collection});
   };
 
   private readonly eventContextMenu = (selected: boolean[]): {[key: string]: ContextMenuItem} => {
@@ -374,7 +373,7 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
     this.searchFile({
       file_search:              "",
       file_order:               FileExplorer.defaultOrder,
-      type_tickable_collection: _.mapValues(this.state.type_tickable_collection, val => ({...val, checked: false})),
+      type_tickable_collection: _.mapValues(this.state.type_tickable_collection, val => ({...val, checked: false})) as TypeCheckbox,
       tag_selected_list:        [],
       tag_set_operation:        SetOperation.UNION,
     });
@@ -382,15 +381,15 @@ export default class FileExplorer extends React.Component<FileBrowserProps, Stat
   };
 
   private readonly eventContextMenuDownload = async () => {
-    await FileEntity.confirmDownload(await FileEntity.requestDownload(_.filter(this.state.file_list, (file, key) => this.state.file_selected[key])));
+    await FileEntity.postConfirmDownload(await FileEntity.postRequestDownload(_.filter(this.state.file_list, (file, key) => this.state.file_selected[key])));
   };
 
   // endregion ----- Event handlers ----- endregion //
 
 }
 
-type SortOrder = Pick<FileEntity, "name" | "size" | "time_created">
-type TypeCheckbox = CheckboxCollection<{[key: string]: FileTypeEntity}>
+type SortOrder = "name" | "size" | "time_created"
+type TypeCheckbox = CheckboxCollection<{ [K in keyof Omit<typeof FileTypeName, "UNKNOWN">]: typeof FileTypeName[K] }>
 
 export interface FileBrowserProps {
   className?: string
@@ -400,7 +399,7 @@ export interface FileBrowserProps {
 
   set_operation?: SetOperation
   tags?: FileTagEntity[]
-  types?: FileTypeEntity[]
+  types?: FileTypeName[]
 
   size?: number
   page?: number
@@ -428,7 +427,6 @@ interface State {
   tag_selected_list: FileTagEntity[]
   tag_available_list: FileTagEntity[]
 
-  type_selected_list: FileTypeEntity[]
   type_tickable_collection: TypeCheckbox
 
   pagination_size: number

@@ -3,25 +3,32 @@
 .Component {
   flex:            0 0 auto;
   align-items:     center;
-  justify-content: space-between;
   grid-row-gap:    15px;
   grid-column-gap: 15px;
+  width:           100%;
   min-height:      38px;
 
-  > .Title {
+  .Loader {
     flex:            1 1 auto;
-    align-items:     flex-end;
+    align-items:     center;
     justify-content: flex-start;
+    width:           26px;
     height:          100%;
-    border-bottom:   2px solid $background-secondary-color;
-    padding-bottom:  5px;
+    padding-top:     2px;
     font-size:       22px;
     line-height:     22px;
+    border-bottom:   2px solid $background-secondary-color;
   }
 
-  > .Content {
-    flex:            0 0 auto;
-    grid-row-gap:    10px;
-    grid-column-gap: 10px;
+  .Title {
+    flex:            1 1 auto;
+    align-items:     center;
+    justify-content: flex-start;
+    height:          100%;
+    padding-top:     2px;
+    font-size:       22px;
+    line-height:     22px;
+    border-bottom:   2px solid $background-secondary-color;
   }
+
 }

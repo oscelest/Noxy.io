@@ -8,7 +8,8 @@ enum EventKey {
   ARROW_RIGHT = "ArrowRight",
   SPACE = " ",
   DELETE = "Delete",
-  PAUSE = "Pause"
+  PAUSE = "Pause",
+  BACKSPACE = "Backspace"
 }
 
 export default EventKey;

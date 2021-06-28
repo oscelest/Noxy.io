@@ -5,8 +5,9 @@ import InputType from "../../enums/InputType";
 import Button from "../Form/Button";
 import Input from "../Form/Input";
 import Style from "./Pagination.module.scss";
+import Component from "../Application/Component";
 
-export default class Pagination extends React.Component<PaginationProps, State> {
+export default class Pagination extends Component<PaginationProps, State> {
   
   constructor(props: PaginationProps) {
     super(props);

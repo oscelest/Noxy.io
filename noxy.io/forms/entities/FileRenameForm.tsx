@@ -5,14 +5,15 @@ import Button from "../../components/Form/Button";
 import Input from "../../components/Form/Input";
 import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
-import Form from "../../components/UI/Form";
+import Form from "../../components/Base/Form";
 import Preview from "../../components/UI/Preview";
-import FileEntity from "../../entities/FileEntity";
+import FileEntity from "../../entities/file/FileEntity";
 import FatalException from "../../exceptions/FatalException";
 import Helper from "../../Helper";
 import Style from "./FileRenameForm.module.scss";
+import Component from "../../components/Application/Component";
 
-export default class FileRenameForm extends React.Component<FileRenameFormProps, State> {
+export default class FileRenameForm extends Component<FileRenameFormProps, State> {
 
   constructor(props: FileRenameFormProps) {
     super(props);

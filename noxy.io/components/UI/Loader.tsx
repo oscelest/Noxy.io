@@ -2,8 +2,9 @@ import React from "react";
 import Size from "../../enums/Size";
 import Style from "./Loader.module.scss";
 import Conditional from "../Application/Conditional";
+import Component from "../Application/Component";
 
-export default class Loader extends React.Component<LoaderProps, State> {
+export default class Loader extends Component<LoaderProps, State> {
   
   constructor(props: LoaderProps) {
     super(props);
@@ -13,10 +14,12 @@ export default class Loader extends React.Component<LoaderProps, State> {
     switch (this.props.size) {
       case Size.LARGE:
         return Style.Large;
+      case Size.NORMAL:
+        return Style.Normal;
       case Size.SMALL:
         return Style.Small;
       default:
-        return Style.Normal;
+        return Style.Auto;
     }
   };
   

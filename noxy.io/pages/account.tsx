@@ -18,20 +18,17 @@ import ColumnText from "../components/Text/ColumnText";
 import ErrorText from "../components/Text/ErrorText";
 import HeaderText from "../components/Text/HeaderText";
 import PageHeader from "../components/UI/PageHeader";
-import Redirect from "../components/UI/Redirect";
+import Redirect from "../components/Application/Redirect";
 import APIKeyEntity from "../entities/APIKeyEntity";
 import UserEntity from "../entities/UserEntity";
 import IconType from "../enums/IconType";
 import InputType from "../enums/InputType";
 import APIKeyCreateForm from "../forms/entities/APIKeyCreateForm";
-import Global from "../Global";
 import Style from "./account.module.scss";
+import Component from "../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
-export default class AccountPage extends React.Component<AccountPageProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class AccountPage extends Component<AccountPageProps, State> {
 
   // noinspection JSUnusedGlobalSymbols
   public static getInitialProps(context: NextPageContext): AccountPageProps {
@@ -69,11 +66,20 @@ export default class AccountPage extends React.Component<AccountPageProps, State
     };
   }
 
-  public readonly search = ({size, page, order}: Filter = {size: this.state.size, page: this.state.page, order: this.state.order}) => {
+  public readonly change = (filter: Filter) => {
+    const size = filter.size ?? this.state.size;
+    const page = filter.page ?? this.state.page;
+    const order = filter.order ?? this.state.order;
+
+    this.setState({size, page, order});
+  };
+
+  public readonly search = () => {
+    const {order, page, size} = this.state;
     const user = this.context.state.masquerade ?? this.context.state.user;
     const list = [...user?.api_key_list ?? []];
-
     const key = _.findKey(order, item => item.order !== undefined) as keyof SortableCollection<SortKeys>;
+
     if (key && order[key] !== undefined && order[key].order) {
       list.sort((prev, next) => {
         if (prev[key] === next[key]) return 0;
@@ -83,11 +89,6 @@ export default class AccountPage extends React.Component<AccountPageProps, State
 
     const data = list.slice(size * (page - 1), size * page);
     this.setState({data, page, size, order});
-  };
-
-  public readonly select = async (token: string) => {
-    localStorage.setItem(RequestHeader.AUTHORIZATION, token);
-    await this.context.refreshLogIn();
   };
 
   public readonly create = () => {
@@ -100,8 +101,12 @@ export default class AccountPage extends React.Component<AccountPageProps, State
     this.search();
   };
 
+  public readonly select = async (token: string) => {
+    localStorage.setItem(RequestHeader.AUTHORIZATION, token);
+    await this.context.refreshLogIn();
+  };
+
   public componentDidMount = async () => {
-    console.log(this.context.state);
     const user = this.context.state.masquerade ?? this.context.state.user;
     this.setState({email: user?.email ?? "", username: user?.username ?? ""});
   };
@@ -189,25 +194,17 @@ export default class AccountPage extends React.Component<AccountPageProps, State
   private readonly renderDataTable = () => {
     if (!this.context.hasPermission(PermissionLevel.API_KEY_VIEW)) return null;
 
-    const {loading, page, size, order} = this.state;
+    const {page, size, order} = this.state;
     const count = this.context.state.user?.api_key_list.length ?? 0;
+    const onCreate = this.context.hasPermission(PermissionLevel.API_KEY_CREATE) ? this.create : undefined;
 
     return (
       <div className={Style.Footer}>
         <PageHeader title={"API Keys"}/>
-        <DataTable className={Style.Table} loader={loading} page={page} size={size} count={count} order={order} header={this.renderTableHeader} onSearch={this.search}>
+        <DataTable className={Style.Table} page={page} size={size} count={count} order={order}
+                   onCreate={onCreate} onChange={this.change} onSearch={this.search}>
           {_.map(this.state.data, this.renderTableRow)}
         </DataTable>
-      </div>
-    );
-  };
-
-  private readonly renderTableHeader = () => {
-    if (!this.context.hasPermission(PermissionLevel.API_KEY_CREATE)) return null;
-
-    return (
-      <div className={Style.Header}>
-        <Button key={0} icon={IconType.UI_ADD} onClick={this.create}>Create</Button>
       </div>
     );
   };
@@ -272,6 +269,7 @@ export default class AccountPage extends React.Component<AccountPageProps, State
 
   private readonly eventPasswordChange = (password: string) => this.setState({password});
   private readonly eventConfirmChange = (confirm: string) => this.setState({confirm});
+
   private readonly eventPasswordSubmit = async () => {
     try {
       // Raise notification
@@ -291,7 +289,7 @@ export default class AccountPage extends React.Component<AccountPageProps, State
 
   private readonly eventAPIKeyFormCreateSubmit = (value: APIKeyEntity) => {
     Dialog.close(this.state.dialog);
-    return value.user?.getPrimaryKey() === this.context.state.user?.getPrimaryKey() ? this.context.refreshLogIn() : this.search();
+    return value.user?.getPrimaryID() === this.context.state.user?.getPrimaryID() ? this.context.refreshLogIn() : this.search();
   };
 
   private readonly eventCheckboxChange = (value: CheckboxCollection<{[key: string]: string}>) => this.select(_.values(value)[0].value);
@@ -309,7 +307,7 @@ enum AccountPageQuery {
   order = "order",
 }
 
-type SortKeys = Pick<APIKeyEntity, "id" | "limit_per_decasecond" | "limit_per_minute" | "time_created">
+type SortKeys = "id" | "limit_per_decasecond" | "limit_per_minute" | "time_created"
 type Filter = Pick<DataTableFilter<SortKeys>, "size" | "page" | "order">;
 
 export interface AccountPageProps {

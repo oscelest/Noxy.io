@@ -7,18 +7,15 @@ import PermissionExplorer from "../../components/Application/PermissionExplorer"
 import Button from "../../components/Form/Button";
 import EntityInput from "../../components/Form/EntityInput";
 import Input from "../../components/Form/Input";
-import Form from "../../components/UI/Form";
+import Form from "../../components/Base/Form";
 import APIKeyEntity from "../../entities/APIKeyEntity";
 import UserEntity from "../../entities/UserEntity";
 import InputType from "../../enums/InputType";
 import FatalException from "../../exceptions/FatalException";
-import Global from "../../Global";
 import Style from "./APIKeyCreateForm.module.scss";
+import Component from "../../components/Application/Component";
 
-export default class APIKeyCreateForm extends React.Component<APIKeyCreateFormProps, State> {
-
-  public static contextType = Global?.Context ?? React.createContext({});
-  public context: Global.Context;
+export default class APIKeyCreateForm extends Component<APIKeyCreateFormProps, State> {
 
   constructor(props: APIKeyCreateFormProps) {
     super(props);
@@ -92,7 +89,7 @@ export default class APIKeyCreateForm extends React.Component<APIKeyCreateFormPr
 
   private readonly eventUserSearch = async (email: string) => {
     if (!email) return [];
-    return await UserEntity.findMany({email}, {skip: 0, limit: 10, order: {email: Order.ASC}});
+    return await UserEntity.getMany({email}, {skip: 0, limit: 10, order: {email: Order.ASC}});
   };
 
   private readonly eventUserChange = (user?: UserEntity) => {

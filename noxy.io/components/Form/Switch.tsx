@@ -2,8 +2,9 @@ import _ from "lodash";
 import React from "react";
 import Button from "../../components/Form/Button";
 import Style from "./Switch.module.scss";
+import Component from "../Application/Component";
 
-export default class Switch<V extends {}> extends React.Component<SwitchProps<V>, State> {
+export default class Switch<V extends {}> extends Component<SwitchProps<V>, State> {
 
   constructor(props: SwitchProps<V>) {
     super(props);
