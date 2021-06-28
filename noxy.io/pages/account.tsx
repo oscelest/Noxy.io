@@ -46,6 +46,8 @@ export default class AccountPage extends Component<AccountPageProps, State> {
   constructor(props: AccountPageProps) {
     super(props);
 
+    console.log(props);
+
     this.state = {
       loading: false,
 
@@ -61,7 +63,7 @@ export default class AccountPage extends Component<AccountPageProps, State> {
         id:                   {order: props.order["id"], text: "ID", icon: IconType.ID},
         limit_per_decasecond: {order: props.order["limit_per_decasecond"], text: "Limit/10 sec", icon: IconType.GEAR},
         limit_per_minute:     {order: props.order["limit_per_minute"], text: "Limit/60 sec", icon: IconType.GEARS},
-        time_created:         {order: props.order["time_created"], text: "Creation date", icon: IconType.CLOCK},
+        time_created:         {order: _.size(props.order) ? props.order["time_created"] : Order.DESC, text: "Creation date", icon: IconType.CLOCK},
       },
     };
   }
