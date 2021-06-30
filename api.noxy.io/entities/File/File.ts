@@ -97,8 +97,10 @@ export default class File extends Entity<File>() {
   @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.ENUM, FileTypeName, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
-  public static async getCount({locals: {respond, user, params: {name, file_type_list, file_tag_list, file_tag_set_operation}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
+  public static async getCount({locals: {respond, context, user, params: {name, file_type_list, file_tag_list, file_tag_set_operation}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
     const options: CountOptions<File> = {};
+
+    console.log("Hello", context);
 
     if (file_tag_set_operation === SetOperation.INTERSECTION) {
       options.groupBy = `(${Database.manager.getMetadata().get(this.name).properties["file_tag_list" as keyof File].joinColumns.join("), (")})`;

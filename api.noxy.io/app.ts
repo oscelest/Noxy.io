@@ -16,6 +16,7 @@ import Logger from "../common/services/Logger";
 import Server from "../common/services/Server";
 import APIKey from "./entities/APIKey";
 import User from "./entities/User";
+import {RequestContext} from "@mikro-orm/core";
 
 (async () => {
   if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");
@@ -40,6 +41,8 @@ import User from "./entities/User";
     Server.bindRoute(new Alias(), HTTPMethod.GET, "/", {user: false}, async ({locals: {respond}}) => {
       setTimeout(() => respond?.({}), Math.ceil(Math.random() * 95) + 5);
     });
+
+    Server.bindMiddleware(((req, res, next) => RequestContext.create(Database.manager, next)))
 
     Server.bindMiddleware(async (request: Server.Request, response: any, next: Function) => {
       const authorization = request.get("Authorization");
@@ -93,7 +96,6 @@ import User from "./entities/User";
     Logger.write(Logger.Level.INFO, "Server started!");
   }
   catch ({message, stack}) {
-    console.log(message, stack);
     Logger.write(Logger.Level.ERROR, {message, stack});
     process.exit(0);
   }
@@ -103,6 +105,7 @@ declare module "express-serve-static-core" {
   interface Locals<ResBody = any, ReqBody = any> {
     user: User
     api_key: APIKey
+    context: RequestContext
     current_user: boolean
   }
 }

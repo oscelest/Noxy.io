@@ -5,7 +5,7 @@ import Validator from "../services/Validator";
 import ValidatorType from "../enums/ValidatorType";
 import ServerException from "../exceptions/ServerException";
 import Server from "../services/Server";
-import {EntityManager, MikroORM, Constructor, FindOptions, Collection} from "@mikro-orm/core";
+import {EntityManager, MikroORM, Constructor, FindOptions, Collection, RequestContext} from "@mikro-orm/core";
 import {Query} from "@mikro-orm/core/typings";
 import Order from "../enums/Order";
 import WhereCondition from "./WhereCondition";
@@ -87,16 +87,16 @@ export default function Entity<E>() {
     }
 
     public static async count(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: CountOptions<E> = {}) {
-      return await Database.manager.count(this, where, options) as number;
+      return await this.getEntityManager().count(this, where, options) as number;
     }
 
     public static async find(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: FindManyOptions<E> = {}) {
-      return await Database.manager.find(this, where, {...options, limit: options.limit, offset: options.skip, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E[];
+      return await this.getEntityManager().find(this, where, {...options, limit: options.limit, offset: options.skip, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E[];
     }
 
     public static async findOne(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: FindOneOptions<E> = {}) {
       try {
-        return await Database.manager.findOneOrFail(this, where, {...options, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E;
+        return await this.getEntityManager().findOneOrFail(this, where, {...options, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E;
       }
       catch (error) {
         if (error.name === "NotFoundError") throw new ServerException(404, {entity: this.name});
@@ -105,7 +105,7 @@ export default function Entity<E>() {
     }
 
     public static async populate(entities: E | E[], populate: Populate<E>) {
-      return await Database.manager.populate(entities, populate);
+      return await this.getEntityManager().populate(entities, populate);
     }
 
     public static async persist(object: Initializer<E>, values?: Initializer<E>) {
@@ -119,7 +119,7 @@ export default function Entity<E>() {
           }
         }
 
-        await Database.manager.persistAndFlush(object);
+        await this.getEntityManager().persistAndFlush(object);
         return object as E;
       }
       catch (error) {
@@ -130,7 +130,7 @@ export default function Entity<E>() {
 
     public static async remove(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: FindOneOptions<E> = {}) {
       const entity = await this.findOne(where, options);
-      await Database.manager.removeAndFlush(entity);
+      await this.getEntityManager().removeAndFlush(entity);
       return entity;
     }
 
@@ -140,6 +140,11 @@ export default function Entity<E>() {
       if (typeof object !== "object") return [prefix ? `${prefix}.${object}` : object.toString()];
       if (Array.isArray(object)) return _.map(object as string[], value => prefix ? `${prefix}.${value}` : value);
       return _.reduce(object, (result, value: any, key: string) => _.concat(result, this.resolvePopulate(value, prefix ? `${prefix}.${key}` : key)), [] as string[]);
+    }
+
+    private static getEntityManager() {
+      if (!RequestContext.getEntityManager) throw new ServerException(500, "Request context not found.");
+      return RequestContext.getEntityManager()!;
     }
 
     //endregion ----- Query methods -----
