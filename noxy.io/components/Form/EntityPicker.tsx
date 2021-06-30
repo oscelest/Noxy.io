@@ -11,6 +11,7 @@ import Button from "./Button";
 import Style from "./EntityPicker.module.scss";
 import Input from "./Input";
 import Component from "../Application/Component";
+import Size from "../../enums/Size";
 
 export default class EntityPicker<V extends {toString(): string}> extends Component<EntityPickerProps<V>, State> {
 
@@ -109,7 +110,7 @@ export default class EntityPicker<V extends {toString(): string}> extends Compon
               {_.map(selected, this.renderSelected)}
             </div>
           </Conditional>
-          <Loader className={Style.Loader} show={loading}>
+          <Loader className={Style.Loader} size={Size.NORMAL} show={loading}>
             <div className={Style.Available}>
               {_.map(available, this.renderAvailable)}
             </div>

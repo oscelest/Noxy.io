@@ -10,24 +10,12 @@ export default class WhereCondition<E extends {new(): any}, I extends Properties
     super();
 
     if (filter) {
-      Object.assign(this, WhereCondition.parseValue(filter));
+      Object.assign(this, WhereCondition.deepParse(filter));
     }
-  }
-
-  public andValue(filter: PropertyArray<I>) {
-    // This should go deeper and check for values and other things.
-
-    for (let key in filter) {
-      const value = filter[key];
-      if (value === undefined || Array.isArray(value) && value.length === 0) continue;
-      this[key as string] = Array.isArray(value) ? {$in: WhereCondition.parseValue(value)} : {$eq: WhereCondition.parseValue(value)};
-    }
-
-    return this;
   }
 
   public andWildcard(filter: Property<I>) {
-    return _.reduce(filter, (result, value, key) => value === undefined ? result : _.set(result, key, {$like: `%${WhereCondition.parseValue(value)}%`}), this);
+    return _.reduce(filter, (result, value, key) => value === undefined ? result : _.set(result, key, {$like: `%${value}%`}), this);
   }
 
   public andExclusion(filter: PropertyArray<I>) {
@@ -50,6 +38,26 @@ export default class WhereCondition<E extends {new(): any}, I extends Properties
     this.$and = filter_list;
 
     return this;
+  }
+
+  private static deepParse(object: any = {}, visited: any[] = []): any {
+    if (object instanceof BaseEntity || visited.includes(object)) return object;
+
+    if (Array.isArray(object)) {
+      return _.filter(object, value => {
+        const parsed = this.deepParse(value, [...visited, object]);
+        return typeof parsed === "object" ? _.size(parsed) : parsed !== undefined;
+      });
+    }
+
+    if (typeof object === "object") {
+      return _.pickBy(object, value => {
+        const parsed = this.deepParse(value, [...visited, object]);
+        return typeof parsed === "object" ? _.size(parsed) : parsed !== undefined;
+      });
+    }
+
+    return object;
   }
 
   private static parseValue(value: any): any {

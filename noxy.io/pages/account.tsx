@@ -46,8 +46,6 @@ export default class AccountPage extends Component<AccountPageProps, State> {
   constructor(props: AccountPageProps) {
     super(props);
 
-    console.log(props);
-
     this.state = {
       loading: false,
 

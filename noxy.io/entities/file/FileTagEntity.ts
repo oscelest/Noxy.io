@@ -30,6 +30,10 @@ export default class FileTagEntity extends BaseEntity {
     return this.id;
   }
 
+  public static render(file_tag: FileTagEntity) {
+    return file_tag.name;
+  }
+
   public static async getCount(search: TagEntitySearchParameter = {}) {
     const result = await Axios.get<APIRequest<number>>(Helper.getAPIPath(this.URL, `count?${new RequestData(search).toString()}`));
     return result.data.content;

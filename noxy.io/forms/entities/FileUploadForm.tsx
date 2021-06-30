@@ -36,7 +36,7 @@ export default class FileUploadForm extends Component<FileUploadFormProps, State
     try {
       const entity = await FileEntity.postOne(
         new File([transfer.file.slice(0, transfer.file.size, transfer.file.type)], transfer.name, {type: transfer.file.type}),
-        {file_tag_list: this.state.tag_available_list},
+        {file_tag_list: this.state.tag_selected_list},
         (event: ProgressEvent) => this.advanceFileTransfer(transfer, {error: undefined, progress: +(event.loaded / event.total * 100).toFixed(2)}),
         (cancel: Canceler) => this.advanceFileTransfer(transfer, {canceler: cancel}),
       );
@@ -86,7 +86,7 @@ export default class FileUploadForm extends Component<FileUploadFormProps, State
     return (
       <Form className={classes.join(" ")} error={error}>
         <EntityPicker className={Style.TagList} horizontal={true} selected={tag_selected_list} available={tag_available_list}
-                      onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
+                      onRender={FileTagEntity.render} onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
 
         <div className={Style.FileList}>
           {_.map(file_list, this.renderFileUpload)}

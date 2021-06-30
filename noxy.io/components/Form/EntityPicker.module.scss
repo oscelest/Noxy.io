@@ -1,11 +1,8 @@
-$row-gap: 5px;
-$col-gap: 10px;
-
 .Component {
   flex:         1 1 auto;
   flex-flow:    column;
   overflow:     auto;
-  grid-row-gap: $row-gap;
+  grid-row-gap: 10px;
 
   &:not(.Horizontal) {
     .List {
@@ -21,14 +18,14 @@ $col-gap: 10px;
     .List {
       flex-flow: row;
 
-      .Available, .Selected {
-        width: calc(50% - 5px);
+      .Available, .Selected, .Loader {
+        width: calc(50% - 2.5px);
       }
     }
   }
 
   .Search {
-    grid-column-gap: $col-gap;
+    grid-column-gap: 10px;
 
     .Input {
       flex: 1 1 auto;
@@ -37,19 +34,17 @@ $col-gap: 10px;
 
   .List {
     flex:            1 1 auto;
-    grid-row-gap:    $row-gap;;
-    grid-column-gap: $col-gap;
+    grid-row-gap:    5px;
+    grid-column-gap: 10px;
     overflow-y:      auto;
-    overflow-x:      hidden;
 
     .Loader {
-
     }
 
     .Available, .Selected {
       flex:         1 1 auto;
       flex-flow:    column;
-      grid-row-gap: $row-gap;
+      grid-row-gap: 5px;
       overflow-y:   auto;
     }
   }

@@ -1,6 +1,5 @@
 import React from "react";
 import Dialog from "../../components/Application/Dialog";
-import Button from "../../components/Form/Button";
 import EntityPicker from "../../components/Form/EntityPicker";
 import FileTagEntity from "../../entities/file/FileTagEntity";
 import Helper from "../../Helper";
@@ -35,8 +34,7 @@ export default class FileTagSelectForm extends Component<FileSetTagListFormProps
     return (
       <Form className={classes.join(" ")} error={error} onSubmit={this.submit}>
         <EntityPicker className={Style.FileTagList} selected={this.state.selected} available={this.state.available} horizontal={true}
-                      onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
-        <Button onClick={this.submit}>Choose tag(s)</Button>
+                      onRender={FileTagEntity.render} onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
       </Form>
     );
   }

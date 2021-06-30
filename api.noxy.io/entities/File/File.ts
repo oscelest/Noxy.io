@@ -42,13 +42,13 @@ export default class File extends Entity<File>() {
   public privacy: Privacy;
 
   @Property({length: 64})
-  public data_hash: string;
+  public data_hash: string = File.generateDataHash();
 
   @Property({length: 32})
-  public share_hash: string;
+  public share_hash: string = File.generateShareHash();
 
   @Property({type: "boolean"})
-  public flag_public_tag: boolean;
+  public flag_public_tag_list: boolean;
 
   @ManyToOne(() => FileExtension)
   public file_extension: FileExtension;
@@ -94,7 +94,7 @@ export default class File extends Entity<File>() {
 
   @File.get("/count")
   @File.bindParameter<Request.getMany>("name", ValidatorType.STRING, {max_length: 128})
-  @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.UUID, {array: true})
+  @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.ENUM, FileTypeName, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
   public static async getCount({locals: {respond, user, params: {name, file_type_list, file_tag_list, file_tag_set_operation}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
@@ -141,10 +141,10 @@ export default class File extends Entity<File>() {
         {privacy: Privacy.LINK, share_hash},
         {privacy: Privacy.PRIVATE, user},
       ),
-      {populate: this.columnPopulate}
+      {populate: this.columnPopulate},
     );
 
-    if (file.user.id === user?.id || file.flag_public_tag) file.file_tag_list = new Collection<FileTag>(FileTag, [], true);
+    if (file.user.id === user?.id || file.flag_public_tag_list) file.file_tag_list = new Collection<FileTag>(FileTag, [], true);
     return respond(file);
   }
 
@@ -157,26 +157,24 @@ export default class File extends Entity<File>() {
 
   @File.post("/")
   @File.bindParameter<Request.postOne>("data", ValidatorType.FILE)
+  @File.bindParameter<Request.postOne>("privacy", ValidatorType.ENUM, Privacy, {optional: true})
+  @File.bindParameter<Request.postOne>("flag_public_tag_list", ValidatorType.ENUM, Privacy, {optional: true})
   @File.bindParameter<Request.postOne>("file_tag_list", ValidatorType.UUID, {array: true, optional: true})
   private static async createOne({locals: {respond, user, params}}: Server.Request<{}, Response.postOne, Request.postOne>) {
-    const {data, file_tag_list} = params!;
+    const {data, privacy, file_tag_list} = params!;
 
     if (data.name.length > 128) {
       return respond(new ServerException(400, {name: data.name}, "File name can only by 128 characters long."));
     }
 
-    const file = this.create({
-      id:              v4(),
-      name:            data.name,
-      size:            data.size,
-      privacy:         Privacy.PRIVATE,
-      data_hash:       File.generateDataHash(),
-      share_hash:      File.generateShareHash(),
-      flag_public_tag: false,
-      file_extension:  await FileExtension.findOne({name: data.extension, mime_type: data.mime_type, type: data.file_type}),
-      file_tag_list:   new Collection<FileTag>(await FileTag.find(this.where({user}).andValue({id: file_tag_list}))),
-      user:            user,
-    });
+    const file = new this();
+    file.name = data.name;
+    file.size = data.size;
+    file.privacy = privacy ?? Privacy.PRIVATE;
+    file.flag_public_tag_list = false;
+    file.file_extension = await FileExtension.findOne({name: data.extension, mime_type: data.mime_type, type: data.file_type});
+    file.user = user;
+    if (file_tag_list?.length) file.file_tag_list.add(...await FileTag.find({user, id: file_tag_list}));
 
     FS.rename(data.path, file.getFilePath(), async error => {
       if (error) return respond(new ServerException(500, {from: data.path, to: file.getFilePath()}, "Error while moving file"));
@@ -248,9 +246,9 @@ export default class File extends Entity<File>() {
 
     if (name !== undefined) file.name = name;
     if (privacy !== undefined) file.privacy = privacy;
-    if (flag_public_tag !== undefined) file.flag_public_tag = flag_public_tag;
+    if (flag_public_tag !== undefined) file.flag_public_tag_list = flag_public_tag;
     if (file_extension !== undefined) file.file_extension = await FileExtension.findOne(file_extension);
-    if (file_tag_list) file.file_tag_list = new Collection<FileTag>(file, await FileTag.find({id: file_tag_list}));
+    if (file_tag_list?.length) file.file_tag_list.add(...await FileTag.find({id: file_tag_list}));
 
     return respond(await this.persist(file));
   }
@@ -273,7 +271,7 @@ namespace Request {
   export type getCount = {name?: string; file_type_list: string[]; file_tag_list: string[]; file_tag_set_operation?: SetOperation}
   export type getOne = {share_hash?: string}
   export type getData = never
-  export type postOne = {data: FileHandle; file_tag_list?: string[]}
+  export type postOne = {data: FileHandle; privacy?: Privacy; flag_public_tag_list?: boolean; file_tag_list?: string[]}
   export type postDownloadRequest = {id: string[], share_hash?: string}
   export type postDownloadConfirm = {token: string}
   export type putOne = {name?: string; file_extension?: string; file_tag_list?: string[], privacy?: Privacy, flag_public_tag?: boolean}

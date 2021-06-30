@@ -52,7 +52,7 @@ import User from "./entities/User";
       if (authorization) {
         try {
           const {id} = await JSONWebToken.verify(authorization, process.env.JWT_SECRET!) as {id: string};
-          request.locals.api_key = await APIKey.findOne({id}, {populate: "user"});
+          request.locals.api_key = await APIKey.findOne({id}, {populate: {user: "api_key_list"}});
         }
         catch (error) {
           if (error instanceof JSONWebToken.TokenExpiredError) return request.locals.respond?.(new ServerException(401, {authorization}, "Authorization token has expired."));

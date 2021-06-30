@@ -162,7 +162,7 @@ export default class FileAliasPage extends Component<FileAliasPageProps, State> 
                   <Conditional condition={isOwner}>
                     <Button onClick={this.openDeleteFileDialog}>Delete file</Button>
                     <EntityPicker selected={tag_selected_list} available={tag_available_list}
-                                  onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openDeleteTagDialog}/>
+                                  onRender={FileTagEntity.render} onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openDeleteTagDialog}/>
                   </Conditional>
 
                 </Loader>
