@@ -32,9 +32,9 @@
     ]
   },
   "dependencies":    {
-    "@mikro-orm/cli":   "^4.5.6",
-    "@mikro-orm/core":  "^4.5.6",
-    "@mikro-orm/mysql": "^4.5.6",
+    "@mikro-orm/cli":   "^4.5.7",
+    "@mikro-orm/core":  "^4.5.7",
+    "@mikro-orm/mysql": "^4.5.7",
     "adm-zip":          "^0.5.5",
     "dotenv":           "^10.0.0",
     "fs-extra":         "^10.0.0",
@@ -44,20 +44,20 @@
     "moment":           "^2.29.1",
     "mysql2":           "^2.2.5",
     "ts-node":          "^10.0.0",
-    "typescript":       "^4.3.2",
+    "typescript":       "^4.3.5",
     "uuid":             "^8.3.2"
   },
   "devDependencies": {
     "@types/adm-zip":                   "^0.4.34",
     "@types/express":                   "^4.17.12",
-    "@types/express-serve-static-core": "^4.17.21",
+    "@types/express-serve-static-core": "^4.17.22",
     "@types/fs-extra":                  "^9.0.11",
-    "@types/jsonwebtoken":              "^8.5.2",
+    "@types/jsonwebtoken":              "^8.5.3",
     "@types/lodash":                    "^4.14.170",
     "@types/mime-types":                "^2.1.0",
-    "@types/node":                      "^15.12.4",
+    "@types/node":                      "^15.14.0",
     "@types/uuid":                      "^8.3.0",
-    "nodemon":                          "^2.0.7",
+    "nodemon":                          "^2.0.9",
     "reflect-metadata":                 "^0.1.13"
   }
 }
