@@ -35,6 +35,7 @@ import FileTypeName from "../../../common/enums/FileTypeName";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Style from "./FileExplorer.module.scss";
 import Component from "./Component";
+import Util from "../../../common/services/Util";
 
 // noinspection JSUnusedGlobalSymbols
 export default class FileExplorer extends Component<FileBrowserProps, State> {
@@ -100,7 +101,7 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
 
       try {
         const count = await FileEntity.getCount(params);
-        next_state.pagination_total = Helper.getPageTotal(count, this.state.pagination_size);
+        next_state.pagination_total = Util.getSampleCount(count, this.state.pagination_size);
         next_state.pagination_current = _.clamp(this.state.pagination_current, 1, next_state.pagination_total);
 
         const skip = (next_state.pagination_current - 1) * this.state.pagination_size;

@@ -22,9 +22,9 @@ import QueuePosition from "../../enums/QueuePosition";
 import Size from "../../enums/Size";
 import FatalException from "../../exceptions/FatalException";
 import ConfirmForm from "../../forms/ConfirmForm";
-import Helper from "../../Helper";
 import Style from "./[id].module.scss";
 import Component from "../../components/Application/Component";
+import Util from "../../../common/services/Util";
 
 // noinspection JSUnusedGlobalSymbols
 export default class FileAliasPage extends Component<FileAliasPageProps, State> {
@@ -127,7 +127,7 @@ export default class FileAliasPage extends Component<FileAliasPageProps, State> 
                   <Conditional condition={file?.file_extension.type === FileTypeName.AUDIO && file_element}>
                     <div className={Style.Info}>
                       <span className={Style.Header}>Audio Length</span>
-                      <EllipsisText className={Style.Body}>{Helper.getDuration((file_element as HTMLAudioElement)?.duration)}</EllipsisText>
+                      <EllipsisText className={Style.Body}>{Util.getDuration((file_element as HTMLAudioElement)?.duration)}</EllipsisText>
                     </div>
                   </Conditional>
 
@@ -145,7 +145,7 @@ export default class FileAliasPage extends Component<FileAliasPageProps, State> 
                     </div>
                     <div className={Style.Info}>
                       <span className={Style.Header}>Video Length</span>
-                      <EllipsisText className={Style.Body}>{Helper.getDuration((file_element as HTMLVideoElement)?.duration)}</EllipsisText>
+                      <EllipsisText className={Style.Body}>{Util.getDuration((file_element as HTMLVideoElement)?.duration)}</EllipsisText>
                     </div>
                   </Conditional>
 

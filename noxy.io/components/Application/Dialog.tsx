@@ -9,8 +9,8 @@ import Icon from "../Form/Icon";
 import DragDrop from "../UI/DragDrop";
 import Conditional from "./Conditional";
 import Style from "./Dialog.module.scss";
-import Helper from "../../Helper";
 import Component from "./Component";
+import Util from "../../../common/services/Util";
 
 export default class Dialog extends Component<DialogProps, State> {
 
@@ -89,7 +89,7 @@ export default class Dialog extends Component<DialogProps, State> {
     }
 
     _.pullAt(this.#instance_list, indexes);
-    Helper.schedule(() => this.setState({}));
+    Util.schedule(() => this.setState({}));
   };
 
   private readonly getInstance = (id: string) => {

@@ -2,11 +2,11 @@ import React from "react";
 import Dialog from "../../components/Application/Dialog";
 import EntityPicker from "../../components/Form/EntityPicker";
 import FileTagEntity from "../../entities/file/FileTagEntity";
-import Helper from "../../Helper";
 import ConfirmForm from "../ConfirmForm";
 import Style from "./FileTagSelectForm.module.scss";
 import Form from "../../components/Base/Form";
 import Component from "../../components/Application/Component";
+import Util from "../../../common/services/Util";
 
 export default class FileTagSelectForm extends Component<FileSetTagListFormProps, State> {
 
@@ -19,7 +19,7 @@ export default class FileTagSelectForm extends Component<FileSetTagListFormProps
   }
 
   public readonly submit = async () => {
-    Helper.schedule(() => this.props.onSubmit(this.state.selected));
+    Util.schedule(() => this.props.onSubmit(this.state.selected));
   };
 
   public componentDidMount(): void {

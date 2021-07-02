@@ -8,6 +8,7 @@ import Loader from "../UI/Loader";
 import Style from "./Button.module.scss";
 import Conditional from "../Application/Conditional";
 import Component from "../Application/Component";
+import Util from "../../../common/services/Util";
 
 export default class Button<V> extends Component<EventProps | ValueProps<V>, State> {
 
@@ -66,7 +67,7 @@ export default class Button<V> extends Component<EventProps | ValueProps<V>, Sta
       return;
     }
 
-    Helper.hasProperty(this.props, "value") ? callback?.(this.props.value, event) : callback?.(event);
+    Util.hasProperty(this.props, "value") ? callback?.(this.props.value, event) : callback?.(event);
   };
 
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {

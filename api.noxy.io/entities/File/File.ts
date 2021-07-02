@@ -100,8 +100,6 @@ export default class File extends Entity<File>() {
   public static async getCount({locals: {respond, context, user, params: {name, file_type_list, file_tag_list, file_tag_set_operation}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
     const options: CountOptions<File> = {};
 
-    console.log("Hello", context);
-
     if (file_tag_set_operation === SetOperation.INTERSECTION) {
       options.groupBy = `(${Database.manager.getMetadata().get(this.name).properties["file_tag_list" as keyof File].joinColumns.join("), (")})`;
       options.having = `COUNT(*) = ${file_tag_list.length}`;

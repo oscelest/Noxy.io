@@ -1,8 +1,8 @@
 import React from "react";
 import IconType from "../../enums/IconType";
 import Style from "./Icon.module.scss";
-import Helper from "../../Helper";
 import Component from "../Application/Component";
+import Util from "../../../common/services/Util";
 
 export default class Icon<V = any> extends Component<IconProps<V>, State> {
 
@@ -26,7 +26,7 @@ export default class Icon<V = any> extends Component<IconProps<V>, State> {
   };
 
   private readonly invokeEvent = (event: React.SyntheticEvent, callback?: (...args: any[]) => any | Promise<any>) => {
-    return Helper.hasProperty(this.props, "value") ? callback?.(this.props.value, event) : callback?.(event);
+    return Util.hasProperty(this.props, "value") ? callback?.(this.props.value, event) : callback?.(event);
   };
 }
 

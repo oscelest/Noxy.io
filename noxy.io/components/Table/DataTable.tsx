@@ -2,7 +2,6 @@ import _ from "lodash";
 import React from "react";
 import IconType from "../../enums/IconType";
 import InputType from "../../enums/InputType";
-import Helper from "../../Helper";
 import Table from "../Base/Table";
 import Button from "../Form/Button";
 import Input from "../Form/Input";
@@ -11,6 +10,7 @@ import Style from "./DataTable.module.scss";
 import Pagination from "./Pagination";
 import Conditional from "../Application/Conditional";
 import Component from "../Application/Component";
+import Util from "../../../common/services/Util";
 
 export default class DataTable<K extends string> extends Component<DataTableProps<K>, State> {
 
@@ -99,7 +99,7 @@ export default class DataTable<K extends string> extends Component<DataTableProp
           </div>
 
           <div className={Style.Center}>
-            <Pagination className={Style.Pagination} current={page} total={Helper.getPageTotal(count, size)} onChange={this.eventPageChange}/>
+            <Pagination className={Style.Pagination} current={page} total={Util.getSampleCount(count, size)} onChange={this.eventPageChange}/>
           </div>
 
           <div className={Style.Right}>

@@ -9,9 +9,9 @@ import Form from "../../components/Base/Form";
 import Preview from "../../components/UI/Preview";
 import FileEntity from "../../entities/file/FileEntity";
 import FatalException from "../../exceptions/FatalException";
-import Helper from "../../Helper";
 import Style from "./FileRenameForm.module.scss";
 import Component from "../../components/Application/Component";
+import Util from "../../../common/services/Util";
 
 export default class FileRenameForm extends Component<FileRenameFormProps, State> {
 
@@ -25,7 +25,7 @@ export default class FileRenameForm extends Component<FileRenameFormProps, State
   }
 
   public readonly submit = async () => {
-    Helper.schedule(this.props.onSubmit, this.parseNames());
+    Util.schedule(this.props.onSubmit, this.parseNames());
   };
 
   private readonly parseNames = () => {
@@ -55,7 +55,7 @@ export default class FileRenameForm extends Component<FileRenameFormProps, State
     if (!this.state.ref.current) throw new FatalException("Fatal Exception", "Input field has not yet been instantiated.");
     const {start = 0, end = 0} = this.state.ref.current.getSelection() ?? {};
     this.state.ref.current.element?.focus();
-    Helper.schedule(this.state.ref.current.setSelection, start + text.length + 2);
+    Util.schedule(this.state.ref.current.setSelection, start + text.length + 2);
     return `${this.state.name.substring(0, start)}{${text}}${this.state.name.substring(end)}`;
   };
 

@@ -1,6 +1,4 @@
 import _ from "lodash";
-import React from "react";
-import Order from "../common/enums/Order";
 import FatalException from "./exceptions/FatalException";
 
 namespace Helper {
@@ -9,14 +7,6 @@ namespace Helper {
 
   export function getAPIPath(...segment: string[]) {
     return process.browser ? `${location.protocol}//api.${location.hostname}/${segment.join("/")}` : "";
-  }
-
-  export function renderJSON(content: JSONObject) {
-    return typeof content === "string" ? content : JSON.stringify(content, undefined, 2);
-  }
-
-  export function hasProperty<O extends object>(object: O, key: keyof O) {
-    return object.hasOwnProperty(key);
   }
 
   export function getQueryProp<V>(prop: undefined | string | string[]): string | undefined
@@ -47,28 +37,9 @@ namespace Helper {
       form.append(input);
     }
 
-    document.getElementById("__next")?.append(form);
+    document.append(form);
     form.submit();
     form.remove();
-  }
-
-  export function getDuration(seconds: number) {
-    const s = Math.floor(seconds % 3600 % 60);
-    const m = Math.floor(seconds % 3600 / 60);
-
-    if (seconds > 3600) {
-      const h = Math.floor(seconds / 3600);
-      return `${h}:${m < 10 ? `0${m}` : m}:${s < 10 ? `0${s}` : s}`;
-    }
-    if (seconds > 60) {
-      return `${m}:${s < 10 ? `0${s}` : s}`;
-    }
-
-    return `0:${s < 10 ? `0${s}` : s}`;
-  }
-
-  export function schedule(fn: Function, ...args: any[]) {
-    return setTimeout(fn, 0, ...args);
   }
 
   export function getReactChildObject<O extends {} | [], V extends Unwrap<O>>(element: Element, object: O): V | undefined {
@@ -76,45 +47,12 @@ namespace Helper {
   }
 
   export function getChildKey<O extends {} | []>(element: Element, object: O): keyof O {
+
     return _.keys(object)[_.findIndex(element.parentElement?.children, child => child === element)] as keyof O;
-  }
-
-  export function isolateEvent<E extends Event | React.SyntheticEvent>(handler: (event: E, ...args: any[]) => any) {
-    return ((event: E, ...args: any[]) => {
-      const result = handler(event, ...args);
-      if (result !== event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      return result;
-    });
-  }
-
-  export function getNextOrder(order?: Order) {
-    return order === Order.DESC ? Order.ASC : (order === Order.ASC ? undefined : Order.DESC);
-  }
-
-  export function getPageTotal(count: number, size: number) {
-    return Math.ceil(count / (size > 0 ? size : 1)) || 1;
   }
 
   export function getActiveElement() {
     return process.browser ? document.activeElement : null;
-  }
-
-  export function getChildrenLength(children: React.ReactNode | React.ReactNodeArray) {
-    if (Array.isArray(children)) return children.length;
-    if (typeof children === "number" || typeof children === "string" || typeof children === "boolean") return 1;
-    return 0;
-  }
-
-  export function parseOptions(options: {[key: string]: any} | (string | number)[]): {[key: string]: any} {
-    return Array.isArray(options) ? _.mapValues(_.invert(options), option => +option) : options;
-  }
-
-  export function getElementFont(element: HTMLElement) {
-    if (!process.browser) return "Arial 14px/14px, sans-serif";
-    return window.getComputedStyle(element).font;
   }
 
   export function getWidestText(texts: string | string[] = [], font: string = "normal normal 400 14px/14px Nunito, sans-serif") {
