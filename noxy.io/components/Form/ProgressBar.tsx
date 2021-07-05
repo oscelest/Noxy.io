@@ -1,6 +1,6 @@
 import React from "react";
-import Style from "./ProgressBar.module.scss";
 import Component from "../Application/Component";
+import Style from "./ProgressBar.module.scss";
 
 export default class ProgressBar extends Component<ProgressBarProps, State> {
   

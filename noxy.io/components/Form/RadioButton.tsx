@@ -1,10 +1,11 @@
 import _ from "lodash";
 import React from "react";
+import Conditional from "../Application/Conditional";
+import Component from "../Application/Component";
 import EventKey from "../../enums/EventKey";
 import Helper from "../../Helper";
 import Style from "./RadioButton.module.scss";
-import Conditional from "../Application/Conditional";
-import Component from "../Application/Component";
+
 
 export default class RadioButton<V, C extends RadioButtonCollection<string, V>> extends Component<RadioButtonProps<V, C>, State> {
 

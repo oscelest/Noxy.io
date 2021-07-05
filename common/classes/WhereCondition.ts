@@ -89,15 +89,11 @@ export default class WhereCondition<E extends {new(): any}, I extends Properties
     }
 
     if (transformer === undefined) {
-      return value ? this.transformAssignValue(result, value, key) : result;
+      return value ? {...result, [key]: value} : result;
     }
 
     const transformed = transformer(value, key);
-    return transformed ? this.transformAssignValue(result, value, key) : result;
-  }
-
-  private static transformAssignValue<I>(result: object, value: Condition<I>, key: string | number) {
-    return typeof value !== "object" || Array.isArray(value) ? {...result, [key]: value} : {...result, ...value as Object};
+    return transformed !== undefined ? {...result, [key]: transformed} : result;
   }
 }
 

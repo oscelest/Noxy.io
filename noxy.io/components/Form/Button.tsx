@@ -1,14 +1,14 @@
 import React from "react";
+import Icon from "./Icon";
+import Component from "../Application/Component";
+import Conditional from "../Application/Conditional";
+import Loader from "../UI/Loader";
+import Helper from "../../Helper";
 import EventKey from "../../enums/EventKey";
 import IconType from "../../enums/IconType";
 import Size from "../../enums/Size";
-import Helper from "../../Helper";
-import Icon from "./Icon";
-import Loader from "../UI/Loader";
-import Style from "./Button.module.scss";
-import Conditional from "../Application/Conditional";
-import Component from "../Application/Component";
 import Util from "../../../common/services/Util";
+import Style from "./Button.module.scss";
 
 export default class Button<V> extends Component<EventProps | ValueProps<V>, State> {
 
