@@ -4,6 +4,7 @@ import PasswordResetConfirmForm from "../forms/PasswordResetConfirmForm";
 import PasswordResetRequestForm from "../forms/PasswordResetRequestForm";
 import Style from "./reset.module.scss";
 import Component from "../components/Application/Component";
+import Conditional from "../components/Application/Conditional";
 
 // noinspection JSUnusedGlobalSymbols
 export default class ResetPage extends Component<ResetPageProps, State> {
@@ -25,7 +26,12 @@ export default class ResetPage extends Component<ResetPageProps, State> {
   public render() {
     return (
       <div className={Style.Component}>
-        {this.props.token ? <PasswordResetConfirmForm token={this.props.token}/> : <PasswordResetRequestForm/>}
+        <Conditional condition={this.props.token}>
+          <PasswordResetConfirmForm token={this.props.token}/>
+        </Conditional>
+        <Conditional condition={!this.props.token}>
+          <PasswordResetRequestForm/>
+        </Conditional>
       </div>
     );
   }

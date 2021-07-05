@@ -6,8 +6,10 @@ import React from "react";
 import Order from "../../common/enums/Order";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import RequestHeader from "../../common/enums/RequestHeader";
+import Component from "../components/Application/Component";
 import Dialog from "../components/Application/Dialog";
 import {Masquerade} from "../components/Application/Masquerade";
+import Redirect from "../components/Application/Redirect";
 import Button from "../components/Form/Button";
 import Checkbox, {CheckboxCollection} from "../components/Form/Checkbox";
 import Input from "../components/Form/Input";
@@ -18,14 +20,12 @@ import ColumnText from "../components/Text/ColumnText";
 import ErrorText from "../components/Text/ErrorText";
 import HeaderText from "../components/Text/HeaderText";
 import PageHeader from "../components/UI/PageHeader";
-import Redirect from "../components/Application/Redirect";
 import APIKeyEntity from "../entities/APIKeyEntity";
 import UserEntity from "../entities/UserEntity";
 import IconType from "../enums/IconType";
 import InputType from "../enums/InputType";
 import APIKeyCreateForm from "../forms/entities/APIKeyCreateForm";
 import Style from "./account.module.scss";
-import Component from "../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
 export default class AccountPage extends Component<AccountPageProps, State> {

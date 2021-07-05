@@ -158,7 +158,7 @@ export default class FileUploadForm extends Component<FileUploadFormProps, State
   };
 
   private readonly eventFileCancelAll = () => {
-    this.setState({file_list: _.filter(this.state.file_list, handle => !!handle.cancel?.())});
+    this.setState({file_list: _.filter(this.state.file_list, handle => !!handle.cancel?.().error)});
   };
 }
 
