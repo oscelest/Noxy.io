@@ -37,9 +37,11 @@ p {
 }
 
 html, body, div, img, button, input, span, select, label, a {
-  display:    flex;
-  position:   relative;
-  box-sizing: border-box;
+  &:not(.codex-editor, .codex-editor *, .ct) {
+    display:    flex;
+    position:   relative;
+    box-sizing: border-box;
+  }
 }
 
 img {
@@ -58,17 +60,3 @@ input {
   width:   100%;
 }
 
-.Info {
-  border-color:     $info-primary-color;
-  background-color: $info-primary-color;
-
-  &:hover {
-    border-color:     $info-muted-color;
-    background-color: $info-primary-color;
-  }
-
-  &:focus {
-    background-color: $info-primary-color;
-    border-color:     $info-highlight-color;
-  }
-}

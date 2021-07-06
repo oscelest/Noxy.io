@@ -21,6 +21,7 @@ import BaseEntity from "../../../../common/classes/BaseEntity";
 import Input from "../../../components/Form/Input";
 import Component from "../../../components/Application/Component";
 import UserEntity from "../../../entities/UserEntity";
+import Textarea from "../../../components/Form/Textarea";
 
 // noinspection JSUnusedGlobalSymbols
 export default class PageIDEditPage extends Component<PageIDEditPageProps, State> {
@@ -93,8 +94,8 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
                 </div>
 
                 <div className={Style.Text}>
-                  {/*<Textarea className={Style.Summary} label={"Summary"} value={this.state.entity.summary} onChange={this.eventSummaryChange}/>*/}
-                  {/*<Textarea className={Style.Content} label={"Content"} value={this.state.entity.content} onChange={this.eventContentChange}/>*/}
+                  <Textarea className={Style.Summary} label={"Summary"} value={this.state.entity.summary}/>
+                  <Textarea className={Style.Content} label={"Content"} value={this.state.entity.content}/>
                 </div>
 
                 <div className={Style.Action}>
