@@ -209,8 +209,8 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
 
   // region    ----- Dialogs -----    region //
 
-  private readonly openUploadDialog = (event: React.DragEvent) => {
-    const file_list = event.dataTransfer?.files ?? [];
+  private readonly openUploadDialog = (event?: React.MouseEvent | React.DragEvent) => {
+    const file_list = (event as React.DragEvent)?.dataTransfer?.files ?? [];
     if (!this.context.hasPermission(PermissionLevel.FILE_CREATE)) return;
 
     this.setState({
@@ -323,8 +323,7 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
 
     if (count === 0) {
       return {
-        // "upload": {icon: IconType.UPLOAD, text: "Upload file", action: this.openUploadDialog},
-        // "tags":    {icon: IconType.TAGS, text: "Manage tags", action: this.eventContextMenuOpen},
+        "upload":  {icon: IconType.UPLOAD, text: "Upload file", action: this.openUploadDialog},
         "refresh": {icon: IconType.REFRESH, text: "Refresh", action: this.searchFile},
         "reset":   {icon: IconType.NOT_ALLOWED, text: "Reset filters", action: this.eventContextMenuReset},
       };
@@ -335,21 +334,21 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
         "open":      {text: "Open", action: this.eventContextMenuOpen},
         "open_tab":  {text: "Open in a new tab", action: this.eventContextMenuOpenTab},
         "copy_link": {icon: IconType.LINK, text: "Copy link", action: this.eventContextMenuCopyLink},
+        "copy_file": {icon: IconType.EXTERNAL_LINK, text: "Copy file link", action: this.eventContextMenuCopyDirectLink},
         "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.openFileNameChangeDialog},
         "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.openFileTagChangeDialog},
         "download":  {icon: IconType.DOWNLOAD, text: "Download", action: this.eventContextMenuDownload},
-        // "share":     {icon: IconType.SHARE, text: "Share", action: () => {}},
-        "delete": {icon: IconType.BIN, text: "Delete", action: this.openFileDeleteDialog},
+        "delete":    {icon: IconType.BIN, text: "Delete", action: this.openFileDeleteDialog},
       };
     }
 
     return {
       "copy_link": {icon: IconType.LINK, text: "Copy links", action: this.eventContextMenuCopyLink},
+      "copy_file": {icon: IconType.EXTERNAL_LINK, text: "Copy file link", action: this.eventContextMenuCopyDirectLink},
       "rename":    {icon: IconType.EDIT_ALT, text: "Rename", action: this.openFileNameChangeDialog},
       "tags":      {icon: IconType.TAGS, text: "Set tags", action: this.openFileTagChangeDialog},
-      // "share":     {icon: IconType.SHARE, text: "Share", action: () => {}},
-      "delete":   {icon: IconType.BIN, text: "Delete", action: this.openFileDeleteDialog},
-      "download": {icon: IconType.DOWNLOAD, text: "Download", action: this.eventContextMenuDownload},
+      "download":  {icon: IconType.DOWNLOAD, text: "Download", action: this.eventContextMenuDownload},
+      "delete":    {icon: IconType.BIN, text: "Delete", action: this.openFileDeleteDialog},
     };
   };
 
@@ -363,6 +362,10 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
 
   private readonly eventContextMenuCopyLink = () => {
     return Helper.setClipboard(this.state.file_selected.reduce((r, v, i) => v ? [...r, this.state.file_list[i].getFilePath()] : r, [] as string[]).join("\n"));
+  };
+
+  private readonly eventContextMenuCopyDirectLink = () => {
+    return Helper.setClipboard(this.state.file_selected.reduce((r, v, i) => v ? [...r, this.state.file_list[i].getDataPath()] : r, [] as string[]).join("\n"));
   };
 
   private readonly eventContextMenuReset = () => {

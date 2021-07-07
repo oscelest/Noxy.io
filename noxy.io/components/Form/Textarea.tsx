@@ -14,8 +14,6 @@ export default class Textarea extends Component<TextareaProps, State> {
 
   public async componentDidMount() {
     if (!this.state.ref.current) throw new FatalException("Could not load EditorJS component.");
-    const EditorJS = (await import("@editorjs/editorjs")).default;
-    new EditorJS({holder: this.state.ref.current});
   }
 
   public render() {

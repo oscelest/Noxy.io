@@ -169,7 +169,7 @@ export interface ContextMenuCollection {
 export interface ContextMenuItem {
   text: string
   icon?: IconType
-  action?: () => void
+  action?: (...args: any[]) => any
   items?: ContextMenuCollection
 }
 
