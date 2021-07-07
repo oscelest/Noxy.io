@@ -11,7 +11,7 @@ import ConfirmForm from "../../forms/ConfirmForm";
 import FileUploadForm from "../../forms/entities/FileUploadForm";
 import FileRenameForm from "../../forms/entities/FileRenameForm";
 import FileTagSelectForm from "../../forms/entities/FileTagSelectForm";
-import {FileAliasPageQuery} from "../../pages/file/[id]";
+import {FileIDPageQuery} from "../../pages/file/[id]";
 import Input from "../Form/Input";
 import Button from "../Form/Button";
 import Switch from "../Form/Switch";
@@ -195,7 +195,7 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
   }
 
   private readonly renderFile = (file: FileEntity, index: number = 0) => {
-    const href = file.privacy === Privacy.LINK ? `/file/${file.id}?${FileAliasPageQuery.SHARE_HASH}=${file.share_hash}` : `/file/${file.id}`;
+    const href = file.privacy === Privacy.LINK ? `/file/${file.id}?${FileIDPageQuery.SHARE_HASH}=${file.share_hash}` : `/file/${file.id}`;
 
     return (
       <div key={index} className={Style.File}>

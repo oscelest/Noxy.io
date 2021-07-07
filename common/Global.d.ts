@@ -29,7 +29,7 @@ declare global {
 
   export type DecoratorConstructor = {new(...args: any[]): any}
 
-  declare interface APIRequest<T> {
+  export interface APIRequest<T> {
     success: boolean
     message: string
     content: T extends (infer R)[] ? Simplify<R>[] : Simplify<T>
@@ -38,30 +38,30 @@ declare global {
     time_elapsed: Date
   }
 
-  declare interface RequestErrorQuery {
+  export interface RequestErrorQuery {
     [key: string]: {
       message: string
       received?: string
     }
   }
 
-  declare interface RequestPagination<O extends {}> {
+  export interface RequestPagination<O extends {}> {
     skip: number
     limit: number
     order: RequestPaginationOrder<O>
   }
 
-  declare type DeepArray<V> = V | DeepArray<V>[]
+  export type DeepArray<V> = V | DeepArray<V>[]
 
-  declare type Unwrap<V> = V extends (infer R)[] ? R : V extends {[key: string]: infer R} ? R : V;
+  export type Unwrap<V> = V extends (infer R)[] ? R : V extends {[key: string]: infer R} ? R : V;
 
-  declare type Simplify<O> = (O extends object ? Properties<O> : O)
+  export type Simplify<O> = (O extends object ? Properties<O> : O)
 
-  declare type RequestPaginationOrder<O extends {}> = { [K in keyof Pick<O, { [K in keyof O]: O[K] extends Function ? never : K }[keyof O]>]?: "ASC" | "DESC" }
+  export type RequestPaginationOrder<O extends {}> = { [K in keyof Pick<O, { [K in keyof O]: O[K] extends Function ? never : K }[keyof O]>]?: "ASC" | "DESC" }
 
-  declare type PageProps = {permission?: string | null}
+  export type PageProps = {permission?: string | null}
 
-  declare type JSONObject = null | boolean | number | string | JSONObject[] | { [prop: string]: JSONObject }
+  export type JSONObject = null | boolean | number | string | JSONObject[] | { [prop: string]: JSONObject }
 
   export interface File {
     fieldname: string

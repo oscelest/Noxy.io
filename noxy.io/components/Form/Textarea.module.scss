@@ -1,6 +1,10 @@
+@import "variables";
+
 .Component {
 
   flex:      1 1 auto;
   flex-flow: column;
+
+  border:    $border-width solid $border-color;
 
 }

@@ -37,11 +37,9 @@ p {
 }
 
 html, body, div, img, button, input, span, select, label, a {
-  &:not(.codex-editor, .codex-editor *, .ct) {
-    display:    flex;
-    position:   relative;
-    box-sizing: border-box;
-  }
+  display:    flex;
+  position:   relative;
+  box-sizing: border-box;
 }
 
 img {
@@ -59,4 +57,3 @@ input {
   padding: 0;
   width:   100%;
 }
-

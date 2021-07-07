@@ -144,7 +144,7 @@ export default class File extends Entity<File>() {
       {populate: this.columnPopulate},
     );
 
-    if (file.user.id === user?.id || file.flag_public_tag_list) file.file_tag_list = new Collection<FileTag>(FileTag, [], true);
+    if (file.user.id !== user?.id && !file.flag_public_tag_list) file.file_tag_list = new Collection<FileTag>(FileTag, [], true);
     return respond(file);
   }
 
@@ -248,7 +248,7 @@ export default class File extends Entity<File>() {
     if (privacy !== undefined) file.privacy = privacy;
     if (flag_public_tag !== undefined) file.flag_public_tag_list = flag_public_tag;
     if (file_extension !== undefined) file.file_extension = await FileExtension.findOne(file_extension);
-    if (file_tag_list?.length) file.file_tag_list.add(...await FileTag.find({id: file_tag_list}));
+    if (file_tag_list?.length) file.file_tag_list.set(await FileTag.find({id: file_tag_list}));
 
     return respond(await this.persist(file));
   }

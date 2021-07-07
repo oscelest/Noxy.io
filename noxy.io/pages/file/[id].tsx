@@ -27,21 +27,21 @@ import Component from "../../components/Application/Component";
 import Util from "../../../common/services/Util";
 
 // noinspection JSUnusedGlobalSymbols
-export default class FileAliasPage extends Component<FileAliasPageProps, State> {
+export default class FileAliasPage extends Component<FileIDPageProps, State> {
 
   // noinspection JSUnusedGlobalSymbols
-  public static getInitialProps(context: NextPageContext): FileAliasPageProps {
-    const alias = (context.query[FileAliasPageQuery.ID] ?? "");
-    const share_hash = (context.query[FileAliasPageQuery.SHARE_HASH] ?? "");
+  public static getInitialProps(context: NextPageContext): FileIDPageProps {
+    const id = (context.query[FileIDPageQuery.ID] ?? "");
+    const share_hash = (context.query[FileIDPageQuery.SHARE_HASH] ?? "");
 
     return {
-      permission:                      null,
-      [FileAliasPageQuery.ID]:         (Array.isArray(alias) ? alias[0] : alias) || "",
-      [FileAliasPageQuery.SHARE_HASH]: (Array.isArray(share_hash) ? share_hash[0] : share_hash) || "",
+      permission:                   null,
+      [FileIDPageQuery.ID]:         (Array.isArray(id) ? id[0] : id) || "",
+      [FileIDPageQuery.SHARE_HASH]: (Array.isArray(share_hash) ? share_hash[0] : share_hash) || "",
     };
   }
 
-  constructor(props: FileAliasPageProps) {
+  constructor(props: FileIDPageProps) {
     super(props);
     this.state = {
       data_loading: true,
@@ -64,7 +64,7 @@ export default class FileAliasPage extends Component<FileAliasPageProps, State> 
 
   public async componentDidMount() {
     try {
-      const file = await FileEntity.getOne(this.props[FileAliasPageQuery.ID], this.props[FileAliasPageQuery.SHARE_HASH]);
+      const file = await FileEntity.getOne(this.props[FileIDPageQuery.ID], this.props[FileIDPageQuery.SHARE_HASH]);
       this.setState({file, file_loading: false});
 
       const next_state = {} as State;
@@ -160,9 +160,9 @@ export default class FileAliasPage extends Component<FileAliasPageProps, State> 
 
                   <Button onClick={this.eventDownload}>Download file</Button>
                   <Conditional condition={isOwner}>
-                    <Button onClick={this.openDeleteFileDialog}>Delete file</Button>
+                    <Button onClick={this.eventFileDeleteDialog}>Delete file</Button>
                     <EntityPicker selected={tag_selected_list} available={tag_available_list}
-                                  onRender={FileTagEntity.render} onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openDeleteTagDialog}/>
+                                  onRender={FileTagEntity.render} onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.eventTagDeleteDialog}/>
                   </Conditional>
 
                 </Loader>
@@ -191,7 +191,7 @@ export default class FileAliasPage extends Component<FileAliasPageProps, State> 
     }
   };
 
-  private readonly openDeleteTagDialog = async (tag: FileTagEntity) => {
+  private readonly eventTagDeleteDialog = async (tag: FileTagEntity) => {
     this.setState({
       dialog: Dialog.show(
         <ConfirmForm value={tag} onAccept={this.eventTagDelete} onDecline={this.closeDialog}/>,
@@ -214,17 +214,17 @@ export default class FileAliasPage extends Component<FileAliasPageProps, State> 
     });
   };
 
-  private readonly openDeleteFileDialog = async () => {
+  private readonly eventFileDeleteDialog = async () => {
     this.setState({
       dialog: Dialog.show(
-        <ConfirmForm value={this.props[FileAliasPageQuery.ID]} onAccept={this.eventFileDelete} onDecline={this.closeDialog}/>,
+        <ConfirmForm value={this.props[FileIDPageQuery.ID]} onAccept={this.eventFileDelete} onDecline={this.closeDialog}/>,
         {position: QueuePosition.NEXT, title: "Permanently delete file?"},
       ),
     });
   };
 
-  private readonly eventFileDelete = async (alias: string) => {
-    await FileEntity.deleteOne(alias);
+  private readonly eventFileDelete = async (id: string) => {
+    await FileEntity.deleteOne(id);
     Dialog.close(this.state.dialog);
     return Router.push(`${location.origin}/file`);
   };
@@ -258,7 +258,7 @@ export default class FileAliasPage extends Component<FileAliasPageProps, State> 
     this.setState({file_privacy});
     this.state.file.privacy = _.find(file_privacy, item => !!item.checked)?.value ?? this.state.file.privacy;
 
-    const file = await FileEntity.putOne(this.props[FileAliasPageQuery.ID], this.state.file);
+    const file = await FileEntity.putOne(this.props[FileIDPageQuery.ID], this.state.file);
     this.setState({file});
 
     if (file_privacy.link.checked) {
@@ -274,12 +274,12 @@ export default class FileAliasPage extends Component<FileAliasPageProps, State> 
   };
 
   private readonly eventDownload = async () => {
-    await FileEntity.postConfirmDownload(await FileEntity.postRequestDownload(this.props[FileAliasPageQuery.ID]));
+    await FileEntity.postConfirmDownload(await FileEntity.postRequestDownload(this.props[FileIDPageQuery.ID]));
   };
 
 }
 
-export enum FileAliasPageQuery {
+export enum FileIDPageQuery {
   ID = "id",
   SHARE_HASH = "share",
 }
@@ -287,9 +287,9 @@ export enum FileAliasPageQuery {
 type TagPrivacyCheckbox = CheckboxCollection<{public: boolean}>
 type FilePrivacyRadioButton = RadioButtonCollection<Privacy, Privacy>
 
-interface FileAliasPageProps extends PageProps {
-  [FileAliasPageQuery.ID]: string
-  [FileAliasPageQuery.SHARE_HASH]: string
+interface FileIDPageProps extends PageProps {
+  [FileIDPageQuery.ID]: string
+  [FileIDPageQuery.SHARE_HASH]: string
 }
 
 interface State {
