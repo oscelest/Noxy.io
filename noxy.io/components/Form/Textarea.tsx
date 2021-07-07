@@ -1,7 +1,6 @@
 import Component from "../Application/Component";
 import Style from "./Textarea.module.scss";
 import React from "react";
-import FatalException from "../../exceptions/FatalException";
 
 export default class Textarea extends Component<TextareaProps, State> {
 
@@ -13,7 +12,7 @@ export default class Textarea extends Component<TextareaProps, State> {
   }
 
   public async componentDidMount() {
-    if (!this.state.ref.current) throw new FatalException("Could not load EditorJS component.");
+
   }
 
   public render() {
@@ -21,7 +20,7 @@ export default class Textarea extends Component<TextareaProps, State> {
     if (this.props.className) classes.push(this.props.className);
 
     return (
-      <div ref={this.state.ref} className={classes.join(" ")}>
+      <div ref={this.state.ref} className={classes.join(" ")} contentEditable={true} suppressContentEditableWarning={true}>
 
       </div>
     );

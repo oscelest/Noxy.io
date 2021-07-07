@@ -2,9 +2,14 @@
 
 .Component {
 
-  flex:      1 1 auto;
-  flex-flow: column;
+  flex:          1 1 auto;
+  flex-flow:     column;
+  border:        $border-width solid $border-color;
+  border-radius: $border-radius;
+  outline:       none;
 
-  border:    $border-width solid $border-color;
+  &:focus {
+    border-color: $focus-color;
+  }
 
 }
