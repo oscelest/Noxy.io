@@ -4,8 +4,7 @@ import {Entity as DBEntity, Enum, Unique, Index, Property, PrimaryKey} from "@mi
 import {v4} from "uuid";
 
 @DBEntity()
-@Unique({name: "name", properties: ["name"] as (keyof FileExtension)[]})
-@Unique({name: "mime_type", properties: ["mime_type", "name"] as (keyof FileExtension)[]})
+@Unique({name: "extension", properties: ["name", "mime_type"] as (keyof FileExtension)[]})
 @Index({name: "time_created", properties: ["time_created"] as (keyof FileExtension)[]})
 @Index({name: "time_updated", properties: ["time_updated"] as (keyof FileExtension)[]})
 export default class FileExtension extends Entity<FileExtension>() {
