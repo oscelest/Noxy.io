@@ -20,10 +20,15 @@ export default class Textarea extends Component<TextareaProps, State> {
     if (this.props.className) classes.push(this.props.className);
 
     return (
-      <div ref={this.state.ref} className={classes.join(" ")} contentEditable={true} suppressContentEditableWarning={true}>
+      <div ref={this.state.ref} className={classes.join(" ")} contentEditable={true} suppressContentEditableWarning={true} onInput={this.eventInput}>
 
       </div>
     );
+  }
+
+  private readonly eventInput = (event: React.SyntheticEvent<HTMLDivElement, InputEvent>) => {
+    event.persist();
+    console.log(event);
   }
 
 }
