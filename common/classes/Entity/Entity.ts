@@ -1,16 +1,16 @@
 import _ from "lodash";
-import Alias from "./Alias";
-import HTTPMethod from "../enums/HTTPMethod";
-import Validator from "../services/Validator";
-import ValidatorType from "../enums/ValidatorType";
-import ServerException from "../exceptions/ServerException";
-import Server from "../services/Server";
+import Alias from "../Alias";
+import HTTPMethod from "../../enums/HTTPMethod";
+import Validator from "../../services/Validator";
+import ValidatorType from "../../enums/ValidatorType";
+import ServerException from "../../exceptions/ServerException";
+import Server from "../../services/Server";
 import {EntityManager, MikroORM, Constructor, FindOptions, Collection, RequestContext} from "@mikro-orm/core";
 import {Query} from "@mikro-orm/core/typings";
-import Order from "../enums/Order";
+import Order from "../../enums/Order";
 import WhereCondition from "./WhereCondition";
 import BaseEntity from "./BaseEntity";
-import Database from "../services/Database";
+import Database from "../../services/Database";
 
 export default function Entity<E>() {
 

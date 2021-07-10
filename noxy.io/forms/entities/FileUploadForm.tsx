@@ -1,7 +1,7 @@
 import {AxiosError, Canceler} from "axios";
 import _ from "lodash";
 import React from "react";
-import FileTransfer from "../../../common/classes/FileTransfer";
+import FileTransfer from "../../../common/classes/File/FileTransfer";
 import Dialog from "../../components/Application/Dialog";
 import Button from "../../components/Form/Button";
 import EntityPicker from "../../components/Form/EntityPicker";

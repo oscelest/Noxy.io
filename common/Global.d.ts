@@ -19,6 +19,7 @@ declare module "express-serve-static-core" {
   }
 }
 
+
 declare global {
 
   export type Key<V> = (V extends (infer R)[] ? keyof R : keyof V) & string

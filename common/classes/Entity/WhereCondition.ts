@@ -1,6 +1,6 @@
 import {Query, PlainObject, OperatorMap} from "@mikro-orm/core/typings";
 import BaseEntity from "./BaseEntity";
-import Util from "../services/Util";
+import Util from "../../services/Util";
 
 export default class WhereCondition<E extends {new(): any}, I extends Properties<InstanceType<E>> = Properties<InstanceType<E>>> extends PlainObject {
 
@@ -19,7 +19,7 @@ export default class WhereCondition<E extends {new(): any}, I extends Properties
   }
 
   public andOr(...filter_list: Condition<I>[]) {
-    this.$or = filter_list.map(value => WhereCondition.transform(value));
+    this.$or = [...this.$or as Condition<I>[] ?? [], ...filter_list.map(value => WhereCondition.transform(value))];
 
     return this;
   }

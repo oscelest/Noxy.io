@@ -4,7 +4,7 @@ import _ from "lodash";
 export default class NamingStrategy implements INamingStrategy {
 
   public classToMigrationName(timestamp: string): string {
-    return `migration-${timestamp}`;
+    return `migration_${timestamp}`;
   }
 
   public classToTableName(entityName: string): string {

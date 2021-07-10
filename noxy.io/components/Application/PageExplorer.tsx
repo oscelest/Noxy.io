@@ -1,7 +1,6 @@
 import React from "react";
 import Style from "./PageExplorer.module.scss";
 import PageEntity from "../../entities/page/PageEntity";
-import Markdown from "../UI/Markdown";
 import Loader from "../UI/Loader";
 import Pagination from "../Table/Pagination";
 import Conditional from "./Conditional";
@@ -13,8 +12,11 @@ import Input from "../Form/Input";
 import PageHeader from "../UI/PageHeader";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Redirect from "./Redirect";
-import BaseEntity from "../../../common/classes/BaseEntity";
 import Component from "./Component";
+import Dialog from "./Dialog";
+import PageCreateForm from "../../forms/entities/PageCreateForm";
+import Router from "next/router";
+import PageBlockExplorer from "./PageBlockExplorer";
 
 export default class PageExplorer extends Component<PageExplorerProps, State> {
 
@@ -23,12 +25,13 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.state = {
       loading: true,
 
-      order:  {
+      order:       {
         id:           {order: undefined, text: "ID", icon: IconType.ID},
         name:         {order: undefined, text: "Name", icon: IconType.TAG},
         time_created: {order: Order.DESC, text: "Time Created", icon: IconType.CLOCK},
       },
-      search: "",
+      search:      "",
+      flag_public: false,
 
       page_list:          [],
       pagination_total:   1,
@@ -37,7 +40,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   }
 
   public async componentDidMount() {
-    const page_list = await PageEntity.getMany();
+    const page_list = await PageEntity.getMany({flag_public: this.state.flag_public});
     this.setState({page_list, loading: false});
   }
 
@@ -57,9 +60,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
           </Conditional>
         </div>
         <div className={Style.Sidebar}>
-          <Redirect className={Style.Create} href={`/page/${BaseEntity.defaultID}/edit`}>
-            <Button icon={IconType.UI_ADD}>Create new post</Button>
-          </Redirect>
+          <Button icon={IconType.UI_ADD} onClick={this.eventCreatePageDialog}>Create new post</Button>
           <Input label={"Search"} value={search} onChange={this.eventSearchChange}/>
           <Sortable onChange={this.eventOrderChange}>
             {order}
@@ -79,7 +80,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
             </Redirect>
           </Conditional>
         </PageHeader>
-        <Markdown className={Style.Markdown}>{page.content}</Markdown>
+        <PageBlockExplorer readonly={true} blocks={page.block_list}/>
       </div>
     );
   };
@@ -95,6 +96,15 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   private readonly eventSearchChange = (search: string) => {
     this.setState({search});
   };
+
+  private readonly eventCreatePageDialog = () => {
+    this.setState({dialog: Dialog.show(<PageCreateForm initial={new PageEntity({name: this.state.search})} onSubmit={this.eventCreatePageSubmit}/>, {title: "Create new page"})});
+  };
+
+  private readonly eventCreatePageSubmit = async (page: PageEntity) => {
+    await Router.push(`/page/${page.id}/edit`);
+    Dialog.close(this.state.dialog);
+  };
 }
 
 type IndexPageOrder = "id" | "name" | "time_created";
@@ -104,10 +114,12 @@ export interface PageExplorerProps {
 }
 
 interface State {
+  dialog?: string
   loading: boolean
 
   order: SortableCollection<IndexPageOrder>
   search: string
+  flag_public: boolean
 
   page_list: PageEntity[]
   pagination_total: number

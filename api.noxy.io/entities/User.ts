@@ -4,7 +4,7 @@ import JWT from "jsonwebtoken";
 import _ from "lodash";
 import {v4} from "uuid";
 import APIKey from "./APIKey";
-import Entity, {Pagination, Populate} from "../../common/classes/Entity";
+import Entity, {Pagination, Populate} from "../../common/classes/Entity/Entity";
 import ValidatorType from "../../common/enums/ValidatorType";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import ServerException from "../../common/exceptions/ServerException";

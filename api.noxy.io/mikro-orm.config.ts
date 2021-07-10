@@ -1,8 +1,8 @@
-import NamingStrategy from "../common/classes/NamingStrategy";
+import NamingStrategy from "../common/classes/Entity/NamingStrategy";
 import {Options} from "@mikro-orm/core";
 
 const DBConfig: Options = {
-  entities:       ["./entities/**", "../common/classes/BaseEntity.ts"],
+  entities:       ["./entities/**", "../common/classes/Entity/BaseEntity.ts"],
   type:           "mysql",
   host:           process.env.DB_HOST,
   port:           Number(process.env.DB_PORT),

@@ -6,7 +6,7 @@ import _ from "lodash";
 import Moment from "moment";
 import Path from "path";
 import {v4} from "uuid";
-import Entity, {Pagination, FindManyOptions, CountOptions, Populate} from "../../../common/classes/Entity";
+import Entity, {Pagination, FindManyOptions, CountOptions, Populate} from "../../../common/classes/Entity/Entity";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import Privacy from "../../../common/enums/Privacy";
 import SetOperation from "../../../common/enums/SetOperation";
@@ -17,7 +17,7 @@ import Server from "../../../common/services/Server";
 import FileExtension from "./FileExtension";
 import FileTag from "./FileTag";
 import User from "../User";
-import FileHandle from "../../../common/classes/FileHandle";
+import FileHandle from "../../../common/classes/File/FileHandle";
 import FileTypeName from "../../../common/enums/FileTypeName";
 import Database from "../../../common/services/Database";
 

@@ -5,7 +5,8 @@ import Order from "../../../common/enums/Order";
 import Privacy from "../../../common/enums/Privacy";
 import FileEntity from "../file/FileEntity";
 import Helper from "../../Helper";
-import BaseEntity from "../../../common/classes/BaseEntity";
+import BaseEntity from "../../../common/classes/Entity/BaseEntity";
+import PageBlockEntity from "./PageBlockEntity";
 
 export default class PageEntity extends BaseEntity {
 
@@ -13,7 +14,7 @@ export default class PageEntity extends BaseEntity {
   public path: string;
   public name: string;
   public summary: string;
-  public content: string;
+  public block_list: PageBlockEntity[];
   public privacy: Privacy;
   public share_hash: string;
   public file_list: FileEntity[];
@@ -29,7 +30,7 @@ export default class PageEntity extends BaseEntity {
     this.path = entity?.path ?? "";
     this.name = entity?.name ?? "";
     this.summary = entity?.summary ?? "";
-    this.content = entity?.content ?? "";
+    this.block_list = PageBlockEntity.instantiate(entity?.block_list);
     this.privacy = entity?.privacy ?? Privacy.PRIVATE;
     this.file_list = FileEntity.instantiate(entity?.file_list);
     this.user = new UserEntity(entity?.user);
@@ -78,6 +79,7 @@ export default class PageEntity extends BaseEntity {
 
 export type PageEntitySearchParameters = {
   name?: string
+  flag_public?: boolean
   exclude?: string | string[] | PageEntity | PageEntity[]
 }
 
@@ -87,7 +89,6 @@ export type PageEntityCreateParameters = {
 
 export type PageEntityUpdateParameters = {
   name?: string
+  path?: string
   privacy?: Privacy
-  summary?: string
-  content?: string
 }

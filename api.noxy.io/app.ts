@@ -96,6 +96,7 @@ import {RequestContext} from "@mikro-orm/core";
     Logger.write(Logger.Level.INFO, "Server started!");
   }
   catch ({message, stack}) {
+    Logger.write(Logger.Level.INFO, {message, stack});
     Logger.write(Logger.Level.ERROR, {message, stack});
     process.exit(0);
   }

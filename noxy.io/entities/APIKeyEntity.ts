@@ -6,7 +6,7 @@ import PermissionLevel from "../../common/enums/PermissionLevel";
 import RequestData from "../classes/RequestData";
 import UserEntity from "./UserEntity";
 import Helper from "../Helper";
-import BaseEntity from "../../common/classes/BaseEntity";
+import BaseEntity from "../../common/classes/Entity/BaseEntity";
 
 export default class APIKeyEntity extends BaseEntity {
 

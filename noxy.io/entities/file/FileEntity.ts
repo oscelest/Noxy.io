@@ -8,7 +8,7 @@ import FileExtensionEntity from "./FileExtensionEntity";
 import FileTagEntity from "./FileTagEntity";
 import UserEntity from "../UserEntity";
 import FileTypeName from "../../../common/enums/FileTypeName";
-import BaseEntity from "../../../common/classes/BaseEntity";
+import BaseEntity from "../../../common/classes/Entity/BaseEntity";
 
 export default class FileEntity extends BaseEntity {
 

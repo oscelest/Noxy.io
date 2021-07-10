@@ -19,7 +19,7 @@ import ServerException from "../exceptions/ServerException";
 import ValidatorException from "../exceptions/ValidatorException";
 import Logger from "./Logger";
 import Validator from "./Validator";
-import FileHandle from "../classes/FileHandle";
+import FileHandle from "../classes/File/FileHandle";
 
 if (!process.env.PORT) throw new Error("PORT environmental value must be defined.");
 if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");

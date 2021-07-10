@@ -3,7 +3,7 @@ import Order from "../../../common/enums/Order";
 import RequestData from "../../classes/RequestData";
 import UserEntity from "../UserEntity";
 import Helper from "../../Helper";
-import BaseEntity from "../../../common/classes/BaseEntity";
+import BaseEntity from "../../../common/classes/Entity/BaseEntity";
 
 export default class FileTagEntity extends BaseEntity {
 

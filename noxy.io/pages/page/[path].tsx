@@ -12,7 +12,7 @@ import PageEntity from "../../entities/page/PageEntity";
 import IconType from "../../enums/IconType";
 import Style from "./[path].module.scss";
 import {Masquerade} from "../../components/Application/Masquerade";
-import BaseEntity from "../../../common/classes/BaseEntity";
+import BaseEntity from "../../../common/classes/Entity/BaseEntity";
 import Component from "../../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols

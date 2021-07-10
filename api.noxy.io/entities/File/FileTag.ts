@@ -1,7 +1,7 @@
 import {Entity as DBEntity, PrimaryKey, Property, Index, Unique, ManyToOne} from "@mikro-orm/core";
 import {v4} from "uuid";
 import User from "../User";
-import Entity, {Pagination, Populate} from "../../../common/classes/Entity";
+import Entity, {Pagination, Populate} from "../../../common/classes/Entity/Entity";
 import ValidatorType from "../../../common/enums/ValidatorType";
 import ServerException from "../../../common/exceptions/ServerException";
 import Server from "../../../common/services/Server";

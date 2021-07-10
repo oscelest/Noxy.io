@@ -2,7 +2,7 @@ import _ from "lodash";
 import React from "react";
 import Input from "./Input";
 import Style from "./EntityInput.module.scss";
-import BaseEntity from "../../../common/classes/BaseEntity";
+import BaseEntity from "../../../common/classes/Entity/BaseEntity";
 import Component from "../Application/Component";
 
 export default class EntityInput<E extends BaseEntity, K extends EntityStringPropertyKeys<E>> extends Component<EntityInputProps<E, K>, State<E, K>> {

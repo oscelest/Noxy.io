@@ -1,4 +1,4 @@
-import Entity from "../../../common/classes/Entity";
+import Entity from "../../../common/classes/Entity/Entity";
 import FileTypeName from "../../../common/enums/FileTypeName";
 import {Entity as DBEntity, Enum, Unique, Index, Property, PrimaryKey} from "@mikro-orm/core";
 import {v4} from "uuid";

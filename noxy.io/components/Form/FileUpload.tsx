@@ -1,6 +1,6 @@
 import _ from "lodash";
 import React from "react";
-import FileTransfer from "../../../common/classes/FileTransfer";
+import FileTransfer from "../../../common/classes/File/FileTransfer";
 import FileTypeName from "../../../common/enums/FileTypeName";
 import Preview from "../UI/Preview";
 import Button from "./Button";

@@ -35,6 +35,7 @@ enum IconType {
   INDENT = "\uedf1",
   ITALIC = "\uedf3",
   OUTDENT = "\uedf9",
+  PARAGRAPH = "\uedfb",
 
   SAVE = "\uee00",
   STRIKE_THROUGH = "\uee02",

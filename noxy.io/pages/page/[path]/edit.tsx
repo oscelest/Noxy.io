@@ -17,11 +17,11 @@ import Privacy from "../../../../common/enums/Privacy";
 import FileEntity from "../../../entities/file/FileEntity";
 import EllipsisText from "../../../components/Text/EllipsisText";
 import Preview from "../../../components/UI/Preview";
-import BaseEntity from "../../../../common/classes/BaseEntity";
+import BaseEntity from "../../../../common/classes/Entity/BaseEntity";
 import Input from "../../../components/Form/Input";
 import Component from "../../../components/Application/Component";
 import UserEntity from "../../../entities/UserEntity";
-import Textarea from "../../../components/Form/Textarea";
+import PageBlockExplorer from "../../../components/Application/PageBlockExplorer";
 
 // noinspection JSUnusedGlobalSymbols
 export default class PageIDEditPage extends Component<PageIDEditPageProps, State> {
@@ -37,7 +37,6 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
     super(props);
     this.state = {
       owner:   false,
-      value:   "",
       entity:  new PageEntity({id: props[PageIDEditPageQuery.PATH]}) as State["entity"],
       loading: true,
     };
@@ -64,7 +63,6 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
         [Privacy.LINK]:    RadioButton.createElement(Privacy.LINK, "With link", next_state.entity.privacy === Privacy.LINK, !next_state.owner),
         [Privacy.PUBLIC]:  RadioButton.createElement(Privacy.PUBLIC, "Public", next_state.entity.privacy === Privacy.PUBLIC, !next_state.owner),
       };
-      next_state.value = next_state.entity.content;
     }
     catch (error) {
       next_state.placeholder = "Page could not be loaded.";
@@ -94,8 +92,7 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
                 </div>
 
                 <div className={Style.Text}>
-                  <Textarea className={Style.Summary} label={"Summary"} value={this.state.entity.summary}/>
-                  <Textarea className={Style.Content} label={"Content"} value={this.state.entity.content}/>
+                  <PageBlockExplorer page={this.state.entity} readonly={false} onChange={() => {}}/>
                 </div>
 
                 <div className={Style.Action}>
@@ -142,14 +139,6 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
     this.setState({entity: new PageEntity({...this.state.entity, path})});
   };
 
-  // private readonly eventSummaryChange = (summary: string, event: React.ChangeEvent<HTMLTextAreaElement>) => {
-  //   this.setState({entity: new PageEntity({...this.state.entity, summary})});
-  // };
-
-  // private readonly eventContentChange = (content: string, event: React.ChangeEvent<HTMLTextAreaElement>) => {
-  //   this.setState({entity: new PageEntity({...this.state.entity, content})});
-  // };
-
   private readonly eventFilePrivacyChange = async (privacy: RadioButtonCollection<Privacy>) => {
     if (!this.state.entity) {
       throw new FatalException("Could not manage file privacy", "The system encountered an unexpected error while managing the privacy settings for this file. Please reload the page and try again.");
@@ -170,22 +159,17 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
   };
 
   private readonly eventSave = async () => {
-    if (this.state.entity.content === this.state.value) return;
-    await PageEntity.putOne(this.state.entity.id, {content: this.state.value});
+    this.setState({entity: await PageEntity.putOne(this.state.entity.id, this.state.entity)});
   };
 
   private readonly eventSaveAndClose = async () => {
-    if (this.state.entity.content !== this.state.value) {
-      await PageEntity.putOne(this.state.entity.id, {content: this.state.value});
-    }
+    await PageEntity.putOne(this.state.entity.id, this.state.entity);
     return Router.push(`/page/${this.state.entity.path}`);
   };
-
 
   private readonly eventMasqueradeChange = (user: UserEntity) => {
     Router.reload();
   };
-
 }
 
 
@@ -199,8 +183,6 @@ export interface PageIDEditPageProps {
 
 interface State {
   entity: PageEntity
-
-  value: string
   owner?: boolean
   privacy?: RadioButtonCollection<Privacy>
 

@@ -1,6 +1,6 @@
 import _ from "lodash";
 import Order from "../../common/enums/Order";
-import BaseEntity from "../../common/classes/BaseEntity";
+import BaseEntity from "../../common/classes/Entity/BaseEntity";
 
 export default class RequestData {
 

@@ -1,4 +1,4 @@
-import FileTypeName from "../enums/FileTypeName";
+import FileTypeName from "../../enums/FileTypeName";
 import _ from "lodash";
 
 export default class FileHandle {

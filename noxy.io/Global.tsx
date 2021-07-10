@@ -131,4 +131,3 @@ interface State {
 }
 
 export default Global;
-

@@ -1,7 +1,30 @@
 import _ from "lodash";
 import Order from "../enums/Order";
 
+const characters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
+
 namespace Util {
+
+  export function n2b(number: number) {
+    if (number < 0 || isNaN(number)  || number === Number.POSITIVE_INFINITY) throw "The input is not valid";
+
+    let residual = Math.floor(number);
+    let result = "";
+    while (residual > 0) {
+      result = characters.charAt(residual % 64) + result;
+      residual = Math.floor(residual / 64);
+    }
+    return result;
+  }
+
+  export function b2n(input: string) {
+    let result = 0;
+    const split = input.split("");
+    for (let i = 0; i < split.length; i++) {
+      result = result * 64 + split.indexOf(split[i]);
+    }
+    return result;
+  }
 
   export function size(value: any) {
     if (typeof value === "string") return value.length;

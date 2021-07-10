@@ -1,6 +1,6 @@
 import {MikroORM, EntityManager} from "@mikro-orm/core";
 import DBConfig from "../../api.noxy.io/mikro-orm.config";
-import BaseEntity from "../classes/BaseEntity";
+import BaseEntity from "../classes/Entity/BaseEntity";
 
 if (!process.env.DB_HOST) throw new Error("DB_HOST environmental value must be defined.");
 if (!process.env.DB_PORT) throw new Error("DB_PORT environmental value must be defined.");
