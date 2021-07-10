@@ -7,3 +7,4 @@ _tmp
 */.env
 */node_modules
 */package-lock.json
+*/migrations
