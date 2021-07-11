@@ -80,7 +80,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
             </Redirect>
           </Conditional>
         </PageHeader>
-        <PageBlockExplorer readonly={true} blocks={page.block_list}/>
+        <PageBlockExplorer readonly={true} page={page} onChange={() => {}}/>
       </div>
     );
   };

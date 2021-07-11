@@ -7,6 +7,7 @@ import TextPageBlock from "../PageBlock/TextPageBlock";
 import Button from "../Form/Button";
 import IconType from "../../enums/IconType";
 import PageEntity from "../../entities/page/PageEntity";
+import HeaderPageBlock, {HeaderBlockContent} from "../PageBlock/HeaderPageBlock";
 
 export default class PageBlockExplorer extends Component<PageBlockExplorerProps, State> {
 
@@ -15,7 +16,7 @@ export default class PageBlockExplorer extends Component<PageBlockExplorerProps,
     this.state = {};
   }
 
-  public readonly createBlock = async (type: PageBlockType, content: any) => {
+  public readonly createBlock = async <V extends {}>(type: PageBlockType, content: V) => {
     const entity = await PageBlockEntity.postOne({type, content, weight: this.props.page.block_list.length, page: this.props.page});
     this.props.onChange(entity);
   };
@@ -26,7 +27,7 @@ export default class PageBlockExplorer extends Component<PageBlockExplorerProps,
     return (
       <div className={Style.Component}>
         {this.props.page.block_list.map(this.renderBlock)}
-        <div>
+        <div className={Style.ActionList}>
           <Button icon={IconType.HEADING} onClick={this.eventHeadingPageBlockCreate}/>
           <Button icon={IconType.PARAGRAPH} onClick={this.eventTextPageBlockCreate}/>
         </div>
@@ -34,16 +35,17 @@ export default class PageBlockExplorer extends Component<PageBlockExplorerProps,
     );
   }
 
-  private readonly renderBlock = (block: PageBlockEntity, index: number = 0) => {
+  private readonly renderBlock = (block: PageBlockEntity<any>, index: number = 0) => {
     switch (block.type) {
       case PageBlockType.HEADER:
+        return <HeaderPageBlock key={index} block={block}/>;
       case PageBlockType.TEXT:
-        return <TextPageBlock/>;
+        return <TextPageBlock key={index} block={block}/>;
     }
     return null;
   };
 
-  private readonly eventHeadingPageBlockCreate = () => this.createBlock(PageBlockType.HEADER, {});
+  private readonly eventHeadingPageBlockCreate = () => this.createBlock<HeaderBlockContent>(PageBlockType.HEADER, {value: "Header", level: 1});
   private readonly eventTextPageBlockCreate = () => this.createBlock(PageBlockType.TEXT, {});
 
 }

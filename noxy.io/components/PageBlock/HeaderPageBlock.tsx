@@ -15,14 +15,19 @@ export default class HeaderPageBlock extends Component<HeaderPageBlockProps, Sta
 
   private readonly renderHeader = () => {
     return React.createElement(`h${Math.min(1, Math.max(6, this.props.block.content.level))}`, {children: this.props.block.content.value});
-  }
+  };
 
 }
 
-interface HeaderPageBlockProps {
-  block: PageBlockEntity<{value: string, level: number}>
+export interface HeaderBlockContent {
+  value: string
+  level: number
+}
+
+export interface HeaderPageBlockProps {
+  block: PageBlockEntity<HeaderBlockContent>
 }
 
 interface State {
-  
+
 }
