@@ -1,5 +1,47 @@
 .Component {
+  flex:            0 0 auto;
+  grid-column-gap: 10px;
 
-  flex: 0 0 auto;
+  .Header {
+    display:     flex;
+    flex:        1 1 auto;
+    align-items: center;
+    margin:      0 0 10px;
+
+    &[data-level="1"] {
+      font-size:   28px;
+      line-height: 28px;
+    }
+
+    &[data-level="2"] {
+      font-size:   24px;
+      line-height: 24px;
+    }
+
+    &[data-level="3"] {
+      font-size:   20px;
+      line-height: 20px;
+    }
+
+    &[data-level="4"] {
+      font-size:   18px;
+      line-height: 18px;
+    }
+
+    &[data-level="5"] {
+      font-size:   16px;
+      line-height: 16px;
+    }
+
+    &[data-level="6"] {
+      font-size:   14px;
+      line-height: 14px;
+    }
+  }
+
+  .ActionList {
+    flex:            0 0 auto;
+    grid-column-gap: 10px;
+  }
 
 }

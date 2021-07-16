@@ -22,6 +22,7 @@ import Input from "../../../components/Form/Input";
 import Component from "../../../components/Application/Component";
 import UserEntity from "../../../entities/UserEntity";
 import PageBlockExplorer from "../../../components/Application/PageBlockExplorer";
+import PageBlockEntity from "../../../entities/page/PageBlockEntity";
 
 // noinspection JSUnusedGlobalSymbols
 export default class PageIDEditPage extends Component<PageIDEditPageProps, State> {
@@ -92,7 +93,7 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
                 </div>
 
                 <div className={Style.Text}>
-                  <PageBlockExplorer page={this.state.entity} readonly={false} onChange={() => {}}/>
+                  <PageBlockExplorer page={this.state.entity} readonly={false} onCreate={this.eventCreate} onChange={this.eventChange}/>
                 </div>
 
                 <div className={Style.Action}>
@@ -130,6 +131,14 @@ export default class PageIDEditPage extends Component<PageIDEditPageProps, State
       </div>
     );
   };
+
+  private eventCreate = (block: PageBlockEntity) => {
+    this.setState({entity: new PageEntity({...this.state.entity, block_list: [...this.state.entity.block_list, block]})});
+  };
+
+  private eventChange = (block: PageBlockEntity) => {
+    this.setState({entity: new PageEntity({...this.state.entity, block_list: this.state.entity.block_list.map(value => value.getPrimaryID() === block.getPrimaryID() ? block : value)})})
+  }
 
   private readonly eventNameChange = (name: string) => {
     this.setState({entity: new PageEntity({...this.state.entity, name})});

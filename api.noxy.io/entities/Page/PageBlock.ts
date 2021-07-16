@@ -19,8 +19,11 @@ export default class PageBlock extends Entity<PageBlock>() {
   @Enum(() => PageBlockType)
   public type: PageBlockType;
 
+  @Property()
+  public weight: number;
+
   @Property({type: "json"})
-  public content: string;
+  public content: object;
 
   @ManyToOne(() => Page)
   public page: Page;
@@ -48,15 +51,15 @@ export default class PageBlock extends Entity<PageBlock>() {
   private static async postOne({locals: {respond, user, params: {type, content, page}}}: Server.Request<{}, Response.postOne, Request.postOne>) {
     const page_entity = await Page.findOne({id: page});
     if (page_entity.user.id !== user.id) return respond(new ServerException(403));
-    return respond(await this.persist({type, content: JSON.stringify(content), page: page_entity}));
+    return respond(await this.persist({type, content: JSON.parse(content), page: page_entity}));
   }
 
   @PageBlock.put("/:id")
-  @PageBlock.bindParameter<Request.putOne>("content", ValidatorType.STRING, {min_length: 1}, {optional: true})
+  @PageBlock.bindParameter<Request.putOne>("content", ValidatorType.STRING, {min_length: 1})
   private static async putOne({params: {id}, locals: {respond, user, params: {content}}}: Server.Request<{id: string}, Response.putOne, Request.putOne>) {
     const page_block = await this.findOne({id}, {populate: this.columnPopulate});
     if (page_block.page.user.id !== user.id) return respond(new ServerException(403));
-    return respond(await this.persist(page_block, {content: JSON.stringify(content)}));
+    return respond(await this.persist(page_block, {content: JSON.parse(content)}));
   }
 
   //endregion ----- Endpoint methods -----
@@ -68,7 +71,7 @@ namespace Request {
   export type getFindMany = getCount & Pagination
   export type getOne = {share_hash?: string}
   export type postOne = {type: PageBlockType; content: string; page: string;}
-  export type putOne = {content?: string;}
+  export type putOne = {content: string;}
 }
 
 namespace Response {

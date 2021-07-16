@@ -21,8 +21,8 @@ export default class PageBlockEntity<O extends {} = {}> extends BaseEntity {
     super();
     this.id = entity?.id ?? BaseEntity.defaultID;
     this.type = entity?.type ?? PageBlockType.TEXT;
-    this.content = (entity as Partial<PageBlockEntity<O>>)?.content ?? {} as O;
     this.weight = entity?.weight ?? 0;
+    this.content = (entity as Partial<PageBlockEntity<O>>)?.content ?? {} as O;
     this.page = new PageEntity(entity?.page);
     this.time_created = new Date(entity?.time_created ?? 0);
     this.time_updated = new Date(entity?.time_updated ?? 0);
@@ -41,7 +41,10 @@ export default class PageBlockEntity<O extends {} = {}> extends BaseEntity {
     return new this(result.data.content);
   }
 
-  public static async putOne(id: string | PageBlockEntity, {content, weight}: Pick<Initializer<PageBlockEntity>, "content" | "weight">) {
+  public static async putOne({content, weight}: PageBlockEntity): Promise<PageBlockEntity>
+  public static async putOne(id: string, initializer: Pick<Initializer<PageBlockEntity>, "content" | "weight">): Promise<PageBlockEntity>
+  public static async putOne(id: string | PageBlockEntity, initializer: Pick<Initializer<PageBlockEntity>, "content" | "weight"> = {}) {
+    const {content, weight} = id instanceof PageBlockEntity ? id : initializer;
     const result = await Axios.put<APIRequest<PageBlockEntity>>(Helper.getAPIPath(this.URL, id.toString()), new RequestData({content, weight}).toObject());
     return new this(result.data.content);
   }

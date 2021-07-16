@@ -5,7 +5,6 @@ import Redirect from "../../components/Application/Redirect";
 import Conditional from "../../components/Application/Conditional";
 import Button from "../../components/Form/Button";
 import Loader from "../../components/UI/Loader";
-import Markdown from "../../components/UI/Markdown";
 import PageHeader from "../../components/UI/PageHeader";
 import Placeholder from "../../components/UI/Placeholder";
 import PageEntity from "../../entities/page/PageEntity";
@@ -14,6 +13,7 @@ import Style from "./[path].module.scss";
 import {Masquerade} from "../../components/Application/Masquerade";
 import BaseEntity from "../../../common/classes/Entity/BaseEntity";
 import Component from "../../components/Application/Component";
+import PageBlockExplorer from "../../components/Application/PageBlockExplorer";
 
 // noinspection JSUnusedGlobalSymbols
 export default class PageIDPage extends Component<PageIDPageProps, State> {
@@ -65,9 +65,7 @@ export default class PageIDPage extends Component<PageIDPageProps, State> {
                 </Redirect>
               </Conditional>
             </PageHeader>
-            <Markdown>
-              {this.state.entity.content}
-            </Markdown>
+            <PageBlockExplorer page={this.state.entity}/>
           </Placeholder>
         </Loader>
       </div>
