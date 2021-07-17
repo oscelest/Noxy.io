@@ -31,7 +31,7 @@ export default class HeaderPageBlock extends Component<HeaderPageBlockProps, Sta
     return React.createElement(
       `h${this.getLevel()}`,
       {
-        className:                      Style.Header,
+        className:                      Style.Content,
         contentEditable:                !this.props.readonly,
         suppressContentEditableWarning: !this.props.readonly,
         "data-level":                   this.props.block.content.level,

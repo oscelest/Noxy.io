@@ -53,7 +53,7 @@ export default class PageBlockExplorer extends Component<PageBlockExplorerProps,
   };
 
   private readonly eventHeadingPageBlockCreate = () => this.createBlock<HeaderBlockContent>(PageBlockType.HEADER, {value: "Header", level: 1});
-  private readonly eventTextPageBlockCreate = () => this.createBlock(PageBlockType.TEXT, {});
+  private readonly eventTextPageBlockCreate = () => this.createBlock(PageBlockType.TEXT, ["Hello", "World"]);
 
   private readonly eventChange = async (block: PageBlockEntity) => this.props.onChange?.(await PageBlockEntity.putOne(block));
 
