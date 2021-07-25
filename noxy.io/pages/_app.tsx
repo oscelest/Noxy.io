@@ -76,7 +76,6 @@ class Header extends Component {
         <div className={Style.Navigation}>
           <Authorized size={Size.SMALL} permission={null}>
             <Authorized>
-              <Redirect className={Style.Link} href={"/page"}><span>Pages</span></Redirect>
               <Redirect className={Style.Link} href={"/file"}>Files</Redirect>
             </Authorized>
             <Redirect className={Style.Link} href={"/account"}>

@@ -1,6 +1,4 @@
 import {NextPageContext} from "next";
-import React from "react";
-import PageExplorer from "../components/Application/PageExplorer";
 import Component from "../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
@@ -16,7 +14,7 @@ export default class IndexPage extends Component<PageProps, State> {
 
   public render() {
     return (
-      <PageExplorer/>
+      <div/>
     );
   }
 }
