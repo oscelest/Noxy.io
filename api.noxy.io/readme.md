@@ -1,0 +1,24 @@
+### Example .env file:
+
+```
+DB_HOST =
+DB_PORT =
+DB_USERNAME =
+DB_PASSWORD =
+DB_DATABASE =
+
+PORT =
+DOMAIN =
+SERVICE =
+
+TMP_PATH =
+LOG_PATH =
+FILE_PATH =
+
+MAIL_ID =
+MAIL_REGION =
+MAIL_SECRET =
+
+JWT_SECRET =
+FILE_SECRET =
+```
