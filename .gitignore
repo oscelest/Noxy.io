@@ -2,6 +2,7 @@ _logs
 _files
 _tmp
 .idea
+.env
 
 */.next
 */.env
