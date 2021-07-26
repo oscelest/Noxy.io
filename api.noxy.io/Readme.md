@@ -1,6 +1,6 @@
 ### Example .env file:
 
-```
+```.env
 DB_HOST =
 DB_PORT =
 DB_USERNAME =
