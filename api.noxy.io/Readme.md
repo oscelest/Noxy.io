@@ -11,9 +11,9 @@ PORT =
 DOMAIN =
 SERVICE =
 
-TMP_PATH =
-LOG_PATH =
-FILE_PATH =
+TMP_PATH = ../_tmp/
+LOG_PATH = ../_logs/
+FILE_PATH = ../_files/
 
 MAIL_ID =
 MAIL_REGION =

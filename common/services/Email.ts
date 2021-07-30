@@ -36,7 +36,4 @@ module Email {
   }
 }
 
-console.log(Email.client);
-console.log(Email.client.config.region());
-
 export default Email;
