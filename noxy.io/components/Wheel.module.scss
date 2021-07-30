@@ -1,0 +1,28 @@
+@import "variables";
+
+.Component {
+  flex: 1 1 auto;
+  max-height: 100%;
+
+  .TextList {
+    flex:            1 1 auto;
+    flex-flow:       column;
+    justify-content: space-around;
+    width:           20%;
+    min-width:       200px;
+
+    &[data-side="left"] {
+      align-items: flex-end;
+      text-align:  right;
+    }
+
+    &[data-side="right"] {
+      align-items: flex-start;
+      text-align:  left;
+    }
+  }
+
+  .Circle {
+    aspect-ratio: 1;
+  }
+}

@@ -1,5 +1,6 @@
 import {NextPageContext} from "next";
 import Component from "../components/Application/Component";
+import Wheel from "../components/Wheel";
 
 // noinspection JSUnusedGlobalSymbols
 export default class IndexPage extends Component<PageProps, State> {
@@ -14,7 +15,7 @@ export default class IndexPage extends Component<PageProps, State> {
 
   public render() {
     return (
-      <div/>
+      <Wheel/>
     );
   }
 }
