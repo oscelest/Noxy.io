@@ -6,7 +6,7 @@ const characters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
 namespace Util {
 
   export function n2b(number: number) {
-    if (number < 0 || isNaN(number)  || number === Number.POSITIVE_INFINITY) throw "The input is not valid";
+    if (number < 0 || isNaN(number) || number === Number.POSITIVE_INFINITY) throw "The input is not valid";
 
     let residual = Math.floor(number);
     let result = "";

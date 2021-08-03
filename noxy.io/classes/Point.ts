@@ -12,19 +12,26 @@ export default class Point {
     this.y = y ?? -Infinity;
   }
 
+  public static fromMouseEvent(event: MouseEvent | React.MouseEvent) {
+    return new Point(event.pageX, event.pageY);
+  }
+
+  public static fromPolarOffset(angle: number, offset: number) {
+    return new Point(offset * Math.cos(angle * Math.PI / 180), offset * Math.sin(angle * Math.PI / 180));
+  }
 
   public static normalizePoints(a: Point, b: Point) {
     return {x1: Math.min(a.x, b.x), x2: Math.max(a.x, b.x), y2: Math.max(a.y, b.y), y1: Math.min(a.y, b.y)};
-  }
-
-  public static fromMouseEvent(event: MouseEvent | React.MouseEvent) {
-    return new Point(event.pageX, event.pageY);
   }
 
   public static getDistanceBetweenPoints(a: Point, b: Point) {
     const {x1, x2, y1, y2} = this.normalizePoints(a, b);
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
   };
+
+  public toString(precision: number = 5) {
+    return `${this.x.toPrecision(precision)},${this.y.toPrecision(precision)}`;
+  }
 
   public isEqual(...target: (Point | undefined)[]) {
     return this.isFinite() && _.every(target, point => point instanceof Point && point.isFinite() && point.x === this.x && point.y === this.y);

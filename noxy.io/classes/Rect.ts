@@ -119,6 +119,10 @@ export default class Rect {
     return this.x < rect.x + rect.width && this.x + this.width > rect.x && this.y < rect.y + rect.height && this.y + this.height > rect.y;
   }
 
+  public toViewBox() {
+    return `${this.x} ${this.y} ${this.width} ${this.height}`
+  }
+
   public toCSS() {
     return {left: `${this.x}px`, top: `${this.y}px`, width: `${this.width}px`, height: `${this.height}px`};
   }
