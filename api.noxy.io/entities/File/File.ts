@@ -78,7 +78,6 @@ export default class File extends Entity<File>() {
   }
 
   public hasAccess(user: User, share_hash?: string) {
-    // TODO: Fix this
     return user?.id === this.user.id || this.privacy === Privacy.PUBLIC || this.privacy === Privacy.LINK && this.share_hash === share_hash;
   }
 
