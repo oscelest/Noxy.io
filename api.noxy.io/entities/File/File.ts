@@ -118,17 +118,22 @@ export default class File extends Entity<File>() {
   @File.bindParameter<Request.getMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
   @File.bindPagination(100, ["id", "name", "size", "time_created"])
   public static async getMany({locals: {respond, user, params: {name, file_type_list, file_tag_list, file_tag_set_operation, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
-    const options: FindManyOptions<File> = {...pagination, populate: this.columnPopulate};
+    const options: FindManyOptions<File> = {...pagination};
 
     if (file_tag_set_operation === SetOperation.INTERSECTION) {
       options.groupBy = `(${Database.manager.getMetadata().get(this.name).properties["file_tag_list" as keyof File].joinColumns.join("), (")})`;
       options.having = `COUNT(*) = ${file_tag_list.length}`;
     }
 
-    return respond(await this.find(
-      this.where({user, file_extension: {type: file_type_list}, file_tag_list: {id: file_tag_list}}).andWildcard({name}),
-      options,
-    ));
+    return respond(
+      await this.populate(
+        await this.find(
+          this.where({user, file_extension: {type: file_type_list}, file_tag_list: {id: file_tag_list}}).andWildcard({name}),
+          options,
+        ),
+        this.columnPopulate,
+      ),
+    );
   }
 
   @File.get("/:id", {user: false})
