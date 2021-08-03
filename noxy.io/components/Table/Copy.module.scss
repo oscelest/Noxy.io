@@ -1,0 +1,22 @@
+@import "../../variables";
+
+.Component {
+  justify-content: space-between;
+  min-width: 100px;
+
+  > .Text {
+    flex: 1 1 auto;
+    align-items: center;
+    padding: 5px;
+    border: $border-width solid $border-color;
+    border-right: none;
+    border-radius: $border-radius 0 0 $border-radius;
+    background: $background-secondary-color;
+  }
+
+  > .Button {
+    flex: 0 0 auto;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+}

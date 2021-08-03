@@ -1,0 +1,48 @@
+@import "../../variables";
+
+.Component {
+  flex:         1 1 auto;
+  flex-flow:    column;
+  grid-row-gap: 10px;
+
+  .Body {
+    flex: 1 1 auto;
+  }
+
+  .Header, .Footer {
+    flex:            0 0 auto;
+    justify-content: space-between;
+    grid-column-gap: 10px;
+
+    .Left, .Center, .Right {
+      flex:            0 0 auto;
+      align-items:     flex-end;
+      grid-column-gap: 10px;
+      width:           calc((100% - 20px) / 3);
+    }
+
+    .Left {
+      justify-content: flex-start;
+    }
+
+    .Center {
+      justify-content: center;
+    }
+
+    .Right {
+      justify-content: flex-end;
+    }
+
+    .HeaderRight {
+      justify-content: flex-end;
+    }
+  }
+
+  .Search {
+    width: 160px;
+  }
+
+  .Size {
+    width: 110px;
+  }
+}

@@ -1,0 +1,13 @@
+.Component {
+  flex:      1 1 auto;
+  max-width: 100%;
+
+  > .Wrapper {
+    display:         block;
+    text-overflow:   ellipsis;
+    min-width:       0;
+    white-space:     nowrap;
+    overflow:        hidden;
+    text-decoration: none;
+  }
+}

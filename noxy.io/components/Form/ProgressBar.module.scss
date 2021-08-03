@@ -1,0 +1,28 @@
+@import "../../variables";
+
+.Component {
+  flex:            1 1 auto;
+  align-items:     center;
+  justify-content: center;
+  height:          38px;
+  color:           $border-color;
+  font-weight:     bold;
+  border:          $border-width solid $border-color;
+  border-radius:   $border-radius;
+  background:      #cf930b;
+
+  .Content {
+    z-index: 1;
+    padding: 0 10px;
+  }
+
+  .Fill {
+    position:   absolute;
+    top:        0;
+    left:       0;
+    right:      0;
+    bottom:     0;
+    background: $focus-color;
+    z-index:    0;
+  }
+}

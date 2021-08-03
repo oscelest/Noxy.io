@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports":     true,
+    "baseUrl":                          ".",
+    "emitDecoratorMetadata":            true,
+    "esModuleInterop":                  true,
+    "experimentalDecorators":           true,
+    "forceConsistentCasingInFileNames": true,
+    "strictPropertyInitialization":     false,
+    "module":                           "CommonJS",
+    "moduleResolution":                 "Node",
+    "noFallthroughCasesInSwitch":       true,
+    "noEmit":                           true,
+    "resolveJsonModule":                true,
+    "target":                           "ESNext",
+    "strict":                           true,
+    "rootDirs":                         [
+      "../common"
+    ]
+  },
+  "include":         [
+    "**/*.ts",
+    "custom.d.ts"
+  ]
+}

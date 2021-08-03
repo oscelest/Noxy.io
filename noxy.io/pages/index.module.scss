@@ -1,0 +1,25 @@
+.Component {
+  flex:           1 1 auto;
+  flex-flow:      column;
+  grid-row-gap:   20px;
+  padding-bottom: 150px;
+
+  > .Segment {
+    flex-flow:     column;
+    grid-row-gap:  10px;
+    padding:       15px;
+    border:        2px solid #5A318E;
+    border-radius: 4px;
+
+    > .Description {
+      > span {
+        font-size: 18px;
+      }
+    }
+
+    > .Input, > .ComboBox, > .Button, > .RadioButton {
+      align-self:      flex-start;
+      grid-column-gap: 10px;
+    }
+  }
+}

@@ -1,0 +1,48 @@
+@import "../../variables";
+
+.Component {
+  flex:         1 1 auto;
+  flex-flow:    column;
+  grid-row-gap: 20px;
+
+
+  .Checkbox {
+    align-self: flex-start;
+  }
+
+  .Header {
+    flex-flow:      column;
+    padding-bottom: 5px;
+    font-size:      16px;
+    line-height:    16px;
+    border-bottom:  $border-width solid $border-color;
+  }
+
+  .Admin {
+    flex:         1 1 auto;
+    flex-flow:    column;
+    grid-row-gap: 5px;
+  }
+
+  .Section {
+    flex:          1 1 auto;
+    flex-flow:     column;
+    grid-row-gap:  10px;
+    padding:       10px;
+    border:        $border-width solid $border-color;
+    border-radius: $border-radius;
+
+    .Item {
+      flex:         1 1 auto;
+      flex-flow:    column;
+      grid-row-gap: 5px;
+
+
+      &:not(:last-child) {
+        padding-bottom: 5px;
+        border-bottom:  2px solid $border-color;
+      }
+    }
+  }
+
+}

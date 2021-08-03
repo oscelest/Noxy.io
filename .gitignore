@@ -1,0 +1,13 @@
+_logs
+_files
+_tmp
+.idea
+.env
+
+*/.next
+*/.env
+*/node_modules
+*/package-lock.json
+*/migrations
+
+**/.env

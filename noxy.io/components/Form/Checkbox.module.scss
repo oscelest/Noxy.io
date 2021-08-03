@@ -1,0 +1,64 @@
+@import "../../variables";
+
+$hover-size:   calc(100% - 8px);
+$checked-size: calc(100% - 10px);
+
+.Component {
+
+  .Item {
+    align-items:     center;
+    grid-column-gap: 5px;
+    cursor:          pointer;
+
+    .Box {
+      width:         18px;
+      height:        18px;
+      border:        3px solid $border-color;
+      border-radius: 4px;
+
+      &:before {
+        content:    " ";
+        position:   absolute;
+        background: $border-color;
+        top:        100%;
+        left:       100%;
+        right:      100%;
+        bottom:     100%;
+        transition: .2s ease-in-out top, .2s ease-in-out left, .2s ease-in-out right, .2s ease-in-out bottom;
+      }
+    }
+
+    .Text {
+      user-select: none;
+    }
+
+    &:focus {
+      outline: none;
+
+      .Box {
+        border: $border-width solid $focus-color;
+      }
+    }
+
+    &[data-disabled="true"] .Box {
+      border-color: $disabled-color;
+
+      &:before {
+        background: $disabled-color;
+      }
+    }
+
+    &[data-disabled="false"]:hover .Text {
+      text-decoration: underline;
+    }
+
+    &[data-checked="true"] {
+      .Box:before {
+        top:    $checked-size;
+        left:   $checked-size;
+        right:  $checked-size;
+        bottom: $checked-size;
+      }
+    }
+  }
+}

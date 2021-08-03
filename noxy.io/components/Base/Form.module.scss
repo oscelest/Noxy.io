@@ -1,0 +1,12 @@
+.Component {
+  flex:         0 0 auto;
+  flex-flow:    column;
+  min-width:    260px;
+  grid-row-gap: 10px;
+
+  .Submit {
+    min-width:    120px;
+    justify-self: center;
+    align-self:   center;
+  }
+}

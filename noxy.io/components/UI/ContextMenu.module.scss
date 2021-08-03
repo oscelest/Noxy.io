@@ -1,0 +1,29 @@
+@import "../../variables";
+
+.Component {
+  flex:          0 0 auto;
+  flex-flow:     column;
+  position:      absolute;
+  background:    $background-primary-color;
+  border:        $border-width solid $border-color;
+  border-radius: $border-radius;
+  z-index:       100;
+
+  .Item {
+    grid-column-gap: 5px;
+    padding:         7px;
+    cursor:          pointer;
+
+    &:hover {
+      background: $background-secondary-color;
+    }
+
+    .Icon {
+
+    }
+
+    .Text {
+
+    }
+  }
+}

@@ -1,0 +1,14 @@
+.Component {
+  display:         flex;
+  flex-flow:       row;
+  flex:            1 0 auto;
+  align-self:      center;
+  justify-self:    center;
+  justify-content: space-between;
+  width:           260px;
+  max-width:       260px;
+
+  .Action {
+    width: 120px;
+  }
+}

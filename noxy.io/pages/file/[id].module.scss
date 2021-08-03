@@ -1,0 +1,98 @@
+@import "../../variables";
+
+.Component {
+  flex:         1 1 auto;
+  flex-flow:    column;
+  grid-row-gap: 15px;
+
+  .Content {
+    flex:            1 1 auto;
+    flex-flow:       row;
+    grid-column-gap: 10px;
+
+    .Viewer {
+      flex: 1 1 auto;
+
+      &[data-file-type="audio"] {
+        align-items:     flex-start;
+        justify-content: center;
+      }
+
+      &[data-file-type="video"] {
+        align-items:     flex-start;
+        justify-content: center;
+      }
+
+      &[data-file-type="image"] {
+        display:         block;
+        width:           100%;
+        height:          100%;
+        align-items:     center;
+        justify-content: center;
+
+        img {
+          position:     absolute;
+          left:         0;
+          right:        0;
+          margin-left:  auto;
+          margin-right: auto;
+        }
+      }
+
+      .Textarea {
+        flex:          1 1 auto;
+        resize:        none;
+        outline:       none;
+        border:        transparent solid $border-width;
+        border-radius: $border-radius;
+
+        &:focus {
+          border: $focus-color solid $border-width;
+        }
+      }
+
+
+      .Preview {
+        flex:        1 1 auto;
+        align-items: flex-start;
+      }
+    }
+  }
+
+  .Sidebar {
+    flex:         0 0 auto;
+    flex-flow:    column;
+    width:        200px;
+    grid-row-gap: 10px;
+
+    .Info {
+      flex:         0 0 auto;
+      flex-flow:    column;
+      grid-row-gap: 5px;
+
+      .Header {
+        font-size:   16px;
+        font-weight: bold;
+      }
+
+      .Body {
+
+      }
+    }
+
+    .Privacy {
+      flex-flow:    column;
+      grid-row-gap: 10px;
+    }
+
+    .TagSearch {
+      grid-column-gap: 10px;
+
+      .Input {
+        flex: 1 1 auto;
+      }
+    }
+
+
+  }
+}

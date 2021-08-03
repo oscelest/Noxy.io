@@ -1,0 +1,34 @@
+@import "../../variables";
+
+.Component {
+  flex-flow:       row;
+  align-items:     center;
+  justify-content: center;
+
+  .Option {
+    flex: 0 1 auto;
+    align-items:     center;
+    justify-content: center;
+    width: 100%;
+
+    > .Button {
+      flex:          1 1 auto;
+      border-radius: 0;
+    }
+
+    &[data-active="false"] > .Button {
+      color:            $disabled-color;
+      background-color: $border-color;
+    }
+
+    &:first-child > .Button {
+      border-top-left-radius:    $border-radius;
+      border-bottom-left-radius: $border-radius;
+    }
+
+    &:last-child > .Button {
+      border-top-right-radius:    $border-radius;
+      border-bottom-right-radius: $border-radius;
+    }
+  }
+}

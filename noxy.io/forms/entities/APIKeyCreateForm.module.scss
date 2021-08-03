@@ -1,0 +1,21 @@
+.Component {
+  flex: 1 0 auto;
+  flex-flow: column;
+  min-width: 260px;
+  max-width: 800px;
+  align-self: center;
+  justify-content: center;
+  grid-row-gap: 20px;
+
+  .InputList {
+    display: flex;
+    flex: 1 0 auto;
+    flex-flow: row wrap;
+    grid-row-gap: 10px;
+    grid-column-gap: 10px;
+
+    .ComboBox {
+      width: 260px;
+    }
+  }
+}

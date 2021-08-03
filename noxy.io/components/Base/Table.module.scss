@@ -1,0 +1,25 @@
+@import "../../variables";
+
+.Component {
+  flex:       1 1 auto;
+  flex-flow:  column;
+  overflow-y: auto;
+
+  .Loader {
+
+  }
+
+  .Placeholder {
+
+  }
+
+  .Row {
+    flex:          0 0 auto;
+    flex-flow:     row;
+    align-self:    flex-start;
+    min-width:     100%;
+    margin:        5px 0;
+    border:        2px solid $background-secondary-color;
+    border-radius: $border-radius;
+  }
+}

@@ -1,0 +1,46 @@
+@import "../../variables";
+
+.Component {
+  flex-flow:    column;
+  grid-row-gap: 20px;
+  overflow-y:   auto;
+
+  .TagSearch {
+    grid-column-gap: 10px;
+
+    .Input {
+      flex: 1 1 auto;
+    }
+  }
+
+  .TagList {
+    height: 165px;
+  }
+
+  .FileList {
+    flex:         1 1 auto;
+    flex-flow:    column;
+    grid-row-gap: 10px;
+    min-height:   86px;
+    max-height:   280px;
+    padding:      0 10px;
+    border-left:  2px solid $background-secondary-color;
+    border-right: 2px solid $background-secondary-color;
+    overflow-y:   auto;
+  }
+
+  .ActionList {
+    flex:            1 1 auto;
+    align-items:     center;
+    justify-content: space-between;
+    grid-column-gap: 10px;
+
+    .Action {
+      width: 120px;
+    }
+  }
+
+  .Browse {
+    display: none;
+  }
+}

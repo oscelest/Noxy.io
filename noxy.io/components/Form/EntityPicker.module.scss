@@ -1,0 +1,94 @@
+.Component {
+  flex:         1 1 auto;
+  flex-flow:    column;
+  overflow:     auto;
+  grid-row-gap: 10px;
+
+  &:not(.Horizontal) {
+    .List {
+      flex-flow: column;
+
+      .Selected {
+        flex: 0 1 auto;
+      }
+    }
+  }
+
+  &.Horizontal {
+    .List {
+      flex-flow: row;
+
+      .Available, .Selected, .Loader {
+        width: calc(50% - 2.5px);
+      }
+    }
+  }
+
+  .Search {
+    grid-column-gap: 10px;
+
+    .Input {
+      flex: 1 1 auto;
+    }
+  }
+
+  .List {
+    flex:            1 1 auto;
+    grid-row-gap:    5px;
+    grid-column-gap: 10px;
+    overflow-y:      auto;
+
+    .Loader {
+    }
+
+    .Available, .Selected {
+      flex:         1 1 auto;
+      flex-flow:    column;
+      grid-row-gap: 5px;
+      overflow-y:   auto;
+    }
+  }
+
+  .Item {
+    flex:            0 0 auto;
+    grid-column-gap: 5px;
+    cursor:          pointer;
+
+    &:hover {
+      .Container .Text {
+        text-decoration: underline;
+      }
+
+      .Delete {
+        visibility: visible;
+      }
+    }
+
+    .Container {
+      flex:            1 1 auto;
+      grid-column-gap: 5px;
+      max-width:       calc(100% - 25px);
+      user-select:     none;
+      align-items:     center;
+
+      .Text {
+        max-width: calc(100% - 25px);
+      }
+    }
+
+    .Icon, .Delete {
+      flex:            0 0 auto;
+      width:           20px;
+      height:          20px;
+      font-size:       12px;
+      align-items:     center;
+      justify-content: center;
+    }
+
+    .Delete {
+      visibility:  hidden;
+      font-size:   16px;
+      line-height: 16px;
+    }
+  }
+}
