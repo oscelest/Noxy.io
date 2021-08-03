@@ -105,7 +105,7 @@ export default function Entity<E>() {
     }
 
     public static async populate(entities: E | E[], populate: Populate<E>) {
-      return await this.getEntityManager().populate(entities, populate);
+      return await this.getEntityManager().populate(entities, populate) as E[];
     }
 
     public static async persist(object: Initializer<E>, values?: Initializer<E>) {
