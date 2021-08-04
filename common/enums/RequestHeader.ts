@@ -1,6 +1,6 @@
 enum RequestHeader {
   AUTHORIZATION = "Authorization",
-  MASQUERADE = "Masquerade",
+  MASQUERADE    = "Masquerade",
 }
 
 export default RequestHeader;

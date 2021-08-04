@@ -1,5 +1,5 @@
 enum SetOperation {
-  UNION = "0",
+  UNION        = "0",
   INTERSECTION = "1",
 }
 

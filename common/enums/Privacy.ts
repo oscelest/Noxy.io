@@ -1,7 +1,7 @@
 enum Privacy {
   PRIVATE = "private",
-  LINK = "link",
-  PUBLIC = "public",
+  LINK    = "link",
+  PUBLIC  = "public",
 }
 
 export default Privacy;

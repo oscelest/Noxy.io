@@ -1,5 +1,5 @@
 enum PageBlockType {
-  TEXT = "text",
+  TEXT   = "text",
   HEADER = "header",
 }
 

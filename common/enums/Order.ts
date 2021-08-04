@@ -1,5 +1,5 @@
 enum Order {
-  ASC = "ASC",
+  ASC  = "ASC",
   DESC = "DESC",
 }
 
