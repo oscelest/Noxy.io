@@ -2,7 +2,7 @@ import _ from "lodash";
 import React from "react";
 import {v4} from "uuid";
 import DialogListenerName from "../../enums/DialogListenerName";
-import EventKey from "../../enums/EventKey";
+import EventCode from "../../enums/EventCode";
 import IconType from "../../enums/IconType";
 import QueuePosition from "../../enums/QueuePosition";
 import Icon from "../Form/Icon";
@@ -174,7 +174,7 @@ export default class Dialog extends Component<DialogProps, State> {
   };
 
   private readonly eventDialogKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === EventKey.ESCAPE) {
+    if (event.code === EventCode.ESCAPE) {
       const instance = this.getInstance(this.getIDFromElement(event.currentTarget));
       if (instance?.configuration.dismiss) {
         Dialog.close(this.getIDFromElement(event.currentTarget));

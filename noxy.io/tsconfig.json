@@ -1,34 +1,34 @@
 {
   "compilerOptions": {
-    "allowJs": true,
-    "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
-    "emitDecoratorMetadata": true,
-    "esModuleInterop": true,
-    "experimentalDecorators": true,
+    "allowJs":                          true,
+    "allowSyntheticDefaultImports":     true,
+    "baseUrl":                          ".",
+    "emitDecoratorMetadata":            true,
+    "esModuleInterop":                  true,
+    "experimentalDecorators":           true,
     "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": true,
-    "noEmit": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "strictPropertyInitialization": false,
-    "target": "ESNext",
-    "lib": [
+    "isolatedModules":                  true,
+    "jsx":                              "preserve",
+    "module":                           "ESNext",
+    "moduleResolution":                 "Node",
+    "noFallthroughCasesInSwitch":       true,
+    "noUnusedLocals":                   true,
+    "noEmit":                           true,
+    "resolveJsonModule":                true,
+    "skipLibCheck":                     true,
+    "strict":                           true,
+    "strictPropertyInitialization":     false,
+    "target":                           "ESNext",
+    "lib":                              [
       "dom",
       "dom.iterable",
       "esnext"
     ]
   },
-  "exclude": [
+  "exclude":         [
     "node_modules"
   ],
-  "include": [
+  "include":         [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.ts",

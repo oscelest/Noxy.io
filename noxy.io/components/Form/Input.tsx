@@ -5,7 +5,7 @@ import Component from "../Application/Component";
 import Dropdown from "../Base/Dropdown";
 import Select from "../Base/Select";
 import Direction from "../../enums/Direction";
-import EventKey from "../../enums/EventKey";
+import EventCode from "../../enums/EventCode";
 import InputType from "../../enums/InputType";
 import FatalException from "../../exceptions/FatalException";
 import Style from "./Input.module.scss";
@@ -172,17 +172,17 @@ export default class Input<T extends string | number = string> extends Component
   private readonly eventKeyDown = (event: React.KeyboardEvent) => {
     if (!this.props.children) return;
 
-    switch (event.key as EventKey) {
-      case EventKey.ARROW_UP:
+    switch (event.code as EventCode) {
+      case EventCode.ARROW_UP:
         this.moveCursor(Direction.UP);
         break;
-      case EventKey.ARROW_DOWN:
+      case EventCode.ARROW_DOWN:
         this.moveCursor(Direction.DOWN);
         break;
-      case EventKey.ENTER:
-      case EventKey.TAB:
+      case EventCode.ENTER:
+      case EventCode.TAB:
         return this.select();
-      case EventKey.ESCAPE:
+      case EventCode.ESCAPE:
         return this.state.ref_input.current?.blur();
       default:
         return;

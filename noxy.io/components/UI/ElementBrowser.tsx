@@ -3,7 +3,7 @@ import React from "react";
 import Point from "../../classes/Point";
 import Rect from "../../classes/Rect";
 import Direction from "../../enums/Direction";
-import EventKey from "../../enums/EventKey";
+import EventCode from "../../enums/EventCode";
 import FatalException from "../../exceptions/FatalException";
 import Helper from "../../Helper";
 import ContextMenu, {ContextMenuCollection} from "./ContextMenu";
@@ -396,20 +396,20 @@ export default class ElementBrowser extends Component<ElementBrowserProps, State
   };
 
   private readonly eventContainerKeyDown = (event: React.KeyboardEvent) => {
-    switch (event.key as EventKey) {
-      case EventKey.ARROW_UP:
+    switch (event.code as EventCode) {
+      case EventCode.ARROW_UP:
         this.moveCursor(Direction.UP, event.ctrlKey, event.shiftKey);
         break;
-      case EventKey.ARROW_DOWN:
+      case EventCode.ARROW_DOWN:
         this.moveCursor(Direction.DOWN, event.ctrlKey, event.shiftKey);
         break;
-      case EventKey.ARROW_LEFT:
+      case EventCode.ARROW_LEFT:
         this.moveCursor(Direction.LEFT, event.ctrlKey, event.shiftKey);
         break;
-      case EventKey.ARROW_RIGHT:
+      case EventCode.ARROW_RIGHT:
         this.moveCursor(Direction.RIGHT, event.ctrlKey, event.shiftKey);
         break;
-      case EventKey.DELETE:
+      case EventCode.DELETE:
         this.props.onDelete?.(this.props.selection);
         break;
       default:

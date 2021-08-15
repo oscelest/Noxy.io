@@ -1,0 +1,12 @@
+.Component {
+  flex:      1 1 auto;
+  max-width: 100%;
+
+  > div {
+    display:         block;
+
+    &:empty:after {
+      content: "\feff"
+    }
+  }
+}

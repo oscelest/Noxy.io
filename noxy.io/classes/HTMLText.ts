@@ -5,7 +5,11 @@ export default class HTMLText {
 
   private readonly text: Character[];
   private readonly element: Element;
+  private readonly selection: Selection;
+  private readonly redo_history: HistoryElement[];
+  private readonly undo_history: HistoryElement[];
 
+  private static linebreak_character = {value: "\n", decoration: 0};
   private static decoration_list: DecorationList = [
     [Decoration.CODE, ["CODE"]],
     [Decoration.BOLD, ["B", "STRONG"]],
@@ -18,59 +22,187 @@ export default class HTMLText {
   constructor(value?: string | Character[]) {
     this.text = [];
     this.element = document.createElement("div");
+    this.selection = {start: 0, length: 0, end: 0};
+    this.undo_history = [];
+    this.redo_history = [];
 
     if (value) {
-      Array.isArray(value) ? this.addCharacterList(value) : this.addHTML(value);
+      Array.isArray(value) ? this.insertCharacter(value) : this.insertHTML(value);
     }
   }
 
-  public getCharacterList(start: number = 0, end: number = this.text.length) {
+  public getLength() {
+    return this.text.length;
+  }
+
+  public getSelection() {
+    return this.selection;
+  }
+
+  public setSelection(selection: FixedSelection | FlexibleSelection) {
+    const {start, end, length} = this.parseSelection(selection);
+    this.selection.start = start;
+    this.selection.end = end;
+    this.selection.length = length;
+    return this;
+  }
+
+  public getCharacter(position: number): Character | undefined {
+    return this.text[position];
+  }
+
+  public getCharacterDecoration(position: number = this.selection.start - 1) {
+    position = Math.min(Math.max(position, 0), this.text.length - 1);
+    return this.getCharacter(position)?.decoration ?? Decoration.NONE;
+  }
+
+  public getCharacterList(selection: FixedSelection | FlexibleSelection = this.selection) {
+    const {start, end} = this.parseSelection(selection);
     return this.text.slice(start, end);
   }
 
-  public addCharacterList(list: Character[], start: number = this.text.length, replace: number = 0) {
-    this.text.splice(start, replace, ...list);
+  public setCharacterList(list: Character | Character[]) {
+    this.text.splice(0, this.text.length, ...(Array.isArray(list) ? list : [list]));
     return this;
   }
 
-  public addHTML(text: string, decoration: Decoration | Decoration[] = Decoration.NONE, start: number = this.text.length, replace: number = 0) {
-    this.element.innerHTML = text;
-    this.text.splice(start, replace, ...this.parseElement(this.element, this.resolveDecoration(decoration)));
+  public insertNewLine(decoration: Decoration | Decoration[] = Decoration.NONE, selection?: FixedSelection | FlexibleSelection) {
+    this.insertCharacter(HTMLText.linebreak_character, selection);
     return this;
   }
 
-  public setHTML(text: string, decoration: Decoration | Decoration[] = []) {
-    this.element.innerHTML = text;
-    this.text.splice(0, this.text.length, ...this.parseElement(this.element, this.resolveDecoration(decoration)));
+  public insertHTML(html: string, decoration: Decoration | Decoration[] = Decoration.NONE, selection?: FixedSelection | FlexibleSelection) {
+    this.element.innerHTML = html;
+    this.insertCharacter(this.parseElement(this.element, HTMLText.parseDecoration(decoration)), selection);
     return this;
   }
 
-  public remove(start: number = 0, end: number = this.text.length) {
-    this.text.splice(start, end);
-    return this;
-  }
+  public insertCharacter(list: Character | Character[], selection: FixedSelection | FlexibleSelection = this.selection) {
+    const {start, length} = this.parseSelection(selection);
 
-  public addDecoration(decoration: Decoration | Decoration[], start: number = 0, end: number = this.text.length) {
-    decoration = this.resolveDecoration(decoration);
-    for (let i = start; i < end; i++) {
-      if (this.text[i]) this.text[i].decoration = this.text[i].decoration | decoration;
+    if (Array.isArray(list) && !list.length || !Array.isArray(list) && !list.value) return this;
+    this.writeStateToHistory();
+    if (Array.isArray(list)) {
+      this.text.splice(start, length, ...list);
+      return this.setSelection({start: start + list.length, length: 0});
     }
+
+    this.text.splice(start, length, list);
+    return this.setSelection({start: start + 1, length: 0});
+  }
+
+  public deleteForward() {
+    return this.delete(this.selection.start === this.selection.end ? {start: this.selection.start, length: 1} : {start: this.selection.start, end: this.selection.end});
+  }
+
+  public deleteBackward() {
+    return this.delete(this.selection.start === this.selection.end ? {start: this.selection.start, length: -1} : {start: this.selection.start, end: this.selection.end});
+  }
+
+  public deleteWordForward() {
+    if (this.selection.start === this.selection.end) {
+      this.selectPatternForward(/\p{Z}/u);
+      const character = this.getCharacter(this.selection.start - 1)?.value;
+      if (character) {
+        this.selectPatternForward(character.match(/[\p{L}\p{N}]/u) ? /[\p{L}\p{N}]/u : /[^\p{L}\p{N}]/u);
+        this.selectPatternForward(/\p{Z}/u);
+      }
+    }
+
+    return this.delete();
+  }
+
+  public deleteWordBackward() {
+    if (this.selection.start === this.selection.end) {
+      this.selectPatternBackward(/\p{Z}/u);
+      const character = this.getCharacter(this.selection.start - 1)?.value;
+      if (character) {
+        this.selectPatternBackward(character.match(/[\p{L}\p{N}]/u) ? /[\p{L}\p{N}]/u : /[^\p{L}\p{N}]/u);
+        this.selectPatternBackward(/\p{Z}/u);
+      }
+    }
+
+    return this.delete();
+  }
+
+  public delete(selection: FixedSelection | FlexibleSelection = this.selection) {
+    const {start, length} = this.parseSelection(selection);
+
+    if (length <= 0) return this;
+    this.writeStateToHistory();
+    this.text.splice(start, length);
+    return this.setSelection({start, length: 0});
+  }
+
+  public addDecoration(decoration: Decoration | Decoration[], selection?: FixedSelection | FlexibleSelection) {
+    return this.decorate(decoration, (decoration, decorator) => decoration | decorator, selection);
+  }
+
+  public removeDecoration(decoration: Decoration | Decoration[], selection?: FixedSelection | FlexibleSelection) {
+    return this.decorate(decoration, (decoration, decorator) => decoration & ~decorator, selection);
+  }
+
+  public setDecoration(decoration: Decoration | Decoration[], selection?: FixedSelection | FlexibleSelection) {
+    return this.decorate(decoration, (decoration, decorator) => decorator, selection);
+  }
+
+  public changeDecoration(decoration: Decoration | Decoration[], selection: FixedSelection | FlexibleSelection = this.selection) {
+    const {start, end, length} = this.parseSelection(selection);
+    const decorator = HTMLText.parseDecoration(decoration);
+
+    return this.text.slice(start, end).every(char => (char.decoration & decorator))
+      ? this.removeDecoration(decorator, {start, end, length})
+      : this.addDecoration(decorator, {start, end, length});
+  }
+
+  private decorate(decoration: Decoration | Decoration[], fn: (decoration: number, decorator: number) => number, selection: FixedSelection | FlexibleSelection = this.selection) {
+    const {start, length} = this.parseSelection(selection);
+    const decorator = HTMLText.parseDecoration(decoration);
+
+    if (length <= 0) return this;
+    this.writeStateToHistory();
+    for (let i = start; i < start + length; i++) {
+      if (this.text[i]) this.text[i].decoration = fn(this.text[i].decoration, decorator);
+    }
+
     return this;
   }
 
-  public removeDecoration(decoration: Decoration | Decoration[], start: number = 0, end: number = this.text.length) {
-    decoration = this.resolveDecoration(decoration);
-    for (let i = start; i < end; i++) {
-      if (this.text[i]) this.text[i].decoration = this.text[i].decoration & ~decoration;
+  public selectPatternForward(regex: RegExp): void {
+    while (this.getCharacter(this.selection.end)?.value.match(regex)) {
+      this.selection.end++;
+      this.selection.length++;
     }
+  }
+
+  public selectPatternBackward(regex: RegExp): void {
+    while (this.getCharacter(this.selection.start - 1)?.value.match(regex)) {
+      this.selection.start--;
+      this.selection.length++;
+    }
+  }
+
+  private writeStateToHistory() {
+    this.undo_history.push({text: [...this.text], selection: {...this.selection}});
+    this.redo_history.length = 0;
+    if (this.undo_history.length > 100) this.undo_history.shift();
+  }
+
+  public undo() {
+    const item = this.undo_history.pop();
+    if (!item) return this;
+    this.redo_history.push({text: [...this.text], selection: {...this.selection}});
+    this.setCharacterList(item.text);
+    this.setSelection(item.selection);
     return this;
   }
 
-  public setDecoration(decoration: Decoration | Decoration[], start: number = 0, end: number = this.text.length) {
-    decoration = this.resolveDecoration(decoration);
-    for (let i = start; i < end; i++) {
-      if (this.text[i]) this.text[i].decoration = decoration;
-    }
+  public redo() {
+    const item = this.redo_history.pop();
+    if (!item) return this;
+    this.undo_history.push({text: [...this.text], selection: {...this.selection}});
+    this.setCharacterList(item.text);
+    this.setSelection(item.selection);
     return this;
   }
 
@@ -137,39 +269,81 @@ export default class HTMLText {
   //region    ----- toReactElementList -----
 
   public toReactElementList() {
-    return this.getBlockHierarchy().map(this.createReactElement);
+    // TODO: Should analyse character list and split into lines, then blocks.
+    return this.getBlockHierarchy().map(this.createReactElementBlock);
   }
 
-  private readonly createReactElement = (block: RenderBlock, index: number = 0): React.ReactNode => {
+  private readonly createReactElementBlock = (block: Block, key: number = 0) => {
+    return React.createElement("div", {key, children: this.createReactElementDecoration(block)});
+  };
+
+  private readonly createReactElementDecoration = (block: RenderBlock, key: number = 0): React.ReactNode => {
     const render = block.render ?? block.decoration;
-    if (render & Decoration.CODE) return this.createReactElementHelper(block, "code", Decoration.CODE, index);
-    if (render & Decoration.BOLD) return this.createReactElementHelper(block, "b", Decoration.BOLD, index);
-    if (render & Decoration.ITALIC) return this.createReactElementHelper(block, "i", Decoration.ITALIC, index);
-    if (render & Decoration.UNDERLINE) return this.createReactElementHelper(block, "u", Decoration.UNDERLINE, index);
-    if (render & Decoration.STRIKETHROUGH) return this.createReactElementHelper(block, "s", Decoration.STRIKETHROUGH, index);
-    if (render & Decoration.MARK) return this.createReactElementHelper(block, "mark", Decoration.MARK, index);
+    if (render & Decoration.CODE) return React.createElement("code", {key, children: this.createReactElementDecoration({...block, render: render - Decoration.CODE})});
+    if (render & Decoration.BOLD) return React.createElement("b", {key, children: this.createReactElementDecoration({...block, render: render - Decoration.BOLD})});
+    if (render & Decoration.ITALIC) return React.createElement("i", {key, children: this.createReactElementDecoration({...block, render: render - Decoration.ITALIC})});
+    if (render & Decoration.UNDERLINE) return React.createElement("u", {key, children: this.createReactElementDecoration({...block, render: render - Decoration.UNDERLINE})});
+    if (render & Decoration.STRIKETHROUGH) return React.createElement("s", {key, children: this.createReactElementDecoration({...block, render: render - Decoration.STRIKETHROUGH})});
+    if (render & Decoration.MARK) return React.createElement("mark", {key, children: this.createReactElementDecoration({...block, render: render - Decoration.MARK})});
 
-    return block.value.map(value => {
-      if (typeof value === "string") return this.createReactElementText(value);
-      return this.createReactElement({...value, decoration: value.decoration - block.decoration});
-    });
+    if (block.value.length === 1 && block.value[0] === HTMLText.linebreak_character.value) return React.createElement("br", {key});
+    return block.value.map(this.createReactElementContent);
   };
 
-  private readonly createReactElementText = (text: string) => {
-    return text.split("\n").flatMap((value, index, array) => array.length - 1 !== index ? [value, React.createElement("br")] : value);
-  };
-
-  private readonly createReactElementHelper = (block: RenderBlock, type: keyof React.ReactHTML, decoration: Decoration, key: number = 0) => {
-    return React.createElement(type, {key, children: this.createReactElement({...block, render: (block.render ?? block.decoration) - decoration})});
+  private readonly createReactElementContent = (block: string | Block, key: number = 0) => {
+    if (typeof block !== "string") return this.createReactElementDecoration(block, key);
+    block = block.replace(/\n/g, "").replace(/(?<!\b)\s(?!\b)?|\s$/g, "\u00A0");
+    return block;
   };
 
   //endregion ----- toReactElementList -----
 
   //region    ----- Common private methods -----
 
-  private readonly resolveDecoration = (decoration: Decoration | Decoration[]) => {
+  private static parseDecoration(decoration: Decoration | Decoration[]) {
     return Array.isArray(decoration) ? decoration.reduce((result, value) => result + value, 0) : decoration;
   };
+
+  private parseSelection(selection: FixedSelection): Selection
+  private parseSelection(selection: FlexibleSelection): Selection
+  private parseSelection({start, end, length}: Selection): Selection {
+    if (start === this.selection.start && end === this.selection.end && length === this.selection.end) {
+      return {start, end, length};
+    }
+
+    if (start < 0) {
+      start = Math.min(this.text.length, Math.max(0, this.text.length - start));
+    }
+
+    if (length !== undefined) {
+      if (length < 0) {
+        start += length;
+        length = Math.abs(length);
+        end = start + length;
+      }
+
+      end = start + length;
+    }
+    else if (end !== undefined) {
+      if (end < 0) {
+        end = Math.min(this.text.length, Math.max(0, this.text.length - end));
+      }
+
+      if (start > end) {
+        start = start + end;
+        end = start - end;
+        start = start - end;
+      }
+
+      length = end - start;
+    }
+    else {
+      end = start;
+      length = 0;
+    }
+
+    return {start, end, length};
+  }
 
   private readonly parseElement = (element: Node, decoration: number = 0): Character[] => {
     const result = [] as Character[];
@@ -188,7 +362,7 @@ export default class HTMLText {
           result.push(...this.parseElement(child, decoration));
         }
         else if (child instanceof HTMLBRElement) {
-          result.push({value: "\n", decoration: 0});
+          result.push(HTMLText.linebreak_character);
         }
         else {
           result.push(...this.parseInnerElement(child, decoration));
@@ -213,7 +387,7 @@ export default class HTMLText {
   private readonly getBlockHierarchy = () => {
     return this.text.reduce(
       (result, character) => {
-        if (!result.length) {
+        if (!result.length || character.value === HTMLText.linebreak_character.value) {
           return [...result, {value: [character.value], decoration: character.decoration}];
         }
 
@@ -237,7 +411,7 @@ export default class HTMLText {
 
   private readonly findCharacterBlock = (character: Character, block: Block): Block | null => {
     if (character.decoration === block.decoration) return block;
-    if (character.decoration & block.decoration) {
+    if (block.decoration === 0 || character.decoration & block.decoration) {
       const next = block.value.find(value => typeof value !== "string") as undefined | Block;
       if (!block.value.length || !next) {
         const next = {value: [], decoration: character.decoration};
@@ -253,7 +427,19 @@ export default class HTMLText {
 
 }
 
-interface Character {
+export type Selection = Required<(FixedSelection & FlexibleSelection)>
+
+export interface FlexibleSelection {
+  start: number;
+  end?: number;
+}
+
+export interface FixedSelection {
+  start: number;
+  length?: number;
+}
+
+export interface Character {
   value: string;
   decoration: number;
 }
@@ -265,6 +451,11 @@ interface RenderBlock extends Block {
 interface Block {
   value: (string | Block)[];
   decoration: number;
+}
+
+interface HistoryElement {
+  selection: Selection;
+  text: Character[];
 }
 
 type DecorationList = [Decoration, string[]][]

@@ -1,5 +1,5 @@
 import React from "react";
-import EventKey from "../../enums/EventKey";
+import EventCode from "../../enums/EventCode";
 import Conditional from "../Application/Conditional";
 import Button from "../Form/Button";
 import ErrorText from "../Text/ErrorText";
@@ -51,7 +51,7 @@ export default class Form extends Component<FormProps, State> {
   }
 
   private readonly eventKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === EventKey.ENTER) this.props.onSubmit?.();
+    if (event.code === EventCode.ENTER || event.code === EventCode.ENTER) this.props.onSubmit?.();
   };
 
 }

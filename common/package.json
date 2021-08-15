@@ -6,15 +6,15 @@
     "update": "npm outdated && npm update --save"
   },
   "dependencies":    {
-    "@aws-sdk/client-ses":       "^3.24.0",
+    "@aws-sdk/client-ses":       "^3.25.0",
     "@mikro-orm/core":           "^4.5.7",
     "@mikro-orm/mysql":          "^4.5.7",
     "express":                   "^4.17.1",
     "isemail":                   "^3.2.0",
     "lodash":                    "^4.17.21",
     "method-override":           "^3.0.0",
-    "multer":                    "^1.4.2",
-    "nanoid":                    "^3.1.23",
+    "multer":                    "^1.4.3",
+    "nanoid":                    "^3.1.25",
     "serve-favicon":             "^2.5.0",
     "uuid":                      "^8.3.2",
     "winston":                   "^3.3.3",
@@ -26,7 +26,7 @@
     "@types/lodash":                    "^4.14.172",
     "@types/method-override":           "^0.0.32",
     "@types/multer":                    "^1.4.7",
-    "@types/node":                      "^16.4.10",
+    "@types/node":                      "^16.6.1",
     "@types/serve-favicon":             "^2.5.3",
     "@types/uuid":                      "^8.3.1"
   }

@@ -2,7 +2,7 @@ import _ from "lodash";
 import React from "react";
 import Conditional from "../Application/Conditional";
 import Component from "../Application/Component";
-import EventKey from "../../enums/EventKey";
+import EventCode from "../../enums/EventCode";
 import Helper from "../../Helper";
 import Style from "./Checkbox.module.scss";
 
@@ -59,9 +59,9 @@ export default class Checkbox<V, O extends {[key: string]: V}, C extends Checkbo
   };
 
   private readonly eventTickableKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    switch (event.key) {
-      case EventKey.ENTER:
-      case EventKey.SPACE:
+    switch (event.code as EventCode) {
+      case EventCode.ENTER:
+      case EventCode.SPACE:
         event.preventDefault();
         event.stopPropagation();
         return this.change(Helper.getChildKey(event.currentTarget, this.getData()));

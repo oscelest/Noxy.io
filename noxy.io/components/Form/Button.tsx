@@ -4,7 +4,7 @@ import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
 import Loader from "../UI/Loader";
 import Helper from "../../Helper";
-import EventKey from "../../enums/EventKey";
+import EventCode from "../../enums/EventCode";
 import IconType from "../../enums/IconType";
 import Size from "../../enums/Size";
 import Util from "../../../common/services/Util";
@@ -75,12 +75,12 @@ export default class Button<V> extends Component<EventProps | ValueProps<V>, Sta
 
     if (event.target === element) {
 
-      if (event.key === EventKey.ESCAPE) {
+      if (event.code === EventCode.ESCAPE) {
         event.preventDefault();
         event.stopPropagation();
         element.blur();
       }
-      else if (event.key === EventKey.SPACE || event.key === EventKey.ENTER) {
+      else if (event.code === EventCode.SPACE || event.code === EventCode.ENTER) {
         element.click();
       }
     }
