@@ -73,57 +73,26 @@ namespace Helper {
     return _.reduce(texts, (result, text) => Math.ceil(Math.max(result, context.measureText(text).width)), 0);
   }
 
-  export async function getClipboard(raw: boolean = false, event?: React.ClipboardEvent<Node> | ClipboardEvent) {
-    let pasted: string | undefined;
-
-    if (event) {
-      pasted = event.clipboardData?.getData("text/plain");
-    }
-    else if (navigator.permissions) {
-      const permission = await navigator.permissions.query({name: "clipboard-read"});
-      if (permission.state === "granted" || permission.state === "prompt") {
-        pasted = await navigator.clipboard.readText();
+  export async function setClipboard(input: string) {
+    if (navigator.permissions) {
+      const permission = await navigator.permissions.query({name: "clipboard-write"});
+      if (permission.state == "granted" || permission.state == "prompt") {
+        return await navigator.clipboard.writeText(input);
       }
-    }
 
-    if (pasted === undefined) {
       throw new FatalException(
-        "Could not read from clipb  oard",
-        "Your browser does not permit this website to read from the clipboard. Please enable this functionality if you wish to paste what's on your clipboard.",
+        "Could not copy to clipboard",
+        "Your browser does not permit this website to copy to the clipboard. Please enable this functionality if you wish to copy this text to the clipboard.",
       );
     }
 
-    if (raw) {
-      const element = document.createElement("div");
-      element.innerHTML = pasted;
-      pasted = element.textContent ?? "";
-    }
-
-    return pasted;
-  }
-
-  export async function setClipboard(text: string) {
-    // if (navigator.permissions) {
-    //   const permission = await navigator.permissions.query({name: "clipboard-write"});
-    //   if (permission.state == "granted" || permission.state == "prompt") {
-    //     await navigator.clipboard.writeText(text);
-    //   }
-    //   else {
-    //     throw new FatalException(
-    //       "Could not copy to clipboard",
-    //       "Your browser does not permit this website to copy to the clipboard. Please enable this functionality if you wish to copy this text to the clipboard.",
-    //     );
-    //   }
-    // }
-    // else {
-      const textarea = document.createElement("textarea");
-      document.getElementById("__next")?.append(textarea);
-      textarea.value = text;
-      textarea.select();
-      textarea.setSelectionRange(0, textarea.value.length);
-      document.execCommand("copy");
-      textarea.remove();
-    // }
+    const textarea = document.createElement("textarea");
+    document.getElementById("__next")?.append(textarea);
+    textarea.value = input;
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+    document.execCommand("copy");
+    textarea.remove();
   }
 
 }

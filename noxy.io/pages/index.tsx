@@ -2,7 +2,7 @@ import {NextPageContext} from "next";
 import Component from "../components/Application/Component";
 import HTMLText from "../classes/HTMLText";
 import React from "react";
-import EditableText from "../components/Text/EditableText";
+import TextBlock from "../components/Block/TextBlock";
 
 // noinspection JSUnusedGlobalSymbols
 export default class IndexPage extends Component<PageProps, State> {
@@ -20,16 +20,14 @@ export default class IndexPage extends Component<PageProps, State> {
   }
 
   public componentDidMount(): void {
-    // this.state.text.insertHTML("Workspace in classic editors is made of a <b>single <i>contenteditable</i> element</b>, used to create different <i>HTML markups</i>. ");
-    // this.state.text.insertHTML("<mark>Editor.js <b>workspace consists of separate Blocks</b>: paragraphs, headings, images, lists, quotes, etc.</mark> ");
-    // this.state.text.insertHTML("Each of them is an independent contenteditable element <code>(or more complex structure)</code> provided by Plugin and united by Editor's Core.");
-    this.state.text.insertHTML("<b>Test.</b><br><br>Text.");
+    this.state.text.insertHTML("Normal text - <i>Bold - <b>Italic Bold</b> - Bold</i> - Normal text\n");
+    this.state.text.insertHTML("<b><i><code><u>Normal text</u></code></i></b> - <code>Code - <u>Underlined code</u> - Code</code> - Normal text");
     this.setState({text: this.state.text});
   }
 
   public render() {
     return (
-      <EditableText text={this.state.text} onChange={this.eventText} onSubmit={() => {}}/>
+      <TextBlock text={this.state.text} readonly={false} onChange={this.eventText}/>
     );
   }
 

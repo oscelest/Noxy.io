@@ -1,0 +1,11 @@
+@import "../../variables";
+
+.Component {
+  flex:      0 0 auto;
+  flex-flow: column;
+
+  .Text {
+    flex:      0 0 auto;
+    flex-flow: column;
+  }
+}

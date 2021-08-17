@@ -47,20 +47,6 @@ export default class EditableText extends Component<EditableTextProps, State> {
     this.props.onChange(this.props.text.deleteWordBackward());
   }
 
-  public async cutText(selection?: FixedSelection | FlexibleSelection) {
-    await this.copyText(selection);
-    this.props.onChange(this.props.text.delete(selection));
-  };
-
-  public async pasteText(raw: boolean = false, input?: React.ClipboardEvent | ClipboardEvent, selection?: FixedSelection | FlexibleSelection) {
-    return this.props.onChange(this.props.text.insertHTML(await Helper.getClipboard(raw, input), Decoration.NONE, selection));
-  };
-
-  public async copyText(selection?: FixedSelection | FlexibleSelection) {
-    await Helper.setClipboard(new HTMLText(this.props.text.getCharacterList(selection)).toHTML());
-    if (document.activeElement !== this.state.ref.current) this.focus();
-  };
-
   public selectAll() {
     this.props.onChange(this.props.text.setSelection({start: 0, end: this.props.text.getLength()}));
   }
@@ -73,7 +59,7 @@ export default class EditableText extends Component<EditableTextProps, State> {
     if (anchor instanceof HTMLBRElement || anchor === this.state.ref.current) anchor_offset = 0;
     if (focus instanceof HTMLBRElement || focus === this.state.ref.current) focus_offset = 0;
     if (anchor instanceof HTMLBRElement && anchor === focus && anchor_offset === focus_offset) {
-      getSelection()?.setPosition(anchor.nextSibling, 0);
+      getSelection()?.setPosition(anchor.parentNode, 0);
     }
     else {
       getSelection()?.setBaseAndExtent(anchor, anchor_offset, focus, focus_offset);
@@ -183,7 +169,7 @@ export default class EditableText extends Component<EditableTextProps, State> {
     this.props.text.setSelection(this.getSelection());
   };
 
-  private readonly eventSelect = (event: any) => {
+  private readonly eventSelect = () => {
     const selection = window.getSelection();
     if (!selection?.anchorNode || !selection?.focusNode) return;
     this.props.text.setSelection(this.getSelection());
@@ -199,15 +185,6 @@ export default class EditableText extends Component<EditableTextProps, State> {
 
   private readonly handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     switch (Helper.getKeyboardEventCommand(event)) {
-      case KeyboardCommand.CUT:
-        return this.cutText();
-      case KeyboardCommand.COPY:
-        return this.copyText();
-      case KeyboardCommand.PASTE:
-        return this.pasteText();
-      case KeyboardCommand.PASTE_RAW:
-      case KeyboardCommand.PASTE_RAW_ALT:
-        return this.pasteText(true);
       case KeyboardCommand.SELECT_ALL:
         return this.selectAll();
       case KeyboardCommand.NEW_LINE:
@@ -215,7 +192,7 @@ export default class EditableText extends Component<EditableTextProps, State> {
         return this.insertNewLine();
       case KeyboardCommand.NEW_PARAGRAPH:
       case KeyboardCommand.NEW_PARAGRAPH_ALT:
-        return this.props.onSubmit(this.props.text);
+        return this.props.onSubmit?.(this.props.text);
       case KeyboardCommand.DELETE_FORWARD:
         return this.deleteForward();
       case KeyboardCommand.DELETE_WORD_FORWARD:
@@ -248,25 +225,29 @@ export default class EditableText extends Component<EditableTextProps, State> {
 
   private readonly eventCut = async (event: React.ClipboardEvent) => {
     event.preventDefault();
-    await this.cutText();
+    event.clipboardData.setData("text/plain", new HTMLText(this.props.text.getCharacterList()).toHTML().innerHTML);
+    this.props.onChange(this.props.text.delete());
   };
 
   private readonly eventCopy = async (event: React.ClipboardEvent) => {
     event.preventDefault();
-    await this.copyText();
+    event.clipboardData.setData("text/html", new HTMLText(this.props.text.getCharacterList()).toHTML().innerHTML);
   };
 
   private readonly eventPaste = async (event: React.ClipboardEvent) => {
     event.preventDefault();
-    await this.pasteText(false, event);
+    const template = document.createElement("template") as HTMLTemplateElement;
+    template.innerHTML = event.clipboardData.getData("text/html");
+    return this.props.onChange(this.props.text.insertHTML(template.innerHTML.replace(/^\n*|\n*$/g, "") ?? ""));
   };
 }
 
 export interface EditableTextProps {
   className?: string;
   text: HTMLText;
+
   onChange(text: HTMLText): void;
-  onSubmit(text: HTMLText): void;
+  onSubmit?(text: HTMLText): void;
 }
 
 interface State {
