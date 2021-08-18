@@ -1,6 +1,6 @@
 import React from "react";
 import FileTypeName from "../../../common/enums/FileTypeName";
-import FileEntity from "../../entities/file/FileEntity";
+import FileEntity from "../../entities/File/FileEntity";
 import IconType from "../../enums/IconType";
 import Icon from "../Form/Icon";
 import Style from "./Preview.module.scss";

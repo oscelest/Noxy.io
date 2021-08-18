@@ -7,7 +7,7 @@ import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
 import Form from "../../components/Base/Form";
 import Preview from "../../components/UI/Preview";
-import FileEntity from "../../entities/file/FileEntity";
+import FileEntity from "../../entities/File/FileEntity";
 import FatalException from "../../exceptions/FatalException";
 import Style from "./FileRenameForm.module.scss";
 import Component from "../../components/Application/Component";

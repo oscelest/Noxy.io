@@ -3,6 +3,12 @@
 .Component {
   flex:      0 0 auto;
   flex-flow: column;
+  padding:   5px;
+
+  &:not(.Readonly) {
+    border:        $border-width solid $border-color;
+    border-radius: $border-radius;
+  }
 
   .Text {
     flex:      0 0 auto;

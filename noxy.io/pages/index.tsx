@@ -1,8 +1,8 @@
 import {NextPageContext} from "next";
 import Component from "../components/Application/Component";
-import HTMLText from "../classes/HTMLText";
 import React from "react";
-import TextBlock from "../components/Block/TextBlock";
+import PageExplorer from "../components/Application/PageExplorer";
+import PageEntity from "../entities/Page/PageEntity";
 
 // noinspection JSUnusedGlobalSymbols
 export default class IndexPage extends Component<PageProps, State> {
@@ -15,27 +15,21 @@ export default class IndexPage extends Component<PageProps, State> {
     super(props);
 
     this.state = {
-      text: new HTMLText(),
+      page: new PageEntity(),
     };
-  }
-
-  public componentDidMount(): void {
-    this.state.text.insertHTML("Normal text - <i>Bold - <b>Italic Bold</b> - Bold</i> - Normal text\n");
-    this.state.text.insertHTML("<b><i><code><u>Normal text</u></code></i></b> - <code>Code - <u>Underlined code</u> - Code</code> - Normal text");
-    this.setState({text: this.state.text});
   }
 
   public render() {
     return (
-      <TextBlock text={this.state.text} readonly={false} onChange={this.eventText}/>
+      <PageExplorer entity={this.state.page} onChange={this.eventText}/>
     );
   }
 
-  private readonly eventText = (text: HTMLText) => {
-    this.setState({text});
+  private readonly eventText = (page: PageEntity) => {
+    this.setState({page});
   };
 }
 
 interface State {
-  text: HTMLText;
+  page: PageEntity;
 }

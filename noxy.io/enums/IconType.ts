@@ -65,6 +65,7 @@ enum IconType {
   LIST           = "\uef72",
   MINUS          = "\uef9a",
   NOT_ALLOWED    = "\uefa9",
+  PAGE           = "\uefb2",
   PLUS           = "\uefc2",
   QUESTION       = "\uefcc",
   RECYCLE        = "\uefd0",

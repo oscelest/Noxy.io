@@ -38,9 +38,12 @@
     }
   }
 
-
   &[data-disabled="true"] {
     color:  $disabled-color;
     cursor: default;
+  }
+
+  .Icon {
+    font-size: 20px;
   }
 }

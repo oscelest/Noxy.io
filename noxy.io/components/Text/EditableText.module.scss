@@ -3,10 +3,10 @@
   max-width: 100%;
 
   > div {
-    display:         block;
+    display: block;
+  }
 
-    &:empty:after {
-      content: "\feff"
-    }
+  *:empty:after {
+    content: "\feff"
   }
 }
