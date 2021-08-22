@@ -1,4 +1,4 @@
-import Decoration from "../../common/enums/Decoration";
+import DecorationValue from "../../common/enums/DecorationValue";
 import React from "react";
 
 export default class HTMLText {
@@ -11,12 +11,12 @@ export default class HTMLText {
 
   private static linebreak_character = {value: "\n", decoration: 0};
   private static decoration_list: DecorationList = [
-    [Decoration.CODE, ["CODE"]],
-    [Decoration.BOLD, ["B", "STRONG"]],
-    [Decoration.ITALIC, ["I"]],
-    [Decoration.UNDERLINE, ["U"]],
-    [Decoration.STRIKETHROUGH, ["S"]],
-    [Decoration.MARK, ["MARK"]],
+    [DecorationValue.CODE, ["CODE"]],
+    [DecorationValue.BOLD, ["B", "STRONG"]],
+    [DecorationValue.ITALIC, ["I"]],
+    [DecorationValue.UNDERLINE, ["U"]],
+    [DecorationValue.STRIKETHROUGH, ["S"]],
+    [DecorationValue.MARK, ["MARK"]],
   ];
 
   constructor(value?: string | Character[]) {
@@ -53,7 +53,7 @@ export default class HTMLText {
 
   public getCharacterDecoration(position: number = this.selection.start - 1) {
     position = Math.min(Math.max(position, 0), this.text.length - 1);
-    return this.getCharacter(position)?.decoration ?? Decoration.NONE;
+    return this.getCharacter(position)?.decoration ?? DecorationValue.NONE;
   }
 
   public getCharacterList(selection: FixedSelection | FlexibleSelection = this.selection) {
@@ -66,12 +66,12 @@ export default class HTMLText {
     return this;
   }
 
-  public insertNewLine(decoration: Decoration | Decoration[] = Decoration.NONE, selection?: FixedSelection | FlexibleSelection) {
+  public insertNewLine(decoration: DecorationValue | DecorationValue[] = DecorationValue.NONE, selection?: FixedSelection | FlexibleSelection) {
     this.insertCharacter(HTMLText.linebreak_character, selection);
     return this;
   }
 
-  public insertHTML(html: string, decoration: Decoration | Decoration[] = Decoration.NONE, selection?: FixedSelection | FlexibleSelection) {
+  public insertHTML(html: string, decoration: DecorationValue | DecorationValue[] = DecorationValue.NONE, selection?: FixedSelection | FlexibleSelection) {
     this.element.innerHTML = html;
     this.insertCharacter(this.parseElement(this.element.content, HTMLText.parseDecoration(decoration)), selection);
     return this;
@@ -134,19 +134,19 @@ export default class HTMLText {
     return this.setSelection({start, length: 0});
   }
 
-  public addDecoration(decoration: Decoration | Decoration[], selection?: FixedSelection | FlexibleSelection) {
+  public addDecoration(decoration: DecorationValue | DecorationValue[], selection?: FixedSelection | FlexibleSelection) {
     return this.decorate(decoration, (decoration, decorator) => decoration | decorator, selection);
   }
 
-  public removeDecoration(decoration: Decoration | Decoration[], selection?: FixedSelection | FlexibleSelection) {
+  public removeDecoration(decoration: DecorationValue | DecorationValue[], selection?: FixedSelection | FlexibleSelection) {
     return this.decorate(decoration, (decoration, decorator) => decoration & ~decorator, selection);
   }
 
-  public setDecoration(decoration: Decoration | Decoration[], selection?: FixedSelection | FlexibleSelection) {
+  public setDecoration(decoration: DecorationValue | DecorationValue[], selection?: FixedSelection | FlexibleSelection) {
     return this.decorate(decoration, (decoration, decorator) => decorator, selection);
   }
 
-  public changeDecoration(decoration: Decoration | Decoration[], selection: FixedSelection | FlexibleSelection = this.selection) {
+  public changeDecoration(decoration: DecorationValue | DecorationValue[], selection: FixedSelection | FlexibleSelection = this.selection) {
     const {start, end, length} = this.parseSelection(selection);
     const decorator = HTMLText.parseDecoration(decoration);
 
@@ -155,7 +155,7 @@ export default class HTMLText {
       : this.addDecoration(decorator, {start, end, length});
   }
 
-  private decorate(decoration: Decoration | Decoration[], fn: (decoration: number, decorator: number) => number, selection: FixedSelection | FlexibleSelection = this.selection) {
+  private decorate(decoration: DecorationValue | DecorationValue[], fn: (decoration: number, decorator: number) => number, selection: FixedSelection | FlexibleSelection = this.selection) {
     const {start, length} = this.parseSelection(selection);
     const decorator = HTMLText.parseDecoration(decoration);
 
@@ -259,23 +259,22 @@ export default class HTMLText {
     return block.replace(/\n/g, "").replace(/(?<!\b)\s(?!\b)?|\s$/g, "\u00A0");
   };
 
-  private readonly getHTMLNodeTag = (decoration: Decoration) => {
+  private readonly getHTMLNodeTag = (decoration: DecorationValue) => {
     switch (decoration) {
-      case Decoration.NONE:
+      case DecorationValue.NONE:
         return "span";
-      case Decoration.CODE:
+      case DecorationValue.CODE:
         return "code";
-      case Decoration.BOLD:
+      case DecorationValue.BOLD:
         return "b";
-      case Decoration.ITALIC:
+      case DecorationValue.ITALIC:
         return "i";
-      case Decoration.UNDERLINE:
+      case DecorationValue.UNDERLINE:
         return "u";
-      case Decoration.STRIKETHROUGH:
+      case DecorationValue.STRIKETHROUGH:
         return "s";
-      case Decoration.MARK:
+      case DecorationValue.MARK:
         return "mark";
-
     }
   };
 
@@ -283,7 +282,7 @@ export default class HTMLText {
 
   //region    ----- Common private methods -----
 
-  private static parseDecoration(decoration: Decoration | Decoration[]) {
+  private static parseDecoration(decoration: DecorationValue | DecorationValue[]) {
     return Array.isArray(decoration) ? decoration.reduce((result, value) => result + value, 0) : decoration;
   };
 
@@ -371,7 +370,7 @@ export default class HTMLText {
     return this.text.reduce(
       (result, character) => {
         if (!result.length || character.value === HTMLText.linebreak_character.value) {
-          result.push({value: [], decoration: Decoration.NONE});
+          result.push({value: [], decoration: DecorationValue.NONE});
         }
 
         this.appendCharacter(character, result[result.length - 1]);
@@ -434,7 +433,7 @@ export interface Character {
 
 interface Block {
   value: (string | Block)[];
-  decoration: Decoration;
+  decoration: DecorationValue;
 }
 
 interface HistoryElement {
@@ -442,4 +441,4 @@ interface HistoryElement {
   text: Character[];
 }
 
-type DecorationList = [Decoration, string[]][]
+type DecorationList = [DecorationValue, string[]][]

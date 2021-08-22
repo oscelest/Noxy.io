@@ -6,8 +6,10 @@ import TextBlock from "../Block/TextBlock";
 import Conditional from "./Conditional";
 import Button from "../Form/Button";
 import IconType from "../../enums/IconType";
-import HTMLText from "../../classes/HTMLText";
 import {v4} from "uuid";
+import PageBlockType from "../../../common/enums/PageBlockType";
+import TableBlock from "../Block/TableBlock";
+import {Character} from "../../classes/Character";
 
 export default class PageExplorer extends Component<PageExplorerProps, State> {
 
@@ -17,6 +19,10 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
       edit: true,
     };
   }
+
+  private readonly addBlock = (block: PageBlockEntity) => {
+    this.props.onChange(new PageEntity({...this.props.entity, page_block_list: [...this.props.entity.page_block_list, block]}));
+  };
 
   public render() {
     const readonly = this.props.readonly ?? true;
@@ -38,29 +44,53 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
 
         <Conditional condition={this.state.edit}>
           <div className={Style.Append}>
-            <Button icon={IconType.UI_ADD} onClick={this.eventPageBlockAdd}/>
+            <Button icon={IconType.FONT} onClick={this.eventTextBlockAdd}/>
+            <Button icon={IconType.TABLE} onClick={this.eventTableBlockAdd}/>
           </div>
         </Conditional>
       </div>
     );
   }
 
-  private readonly renderPageBlock = (block: PageBlockEntity<any>, key: number = 0) => {
-    return (
-      <TextBlock key={key} block={block} readonly={!this.state.edit} onChange={this.eventPageBlockChange}/>
-    );
+  private readonly renderPageBlock = (block: PageBlockEntity<PageBlockType>, key: number = 0) => {
+    switch (block.type) {
+      case PageBlockType.TEXT:
+        return <TextBlock key={key} block={block as PageBlockEntity<PageBlockType.TEXT>} readonly={!this.state.edit} onChange={this.eventPageBlockChange}/>;
+      case PageBlockType.HEADER:
+        return null;
+      case PageBlockType.TABLE:
+        return <TableBlock key={key} block={block as PageBlockEntity<PageBlockType.TABLE>} readonly={!this.state.edit} onChange={this.eventPageBlockChange}/>;
+      case PageBlockType.UNKNOWN:
+        return null;
+    }
   };
 
   private readonly eventEditModeClick = () => {
     this.setState({edit: !this.state.edit});
   };
 
-  private readonly eventPageBlockAdd = () => {
-    this.props.onChange(new PageEntity({...this.props.entity, page_block_list: [...this.props.entity.page_block_list, new PageBlockEntity({id: v4(), content: new HTMLText("Test")})]}));
+  private readonly eventTextBlockAdd = () => {
+    this.addBlock(new PageBlockEntity({id: v4(), type: PageBlockType.TEXT, content: [new Character("Test")]}));
   };
 
-  private readonly eventPageBlockChange = (block: PageBlockEntity) => {
+  private readonly eventTableBlockAdd = () => {
+    this.addBlock(new PageBlockEntity({
+      id:      v4(),
+      type:    PageBlockType.TABLE,
+      content: [
+        [
+          [new Character("T")],
+          [new Character("E")],
+        ],
+        [
+          [new Character("S")],
+          [new Character("T")],
+        ],
+      ],
+    }));
+  };
 
+  private readonly eventPageBlockChange = (block: PageBlockEntity<PageBlockType>) => {
     const index = this.props.entity.page_block_list.findIndex((value) => value.getPrimaryID() === block.getPrimaryID());
     const offset = index < 0 ? this.props.entity.page_block_list.length : index;
     const page_block_list = [...this.props.entity.page_block_list.slice(0, offset), block, ...this.props.entity.page_block_list.slice(offset + 1)];

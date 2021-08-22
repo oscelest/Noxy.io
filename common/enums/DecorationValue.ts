@@ -1,4 +1,4 @@
-enum Decoration {
+enum DecorationValue {
   NONE          = 0b000000,
   CODE          = 0b000001,
   BOLD          = 0b000010,
@@ -8,4 +8,4 @@ enum Decoration {
   MARK          = 0b100000,
 }
 
-export default Decoration;
+export default DecorationValue;

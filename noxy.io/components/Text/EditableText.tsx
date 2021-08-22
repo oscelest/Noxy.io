@@ -2,7 +2,7 @@ import Component from "../Application/Component";
 import React from "react";
 import HTMLText, {FixedSelection, FlexibleSelection} from "../../classes/HTMLText";
 import Helper from "../../Helper";
-import Decoration from "../../../common/enums/Decoration";
+import DecorationValue from "../../../common/enums/DecorationValue";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 import Style from "./EditableText.module.scss";
 
@@ -23,11 +23,11 @@ export default class EditableText extends Component<EditableTextProps, State> {
     this.props.onChange(this.props.text.undo());
   }
 
-  public decorate(decoration: Decoration | Decoration[], selection?: FixedSelection | FlexibleSelection) {
+  public decorate(decoration: DecorationValue | DecorationValue[], selection?: FixedSelection | FlexibleSelection) {
     this.props.onChange(this.props.text.changeDecoration(decoration, selection));
   }
 
-  public insertNewLine(decoration?: Decoration | Decoration[], selection?: FixedSelection | FlexibleSelection) {
+  public insertNewLine(decoration?: DecorationValue | DecorationValue[], selection?: FixedSelection | FlexibleSelection) {
     this.props.onChange(this.props.text.insertNewLine(decoration, selection));
   };
 
@@ -208,11 +208,11 @@ export default class EditableText extends Component<EditableTextProps, State> {
       case KeyboardCommand.UNDO_ALT:
         return this.undo();
       case KeyboardCommand.BOLD_TEXT:
-        return this.decorate(Decoration.BOLD);
+        return this.decorate(DecorationValue.BOLD);
       case KeyboardCommand.ITALIC_TEXT:
-        return this.decorate(Decoration.ITALIC);
+        return this.decorate(DecorationValue.ITALIC);
       case KeyboardCommand.UNDERLINE_TEXT:
-        return this.decorate(Decoration.UNDERLINE);
+        return this.decorate(DecorationValue.UNDERLINE);
     }
 
     return true;

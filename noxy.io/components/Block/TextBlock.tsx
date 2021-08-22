@@ -1,9 +1,9 @@
 import Component from "../Application/Component";
-import HTMLText from "../../classes/HTMLText";
-import Conditional from "../Application/Conditional";
-import EditableText from "../Text/EditableText";
 import Style from "./TextBlock.module.scss";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
+import PageBlockType from "../../../common/enums/PageBlockType";
+import {Character} from "../../classes/Character";
+import EditText from "../Text/EditText";
 
 export default class TextBlock extends Component<TextBlockProps, State> {
 
@@ -16,37 +16,31 @@ export default class TextBlock extends Component<TextBlockProps, State> {
 
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
-    if (this.props.readonly) classes.push(Style.Readonly);
 
     return (
       <div className={classes.join(" ")}>
-        <Conditional condition={readonly}>
-          {this.props.block.content.toReactElementList()}
-        </Conditional>
-        <Conditional condition={!readonly}>
-          <EditableText text={this.props.block.content} onChange={this.eventChange} onSubmit={this.eventSubmit}/>
-        </Conditional>
+        <EditText readonly={readonly} onChange={this.eventChange} onSubmit={this.eventSubmit}>{this.props.block.content}</EditText>
       </div>
     );
   }
 
-  private readonly eventChange = (content: HTMLText) => {
-    this.props.onChange(new PageBlockEntity<HTMLText>({...this.props.block, content}));
+  private readonly eventChange = (content: Character[]) => {
+    this.props.onChange(new PageBlockEntity<PageBlockType.TEXT>({...this.props.block, content}));
   };
 
-  private readonly eventSubmit = (content: HTMLText) => {
-    this.props.onSubmit?.(new PageBlockEntity<HTMLText>({...this.props.block, content}));
+  private readonly eventSubmit = (content: Character[]) => {
+    this.props.onSubmit?.(new PageBlockEntity<PageBlockType.TEXT>({...this.props.block, content}));
   };
 
 }
 
 export interface TextBlockProps {
-  block: PageBlockEntity<HTMLText>;
+  block: PageBlockEntity<PageBlockType.TEXT>;
   readonly?: boolean;
   className?: string;
 
-  onChange(block: PageBlockEntity<HTMLText>): void;
-  onSubmit?(block: PageBlockEntity<HTMLText>): void;
+  onChange(block: PageBlockEntity<PageBlockType.TEXT>): void;
+  onSubmit?(block: PageBlockEntity<PageBlockType.TEXT>): void;
 }
 
 interface State {

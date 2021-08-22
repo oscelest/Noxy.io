@@ -39,6 +39,7 @@ enum IconType {
 
   SAVE           = "\uee00",
   STRIKE_THROUGH = "\uee02",
+  TABLE          = "\uee06",
   TEXT_HEIGHT    = "\uee07",
   UNDERLINE      = "\uee0a",
   ATTACHMENT     = "\ueea7",

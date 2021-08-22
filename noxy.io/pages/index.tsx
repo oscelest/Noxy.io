@@ -3,6 +3,10 @@ import Component from "../components/Application/Component";
 import React from "react";
 import PageExplorer from "../components/Application/PageExplorer";
 import PageEntity from "../entities/Page/PageEntity";
+import PageBlockEntity from "../entities/Page/PageBlockEntity";
+import {v4} from "uuid";
+import PageBlockType from "../../common/enums/PageBlockType";
+import {Character} from "../classes/Character";
 
 // noinspection JSUnusedGlobalSymbols
 export default class IndexPage extends Component<PageProps, State> {
@@ -15,7 +19,76 @@ export default class IndexPage extends Component<PageProps, State> {
     super(props);
 
     this.state = {
-      page: new PageEntity(),
+      page: new PageEntity({
+        page_block_list: [
+          new PageBlockEntity({
+            id:      v4(),
+            type:    PageBlockType.TEXT,
+            content: [
+              new Character("T"),
+              new Character("E"),
+              new Character("S"),
+              new Character("T"),
+
+              new Character(" "),
+
+              new Character("B", {bold: true}),
+              new Character("O", {bold: true}),
+              new Character("L", {bold: true}),
+              new Character("D", {bold: true}),
+
+              new Character(" ", {bold: true}),
+
+              new Character("I", {italic: true, bold: true}),
+              new Character("T", {italic: true, bold: true}),
+              new Character("A", {italic: true, bold: true}),
+              new Character("L", {italic: true, bold: true}),
+              new Character("I", {italic: true, bold: true}),
+              new Character("C", {italic: true, bold: true}),
+              new Character("B", {italic: true, bold: true}),
+              new Character("O", {italic: true, bold: true}),
+              new Character("L", {italic: true, bold: true}),
+              new Character("D", {italic: true, bold: true}),
+
+              new Character(" ", {italic: true}),
+
+              new Character("I", {italic: true}),
+              new Character("T", {italic: true}),
+              new Character("A", {italic: true}),
+              new Character("L", {italic: true}),
+              new Character("I", {italic: true}),
+              new Character("C", {italic: true}),
+
+              new Character(" ", {italic: true}),
+
+              new Character("I", {italic: true, code: true}),
+              new Character("T", {italic: true, code: true}),
+              new Character("A", {italic: true, code: true}),
+              new Character("L", {italic: true, code: true}),
+              new Character("I", {italic: true, code: true}),
+              new Character("C", {italic: true, code: true}),
+              new Character("C", {italic: true, code: true}),
+              new Character("O", {italic: true, code: true}),
+              new Character("D", {italic: true, code: true}),
+              new Character("E", {italic: true, code: true}),
+
+              new Character(" ", {code: true}),
+
+              new Character("C", {code: true}),
+              new Character("O", {code: true}),
+              new Character("D", {code: true}),
+              new Character("E", {code: true}),
+
+              new Character(" "),
+
+              new Character("T"),
+              new Character("E"),
+              new Character("S"),
+              new Character("T"),
+            ],
+          }),
+        ],
+      }),
     };
   }
 

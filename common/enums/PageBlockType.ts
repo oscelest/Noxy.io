@@ -1,6 +1,7 @@
 enum PageBlockType {
-  TEXT   = "text",
-  HEADER = "header",
+  TEXT    = "text",
+  HEADER  = "header",
+  TABLE   = "table",
   UNKNOWN = "unknown",
 }
 
