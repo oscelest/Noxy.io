@@ -1,12 +1,12 @@
+import {v4} from "uuid";
 import {NextPageContext} from "next";
-import Component from "../components/Application/Component";
 import React from "react";
+import Character from "../classes/Character";
+import Component from "../components/Application/Component";
 import PageExplorer from "../components/Application/PageExplorer";
 import PageEntity from "../entities/Page/PageEntity";
 import PageBlockEntity from "../entities/Page/PageBlockEntity";
-import {v4} from "uuid";
 import PageBlockType from "../../common/enums/PageBlockType";
-import {Character} from "../classes/Character";
 
 // noinspection JSUnusedGlobalSymbols
 export default class IndexPage extends Component<PageProps, State> {
@@ -30,7 +30,8 @@ export default class IndexPage extends Component<PageProps, State> {
               new Character("S"),
               new Character("T"),
 
-              new Character(" "),
+              new Character("\n"),
+              new Character("\n"),
 
               new Character("B", {bold: true}),
               new Character("O", {bold: true}),
@@ -52,12 +53,12 @@ export default class IndexPage extends Component<PageProps, State> {
 
               new Character(" ", {italic: true}),
 
-              new Character("I", {italic: true}),
-              new Character("T", {italic: true}),
-              new Character("A", {italic: true}),
-              new Character("L", {italic: true}),
-              new Character("I", {italic: true}),
-              new Character("C", {italic: true}),
+              new Character("I", {italic: true, font_size: "22px"}),
+              new Character("T", {italic: true, font_size: "22px"}),
+              new Character("A", {italic: true, font_size: "22px"}),
+              new Character("L", {italic: true, font_size: "22px"}),
+              new Character("I", {italic: true, font_size: "22px"}),
+              new Character("C", {italic: true, font_size: "22px"}),
 
               new Character(" ", {italic: true}),
 
@@ -79,7 +80,8 @@ export default class IndexPage extends Component<PageProps, State> {
               new Character("D", {code: true}),
               new Character("E", {code: true}),
 
-              new Character(" "),
+              new Character("\n"),
+              new Character("\n"),
 
               new Character("T"),
               new Character("E"),

@@ -30,7 +30,10 @@ enum KeyboardCommand {
 
   BOLD_TEXT            = "Ctrl+KeyB",
   ITALIC_TEXT          = "Ctrl+KeyI",
-  UNDERLINE_TEXT       = "Ctrl+KeyU"
+  UNDERLINE_TEXT       = "Ctrl+KeyU",
+  MARK_TEXT            = "Ctrl+KeyH",
+  STRIKETHROUGH_TEXT   = "Ctrl+KeyD",
+  CODE_TEXT            = "Ctrl+KeyM",
 }
 
 export default KeyboardCommand;

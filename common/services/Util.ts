@@ -5,6 +5,10 @@ const characters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
 
 namespace Util {
 
+  export function getProperties<O extends object>(object: O): (keyof O)[] {
+    return Object.getOwnPropertyNames(object) as (keyof O)[];
+  }
+
   export function n2b(number: number) {
     if (number < 0 || isNaN(number) || number === Number.POSITIVE_INFINITY) throw "The input is not valid";
 

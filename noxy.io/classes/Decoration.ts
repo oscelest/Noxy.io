@@ -1,4 +1,4 @@
-export class Decoration {
+export default class Decoration {
 
   public bold: boolean;
   public code: boolean;
@@ -23,32 +23,28 @@ export class Decoration {
     this.font_family = initializer.font_family ?? "";
     this.color = initializer.color ?? "";
     this.background_color = initializer.background_color ?? "";
-
-    // this.bold = !!((initializer?.bold || 0) & DecorationValue.BOLD);
-    // this.code = !!(decoration & DecorationValue.CODE);
-    // this.mark = !!(decoration & DecorationValue.MARK);
-    // this.italic = !!(decoration & DecorationValue.ITALIC);
-    // this.underline = !!(decoration & DecorationValue.UNDERLINE);
-    // this.strikethrough = !!(decoration & DecorationValue.STRIKETHROUGH);
-    // this.font_size = font_size ?? 0;
-    // this.font_family = font_style ?? "";
-    // this.color = color ?? "";
-    // this.background_color = background_color ?? "";
   }
 
   public equals(decoration: Decoration) {
     return Object.keys(this).every(key => this[key as keyof Decoration] === decoration[key as keyof Decoration]);
   }
 
-  public toJSON() {
-    // const json = [0, this.font_size];
-    // if (this.bold) json[0] += DecorationValue.BOLD;
-    // if (this.code) json[0] += DecorationValue.CODE;
-    // if (this.mark) json[0] += DecorationValue.MARK;
-    // if (this.italic) json[0] += DecorationValue.ITALIC;
-    // if (this.underline) json[0] += DecorationValue.UNDERLINE;
-    // if (this.strikethrough) json[0] += DecorationValue.STRIKETHROUGH;
-    // return JSON.stringify(json);
+  public static parseHTML(node: Node, decoration: Decoration = new Decoration()) {
+    if (node instanceof HTMLElement) {
+      if (node.tagName === "B") decoration.bold = true;
+      if (node.tagName === "I") decoration.italic = true;
+      if (node.tagName === "U") decoration.underline = true;
+      if (node.tagName === "S") decoration.strikethrough = true;
+      if (node.tagName === "CODE") decoration.code = true;
+      if (node.tagName === "MARK") decoration.mark = true;
+
+      const {fontSize, fontFamily, color, backgroundColor} = node.style;
+      decoration.font_size = fontSize;
+      decoration.font_family = fontFamily;
+      decoration.color = color;
+      decoration.background_color = backgroundColor;
+    }
+    return decoration;
   }
 
 }
