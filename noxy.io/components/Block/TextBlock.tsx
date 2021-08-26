@@ -2,8 +2,8 @@ import Component from "../Application/Component";
 import Style from "./TextBlock.module.scss";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import PageBlockType from "../../../common/enums/PageBlockType";
-import {Character} from "../../classes/Character";
 import EditText from "../Text/EditText";
+import RichText from "../../classes/RichText";
 
 export default class TextBlock extends Component<TextBlockProps, State> {
 
@@ -24,11 +24,11 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     );
   }
 
-  private readonly eventChange = (content: Character[]) => {
+  private readonly eventChange = (content: RichText) => {
     this.props.onChange(new PageBlockEntity<PageBlockType.TEXT>({...this.props.block, content}));
   };
 
-  private readonly eventSubmit = (content: Character[]) => {
+  private readonly eventSubmit = (content: RichText) => {
     this.props.onSubmit?.(new PageBlockEntity<PageBlockType.TEXT>({...this.props.block, content}));
   };
 

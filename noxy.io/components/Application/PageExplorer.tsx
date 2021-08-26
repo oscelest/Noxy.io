@@ -9,7 +9,8 @@ import IconType from "../../enums/IconType";
 import {v4} from "uuid";
 import PageBlockType from "../../../common/enums/PageBlockType";
 import TableBlock from "../Block/TableBlock";
-import {Character} from "../../classes/Character";
+import Character from "../../classes/Character";
+import RichText from "../../classes/RichText";
 
 export default class PageExplorer extends Component<PageExplorerProps, State> {
 
@@ -70,7 +71,11 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
 
   private readonly eventTextBlockAdd = () => {
-    this.addBlock(new PageBlockEntity({id: v4(), type: PageBlockType.TEXT, content: [new Character("Test")]}));
+    this.addBlock(new PageBlockEntity({
+      id:      v4(),
+      type:    PageBlockType.TEXT,
+      content: new RichText([new Character("T"), new Character("E"), new Character("S"), new Character("T")]),
+    }));
   };
 
   private readonly eventTableBlockAdd = () => {
@@ -79,12 +84,12 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
       type:    PageBlockType.TABLE,
       content: [
         [
-          [new Character("T")],
-          [new Character("E")],
+          new RichText([new Character("T")]),
+          new RichText([new Character("E")]),
         ],
         [
-          [new Character("S")],
-          [new Character("T")],
+          new RichText([new Character("S")]),
+          new RichText([new Character("T")]),
         ],
       ],
     }));
