@@ -3,7 +3,7 @@ import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import Style from "./TableBlock.module.scss";
 import PageBlockType from "../../../common/enums/PageBlockType";
 import EditText from "../Text/EditText";
-import {Character} from "../../classes/Character";
+import RichText from "../../classes/RichText";
 
 export default class TableBlock extends Component<TableBlockProps, State> {
 
@@ -11,10 +11,10 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     super(props);
   }
 
-  private findText = (text: Character[]) => {
+  private findText = (text: RichText) => {
     for (let row = 0; row < this.props.block.content.length; row++) {
       for (let column = 0; column < this.props.block.content[row].length; column++) {
-        if (text === this.props.block.content[row][column]) return [row, column];
+        if (text.id === this.props.block.content[row][column].id) return [row, column];
       }
     }
     throw "Text not found.";
@@ -37,7 +37,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     );
   }
 
-  private readonly renderRow = (row: Character[][], key: number = 0) => {
+  private readonly renderRow = (row: RichText[], key: number = 0) => {
     return (
       <tr key={key}>
         {row.map(this.renderColumn)}
@@ -45,7 +45,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     );
   };
 
-  private readonly renderColumn = (column: Character[], key: number = 0) => {
+  private readonly renderColumn = (column: RichText, key: number = 0) => {
     const readonly = this.props.readonly ?? true;
 
     return (
@@ -55,7 +55,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     );
   };
 
-  private readonly eventChange = (new_text: Character[], old_text: Character[]) => {
+  private readonly eventChange = (new_text: RichText, old_text: RichText) => {
     const [row, column] = this.findText(old_text);
     const content = [...this.props.block.content];
     content[row] = [...this.props.block.content[row]];
@@ -63,12 +63,8 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     this.props.onChange(new PageBlockEntity<PageBlockType.TABLE>({...this.props.block, content: content}));
   };
 
-  private readonly eventSubmit = (new_text: Character[], old_text: Character[]) => {
-    const [row, column] = this.findText(old_text);
-    const content = [...this.props.block.content];
-    content[row] = [...this.props.block.content[row]];
-    content[row][column] = new_text;
-    this.props.onSubmit?.(new PageBlockEntity<PageBlockType.TABLE>({...this.props.block, content: content}));
+  private readonly eventSubmit = () => {
+    this.props.onSubmit?.(this.props.block);
   };
 
 }

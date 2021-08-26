@@ -7,6 +7,7 @@ import PageExplorer from "../components/Application/PageExplorer";
 import PageEntity from "../entities/Page/PageEntity";
 import PageBlockEntity from "../entities/Page/PageBlockEntity";
 import PageBlockType from "../../common/enums/PageBlockType";
+import RichText from "../classes/RichText";
 
 // noinspection JSUnusedGlobalSymbols
 export default class IndexPage extends Component<PageProps, State> {
@@ -24,7 +25,7 @@ export default class IndexPage extends Component<PageProps, State> {
           new PageBlockEntity({
             id:      v4(),
             type:    PageBlockType.TEXT,
-            content: [
+            content: new RichText([
               new Character("T"),
               new Character("E"),
               new Character("S"),
@@ -87,7 +88,7 @@ export default class IndexPage extends Component<PageProps, State> {
               new Character("E"),
               new Character("S"),
               new Character("T"),
-            ],
+            ]),
           }),
         ],
       }),

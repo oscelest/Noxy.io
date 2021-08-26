@@ -1,7 +1,7 @@
 import BaseEntity from "../../../common/classes/Entity/BaseEntity";
 import PageBlockType from "../../../common/enums/PageBlockType";
 import PageEntity from "./PageEntity";
-import {Character} from "../../classes/Character";
+import RichText from "../../classes/RichText";
 
 export default class PageBlockEntity<Type extends PageBlockType = PageBlockType> extends BaseEntity {
 
@@ -49,7 +49,7 @@ export default class PageBlockEntity<Type extends PageBlockType = PageBlockType>
   }
 }
 
-type Text = Character[];
+type Text = RichText;
 
 export interface PageBlockContentInput {
   [PageBlockType.UNKNOWN]: object;

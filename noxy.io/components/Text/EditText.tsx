@@ -7,6 +7,7 @@ import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
 import Util from "../../../common/services/Util";
 import ClipboardDataType from "../../../common/enums/ClipboardDataType";
+import RichText from "../../classes/RichText";
 
 export default class EditText extends Component<EditTextProps, State> {
 
@@ -15,40 +16,44 @@ export default class EditText extends Component<EditTextProps, State> {
   constructor(props: EditTextProps) {
     super(props);
     this.state = {
-      ref:       React.createRef(),
-      selection: [0, 0],
+      ref:          React.createRef(),
+      selection:    [0, 0],
+      redo_history: [],
+      undo_history: [],
     };
   }
 
   public readonly insert = (character: string, [start, end]: [number, number] = this.getSelection()) => {
     if (character.length !== 1) throw "Insert string must be a single character.";
-    const decoration = this.props.children[start - 1]?.decoration ?? new Decoration();
-    this.insertText(new Character(character, decoration), [start, end]);
-    this.setState({selection: [start + 1, start + 1]});
+    this.insertText(new Character(character, this.getText().getCharacterSafe(start - 1).decoration), [start, end]);
   };
 
   public readonly decorate = (decoration: Initializer<Decoration>, [start, end]: [number, number] = this.getSelection()) => {
     start = Math.min(start, end);
     end = Math.max(start, end);
-    const text = this.props.children.slice(Math.max(0, start), Math.min(end, this.props.children.length));
+
+    let text = this.getText().slice(start, end);
     const keys = Util.getProperties(decoration);
+
     for (let i = 0; i < keys.length; i++) {
-      Character.applyDecoration(text, keys[i], Character.hasDecoration(text, keys[i]) ? undefined : decoration[keys[i]]);
+      text = text.applyDecoration(keys[i], text.hasDecoration(keys[i]) ? undefined : decoration[keys[i]]);
     }
+
     this.insertText(text, [start, end]);
-    this.setState({selection: [start, end]});
   };
 
-  public readonly deleteForward = () => {
-    let [start, end] = this.getSelection();
-    if (start === end) end = Math.min(end + 1, this.props.children.length);
-    this.insertText([], [start, end]);
+  public readonly deleteForward = ([start, end]: [number, number] = this.getSelection()) => {
+    if (start === this.getText().length && end === this.getText().length) return;
+    if (start === end) end = Math.min(end + 1, this.getText().length);
+
+    this.insertText(new RichText(), [start, end]);
   };
 
-  public readonly deleteBackward = () => {
-    let [start, end] = this.getSelection();
+  public readonly deleteBackward = ([start, end]: [number, number] = this.getSelection()) => {
+    if (!start && !end) return;
     if (start === end) start = Math.max(0, start - 1);
-    this.insertText([], [start, end]);
+
+    this.insertText(new RichText(), [start, end]);
   };
 
   public readonly select = (start: number, end: number) => {
@@ -57,35 +62,65 @@ export default class EditText extends Component<EditTextProps, State> {
     getSelection()?.setBaseAndExtent(start_node.element, start_node.position, end_node.element, end_node.position);
   };
 
-  public deleteWordForward() {
-    let [start, end] = this.getSelection();
-    if (start !== end) return this.deleteForward();
+  public deleteWordForward([start, end]: [number, number] = this.getSelection()) {
+    if (start !== end || end === this.getText().length) return this.deleteBackward([start, end]);
 
-    let character = this.props.children[end]?.value;
-    if (!character) return;
+    end = this.findNext(/[^\p{Z}]/u, end);
+    end = this.findNext(this.getText().getCharacterSafe(end).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, end);
+    end = this.findNext(/[^\p{Z}]/u, end);
 
-    const regex = character.match(/[\p{L}\p{N}]/u) ? /[\p{L}\p{N}]/u : /[^\p{L}\p{N}\p{Z}]/u;
-    if (character.match(/\p{Z}/u)) while (this.props.children[end].value.match(/\p{Z}/u)) character = this.props.children[++end]?.value;
-
-    while (character?.match(regex)) character = this.props.children[++end]?.value
-    while (character?.match(/\p{Z}/u)) character = this.props.children[++end]?.value
-    this.insertText([], [start, end]);
+    this.insertText(new RichText(), [start, end]);
   }
 
-  public deleteWordBackward() {
-    let [start, end] = this.getSelection();
-    if (start !== end) return this.deleteBackward();
+  public deleteWordBackward([start, end]: [number, number] = this.getSelection()) {
+    if (start !== end || !start) return this.deleteBackward([start, end]);
 
-    let character = this.props.children[--start]?.value;
-    if (!character) return;
+    start = this.findPrevious(/[^\p{Z}]/u, start);
+    start = this.findPrevious(this.getText().getCharacterSafe(start).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, start);
+    start = this.findPrevious(/[^\p{Z}]/u, start);
 
-    const regex = character.match(/[\p{L}\p{N}]/u) ? /[\p{L}\p{N}]/u : /[^\p{L}\p{N}\p{Z}]/u;
-    if (character.match(/\p{Z}/u)) while (character?.match(/\p{Z}/u)) character = this.props.children[--start]?.value;
-
-    while (character?.match(regex)) character = this.props.children[--start]?.value;
-    while (character?.match(/\p{Z}/u)) character = this.props.children[--start]?.value;
-    this.insertText([], [start + 1, end]);
+    this.insertText(new RichText(), [start + 1, end]);
   }
+
+  public undo() {
+    const item = this.state.undo_history[this.state.undo_history.length - 1];
+    if (!item) return this;
+
+    this.props.onChange(item.text, this.props.children);
+    this.setState({
+      selection:    item.selection,
+      redo_history: [...this.state.redo_history, {text: this.props.children, selection: this.getSelection()}],
+      undo_history: this.state.undo_history.slice(0, this.state.undo_history.length - 1),
+    });
+  }
+
+  public redo() {
+    const item = this.state.redo_history[this.state.redo_history.length - 1];
+    if (!item) return this;
+
+    this.props.onChange(item.text, this.props.children);
+    this.setState({
+      selection:    item.selection,
+      redo_history: this.state.redo_history.slice(0, this.state.redo_history.length - 1),
+      undo_history: [...this.state.undo_history, {text: this.props.children, selection: this.getSelection()}],
+    });
+  }
+
+  private readonly insertText = (insert: Character | Character[] | RichText, selection: [number, number] = this.getSelection()) => {
+    const length = insert instanceof Character ? 1 : insert.length;
+    const text = this.getText().insert(insert, selection);
+
+    this.props.onChange(text, this.props.children);
+    this.setState({selection: [selection[0] + length, selection[1] + length], redo_history: [], undo_history: [...this.state.undo_history, {text: this.props.children, selection}]});
+  };
+
+  private readonly findNext = (regex: RegExp, position: number): number => {
+    return this.getText().getCharacter(position)?.value?.match(regex) ? position : this.findNext(regex, position + 1);
+  };
+
+  private readonly findPrevious = (regex: RegExp, position: number): number => {
+    return this.getText().getCharacter(--position).value?.match(regex) ? position : this.findPrevious(regex, position);
+  };
 
   private readonly appendHTMLNode = (node: Node, segment: Segment) => {
     node.appendChild(this.renderHTMLNode(segment));
@@ -93,12 +128,12 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 
   private readonly parseSelection = (selection?: [number, number]): [number, number] => {
-    if (!selection) return [0, this.getTextLength()];
+    if (!selection) return [0, this.getText().length];
     if (isNaN(+selection[0])) selection[0] = 0;
-    if (isNaN(+selection[1])) selection[1] = this.getTextLength();
+    if (isNaN(+selection[1])) selection[1] = this.getText().length;
 
     selection[0] = Math.max(Math.min(selection[0], selection[1]), 0);
-    selection[1] = Math.min(Math.max(selection[0], selection[1]), this.getTextLength());
+    selection[1] = Math.min(Math.max(selection[0], selection[1]), this.getText().length);
     return selection;
   };
 
@@ -115,7 +150,7 @@ export default class EditText extends Component<EditTextProps, State> {
     const focus_position = this.getPositionByNode(focus_node) + focus_offset;
     const anchor_position = this.getPositionByNode(anchor_node) + anchor_offset;
 
-    return [Math.min(focus_position, anchor_position), Math.max(focus_position, anchor_position)];
+    return [Math.max(0, Math.min(focus_position, anchor_position)), Math.min(Math.max(focus_position, anchor_position), this.props.children.length)];
   };
 
   private readonly getNodeByPosition = (position: number, parent: Node | null = this.state.ref.current): {position: number, element: Node} => {
@@ -153,19 +188,9 @@ export default class EditText extends Component<EditTextProps, State> {
     return node;
   };
 
-  private readonly insertText = (text: Character | Character[] = [], [start, end]: [number, number] = this.getSelection()) => {
-    text = Array.isArray(text) ? text : [text];
-    this.props.onChange([...this.props.children.slice(0, start), ...text, ...this.props.children.slice(end)], this.props.children);
-    this.setState({selection: [start + text.length, start + text.length]});
+  private readonly getText = () => {
+    return this.props.children;
   };
-
-  private readonly getTextLength = () => {
-    return this.props.children.length ?? 0;
-  };
-
-  public componentDidMount(): void {
-    // window.addEventListener("mouseup", this.eventMouseUp);
-  }
 
   public componentDidUpdate(prevProps: Readonly<EditTextProps>, prevState: Readonly<State>, snapshot?: any): void {
     if (prevState.selection !== this.state.selection || prevProps.children.length !== this.props.children.length) {
@@ -174,10 +199,6 @@ export default class EditText extends Component<EditTextProps, State> {
       const end_node = this.getNodeByPosition(end);
       getSelection()?.setBaseAndExtent(start_node.element, start_node.position, end_node.element, end_node.position);
     }
-  }
-
-  public componentWillUnmount(): void {
-    // window.removeEventListener("mouseup", this.eventMouseUp);
   }
 
   public render() {
@@ -193,7 +214,7 @@ export default class EditText extends Component<EditTextProps, State> {
   }
 
   private readonly renderReactElementList = (selection?: [number, number]) => {
-    const lines = Character.getLines(this.props.children.slice(...this.parseSelection(selection)));
+    const lines = this.getText().slice(...this.parseSelection(selection)).getLines();
     const result = [] as React.ReactNode[];
 
     for (let i = 0; i < lines.length; i++) {
@@ -223,7 +244,7 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 
   public readonly renderHTML = (selection?: [number, number]) => {
-    const lines = Character.getLines(this.props.children.slice(...this.parseSelection(selection)));
+    const lines = this.getText().slice(...this.parseSelection(selection)).getLines();
     const container = document.createElement("div");
 
     for (let i = 0; i < lines.length; i++) {
@@ -287,12 +308,12 @@ export default class EditText extends Component<EditTextProps, State> {
         return this.deleteBackward();
       case KeyboardCommand.DELETE_WORD_BACKWARD:
         return this.deleteWordBackward();
-      // case KeyboardCommand.REDO:
-      // case KeyboardCommand.REDO_ALT:
-      //   return this.redo();
-      // case KeyboardCommand.UNDO:
-      // case KeyboardCommand.UNDO_ALT:
-      //   return this.undo();
+      case KeyboardCommand.REDO:
+      case KeyboardCommand.REDO_ALT:
+        return this.redo();
+      case KeyboardCommand.UNDO:
+      case KeyboardCommand.UNDO_ALT:
+        return this.undo();
       case KeyboardCommand.BOLD_TEXT:
         return this.decorate({bold: true});
       case KeyboardCommand.ITALIC_TEXT:
@@ -320,7 +341,7 @@ export default class EditText extends Component<EditTextProps, State> {
     event.preventDefault();
     event.clipboardData.setData("text/plain", this.renderHTML(this.getSelection()).textContent ?? "");
     event.clipboardData.setData("text/html", this.renderHTML(this.getSelection()).innerHTML);
-    this.insertText([]);
+    this.insertText(new RichText());
   };
 
   private readonly eventPaste = async (event: React.ClipboardEvent) => {
@@ -330,7 +351,7 @@ export default class EditText extends Component<EditTextProps, State> {
       const html = event.clipboardData.getData(ClipboardDataType.TEXT_HTML).match(/<!--StartFragment-->(?<html>.*)<!--EndFragment-->/);
       if (html?.groups?.html) {
         this.template.innerHTML = html.groups.html;
-        return this.insertText(Character.parseHTML(this.template.content));
+        return this.insertText(RichText.parseHTML(this.template.content));
       }
     }
 
@@ -347,16 +368,18 @@ interface Segment {
 
 export interface EditTextProps {
   id?: string;
-  children: Character[];
+  children: RichText;
 
   className?: string;
   readonly?: boolean;
 
-  onChange(new_text: Character[], old_text: Character[]): void;
-  onSubmit?(text: Character[]): void;
+  onChange(new_text: RichText, old_text: RichText): void;
+  onSubmit?(text: RichText): void;
 }
 
 interface State {
   ref: React.RefObject<HTMLDivElement>;
   selection: [number, number];
+  undo_history: {text: RichText, selection: [number, number]}[];
+  redo_history: {text: RichText, selection: [number, number]}[];
 }
