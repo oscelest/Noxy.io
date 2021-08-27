@@ -39,7 +39,7 @@ export default class EditText extends Component<EditTextProps, State> {
       text = text.applyDecoration(keys[i], text.hasDecoration(keys[i]) ? undefined : decoration[keys[i]]);
     }
 
-    this.insertText(text, [start, end]);
+    this.insertText(text, [start, end], false);
   };
 
   public readonly deleteForward = ([start, end]: [number, number] = this.getSelection()) => {
@@ -106,12 +106,13 @@ export default class EditText extends Component<EditTextProps, State> {
     });
   }
 
-  private readonly insertText = (insert: Character | Character[] | RichText, selection: [number, number] = this.getSelection()) => {
+  private readonly insertText = (insert: Character | Character[] | RichText, selection: [number, number] = this.getSelection(), clear_selection = true) => {
     const length = insert instanceof Character ? 1 : insert.length;
     const text = this.getText().insert(insert, selection);
+    const next_selection = clear_selection ? [selection[0] + length, selection[0] + length] as [number, number] : selection;
 
     this.props.onChange(text, this.props.children);
-    this.setState({selection: [selection[0] + length, selection[1] + length], redo_history: [], undo_history: [...this.state.undo_history, {text: this.props.children, selection}]});
+    this.setState({selection: next_selection, redo_history: [], undo_history: [...this.state.undo_history, {text: this.props.children, selection}]});
   };
 
   private readonly findNext = (regex: RegExp, position: number): number => {
