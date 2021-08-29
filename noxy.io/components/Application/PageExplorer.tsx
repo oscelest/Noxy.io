@@ -46,23 +46,29 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     }
   };
   
+  private readonly isReadonly = () => {
+    return this.props.readonly ?? true;
+  }
+  
   public render() {
-    const readonly = this.props.readonly ?? true;
-    
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
     
     return (
       <div className={classes.join(" ")}>
         <div className={Style.Toolbar}>
-          <Conditional condition={readonly}>
-            <Button className={Style.ButtonEdit} icon={this.state.edit ? IconType.FILE_DOCUMENT : IconType.EDIT} onClick={this.eventEditModeClick}/>
-            <Button value={PageExplorer.BoldDecoration} icon={IconType.BOLD} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-            <Button value={PageExplorer.ItalicDecoration} icon={IconType.ITALIC} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-            <Button value={PageExplorer.StrikethroughDecoration} icon={IconType.STRIKE_THROUGH} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-            <Button value={PageExplorer.UnderlineDecoration} icon={IconType.UNDERLINE} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-            <Button value={PageExplorer.CodeDecoration} icon={IconType.CODE_ALT} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-            <Button value={PageExplorer.MarkDecoration} icon={IconType.MARKER} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+          <Conditional condition={this.isReadonly()}>
+            <div className={Style.Left}>
+              <Button value={PageExplorer.BoldDecoration} icon={IconType.BOLD} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+              <Button value={PageExplorer.ItalicDecoration} icon={IconType.ITALIC} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+              <Button value={PageExplorer.StrikethroughDecoration} icon={IconType.STRIKE_THROUGH} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+              <Button value={PageExplorer.UnderlineDecoration} icon={IconType.UNDERLINE} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+              <Button value={PageExplorer.CodeDecoration} icon={IconType.CODE_ALT} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+              <Button value={PageExplorer.MarkDecoration} icon={IconType.MARKER} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+            </div>
+            <div className={Style.Right}>
+              <Button className={Style.ButtonEdit} icon={this.state.edit ? IconType.FILE_DOCUMENT : IconType.EDIT} onClick={this.eventEditModeClick}/>
+            </div>
           </Conditional>
         </div>
         
@@ -71,10 +77,10 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
         </div>
         
         <Conditional condition={this.state.edit}>
-          <div className={Style.Append}>
-            <Button value={PageBlockType.TEXT} icon={IconType.FONT} onClick={this.eventBlockAddClick}/>
-            <Button value={PageBlockType.TABLE} icon={IconType.TABLE} onClick={this.eventBlockAddClick}/>
-            <Button value={PageBlockType.HEADER} icon={IconType.HEADING} onClick={this.eventBlockAddClick}/>
+          <div className={Style.BlockBar}>
+            <Button value={PageBlockType.TEXT} icon={IconType.PLUS} onClick={this.eventBlockAddClick}>Text</Button>
+            <Button value={PageBlockType.TABLE} icon={IconType.PLUS} onClick={this.eventBlockAddClick}>Table</Button>
+            <Button value={PageBlockType.HEADER} icon={IconType.PLUS} onClick={this.eventBlockAddClick}>Header</Button>
           </div>
         </Conditional>
       </div>
@@ -84,12 +90,15 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   private readonly renderBlock = (block: PageBlockEntity<PageBlockType>, key: number = 0) => {
     return (
       <div key={key} className={Style.Block}>
+        <Conditional condition={this.state.edit}>
+          <div className={Style.BlockHandle}/>
+        </Conditional>
         {this.renderPageBlock(block)}
-        <div className={Style.BlockActionList}>
-          <Button value={key} icon={IconType.CARET_UP} disabled={key === 0} onClick={this.eventBlockUpClick}/>
-          <Button value={key} icon={IconType.CLOSE}/>
-          <Button value={key} icon={IconType.CARET_DOWN} disabled={key === this.props.entity.page_block_list.length - 1} onClick={this.eventBlockDownClick}/>
-        </div>
+        <Conditional condition={this.state.edit}>
+          <div className={Style.BlockActionList}>
+            <Button value={key} icon={IconType.CLOSE}/>
+          </div>
+        </Conditional>
       </div>
     );
   };
@@ -101,7 +110,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
       ref:       this.state.focus?.id === block.id ? this.state.ref : null,
       readonly:  !this.state.edit,
       className: Style.PageBlock,
-      onBlur:    this.eventPageBlockBlur,
       onFocus:   this.eventPageBlockFocus,
       onChange:  this.eventPageBlockChange,
       onSubmit:  this.eventPageBlockSubmit,
@@ -126,41 +134,37 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.addBlock(this.getBlockComponent(type).create());
   };
   
-  private readonly eventBlockDownClick = (key: number) => {
-    if (key === this.props.entity.page_block_list.length - 1) return;
-    
-    this.props.onChange(
-      new PageEntity({
-        ...this.props.entity,
-        page_block_list: [
-          ...this.props.entity.page_block_list.slice(0, key),
-          this.props.entity.page_block_list[key + 1],
-          this.props.entity.page_block_list[key],
-          ...this.props.entity.page_block_list.slice(key + 2),
-        ],
-      }),
-    );
-  };
-  
-  private readonly eventBlockUpClick = (key: number) => {
-    if (0 === this.props.entity.page_block_list.length - 1) return;
-    
-    this.props.onChange(
-      new PageEntity({
-        ...this.props.entity,
-        page_block_list: [
-          ...this.props.entity.page_block_list.slice(0, key - 1),
-          this.props.entity.page_block_list[key],
-          this.props.entity.page_block_list[key - 1],
-          ...this.props.entity.page_block_list.slice(key + 1),
-        ],
-      }),
-    );
-  };
-  
-  private readonly eventPageBlockBlur = () => {
-    this.setState({focus: undefined});
-  };
+  // private readonly eventBlockDownClick = (key: number) => {
+  //   if (key === this.props.entity.page_block_list.length - 1) return;
+  //
+  //   this.props.onChange(
+  //     new PageEntity({
+  //       ...this.props.entity,
+  //       page_block_list: [
+  //         ...this.props.entity.page_block_list.slice(0, key),
+  //         this.props.entity.page_block_list[key + 1],
+  //         this.props.entity.page_block_list[key],
+  //         ...this.props.entity.page_block_list.slice(key + 2),
+  //       ],
+  //     }),
+  //   );
+  // };
+  //
+  // private readonly eventBlockUpClick = (key: number) => {
+  //   if (0 === this.props.entity.page_block_list.length - 1) return;
+  //
+  //   this.props.onChange(
+  //     new PageEntity({
+  //       ...this.props.entity,
+  //       page_block_list: [
+  //         ...this.props.entity.page_block_list.slice(0, key - 1),
+  //         this.props.entity.page_block_list[key],
+  //         this.props.entity.page_block_list[key - 1],
+  //         ...this.props.entity.page_block_list.slice(key + 1),
+  //       ],
+  //     }),
+  //   );
+  // };
   
   private readonly eventPageBlockFocus = (focus: PageBlockEntity<PageBlockType>) => {
     this.setState({focus});

@@ -1,6 +1,13 @@
 .Component {
   display: block;
+  width: 100%;
   outline: none;
+
+  &:not(.Readonly):empty:before {
+    content: "...";
+    cursor: text;
+    color: rgb(255 255 255 / 50%);
+  }
 
   div {
     display: block;

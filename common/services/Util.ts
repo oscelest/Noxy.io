@@ -5,6 +5,10 @@ const characters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
 
 namespace Util {
 
+  export function clamp(value: number, max: number, min: number = 0)  {
+    return Math.min(Math.max(value, min), max);
+  }
+  
   export function getProperties<O extends object>(object: O): (keyof O)[] {
     return Object.getOwnPropertyNames(object) as (keyof O)[];
   }

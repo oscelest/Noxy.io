@@ -1,10 +1,10 @@
 import {NextPageContext} from "next";
 import React from "react";
+import Component from "../components/Application/Component";
+import Conditional from "../components/Application/Conditional";
 import PasswordResetConfirmForm from "../forms/PasswordResetConfirmForm";
 import PasswordResetRequestForm from "../forms/PasswordResetRequestForm";
 import Style from "./reset.module.scss";
-import Component from "../components/Application/Component";
-import Conditional from "../components/Application/Conditional";
 
 // noinspection JSUnusedGlobalSymbols
 export default class ResetPage extends Component<ResetPageProps, State> {
@@ -21,7 +21,6 @@ export default class ResetPage extends Component<ResetPageProps, State> {
   constructor(props: ResetPageProps) {
     super(props);
   }
-
 
   public render() {
     return (

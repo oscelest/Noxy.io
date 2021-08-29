@@ -202,11 +202,13 @@ export default class EditText extends Component<EditTextProps, State> {
   }
   
   public render() {
+    const readonly = this.props.readonly ?? true;
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
+    if (this.props.readonly ?? true) classes.push(Style.Readonly)
     
     return (
-      <div ref={this.state.ref} className={classes.join(" ")} contentEditable={true} suppressContentEditableWarning={true}
+      <div ref={this.state.ref} className={classes.join(" ")} contentEditable={!readonly} suppressContentEditableWarning={!readonly}
            onBlur={this.eventBlur}           onFocus={this.eventFocus}
            onCopy={this.eventCopy} onPaste={this.eventPaste} onCut={this.eventCut} onKeyDown={this.eventKeyDown} onKeyPress={this.eventKeyPress}>
         {this.renderReactElementList()}

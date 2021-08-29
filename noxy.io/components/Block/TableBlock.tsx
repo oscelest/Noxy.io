@@ -3,8 +3,10 @@ import PageBlockType from "../../../common/enums/PageBlockType";
 import Decoration from "../../classes/Decoration";
 import RichText from "../../classes/RichText";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
+import IconType from "../../enums/IconType";
 import Component from "../Application/Component";
 import {DefaultBlockProps, PageBlockInterface} from "../Application/PageExplorer";
+import Button from "../Form/Button";
 import EditText from "../Text/EditText";
 import Style from "./TableBlock.module.scss";
 
@@ -18,7 +20,7 @@ export default class TableBlock extends Component<TableBlockProps, State> implem
     return new PageBlockEntity({
       id:      v4(),
       type:    PageBlockType.TABLE,
-      content: [[new RichText()]],
+      content: [[new RichText(), new RichText()], [new RichText(), new RichText()]],
     });
   };
   
@@ -41,11 +43,17 @@ export default class TableBlock extends Component<TableBlockProps, State> implem
     
     return (
       <div className={classes.join(" ")}>
-        <table>
-          <tbody>
-            {this.props.block.content.map(this.renderRow)}
-          </tbody>
-        </table>
+        <div className={Style.Row}>
+          <table>
+            <tbody>
+              {this.props.block.content.map(this.renderRow)}
+            </tbody>
+          </table>
+          <Button icon={IconType.PLUS} onClick={this.eventAddColumnClick}>Column</Button>
+        </div>
+        <div className={Style.Row}>
+          <Button icon={IconType.PLUS} onClick={this.eventAddRowClick}>Row</Button>
+        </div>
       </div>
     );
   }
@@ -68,20 +76,37 @@ export default class TableBlock extends Component<TableBlockProps, State> implem
     );
   };
   
+  private readonly eventAddRowClick = () => {
+    const content = [...this.props.block.content];
+    const count = this.props.block.content.reduce((result, row) => Math.max(row.length, result), 0);
+    
+    const array = [] as RichText[];
+    for (let i = 0; i < count; i++) array.push(new RichText());
+    content.push(array);
+    
+    this.props.onChange(new PageBlockEntity<PageBlockType.TABLE>({...this.props.block, content}))
+  }
+  
+  private readonly eventAddColumnClick = () => {
+    const content = [...this.props.block.content];
+    for (let i = 0; i < content.length; i++) content[i] = [...content[i], new RichText()];
+    this.props.onChange(new PageBlockEntity<PageBlockType.TABLE>({...this.props.block, content}))
+  }
+  
   private readonly eventBlur = () => {
     this.props.onBlur?.(this.props.block);
-  }
+  };
   
   private readonly eventFocus = () => {
     this.props.onFocus?.(this.props.block);
-  }
+  };
   
   private readonly eventChange = (new_text: RichText, old_text: RichText) => {
     const [row, column] = this.findText(old_text);
     const content = [...this.props.block.content];
     content[row] = [...this.props.block.content[row]];
     content[row][column] = new_text;
-    this.props.onChange(new PageBlockEntity<PageBlockType.TABLE>({...this.props.block, content: content}));
+    this.props.onChange(new PageBlockEntity<PageBlockType.TABLE>({...this.props.block, content}));
   };
   
   private readonly eventSubmit = () => {
