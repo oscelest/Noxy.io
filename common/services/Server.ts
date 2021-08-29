@@ -11,6 +11,7 @@ import Path from "path";
 import ServeFavicon from "serve-favicon";
 import {v4} from "uuid";
 import Alias from "../classes/Alias";
+import FileHandle from "../classes/File/FileHandle";
 import HTTPMethod from "../enums/HTTPMethod";
 import HTTPStatusCode from "../enums/HTTPStatusCode";
 import PermissionLevel from "../enums/PermissionLevel";
@@ -19,7 +20,6 @@ import ServerException from "../exceptions/ServerException";
 import ValidatorException from "../exceptions/ValidatorException";
 import Logger from "./Logger";
 import Validator from "./Validator";
-import FileHandle from "../classes/File/FileHandle";
 
 if (!process.env.PORT) throw new Error("PORT environmental value must be defined.");
 if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");
@@ -189,6 +189,7 @@ module Server {
         }
       }
       catch (error) {
+        if (!(error instanceof ValidatorException)) throw error;
         error_collection[name] = error;
       }
     }

@@ -16,6 +16,7 @@ enum IconType {
   FILE_IMAGE     = "\ueb16",
   FILE_TEXT      = "\ueb2a",
   FILE_VIDEO     = "\ueb2c",
+  MARKER         = "\uebea",
 
   UI_ADD         = "\uec3e",
   UI_CLOSE       = "\uec4f",

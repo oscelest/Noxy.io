@@ -1,16 +1,16 @@
+import {Collection, Constructor, EntityManager, FindOptions, MikroORM, RequestContext} from "@mikro-orm/core";
+import {Query} from "@mikro-orm/core/typings";
 import _ from "lodash";
-import Alias from "../Alias";
 import HTTPMethod from "../../enums/HTTPMethod";
-import Validator from "../../services/Validator";
+import Order from "../../enums/Order";
 import ValidatorType from "../../enums/ValidatorType";
 import ServerException from "../../exceptions/ServerException";
-import Server from "../../services/Server";
-import {EntityManager, MikroORM, Constructor, FindOptions, Collection, RequestContext} from "@mikro-orm/core";
-import {Query} from "@mikro-orm/core/typings";
-import Order from "../../enums/Order";
-import WhereCondition from "./WhereCondition";
-import BaseEntity from "./BaseEntity";
 import Database from "../../services/Database";
+import Server from "../../services/Server";
+import Validator from "../../services/Validator";
+import Alias from "../Alias";
+import BaseEntity from "./BaseEntity";
+import WhereCondition from "./WhereCondition";
 
 export default function Entity<E>() {
 
@@ -99,7 +99,9 @@ export default function Entity<E>() {
         return await this.getEntityManager().findOneOrFail(this, where, {...options, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E;
       }
       catch (error) {
-        if (error.name === "NotFoundError") throw new ServerException(404, {entity: this.name});
+        if (error instanceof Error) {
+          if (error.name === "NotFoundError") throw new ServerException(404, {entity: this.name});
+        }
         throw error;
       }
     }
@@ -123,7 +125,10 @@ export default function Entity<E>() {
         return object as E;
       }
       catch (error) {
-        if (error.code === "ER_DUP_ENTRY") throw new ServerException(409);
+        console.log(error)
+        if (error instanceof Error) {
+          if ((error as any).code === "ER_DUP_ENTRY") throw new ServerException(409);
+        }
         throw error;
       }
     }

@@ -1,14 +1,14 @@
 import React from "react";
-import Icon from "./Icon";
-import Component from "../Application/Component";
-import Conditional from "../Application/Conditional";
-import Loader from "../UI/Loader";
-import Helper from "../../Helper";
+import Util from "../../../common/services/Util";
 import EventCode from "../../enums/EventCode";
 import IconType from "../../enums/IconType";
 import Size from "../../enums/Size";
-import Util from "../../../common/services/Util";
+import Helper from "../../Helper";
+import Component from "../Application/Component";
+import Conditional from "../Application/Conditional";
+import Loader from "../UI/Loader";
 import Style from "./Button.module.scss";
+import Icon from "./Icon";
 
 export default class Button<V> extends Component<EventProps | ValueProps<V>, State> {
 
@@ -27,7 +27,8 @@ export default class Button<V> extends Component<EventProps | ValueProps<V>, Sta
 
     return (
       <div className={classes.join(" ")} tabIndex={tab_index} data-disabled={disabled} data-loading={loading}
-           onClick={this.eventClick} onMouseEnter={this.eventMouseEnter} onMouseLeave={this.eventMouseLeave} onFocus={this.eventFocus} onBlur={this.eventBlur} onKeyDown={this.eventKeyDown}>
+           onClick={this.eventClick} onMouseEnter={this.eventMouseEnter} onMouseLeave={this.eventMouseLeave} onMouseDown={this.eventMouseDown} onMouseUp={this.eventMouseUp}
+           onFocus={this.eventFocus} onBlur={this.eventBlur} onKeyDown={this.eventKeyDown}>
         <Loader className={Style.Loader} size={Size.SMALL} show={loading}>
           <Conditional condition={this.props.icon}>
             <Icon className={Style.Icon} type={this.props.icon!}/>
@@ -39,6 +40,14 @@ export default class Button<V> extends Component<EventProps | ValueProps<V>, Sta
       </div>
     );
   }
+  
+  private readonly eventMouseDown = (event: React.MouseEvent) => {
+    this.invokeEvent(event, this.props.onMouseDown);
+  };
+  
+  private readonly eventMouseUp = (event: React.MouseEvent) => {
+    this.invokeEvent(event, this.props.onMouseUp);
+  };
 
   private readonly eventMouseEnter = (event: React.MouseEvent) => {
     this.invokeEvent(event, this.props.onMouseEnter);
@@ -104,6 +113,8 @@ interface BaseProps {
 interface EventProps extends BaseProps {
   value?: never
   onClick?(event: React.MouseEvent): any | Promise<any>
+  onMouseDown?(event: React.MouseEvent): any | Promise<any>
+  onMouseUp?(event: React.MouseEvent): any | Promise<any>
   onMouseEnter?(event: React.MouseEvent): any | Promise<any>
   onMouseLeave?(event: React.MouseEvent): any | Promise<any>
   onFocus?(event: React.MouseEvent): any | Promise<any>
@@ -113,6 +124,8 @@ interface EventProps extends BaseProps {
 interface ValueProps<V> extends BaseProps {
   value: V
   onClick?(value: V, event: React.MouseEvent): any | Promise<any>
+  onMouseDown?(value: V, event: React.MouseEvent): any | Promise<any>
+  onMouseUp?(value: V, event: React.MouseEvent): any | Promise<any>
   onMouseEnter?(value: V, event: React.MouseEvent): any | Promise<any>
   onMouseLeave?(value: V, event: React.MouseEvent): any | Promise<any>
   onFocus?(value: V, event: React.MouseEvent): any | Promise<any>

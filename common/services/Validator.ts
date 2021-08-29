@@ -1,9 +1,9 @@
 import Crypto from "crypto";
 import IsEmail from "isemail";
 import _ from "lodash";
+import Order from "../enums/Order";
 import ValidatorType from "../enums/ValidatorType";
 import ValidatorException from "../exceptions/ValidatorException";
-import Order from "../enums/Order";
 
 namespace Validator {
   
@@ -138,6 +138,7 @@ namespace Validator {
         parsed_list.push(parseParameter(type, received[i], conditions));
       }
       catch (error) {
+        if (!(error instanceof ValidatorException)) throw error;
         error_list.push(error);
       }
     }

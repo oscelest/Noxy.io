@@ -1,15 +1,15 @@
-import {Entity as DBEntity, Unique, Index, PrimaryKey, Property, OneToMany, Collection, Cascade} from "@mikro-orm/core";
+import {Cascade, Collection, Entity as DBEntity, Index, OneToMany, PrimaryKey, Property, Unique} from "@mikro-orm/core";
 import crypto from "crypto";
 import JWT from "jsonwebtoken";
 import _ from "lodash";
 import {v4} from "uuid";
-import APIKey from "./APIKey";
 import Entity, {Pagination, Populate} from "../../common/classes/Entity/Entity";
-import ValidatorType from "../../common/enums/ValidatorType";
 import PermissionLevel from "../../common/enums/PermissionLevel";
+import ValidatorType from "../../common/enums/ValidatorType";
 import ServerException from "../../common/exceptions/ServerException";
 import Email from "../../common/services/Email";
 import Server from "../../common/services/Server";
+import APIKey from "./APIKey";
 
 @DBEntity()
 @Unique({name: "email", properties: ["email"] as (keyof User)[]})
@@ -174,6 +174,7 @@ export default class User extends Entity<User>() {
     catch (error) {
       if (error instanceof JWT.TokenExpiredError) return respond(new ServerException(410));
       if (error instanceof JWT.JsonWebTokenError) return respond(new ServerException(404));
+      if (!(error instanceof ServerException)) return respond(new ServerException(500, error))
       return respond(error);
     }
 
