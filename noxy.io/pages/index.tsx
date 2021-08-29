@@ -21,7 +21,7 @@ export default class IndexPage extends Component<PageProps, State> {
   
   public render() {
     return (
-      <PageExplorer entity={this.state.page} onChange={this.eventText}/>
+      <PageExplorer entity={this.state.page} readonly={false} onChange={this.eventText}/>
     );
   }
   

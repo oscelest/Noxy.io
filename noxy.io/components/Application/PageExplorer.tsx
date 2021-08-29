@@ -4,10 +4,12 @@ import Decoration from "../../classes/Decoration";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import PageEntity from "../../entities/Page/PageEntity";
 import IconType from "../../enums/IconType";
+import Dropdown from "../Base/Dropdown";
 import HeaderBlock from "../Block/HeaderBlock";
 import TableBlock from "../Block/TableBlock";
 import TextBlock from "../Block/TextBlock";
 import Button from "../Form/Button";
+import Input from "../Form/Input";
 import Component from "./Component";
 import Conditional from "./Conditional";
 import Style from "./PageExplorer.module.scss";
@@ -24,8 +26,10 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   constructor(props: PageExplorerProps) {
     super(props);
     this.state = {
-      edit: true,
       ref:  React.createRef(),
+      edit: true,
+      
+      text_color: false,
     };
   }
   
@@ -50,14 +54,23 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     return this.props.readonly ?? true;
   }
   
+  private readonly eventColorPickerClick = () => {
+    this.setState({text_color: !this.state.text_color});
+  }
+  
+  private readonly eventColorPickerChange = (event: React.ChangeEvent) => {
+    console.log(event, event.persist());
+  }
+  
   public render() {
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
+    if (this.props.readonly ?? true) classes.push(Style.Readonly);
     
     return (
       <div className={classes.join(" ")}>
         <div className={Style.Toolbar}>
-          <Conditional condition={this.isReadonly()}>
+          <Conditional condition={!this.isReadonly()}>
             <div className={Style.Left}>
               <Button value={PageExplorer.BoldDecoration} icon={IconType.BOLD} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
               <Button value={PageExplorer.ItalicDecoration} icon={IconType.ITALIC} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
@@ -66,6 +79,15 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
               <Button value={PageExplorer.CodeDecoration} icon={IconType.CODE_ALT} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
               <Button value={PageExplorer.MarkDecoration} icon={IconType.MARKER} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
             </div>
+            <div>
+              <Button icon={IconType.FONT} onClick={this.eventColorPickerClick}/>
+              <Dropdown hidden={!this.state.text_color}>
+                <input type={"color"} onChange={this.eventColorPickerChange}/>
+              </Dropdown>
+            </div>
+            <Input label={"Font"} value={"Helvetica"} onChange={() => {}}>
+              {["Helvetica", "Nunito"]}
+            </Input>
             <div className={Style.Right}>
               <Button className={Style.ButtonEdit} icon={this.state.edit ? IconType.FILE_DOCUMENT : IconType.EDIT} onClick={this.eventEditModeClick}/>
             </div>
@@ -212,4 +234,6 @@ interface State {
   ref: React.RefObject<PageBlockInterface>;
   edit: boolean;
   focus?: PageBlockEntity;
+  
+  text_color: boolean
 }
