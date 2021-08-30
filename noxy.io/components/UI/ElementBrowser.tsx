@@ -1,14 +1,14 @@
 import _ from "lodash";
 import React from "react";
+import Direction from "../../../common/enums/Direction";
+import EventCode from "../../../common/enums/EventCode";
 import Point from "../../classes/Point";
 import Rect from "../../classes/Rect";
-import Direction from "../../enums/Direction";
-import EventCode from "../../enums/EventCode";
 import FatalException from "../../exceptions/FatalException";
 import Helper from "../../Helper";
+import Component from "../Application/Component";
 import ContextMenu, {ContextMenuCollection} from "./ContextMenu";
 import Style from "./ElementBrowser.module.scss";
-import Component from "../Application/Component";
 
 export default class ElementBrowser extends Component<ElementBrowserProps, State> {
 

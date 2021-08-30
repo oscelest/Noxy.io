@@ -7,8 +7,6 @@ enum Direction {
   DOWN_LEFT,
   LEFT,
   UP_LEFT,
-  FORWARD,
-  BACKWARD
 }
 
 export default Direction;

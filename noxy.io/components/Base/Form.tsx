@@ -1,11 +1,11 @@
 import React from "react";
-import EventCode from "../../enums/EventCode";
+import EventCode from "../../../common/enums/EventCode";
+import Util from "../../../common/services/Util";
+import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
 import Button from "../Form/Button";
 import ErrorText from "../Text/ErrorText";
 import Style from "./Form.module.scss";
-import Component from "../Application/Component";
-import Util from "../../../common/services/Util";
 
 export default class Form extends Component<FormProps, State> {
 

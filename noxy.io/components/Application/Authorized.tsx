@@ -1,6 +1,6 @@
 import React from "react";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
-import Size from "../../enums/Size";
+import Size from "../../../common/enums/Size";
 import LogInForm from "../../forms/LogInForm";
 import SignUpForm from "../../forms/SignUpForm";
 import TitleText from "../Text/TitleText";

@@ -1,10 +1,10 @@
 import _ from "lodash";
 import React from "react";
-import Size from "../../enums/Size";
+import Size from "../../../common/enums/Size";
+import Component from "../Application/Component";
 import Loader from "../UI/Loader";
 import Placeholder from "../UI/Placeholder";
 import Style from "./Table.module.scss";
-import Component from "../Application/Component";
 
 export default class Table extends Component<TableProps, State> {
   

@@ -2,18 +2,18 @@ import {AxiosError, Canceler} from "axios";
 import _ from "lodash";
 import React from "react";
 import FileTransfer from "../../../common/classes/File/FileTransfer";
+import QueuePosition from "../../../common/enums/QueuePosition";
+import Component from "../../components/Application/Component";
 import Dialog from "../../components/Application/Dialog";
+import Form from "../../components/Base/Form";
 import Button from "../../components/Form/Button";
 import EntityPicker from "../../components/Form/EntityPicker";
 import FilePicker from "../../components/Form/FilePicker";
 import FileUpload from "../../components/Form/FileUpload";
 import FileEntity from "../../entities/File/FileEntity";
 import FileTagEntity from "../../entities/File/FileTagEntity";
-import QueuePosition from "../../enums/QueuePosition";
 import ConfirmForm from "../ConfirmForm";
 import Style from "./FileUploadForm.module.scss";
-import Form from "../../components/Base/Form";
-import Component from "../../components/Application/Component";
 
 export default class FileUploadForm extends Component<FileUploadFormProps, State> {
 

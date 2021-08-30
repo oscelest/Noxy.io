@@ -1,13 +1,13 @@
 import _ from "lodash";
 import React from "react";
-import Conditional from "../Application/Conditional";
-import Component from "../Application/Component";
-import Dropdown from "../Base/Dropdown";
-import Select from "../Base/Select";
-import Direction from "../../enums/Direction";
-import EventCode from "../../enums/EventCode";
+import Direction from "../../../common/enums/Direction";
+import EventCode from "../../../common/enums/EventCode";
 import InputType from "../../enums/InputType";
 import FatalException from "../../exceptions/FatalException";
+import Component from "../Application/Component";
+import Conditional from "../Application/Conditional";
+import Dropdown from "../Base/Dropdown";
+import Select from "../Base/Select";
 import Style from "./Input.module.scss";
 
 export default class Input<T extends string | number = string> extends Component<InputProps<T>, State> {

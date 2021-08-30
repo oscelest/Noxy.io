@@ -1,17 +1,17 @@
 import _ from "lodash";
 import React from "react";
+import Size from "../../../common/enums/Size";
 import IconType from "../../enums/IconType";
 import FatalException from "../../exceptions/FatalException";
 import Helper from "../../Helper";
+import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
-import Icon from "./Icon";
 import EllipsisText from "../Text/EllipsisText";
 import Loader from "../UI/Loader";
 import Button from "./Button";
 import Style from "./EntityPicker.module.scss";
+import Icon from "./Icon";
 import Input from "./Input";
-import Component from "../Application/Component";
-import Size from "../../enums/Size";
 
 export default class EntityPicker<V extends {toString(): string}> extends Component<EntityPickerProps<V>, State> {
 

@@ -13,33 +13,6 @@ export default class EditText extends Component<EditTextProps, State> {
   
   private template: HTMLTemplateElement = document.createElement("template");
   
-  private static keyboard_command_collection: { [K in KeyboardCommand]?: EditTextKeyboardCommandFunction[] } = {
-    [KeyboardCommand.BOLD_TEXT]:            [EditText.eventDecorateBold],
-    [KeyboardCommand.ITALIC_TEXT]:          [EditText.eventDecorateItalic],
-    [KeyboardCommand.UNDERLINE_TEXT]:       [EditText.eventDecorateUnderline],
-    [KeyboardCommand.CODE_TEXT]:            [EditText.eventDecorateCode],
-    [KeyboardCommand.MARK_TEXT]:            [EditText.eventDecorateMark],
-    [KeyboardCommand.STRIKETHROUGH_TEXT]:   [EditText.eventDecorateStrikethrough],
-    
-    [KeyboardCommand.SELECT_ALL]:           [EditText.eventSelectAll],
-    
-    [KeyboardCommand.NEW_LINE]:             [EditText.eventNewLine],
-    [KeyboardCommand.NEW_LINE_ALT]:         [EditText.eventNewLine],
-    [KeyboardCommand.NEW_PARAGRAPH]:        [EditText.eventNewParagraph],
-    [KeyboardCommand.NEW_PARAGRAPH_ALT]:    [EditText.eventNewParagraph],
-    
-    [KeyboardCommand.UNDO]:                 [EditText.eventUndo],
-    [KeyboardCommand.UNDO_ALT]:             [EditText.eventUndo],
-    [KeyboardCommand.REDO]:                 [EditText.eventRedo],
-    [KeyboardCommand.REDO_ALT]:             [EditText.eventRedo],
-
-    [KeyboardCommand.DELETE_FORWARD]:       [EditText.eventDeleteForward],
-    [KeyboardCommand.DELETE_WORD_FORWARD]:  [EditText.eventDeleteWordForward],
-    
-    [KeyboardCommand.DELETE_BACKWARD]:      [EditText.eventDeleteBackward],
-    [KeyboardCommand.DELETE_WORD_BACKWARD]: [EditText.eventDeleteWordBackward],
-  };
-  
   constructor(props: EditTextProps) {
     super(props);
     this.state = {
@@ -48,66 +21,6 @@ export default class EditText extends Component<EditTextProps, State> {
       redo_history: [],
       undo_history: [],
     };
-  }
-  
-  private static eventDecorateStrikethrough( component: EditText) {
-    return component.decorate({strikethrough: true});
-  }
-  
-  private static eventDecorateBold( component: EditText) {
-    return component.decorate({bold: true});
-  }
-  
-  private static eventDecorateCode( component: EditText) {
-    return component.decorate({code: true});
-  }
-  
-  private static eventDecorateMark( component: EditText) {
-    return component.decorate({mark: true});
-  }
-  
-  private static eventDecorateItalic( component: EditText) {
-    return component.decorate({italic: true});
-  }
-  
-  private static eventDecorateUnderline( component: EditText) {
-    return component.decorate({underline: true});
-  }
-  
-  private static eventSelectAll( component: EditText) {
-    return component.select(0, component.props.children.length);
-  }
-  
-  private static eventNewLine( component: EditText) {
-    return component.insert("\n");
-  }
-  
-  private static eventNewParagraph( component: EditText) {
-    return component.props.onSubmit?.(component.props.children);
-  }
-  
-  private static eventDeleteForward( component: EditText) {
-    return component.deleteForward();
-  }
-  
-  private static eventDeleteBackward( component: EditText) {
-    return component.deleteBackward();
-  }
-  
-  private static eventDeleteWordForward( component: EditText) {
-    return component.deleteWordForward();
-  }
-  
-  private static eventDeleteWordBackward( component: EditText) {
-    return component.deleteWordBackward();
-  }
-  
-  private static eventRedo( component: EditText) {
-    return component.redo();
-  }
-  
-  private static eventUndo( component: EditText) {
-    return component.undo();
   }
   
   public readonly insert = (character: string, [start, end]: [number, number] = this.getSelection()) => {
@@ -120,7 +33,9 @@ export default class EditText extends Component<EditTextProps, State> {
     end = Math.max(start, end);
     
     let text = this.getText().slice(start, end);
-    const keys = Util.getProperties(decoration);
+    let keys = Util.getProperties(decoration);
+    if (this.props.whitelist?.length) keys = keys.filter(value => this.props.whitelist!.includes(value));
+    if (this.props.blacklist?.length) keys = keys.filter(value => !this.props.blacklist!.includes(value));
     
     for (let i = 0; i < keys.length; i++) {
       text = text.applyDecoration(keys[i], text.hasDecoration(keys[i]) ? undefined : decoration[keys[i]]);
@@ -373,25 +288,55 @@ export default class EditText extends Component<EditTextProps, State> {
   };
   
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!this.handleKeyDown(event)) {
-      event.preventDefault();
-      event.stopPropagation();
-      return false;
-    }
+    if (this.props.onKeyDown?.(event, this) === true || this.handleKeyDown(event) === true) return true;
+    
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
   };
   
   private readonly handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const command = Helper.getKeyboardEventCommand(event);
-    const function_list = EditText.keyboard_command_collection[command];
-    if (!function_list) return true;
     
-    for (let i = 0; i < function_list.length; i++) {
-      if (function_list[i](this, event, command) !== false) return false;
+    switch (command) {
+      case KeyboardCommand.SELECT_ALL:
+        return this.select(0, this.props.children.length);
+      case KeyboardCommand.NEW_LINE:
+      case KeyboardCommand.NEW_LINE_ALT:
+        return this.insert("\n");
+      case KeyboardCommand.NEW_PARAGRAPH:
+      case KeyboardCommand.NEW_PARAGRAPH_ALT:
+        return this.props.onSubmit?.(this.props.children);
+      case KeyboardCommand.DELETE_FORWARD:
+        return this.deleteForward();
+      case KeyboardCommand.DELETE_WORD_FORWARD:
+        return this.deleteWordForward();
+      case KeyboardCommand.DELETE_BACKWARD:
+        return this.deleteBackward();
+      case KeyboardCommand.DELETE_WORD_BACKWARD:
+        return this.deleteWordBackward();
+      case KeyboardCommand.REDO:
+      case KeyboardCommand.REDO_ALT:
+        return this.redo();
+      case KeyboardCommand.UNDO:
+      case KeyboardCommand.UNDO_ALT:
+        return this.undo();
+      case KeyboardCommand.BOLD_TEXT:
+        return this.decorate({bold: true});
+      case KeyboardCommand.ITALIC_TEXT:
+        return this.decorate({italic: true});
+      case KeyboardCommand.UNDERLINE_TEXT:
+        return this.decorate({underline: true});
+      case KeyboardCommand.MARK_TEXT:
+        return this.decorate({mark: true});
+      case KeyboardCommand.CODE_TEXT:
+        return this.decorate({code: true});
+      case KeyboardCommand.STRIKETHROUGH_TEXT:
+        return this.decorate({strikethrough: true});
     }
     
     return true;
   };
-  
   
   private readonly eventBlur = () => {
     this.props.onBlur?.(this.props.children);
@@ -429,24 +374,23 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 }
 
-export type EditTextKeyboardCommandFunction = (component: EditText, event: React.KeyboardEvent<HTMLDivElement>, command: KeyboardCommand) => any
-
 interface Segment {
   text: Character[];
   decoration: Decoration;
 }
 
 export interface EditTextProps {
-  id?: string;
   children: RichText;
-  
   className?: string;
   readonly?: boolean;
+  whitelist?: (keyof Initializer<Decoration>)[];
+  blacklist?: (keyof Initializer<Decoration>)[];
   
   onBlur?(text: RichText): void;
   onFocus?(text: RichText): void;
   onChange(new_text: RichText, old_text: RichText): void;
   onSubmit?(text: RichText): void;
+  onKeyDown?(event: React.KeyboardEvent<HTMLDivElement>, component: EditText): boolean | void;
 }
 
 interface State {

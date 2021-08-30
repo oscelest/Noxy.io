@@ -55,8 +55,10 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> impl
   };
   
   private readonly renderEditText = () => {
+    const blacklist = ["bold"] as (keyof Initializer<Decoration>)[]
+    
     return (
-      <EditText ref={this.state.ref} readonly={this.props.readonly} onBlur={this.eventBlur} onFocus={this.eventFocus} onChange={this.eventChange} onSubmit={this.eventSubmit}>
+      <EditText ref={this.state.ref} readonly={this.props.readonly} blacklist={blacklist} onBlur={this.eventBlur} onFocus={this.eventFocus} onChange={this.eventChange} onSubmit={this.eventSubmit}>
         {this.props.block.content.text}
       </EditText>
     );

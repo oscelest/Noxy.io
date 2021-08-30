@@ -4,15 +4,15 @@ import Head from "next/head";
 import router, {Router} from "next/router";
 import * as React from "react";
 import PermissionLevel from "../../common/enums/PermissionLevel";
+import Size from "../../common/enums/Size";
 import Authorized from "../components/Application/Authorized";
+import Component from "../components/Application/Component";
 import Dialog from "../components/Application/Dialog";
 import Redirect from "../components/Application/Redirect";
 import DialogListenerName from "../enums/DialogListenerName";
-import Size from "../enums/Size";
 import Global from "../Global";
 import "../global.scss";
 import Style from "./_app.module.scss";
-import Component from "../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
 export default class Application extends App {

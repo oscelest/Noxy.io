@@ -40,6 +40,7 @@
       }
 
       .BlockHandle {
+        flex: 0 0 auto;
         align-items: center;
         width: 16px;
         border-right: $border-width solid $border-color;

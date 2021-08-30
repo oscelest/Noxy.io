@@ -1,16 +1,16 @@
 import _ from "lodash";
 import React from "react";
 import {v4} from "uuid";
+import EventCode from "../../../common/enums/EventCode";
+import QueuePosition from "../../../common/enums/QueuePosition";
+import Util from "../../../common/services/Util";
 import DialogListenerName from "../../enums/DialogListenerName";
-import EventCode from "../../enums/EventCode";
 import IconType from "../../enums/IconType";
-import QueuePosition from "../../enums/QueuePosition";
 import Icon from "../Form/Icon";
 import DragDrop from "../UI/DragDrop";
+import Component from "./Component";
 import Conditional from "./Conditional";
 import Style from "./Dialog.module.scss";
-import Component from "./Component";
-import Util from "../../../common/services/Util";
 
 export default class Dialog extends Component<DialogProps, State> {
 

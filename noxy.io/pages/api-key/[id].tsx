@@ -1,14 +1,14 @@
 import {NextPageContext} from "next";
 import React from "react";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
+import Size from "../../../common/enums/Size";
+import Component from "../../components/Application/Component";
 import Loader from "../../components/UI/Loader";
 import PageHeader from "../../components/UI/PageHeader";
 import Placeholder from "../../components/UI/Placeholder";
 import APIKeyEntity from "../../entities/APIKeyEntity";
-import Size from "../../enums/Size";
 import APIKeyUpdateForm from "../../forms/entities/APIKeyUpdateForm";
 import Style from "./[id].module.scss";
-import Component from "../../components/Application/Component";
 
 // noinspection JSUnusedGlobalSymbols
 export default class APIKeyIDPage extends Component<APIKeyIDPageProps, State> {

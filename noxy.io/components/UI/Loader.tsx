@@ -1,8 +1,8 @@
 import React from "react";
-import Size from "../../enums/Size";
-import Style from "./Loader.module.scss";
-import Conditional from "../Application/Conditional";
+import Size from "../../../common/enums/Size";
 import Component from "../Application/Component";
+import Conditional from "../Application/Conditional";
+import Style from "./Loader.module.scss";
 
 export default class Loader extends Component<LoaderProps, State> {
   

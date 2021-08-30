@@ -1,9 +1,9 @@
 import _ from "lodash";
 import React from "react";
-import Conditional from "../Application/Conditional";
-import Component from "../Application/Component";
-import EventCode from "../../enums/EventCode";
+import EventCode from "../../../common/enums/EventCode";
 import Helper from "../../Helper";
+import Component from "../Application/Component";
+import Conditional from "../Application/Conditional";
 import Style from "./Checkbox.module.scss";
 
 export default class Checkbox<V, O extends {[key: string]: V}, C extends CheckboxCollection<O>> extends Component<CheckboxProps<V, O, C>, State> {

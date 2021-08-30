@@ -6,6 +6,10 @@ import PrettyBytes from "pretty-bytes";
 import React from "react";
 import FileTypeName from "../../../common/enums/FileTypeName";
 import Privacy from "../../../common/enums/Privacy";
+import QueuePosition from "../../../common/enums/QueuePosition";
+import Size from "../../../common/enums/Size";
+import Util from "../../../common/services/Util";
+import Component from "../../components/Application/Component";
 import Conditional from "../../components/Application/Conditional";
 import Dialog from "../../components/Application/Dialog";
 import Button from "../../components/Form/Button";
@@ -18,13 +22,9 @@ import PageHeader from "../../components/UI/PageHeader";
 import Placeholder from "../../components/UI/Placeholder";
 import FileEntity from "../../entities/File/FileEntity";
 import FileTagEntity from "../../entities/File/FileTagEntity";
-import QueuePosition from "../../enums/QueuePosition";
-import Size from "../../enums/Size";
 import FatalException from "../../exceptions/FatalException";
 import ConfirmForm from "../../forms/ConfirmForm";
 import Style from "./[id].module.scss";
-import Component from "../../components/Application/Component";
-import Util from "../../../common/services/Util";
 
 // noinspection JSUnusedGlobalSymbols
 export default class FileAliasPage extends Component<FileIDPageProps, State> {
