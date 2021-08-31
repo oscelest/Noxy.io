@@ -1,0 +1,38 @@
+.Component {
+  flex-flow: column;
+  grid-row-gap: 10px;
+  grid-column-gap: 10px;
+
+  .Row {
+    grid-row-gap: 10px;
+    grid-column-gap: 10px;
+
+    .Window {
+      flex: 0 0 auto;
+      width: 200px;
+      height: 200px;
+    }
+
+    ::-webkit-color-swatch {
+      border: none;
+    }
+
+    .SideBar {
+      flex-flow: column;
+      grid-column-gap: 10px;
+      grid-row-gap: 10px;
+
+      .Mode {
+        width: 100%;
+      }
+
+      .Preset {
+        width: 60px;
+      }
+    }
+
+    .Recent {
+      height: 50px;
+    }
+  }
+}

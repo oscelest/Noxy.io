@@ -17,22 +17,58 @@ export default class EditText extends Component<EditTextProps, State> {
     super(props);
     this.state = {
       ref:          React.createRef(),
-      selection:    [0, 0],
+      selection:    {start: 0, end: 0, forward: true},
       redo_history: [],
       undo_history: [],
     };
   }
   
-  public readonly insert = (character: string, [start, end]: [number, number] = this.getSelection()) => {
-    if (character.length !== 1) throw "Insert string must be a single character.";
-    this.insertText(new Character(character, this.getText().getCharacter(Math.max(0, start - 1))?.decoration), [start, end]);
+  public getText(): RichText {
+    return this.props.children;
   };
   
-  public readonly decorate = (decoration: Initializer<Decoration>, [start, end]: [number, number] = this.getSelection()) => {
-    start = Math.min(start, end);
-    end = Math.max(start, end);
+  public getSelection(): Selection {
+    const selection = getSelection();
+    if (!selection || !selection.focusNode || !selection.anchorNode) return this.state.selection;
+    if (!this.state.ref.current) throw "Could not get reference element.";
     
-    let text = this.getText().slice(start, end);
+    if (this.state.ref.current.contains(selection.focusNode) && this.state.ref.current.contains(selection.anchorNode)) {
+      const focus_node = selection.focusNode;
+      const anchor_node = selection.anchorNode;
+      const focus_offset = selection.focusOffset;
+      const anchor_offset = selection.anchorOffset;
+      
+      const focus_position = this.getPositionByNode(focus_node) + focus_offset;
+      const anchor_position = this.getPositionByNode(anchor_node) + anchor_offset;
+      
+      return {
+        start:   Math.max(Math.min(focus_position, anchor_position), 0),
+        end:     Math.min(Math.max(focus_position, anchor_position), this.props.children.length),
+        forward: focus_position >= anchor_position,
+      };
+    }
+    else {
+      return this.state.selection;
+    }
+  };
+  
+  public isDecorationDisabled = (decoration: keyof Initializer<Decoration>): boolean => {
+    return !!(this.props.whitelist?.length && !this.props.whitelist.includes(decoration) || this.props.blacklist?.includes(decoration));
+  };
+  
+  public select(start: number = 0, end: number = this.getText().length, forward: boolean = true) {
+    this.setState({selection: {start, end, forward}});
+  };
+  
+  public insert(character: string, selection: Selection = this.getSelection()) {
+    if (character.length !== 1) throw "Insert string must be a single character.";
+    this.insertText(new Character(character, this.getText().getCharacter(Math.max(0, selection.start - 1))?.decoration), selection);
+  };
+  
+  public decorate(decoration: Initializer<Decoration>, selection: Selection = this.getSelection()) {
+    selection = this.parseSelection(selection);
+    
+    let text = this.getText().slice(selection.start, selection.end);
     let keys = Util.getProperties(decoration);
     if (this.props.whitelist?.length) keys = keys.filter(value => this.props.whitelist!.includes(value));
     if (this.props.blacklist?.length) keys = keys.filter(value => !this.props.blacklist!.includes(value));
@@ -41,54 +77,48 @@ export default class EditText extends Component<EditTextProps, State> {
       text = text.applyDecoration(keys[i], text.hasDecoration(keys[i]) ? undefined : decoration[keys[i]]);
     }
     
-    this.insertText(text, [start, end], false);
+    this.insertText(text, selection, false);
   };
   
-  public readonly deleteForward = ([start, end]: [number, number] = this.getSelection()) => {
-    if (start === this.getText().length && end === this.getText().length) return;
-    if (start === end) end = Math.min(end + 1, this.getText().length);
+  public deleteForward(selection: Selection = this.getSelection()) {
+    if (selection.start === this.getText().length && selection.end === this.getText().length) return;
+    if (selection.start === selection.end) selection.end = Math.min(selection.end + 1, this.getText().length);
     
-    this.insertText(new RichText(), [start, end]);
+    this.insertText(new RichText(), selection);
   };
   
-  public readonly deleteBackward = ([start, end]: [number, number] = this.getSelection()) => {
-    if (!start && !end) return;
-    if (start === end) start = Math.max(0, start - 1);
+  public deleteBackward(selection: Selection = this.getSelection()) {
+    if (!selection.start && !selection.end) return;
+    if (selection.start === selection.end) selection.start = Math.max(0, selection.start - 1);
     
-    this.insertText(new RichText(), [start, end]);
+    this.insertText(new RichText(), selection);
   };
   
-  public readonly select = (start: number, end: number) => {
-    const start_node = this.getNodeByPosition(Math.min(start, end));
-    const end_node = this.getNodeByPosition(Math.max(start, end));
-    getSelection()?.setBaseAndExtent(start_node.element, start_node.position, end_node.element, end_node.position);
-  };
-  
-  public deleteWordForward([start, end]: [number, number] = this.getSelection()) {
-    if (start !== end || end === this.getText().length) return this.deleteBackward([start, end]);
+  public deleteWordForward(selection: Selection = this.getSelection()) {
+    if (selection.start !== selection.end || selection.end === this.getText().length) return this.deleteBackward(selection);
     
-    end = this.find(/[^\p{Z}]/u, end) ?? this.getText().length;
-    end = this.find(this.getText().getCharacterSafe(end).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, end) ?? this.getText().length;
-    end = this.find(/[^\p{Z}]/u, end) ?? this.getText().length;
+    selection.end = this.find(/[^\p{Z}]/u, selection.end) ?? this.getText().length;
+    selection.end = this.find(this.getText().getCharacterSafe(selection.end).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.end) ?? this.getText().length;
+    selection.end = this.find(/[^\p{Z}]/u, selection.end) ?? this.getText().length;
     
-    this.insertText(new RichText(), [start, end]);
+    this.insertText(new RichText(), selection);
   }
   
-  public deleteWordBackward([start, end]: [number, number] = this.getSelection()) {
-    if (start !== end || !start) return this.deleteBackward([start, end]);
+  public deleteWordBackward(selection: Selection = this.getSelection()) {
+    if (selection.start !== selection.end || !selection.start) return this.deleteBackward(selection);
     
-    start = this.find(/[^\p{Z}]/u, start, false) ?? 0;
-    start = this.find(this.getText().getCharacterSafe(start).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, start, false) ?? 0;
-    start = this.find(/[^\p{Z}]/u, start, false) ?? 0;
+    selection.start = this.find(/[^\p{Z}]/u, selection.start, false) ?? 0;
+    selection.start = this.find(this.getText().getCharacterSafe(selection.start).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.start, false) ?? 0;
+    selection.start = this.find(/[^\p{Z}]/u, selection.start, false) ?? 0;
     
-    this.insertText(new RichText(), [start ? start + 1 : start, end]);
+    this.insertText(new RichText(), {...selection, start: selection.start ? selection.start + 1 : selection.start});
   }
   
   public undo() {
     const item = this.state.undo_history[this.state.undo_history.length - 1];
     if (!item) return this;
     
-    this.props.onChange(item.text, this.props.children);
+    this.props.onChange(item.text, this);
     this.setState({
       selection:    item.selection,
       redo_history: [...this.state.redo_history, {text: this.props.children, selection: this.getSelection()}],
@@ -100,7 +130,7 @@ export default class EditText extends Component<EditTextProps, State> {
     const item = this.state.redo_history[this.state.redo_history.length - 1];
     if (!item) return this;
     
-    this.props.onChange(item.text, this.props.children);
+    this.props.onChange(item.text, this);
     this.setState({
       selection:    item.selection,
       redo_history: this.state.redo_history.slice(0, this.state.redo_history.length - 1),
@@ -108,54 +138,40 @@ export default class EditText extends Component<EditTextProps, State> {
     });
   }
   
-  private readonly insertText = (insert: Character | Character[] | RichText, selection: [number, number] = this.getSelection(), clear_selection = true) => {
+  private insertText(insert: Character | Character[] | RichText, selection: Selection = this.getSelection(), clear_selection = true) {
+    selection = this.parseSelection(selection);
     const length = insert instanceof Character ? 1 : insert.length;
-    const text = this.getText().insert(insert, selection);
-    const next_selection = clear_selection ? [selection[0] + length, selection[0] + length] as [number, number] : selection;
+    const text = this.getText().insert(insert, [selection.start, selection.end]);
+    const next_selection = clear_selection ? {start: selection.start + length, end: selection.start + length, forward: selection.forward} : selection;
     
-    this.props.onChange(text, this.props.children);
+    this.props.onChange(text, this);
+    console.log("Inserting", next_selection);
     this.setState({selection: next_selection, redo_history: [], undo_history: [...this.state.undo_history, {text: this.props.children, selection}]});
   };
   
-  private readonly find = (regex: RegExp, position: number, forward: boolean = true): number | undefined => {
+  private find(regex: RegExp, position: number, forward: boolean = true): number | undefined {
     position = forward ? position : position - 1;
     const character = this.getText().getCharacter(position);
     if (!character) return undefined;
     return character.value.match(regex) ? position : this.find(regex, forward ? position + 1 : position, forward);
   };
   
-  private readonly appendHTMLNode = (node: Node, segment: Segment) => {
+  private appendHTMLNode(node: Node, segment: Segment) {
     node.appendChild(this.renderHTMLNode(segment));
     return node;
   };
   
-  private readonly parseSelection = (selection?: [number, number]): [number, number] => {
-    if (!selection) return [0, this.getText().length];
-    if (isNaN(+selection[0])) selection[0] = 0;
-    if (isNaN(+selection[1])) selection[1] = this.getText().length;
+  private parseSelection(selection?: Selection): Selection {
+    if (!selection) return {start: 0, end: this.getText().length, forward: true};
+    if (isNaN(+selection.start)) selection.start = 0;
+    if (isNaN(+selection.end)) selection.end = this.getText().length;
     
-    selection[0] = Math.max(Math.min(selection[0], selection[1]), 0);
-    selection[1] = Math.min(Math.max(selection[0], selection[1]), this.getText().length);
+    selection.start = Math.max(Math.min(selection.start, selection.end), 0);
+    selection.end = Math.min(Math.max(selection.start, selection.end), this.getText().length);
     return selection;
   };
   
-  private readonly getSelection = (): [number, number] => {
-    const selection = getSelection();
-    if (!selection || !selection.focusNode || !selection.anchorNode) throw "Could not get selection.";
-    if (!this.state.ref.current) throw "Could not get reference element.";
-    
-    const focus_node = selection.focusNode;
-    const anchor_node = selection.anchorNode;
-    const focus_offset = selection.focusOffset;
-    const anchor_offset = selection.anchorOffset;
-    
-    const focus_position = this.getPositionByNode(focus_node) + focus_offset;
-    const anchor_position = this.getPositionByNode(anchor_node) + anchor_offset;
-    
-    return [Math.max(0, Math.min(focus_position, anchor_position)), Math.min(Math.max(focus_position, anchor_position), this.props.children.length)];
-  };
-  
-  private readonly getNodeByPosition = (position: number, parent: Node | null = this.state.ref.current): {position: number, element: Node} => {
+  private getNodeByPosition(position: number, parent: Node | null = this.state.ref.current): {position: number, element: Node} {
     if (!parent) throw "Could not get container element.";
     
     for (let i = 0; i < parent.childNodes.length; i++) {
@@ -169,7 +185,7 @@ export default class EditText extends Component<EditTextProps, State> {
     return {position, element: parent};
   };
   
-  private readonly getPositionByNode = (node: Node, parent: Node | null = this.state.ref.current): number => {
+  private getPositionByNode(node: Node, parent: Node | null = this.state.ref.current): number {
     if (!parent) throw "Could not get container element.";
     if (node === parent) return 0;
     const container = this.getClosestContainer(node, parent);
@@ -184,22 +200,19 @@ export default class EditText extends Component<EditTextProps, State> {
     return length;
   };
   
-  private readonly getClosestContainer = (node: Node, parent: Node): Node => {
+  private getClosestContainer(node: Node, parent: Node): Node {
     if (node.parentElement === null) throw "No parent element exists";
     if (node.parentElement !== parent) return this.getClosestContainer(node.parentElement, parent);
     return node;
   };
   
-  private readonly getText = () => {
-    return this.props.children;
-  };
-  
   public componentDidUpdate(prevProps: Readonly<EditTextProps>, prevState: Readonly<State>, snapshot?: any): void {
     if (prevState.selection !== this.state.selection || prevProps.children.length !== this.props.children.length) {
-      const [start, end] = this.state.selection;
-      const start_node = this.getNodeByPosition(start);
-      const end_node = this.getNodeByPosition(end);
+      const {start, end, forward} = this.state.selection;
+      const start_node = this.getNodeByPosition(forward ? start : end);
+      const end_node = this.getNodeByPosition(forward ? end : start);
       getSelection()?.setBaseAndExtent(start_node.element, start_node.position, end_node.element, end_node.position);
+      this.props.onSelect?.(this.state.selection, this);
     }
   }
   
@@ -211,15 +224,16 @@ export default class EditText extends Component<EditTextProps, State> {
     
     return (
       <div ref={this.state.ref} className={classes.join(" ")} contentEditable={!readonly} suppressContentEditableWarning={!readonly}
-           onBlur={this.eventBlur} onFocus={this.eventFocus}
+           onBlur={this.eventBlur} onFocus={this.eventFocus} onSelect={this.eventSelect}
            onCopy={this.eventCopy} onPaste={this.eventPaste} onCut={this.eventCut} onKeyDown={this.eventKeyDown} onKeyPress={this.eventKeyPress}>
         {this.renderReactElementList()}
       </div>
     );
   }
   
-  private readonly renderReactElementList = (selection?: [number, number]) => {
-    const lines = this.getText().slice(...this.parseSelection(selection)).getLines();
+  private renderReactElementList = (selection?: Selection) => {
+    const {start, end} = this.parseSelection(selection);
+    const lines = this.getText().slice(start, end).getLines();
     const result = [] as React.ReactNode[];
     
     for (let i = 0; i < lines.length; i++) {
@@ -248,8 +262,9 @@ export default class EditText extends Component<EditTextProps, State> {
     );
   };
   
-  public readonly renderHTML = (selection?: [number, number]) => {
-    const lines = this.getText().slice(...this.parseSelection(selection)).getLines();
+  public readonly renderHTML = (selection?: Selection) => {
+    const {start, end} = this.parseSelection(selection);
+    const lines = this.getText().slice(start, end).getLines();
     const container = document.createElement("div");
     
     for (let i = 0; i < lines.length; i++) {
@@ -288,15 +303,19 @@ export default class EditText extends Component<EditTextProps, State> {
   };
   
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (this.props.onKeyDown?.(event, this) === true || this.handleKeyDown(event) === true) return true;
+    this.props.onKeyDown?.(event, this);
     
-    event.preventDefault();
-    event.stopPropagation();
-    return false;
+    if (!event.defaultPrevented) this.handleKeyDown(event);
+    if (!event.bubbles) {
+      event.stopPropagation();
+      event.preventDefault();
+      return false;
+    }
   };
   
   private readonly handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const command = Helper.getKeyboardEventCommand(event);
+    event.bubbles = false;
     
     switch (command) {
       case KeyboardCommand.SELECT_ALL:
@@ -306,7 +325,7 @@ export default class EditText extends Component<EditTextProps, State> {
         return this.insert("\n");
       case KeyboardCommand.NEW_PARAGRAPH:
       case KeyboardCommand.NEW_PARAGRAPH_ALT:
-        return this.props.onSubmit?.(this.props.children);
+        return this.props.onSubmit?.(this);
       case KeyboardCommand.DELETE_FORWARD:
         return this.deleteForward();
       case KeyboardCommand.DELETE_WORD_FORWARD:
@@ -335,15 +354,25 @@ export default class EditText extends Component<EditTextProps, State> {
         return this.decorate({strikethrough: true});
     }
     
-    return true;
+    event.bubbles = true;
   };
   
-  private readonly eventBlur = () => {
-    this.props.onBlur?.(this.props.children);
+  private readonly eventBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    this.props.onBlur?.(event, this);
   };
   
-  private readonly eventFocus = () => {
-    this.props.onFocus?.(this.props.children);
+  private readonly eventFocus = (event: React.FocusEvent<HTMLDivElement>) => {
+    this.props.onFocus?.(event, this);
+  };
+  
+  private readonly eventSelect = (event: React.SyntheticEvent<HTMLElement, MouseEvent | Event>) => {
+    const selection = this.getSelection();
+    const {start: prev_start, end: prev_end, forward: prev_forward} = selection;
+    const {start: next_start, end: next_end, forward: next_forward} = this.state.selection;
+
+    if (next_start !== prev_start || next_end !== prev_end || next_forward !== prev_forward) {
+      this.setState({selection});
+    }
   };
   
   private readonly eventCopy = async (event: React.ClipboardEvent) => {
@@ -379,6 +408,10 @@ interface Segment {
   decoration: Decoration;
 }
 
+export type Selection = {start: number, end: number, forward: boolean};
+export type EditTextCommand = keyof Initializer<Decoration>;
+export type EditTextCommandList = EditTextCommand[];
+
 export interface EditTextProps {
   children: RichText;
   className?: string;
@@ -386,16 +419,18 @@ export interface EditTextProps {
   whitelist?: (keyof Initializer<Decoration>)[];
   blacklist?: (keyof Initializer<Decoration>)[];
   
-  onBlur?(text: RichText): void;
-  onFocus?(text: RichText): void;
-  onChange(new_text: RichText, old_text: RichText): void;
-  onSubmit?(text: RichText): void;
+  onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
+  onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
+  onSelect?(selection: Selection, component: EditText): void;
   onKeyDown?(event: React.KeyboardEvent<HTMLDivElement>, component: EditText): boolean | void;
+  
+  onChange(text: RichText, component: EditText): void;
+  onSubmit?(component: EditText): void;
 }
 
 interface State {
   ref: React.RefObject<HTMLDivElement>;
-  selection: [number, number];
-  undo_history: {text: RichText, selection: [number, number]}[];
-  redo_history: {text: RichText, selection: [number, number]}[];
+  selection: Selection;
+  undo_history: {text: RichText, selection: Selection}[];
+  redo_history: {text: RichText, selection: Selection}[];
 }

@@ -2,17 +2,19 @@ import React from "react";
 import {v4} from "uuid";
 import PageBlockType from "../../../common/enums/PageBlockType";
 import Util from "../../../common/services/Util";
-import Decoration from "../../classes/Decoration";
 import RichText from "../../classes/RichText";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
-import {DefaultBlockProps, PageBlockInterface} from "../Application/PageExplorer";
+import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import Button from "../Form/Button";
-import EditText from "../Text/EditText";
+import EditText, {EditTextCommandList} from "../Text/EditText";
 import Style from "./HeaderBlock.module.scss";
 
-export default class HeaderBlock extends Component<HeaderBlockProps, State> implements PageBlockInterface {
+export default class HeaderBlock extends Component<HeaderBlockProps, State> {
+  
+  private static readonly blacklist: EditTextCommandList = ["bold"];
+  private static readonly whitelist: EditTextCommandList = [];
   
   constructor(props: HeaderBlockProps) {
     super(props);
@@ -28,10 +30,6 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> impl
       content: {text: new RichText(), size: 1},
     });
   };
-  
-  public decorate(decoration: Initializer<Decoration>): void {
-    this.state.ref.current?.decorate(decoration);
-  }
   
   public render() {
     const readonly = this.props.readonly ?? true;
@@ -55,10 +53,9 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> impl
   };
   
   private readonly renderEditText = () => {
-    const blacklist = ["bold"] as (keyof Initializer<Decoration>)[]
-    
     return (
-      <EditText ref={this.state.ref} readonly={this.props.readonly} blacklist={blacklist} onBlur={this.eventBlur} onFocus={this.eventFocus} onChange={this.eventChange} onSubmit={this.eventSubmit}>
+      <EditText ref={this.state.ref} readonly={this.props.readonly} whitelist={HeaderBlock.whitelist} blacklist={HeaderBlock.blacklist}
+                onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit}>
         {this.props.block.content.text}
       </EditText>
     );
@@ -77,20 +74,12 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> impl
     );
   };
   
-  private readonly eventBlur = () => {
-    this.props.onBlur?.(this.props.block);
-  };
-  
-  private readonly eventFocus = () => {
-    this.props.onFocus?.(this.props.block);
-  };
-  
   private readonly eventChange = (text: RichText) => {
     this.props.onChange(new PageBlockEntity<PageBlockType.HEADER>({...this.props.block, content: {...this.props.block.content, text}}));
   };
   
-  private readonly eventSubmit = (text: RichText) => {
-    this.props.onSubmit?.(new PageBlockEntity<PageBlockType.HEADER>({...this.props.block, content: {...this.props.block.content, text}}));
+  private readonly eventSubmit = () => {
+    this.props.onSubmit?.(this.props.block);
   };
   
   private readonly eventHeaderLevelClick = (size: number) => {
@@ -98,7 +87,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> impl
   };
 }
 
-export interface HeaderBlockProps extends DefaultBlockProps<PageBlockType.HEADER> {
+export interface HeaderBlockProps extends PageExplorerBlockProps<PageBlockType.HEADER> {
 
 }
 

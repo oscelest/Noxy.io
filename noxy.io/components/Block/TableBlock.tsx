@@ -1,17 +1,20 @@
+import React from "react";
 import {v4} from "uuid";
 import PageBlockType from "../../../common/enums/PageBlockType";
-import Decoration from "../../classes/Decoration";
 import RichText from "../../classes/RichText";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import IconType from "../../enums/IconType";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
-import {DefaultBlockProps, PageBlockInterface} from "../Application/PageExplorer";
+import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import Button from "../Form/Button";
-import EditText from "../Text/EditText";
+import EditText, {EditTextCommandList} from "../Text/EditText";
 import Style from "./TableBlock.module.scss";
 
-export default class TableBlock extends Component<TableBlockProps, State> implements PageBlockInterface {
+export default class TableBlock extends Component<TableBlockProps, State> {
+  
+  private static readonly blacklist: EditTextCommandList = [];
+  private static readonly whitelist: EditTextCommandList = [];
   
   constructor(props: TableBlockProps) {
     super(props);
@@ -24,10 +27,6 @@ export default class TableBlock extends Component<TableBlockProps, State> implem
       content: [[new RichText(), new RichText()], [new RichText(), new RichText()]],
     });
   };
-  
-  public decorate(decoration: Initializer<Decoration>): void {
-  
-  }
   
   private findText = (text: RichText) => {
     for (let row = 0; row < this.props.block.content.length; row++) {
@@ -47,11 +46,11 @@ export default class TableBlock extends Component<TableBlockProps, State> implem
       <div className={classes.join(" ")}>
         <div className={Style.Row}>
           <div className={Style.Table}>
-          <table>
-            <tbody>
-              {this.props.block.content.map(this.renderRow)}
-            </tbody>
-          </table>
+            <table>
+              <tbody>
+                {this.props.block.content.map(this.renderRow)}
+              </tbody>
+            </table>
           </div>
           <Conditional condition={!readonly}>
             <Button icon={IconType.PLUS} onClick={this.eventAddColumnClick}>Column</Button>
@@ -77,7 +76,8 @@ export default class TableBlock extends Component<TableBlockProps, State> implem
   private readonly renderColumn = (column: RichText, key: number = 0) => {
     return (
       <td key={key}>
-        <EditText readonly={this.props.readonly} onBlur={this.eventBlur} onFocus={this.eventFocus} onChange={this.eventChange} onSubmit={this.eventSubmit}>
+        <EditText readonly={this.props.readonly} blacklist={TableBlock.blacklist} whitelist={TableBlock.whitelist}
+                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit}>
           {column}
         </EditText>
       </td>
@@ -101,19 +101,11 @@ export default class TableBlock extends Component<TableBlockProps, State> implem
     this.props.onChange(new PageBlockEntity<PageBlockType.TABLE>({...this.props.block, content}));
   };
   
-  private readonly eventBlur = () => {
-    this.props.onBlur?.(this.props.block);
-  };
-  
-  private readonly eventFocus = () => {
-    this.props.onFocus?.(this.props.block);
-  };
-  
-  private readonly eventChange = (new_text: RichText, old_text: RichText) => {
-    const [row, column] = this.findText(old_text);
+  private readonly eventChange = (text: RichText, component: EditText) => {
+    const [row, column] = this.findText(component.getText());
     const content = [...this.props.block.content];
     content[row] = [...this.props.block.content[row]];
-    content[row][column] = new_text;
+    content[row][column] = text;
     this.props.onChange(new PageBlockEntity<PageBlockType.TABLE>({...this.props.block, content}));
   };
   
@@ -123,7 +115,7 @@ export default class TableBlock extends Component<TableBlockProps, State> implem
   
 }
 
-export interface TableBlockProps extends DefaultBlockProps<PageBlockType.TABLE> {
+export interface TableBlockProps extends PageExplorerBlockProps<PageBlockType.TABLE> {
 
 }
 

@@ -28,6 +28,8 @@ declare global {
 
   export type Initializer<E> = Partial<Properties<E>>
 
+  export type Writeable<T> = { -readonly [K in keyof T]: T[K] };
+  
   export type DecoratorConstructor = {new(...args: any[]): any}
 
   export interface APIRequest<T> {

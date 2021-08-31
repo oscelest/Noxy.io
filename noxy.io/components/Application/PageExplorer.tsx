@@ -4,12 +4,12 @@ import Decoration from "../../classes/Decoration";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import PageEntity from "../../entities/Page/PageEntity";
 import IconType from "../../enums/IconType";
-import Dropdown from "../Base/Dropdown";
 import HeaderBlock from "../Block/HeaderBlock";
 import TableBlock from "../Block/TableBlock";
 import TextBlock from "../Block/TextBlock";
 import Button from "../Form/Button";
 import Input from "../Form/Input";
+import EditText, {Selection} from "../Text/EditText";
 import Component from "./Component";
 import Conditional from "./Conditional";
 import Style from "./PageExplorer.module.scss";
@@ -26,10 +26,9 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   constructor(props: PageExplorerProps) {
     super(props);
     this.state = {
-      ref:  React.createRef(),
-      edit: true,
-      
+      edit:       true,
       text_color: false,
+      decoration: new Decoration()
     };
   }
   
@@ -52,15 +51,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   
   private readonly isReadonly = () => {
     return this.props.readonly ?? true;
-  }
-  
-  private readonly eventColorPickerClick = () => {
-    this.setState({text_color: !this.state.text_color});
-  }
-  
-  private readonly eventColorPickerChange = (event: React.ChangeEvent) => {
-    console.log(event, event.persist());
-  }
+  };
   
   public render() {
     const classes = [Style.Component];
@@ -72,22 +63,39 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
         <div className={Style.Toolbar}>
           <Conditional condition={!this.isReadonly()}>
             <div className={Style.Left}>
-              <Button value={PageExplorer.BoldDecoration} icon={IconType.BOLD} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-              <Button value={PageExplorer.ItalicDecoration} icon={IconType.ITALIC} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-              <Button value={PageExplorer.StrikethroughDecoration} icon={IconType.STRIKE_THROUGH} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-              <Button value={PageExplorer.UnderlineDecoration} icon={IconType.UNDERLINE} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-              <Button value={PageExplorer.CodeDecoration} icon={IconType.CODE_ALT} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-              <Button value={PageExplorer.MarkDecoration} icon={IconType.MARKER} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+              <Button value={PageExplorer.BoldDecoration} icon={IconType.BOLD} disabled={this.state.focus?.isDecorationDisabled("bold")}
+                      onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+              
+              <Button value={PageExplorer.ItalicDecoration} icon={IconType.ITALIC} disabled={this.state.focus?.isDecorationDisabled("italic")}
+                      onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+              
+              <Button value={PageExplorer.StrikethroughDecoration} icon={IconType.STRIKE_THROUGH} disabled={this.state.focus?.isDecorationDisabled("strikethrough")}
+                      onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+              
+              <Button value={PageExplorer.UnderlineDecoration} icon={IconType.UNDERLINE} disabled={this.state.focus?.isDecorationDisabled("underline")}
+                      onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+              
+              <Button value={PageExplorer.CodeDecoration} icon={IconType.CODE_ALT} disabled={this.state.focus?.isDecorationDisabled("code")}
+                      onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+              
+              <Button value={PageExplorer.MarkDecoration} icon={IconType.MARKER} disabled={this.state.focus?.isDecorationDisabled("mark")}
+                      onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
             </div>
+            
             <div>
-              <Button icon={IconType.FONT} onClick={this.eventColorPickerClick}/>
-              <Dropdown hidden={!this.state.text_color}>
-                <input type={"color"} onChange={this.eventColorPickerChange}/>
-              </Dropdown>
+              <Input className={Style.FontFamily} label={"Font"} value={"Helvetica"} onChange={() => {}}>
+                {["Helvetica", "Nunito"]}
+              </Input>
+              
+              <Input className={Style.FontSize} label={"Font"} value={"14px"} onChange={() => {}}>
+                {["8px", "10px", "12px", "14px", "18px", "24px"]}
+              </Input>
+              
+              <Button icon={IconType.FONT}/>
+              <Button icon={IconType.FONT}/>
             </div>
-            <Input label={"Font"} value={"Helvetica"} onChange={() => {}}>
-              {["Helvetica", "Nunito"]}
-            </Input>
+            
+            
             <div className={Style.Right}>
               <Button className={Style.ButtonEdit} icon={this.state.edit ? IconType.FILE_DOCUMENT : IconType.EDIT} onClick={this.eventEditModeClick}/>
             </div>
@@ -126,13 +134,13 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
   
   private readonly renderPageBlock = (block: PageBlockEntity<PageBlockType>) => {
-    const element = this.getBlockComponent(block.type) as React.ComponentClass<DefaultBlockProps>;
-    const props: DefaultBlockProps = {
+    const element = this.getBlockComponent(block.type) as React.ComponentClass<PageExplorerBlockProps>;
+    const props: PageExplorerBlockProps = {
       block,
-      ref:       this.state.focus?.id === block.id ? this.state.ref : null,
       readonly:  !this.state.edit,
       className: Style.PageBlock,
       onFocus:   this.eventPageBlockFocus,
+      onSelect:  this.eventPageBlockSelect,
       onChange:  this.eventPageBlockChange,
       onSubmit:  this.eventPageBlockSubmit,
     };
@@ -145,7 +153,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
   
   private readonly eventDecorateClick = (decoration: Initializer<Decoration>) => {
-    if (this.state.ref.current && this.state.focus) this.state.ref.current.decorate(decoration);
+    this.state.focus?.decorate(decoration);
   };
   
   private readonly eventDecorateMouseDown = (decoration: Initializer<Decoration>, event: React.MouseEvent) => {
@@ -188,8 +196,13 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   //   );
   // };
   
-  private readonly eventPageBlockFocus = (focus: PageBlockEntity<PageBlockType>) => {
+  private readonly eventPageBlockFocus = (event: React.FocusEvent<HTMLDivElement>, focus: EditText) => {
     this.setState({focus});
+  };
+  
+  private readonly eventPageBlockSelect = ({start, end}: Selection, component: EditText) => {
+    if (start === end) start = Math.max(0, start - 1);
+    this.setState({decoration: component.getText().slice(start, end).getTextDecoration()})
   };
   
   private readonly eventPageBlockChange = (block: PageBlockEntity<PageBlockType>) => {
@@ -206,20 +219,16 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
 }
 
-export interface DefaultBlockProps<Type extends PageBlockType = PageBlockType> extends React.PropsWithChildren<any> {
-  ref: React.Ref<any>;
+export interface PageExplorerBlockProps<Type extends PageBlockType = PageBlockType> extends React.PropsWithChildren<any> {
   block: PageBlockEntity<Type>;
   readonly?: boolean;
   className?: string;
   
-  onBlur?(block: PageBlockEntity<Type>): void;
-  onFocus?(block: PageBlockEntity<Type>): void;
+  onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
+  onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
+  onSelect?(selection: Selection, component: EditText): void;
   onChange(block: PageBlockEntity<Type>): void;
   onSubmit?(block: PageBlockEntity<Type>): void;
-}
-
-export type PageBlockInterface = {
-  decorate(decoration: Initializer<Decoration>): void;
 }
 
 export interface PageExplorerProps {
@@ -231,9 +240,9 @@ export interface PageExplorerProps {
 }
 
 interface State {
-  ref: React.RefObject<PageBlockInterface>;
   edit: boolean;
-  focus?: PageBlockEntity;
+  focus?: EditText;
+  decoration: Decoration;
   
-  text_color: boolean
+  text_color: boolean;
 }
