@@ -4,6 +4,7 @@ import Decoration from "../../classes/Decoration";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import PageEntity from "../../entities/Page/PageEntity";
 import IconType from "../../enums/IconType";
+import Helper from "../../Helper";
 import HeaderBlock from "../Block/HeaderBlock";
 import TableBlock from "../Block/TableBlock";
 import TextBlock from "../Block/TextBlock";
@@ -26,10 +27,22 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   constructor(props: PageExplorerProps) {
     super(props);
     this.state = {
-      edit:       true,
-      text_color: false,
-      decoration: new Decoration()
+      edit:             true,
+      text_color:       false,
+      decoration:       new Decoration(),
+      font_family:      Decoration.defaultFontFamily,
+      font_size:        Decoration.defaultFontSize,
+      font_size_length: Decoration.defaultFontSizeLength,
     };
+  }
+  
+  private decorate(decoration: Initializer<Decoration>) {
+    this.state.focus?.decorate(decoration);
+    this.setState({
+      font_family:      decoration.font_family || this.state.font_family,
+      font_size:        decoration.font_size || this.state.font_size,
+      font_size_length: decoration.font_size_length || this.state.font_size_length,
+    });
   }
   
   private readonly addBlock = (block: PageBlockEntity) => {
@@ -52,6 +65,43 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   private readonly isReadonly = () => {
     return this.props.readonly ?? true;
   };
+  
+  private readonly eventFontSizeChange = (font_size: string) => {
+    this.setState({font_size});
+  };
+  
+  private readonly eventFontSizeReset = () => {
+    const {font_size} = this.state;
+    return font_size && !isNaN(+font_size) ? this.state.focus?.decorate({font_size}) : this.setState({font_size: this.state.decoration.font_size});
+  };
+  
+  
+  private readonly eventFontIndex = (index: number) => {
+    console.log(index);
+    const font_family = Helper.FontFamilyList[index];
+    console.log(this.state.decoration.font_family, font_family)
+    if (!font_family || this.state.font_family === font_family) return;
+    this.decorate({font_family});
+  };
+  
+  private readonly eventFontChange = (font_family: string) => {
+    console.log("change");
+    this.setState({font_family});
+  };
+  
+  private readonly eventFontReset = () => {
+    // console.log("reset?");
+    // const {font_family} = this.state;
+    // if (font_family) {
+    //   const index = Helper.FontFamilyList.findIndex(value => value.toLowerCase() === font_family?.toLowerCase());
+    //   if (index >= 0) {
+    //     return this.state.focus?.decorate({font_family});
+    //   }
+    // }
+    //
+    // this.setState({font_family: this.state.decoration.font_family});
+  };
+  
   
   public render() {
     const classes = [Style.Component];
@@ -83,12 +133,15 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
             </div>
             
             <div>
-              <Input className={Style.FontFamily} label={"Font"} value={"Helvetica"} onChange={() => {}}>
-                {["Helvetica", "Nunito"]}
+              <Input className={Style.FontFamily} label={"Font"} value={this.state.font_family}
+                     onChange={this.eventFontChange} onReset={this.eventFontReset} onIndexChange={this.eventFontIndex} onIndexCommit={this.eventFontIndex}>
+                {Helper.FontFamilyList}
               </Input>
               
-              <Input className={Style.FontSize} label={"Font"} value={"14px"} onChange={() => {}}>
-                {["8px", "10px", "12px", "14px", "18px", "24px"]}
+              <Input className={Style.FontSize} label={"Size"} value={this.state.font_size} onChange={this.eventFontSizeChange} onReset={this.eventFontSizeReset}/>
+              
+              <Input className={Style.FontSizeType} label={"Length"} value={this.state.font_size_length} onChange={() => {}}>
+                {Helper.FontSizeList}
               </Input>
               
               <Button icon={IconType.FONT}/>
@@ -164,45 +217,15 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.addBlock(this.getBlockComponent(type).create());
   };
   
-  // private readonly eventBlockDownClick = (key: number) => {
-  //   if (key === this.props.entity.page_block_list.length - 1) return;
-  //
-  //   this.props.onChange(
-  //     new PageEntity({
-  //       ...this.props.entity,
-  //       page_block_list: [
-  //         ...this.props.entity.page_block_list.slice(0, key),
-  //         this.props.entity.page_block_list[key + 1],
-  //         this.props.entity.page_block_list[key],
-  //         ...this.props.entity.page_block_list.slice(key + 2),
-  //       ],
-  //     }),
-  //   );
-  // };
-  //
-  // private readonly eventBlockUpClick = (key: number) => {
-  //   if (0 === this.props.entity.page_block_list.length - 1) return;
-  //
-  //   this.props.onChange(
-  //     new PageEntity({
-  //       ...this.props.entity,
-  //       page_block_list: [
-  //         ...this.props.entity.page_block_list.slice(0, key - 1),
-  //         this.props.entity.page_block_list[key],
-  //         this.props.entity.page_block_list[key - 1],
-  //         ...this.props.entity.page_block_list.slice(key + 1),
-  //       ],
-  //     }),
-  //   );
-  // };
-  
   private readonly eventPageBlockFocus = (event: React.FocusEvent<HTMLDivElement>, focus: EditText) => {
     this.setState({focus});
   };
   
   private readonly eventPageBlockSelect = ({start, end}: Selection, component: EditText) => {
     if (start === end) start = Math.max(0, start - 1);
-    this.setState({decoration: component.getText().slice(start, end).getTextDecoration()})
+    const decoration = component.getText().slice(start, end).getTextDecoration();
+    console.log("selection", decoration);
+    this.setState({decoration, font_family: decoration.font_family, font_size: decoration.font_size, font_size_length: decoration.font_size_length});
   };
   
   private readonly eventPageBlockChange = (block: PageBlockEntity<PageBlockType>) => {
@@ -244,5 +267,42 @@ interface State {
   focus?: EditText;
   decoration: Decoration;
   
+  font_family?: string;
+  font_size?: string;
+  font_size_length?: string;
+  
   text_color: boolean;
 }
+
+
+// private readonly eventBlockDownClick = (key: number) => {
+//   if (key === this.props.entity.page_block_list.length - 1) return;
+//
+//   this.props.onChange(
+//     new PageEntity({
+//       ...this.props.entity,
+//       page_block_list: [
+//         ...this.props.entity.page_block_list.slice(0, key),
+//         this.props.entity.page_block_list[key + 1],
+//         this.props.entity.page_block_list[key],
+//         ...this.props.entity.page_block_list.slice(key + 2),
+//       ],
+//     }),
+//   );
+// };
+//
+// private readonly eventBlockUpClick = (key: number) => {
+//   if (0 === this.props.entity.page_block_list.length - 1) return;
+//
+//   this.props.onChange(
+//     new PageEntity({
+//       ...this.props.entity,
+//       page_block_list: [
+//         ...this.props.entity.page_block_list.slice(0, key - 1),
+//         this.props.entity.page_block_list[key],
+//         this.props.entity.page_block_list[key - 1],
+//         ...this.props.entity.page_block_list.slice(key + 1),
+//       ],
+//     }),
+//   );
+// };

@@ -74,7 +74,7 @@ export default class EditText extends Component<EditTextProps, State> {
     if (this.props.blacklist?.length) keys = keys.filter(value => !this.props.blacklist!.includes(value));
     
     for (let i = 0; i < keys.length; i++) {
-      text = text.applyDecoration(keys[i], text.hasDecoration(keys[i]) ? undefined : decoration[keys[i]]);
+      text = text.applyDecoration(keys[i], text.hasDecoration(keys[i], decoration[keys[i]]) ? undefined : decoration[keys[i]]);
     }
     
     this.insertText(text, selection, false);
@@ -145,7 +145,6 @@ export default class EditText extends Component<EditTextProps, State> {
     const next_selection = clear_selection ? {start: selection.start + length, end: selection.start + length, forward: selection.forward} : selection;
     
     this.props.onChange(text, this);
-    console.log("Inserting", next_selection);
     this.setState({selection: next_selection, redo_history: [], undo_history: [...this.state.undo_history, {text: this.props.children, selection}]});
   };
   
@@ -255,7 +254,7 @@ export default class EditText extends Component<EditTextProps, State> {
     if (decoration.color) styling.color = decoration.color;
     if (decoration.background_color) styling.backgroundColor = decoration.background_color;
     if (decoration.font_family) styling.fontFamily = decoration.font_family;
-    if (decoration.font_size) styling.fontSize = decoration.font_size;
+    if (decoration.font_size) styling.fontSize = decoration.font_size + decoration.font_size_length;
     
     return (
       <span key={key} style={styling}>{text.length ? this.renderText(text) : <br/>}</span>
@@ -287,7 +286,7 @@ export default class EditText extends Component<EditTextProps, State> {
     if (decoration.color) node.style.color = decoration.color;
     if (decoration.background_color) node.style.backgroundColor = decoration.background_color;
     if (decoration.font_family) node.style.fontFamily = decoration.font_family;
-    if (decoration.font_size) node.style.fontSize = decoration.font_size;
+    if (decoration.font_size) node.style.fontSize = decoration.font_size + decoration.font_size_length;
     node.append(text.length ? document.createTextNode(this.renderText(text)) : document.createElement("br"));
     return node;
   };

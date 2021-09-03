@@ -5,6 +5,12 @@ import KeyboardCommand from "./enums/KeyboardCommand";
 namespace Helper {
   
   export const Canvas = process.browser ? document.createElement("canvas") : null;
+  export const FontFamilyList = ["Arial", "Helvetica", "Verdana", "Georgia", "Times New Roman", "Tahoma", "Trebuchet MS", "Nunito", "Garamond", "Courier New", "Brush Script MT"];
+  export const FontSizeList = ["cm", "mm", "in", "px", "pt", "pc", "em", "ex", "ch", "rem", "vw", "vmax", "%"];
+  
+  export function isValidLengthType(length_type: string) {
+    return FontSizeList.includes(length_type.toLowerCase());
+  }
   
   export function getKeyboardEventCommand(event: React.KeyboardEvent): KeyboardCommand {
     const parts = [] as string[];

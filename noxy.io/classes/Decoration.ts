@@ -1,17 +1,24 @@
-export default class Decoration {
+import Helper from "../Helper";
 
+export default class Decoration {
+  
   public readonly bold: boolean;
   public readonly code: boolean;
   public readonly mark: boolean;
   public readonly italic: boolean;
   public readonly underline: boolean;
   public readonly strikethrough: boolean;
-
+  
   public readonly font_size: string;
+  public readonly font_size_length: string;
   public readonly font_family: string;
   public readonly color: string;
   public readonly background_color: string;
-
+  
+  public static defaultFontFamily = "Nunito";
+  public static defaultFontSize = "14";
+  public static defaultFontSizeLength = "px";
+  
   constructor(initializer: Initializer<Decoration> = {}) {
     this.bold = initializer.bold ?? false;
     this.code = initializer.code ?? false;
@@ -19,19 +26,20 @@ export default class Decoration {
     this.italic = initializer.italic ?? false;
     this.underline = initializer.underline ?? false;
     this.strikethrough = initializer.strikethrough ?? false;
-    this.font_size = initializer.font_size ?? "";
-    this.font_family = initializer.font_family ?? "";
+    this.font_family = initializer.font_family ?? Decoration.defaultFontFamily;
+    this.font_size = initializer.font_size ?? Decoration.defaultFontSize;
+    this.font_size_length = initializer.font_size_length ?? Decoration.defaultFontSizeLength;
     this.color = initializer.color ?? "";
     this.background_color = initializer.background_color ?? "";
   }
-
+  
   public equals(decoration: Decoration) {
     return Object.keys(this).every(key => this[key as keyof Decoration] === decoration[key as keyof Decoration]);
   }
-
+  
   public static parseHTML(node: Node, decoration?: Initializer<Decoration>) {
     const initializer = {...decoration} as Properties<{ -readonly [P in keyof Decoration]: Decoration[P] }>;
-
+    
     if (node instanceof HTMLElement) {
       if (node.tagName === "B") initializer.bold = true;
       if (node.tagName === "I") initializer.italic = true;
@@ -39,17 +47,19 @@ export default class Decoration {
       if (node.tagName === "S") initializer.strikethrough = true;
       if (node.tagName === "CODE") initializer.code = true;
       if (node.tagName === "MARK") initializer.mark = true;
-
+      
       const {fontSize, fontFamily, color, backgroundColor} = node.style;
-      initializer.font_size = fontSize;
-      initializer.font_family = fontFamily;
+      const [font_size, font_size_length] = fontSize.split(/(?<=[0-9]+)(?=[a-z]+)/);
+      initializer.font_size = font_size && !isNaN(+font_size) ? font_size : Decoration.defaultFontSize;
+      initializer.font_size_length = Helper.isValidLengthType(font_size_length) ? font_size_length : Decoration.defaultFontSizeLength;
+      initializer.font_family = fontFamily || Decoration.defaultFontFamily;
       initializer.color = color;
       initializer.background_color = backgroundColor;
     }
-
+    
     return new Decoration(initializer);
   }
-
+  
 }
 
 

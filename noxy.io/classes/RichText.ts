@@ -84,10 +84,10 @@ export default class RichText {
     return new Decoration(result);
   }
   
-  public hasDecoration(decoration: keyof Decoration) {
+  public hasDecoration<K extends keyof Initializer<Decoration>>(decoration: K, value: Initializer<Decoration>[K]) {
     for (let i = 0; i < this.length; i++) {
       const character = this.getCharacterSafe(i);
-      if (!character.decoration[decoration]) return false;
+      if (character.decoration[decoration] !== value) return false;
     }
     return true;
   }

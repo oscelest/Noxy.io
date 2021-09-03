@@ -1,14 +1,11 @@
-import {v4} from "uuid";
 import Decoration from "./Decoration";
 
 export default class Character {
 
-  public readonly id: string;
   public readonly value: string;
   public readonly decoration: Decoration;
 
   constructor(value: string, decoration?: Initializer<Decoration>) {
-    this.id = v4();
     this.value = value;
     this.decoration = new Decoration(decoration);
   }
