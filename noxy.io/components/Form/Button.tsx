@@ -29,7 +29,7 @@ export default class Button<V> extends Component<EventProps | ValueProps<V>, Sta
       <div className={classes.join(" ")} tabIndex={tab_index} data-disabled={disabled} data-loading={loading}
            onClick={this.eventClick} onMouseEnter={this.eventMouseEnter} onMouseLeave={this.eventMouseLeave} onMouseDown={this.eventMouseDown} onMouseUp={this.eventMouseUp}
            onFocus={this.eventFocus} onBlur={this.eventBlur} onKeyDown={this.eventKeyDown}>
-        <Loader className={Style.Loader} size={Size.SMALL} show={loading}>
+        <Loader className={Style.Loader} size={Size.SMALL} value={loading}>
           <Conditional condition={this.props.icon}>
             <Icon className={Style.Icon} type={this.props.icon!}/>
           </Conditional>

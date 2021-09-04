@@ -1,16 +1,16 @@
 import _ from "lodash";
 import React from "react";
+import Util from "../../../common/services/Util";
 import IconType from "../../enums/IconType";
 import InputType from "../../enums/InputType";
+import Component from "../Application/Component";
+import Conditional from "../Application/Conditional";
 import Table from "../Base/Table";
 import Button from "../Form/Button";
 import Input from "../Form/Input";
 import Sortable, {SortableCollection} from "../Form/Sortable";
 import Style from "./DataTable.module.scss";
 import Pagination from "./Pagination";
-import Conditional from "../Application/Conditional";
-import Component from "../Application/Component";
-import Util from "../../../common/services/Util";
 
 export default class DataTable<K extends string> extends Component<DataTableProps<K>, State> {
 
@@ -50,7 +50,7 @@ export default class DataTable<K extends string> extends Component<DataTableProp
   };
 
   public render() {
-    const {count, page, size, search, order, loading, placeholder, children, onCreate} = this.props;
+    const {count, page, size, search, order, loading, children, onCreate} = this.props;
     const {page_size_list, page_size_index, page_size_input} = this.state;
 
     const classes = [Style.Component];
@@ -88,7 +88,7 @@ export default class DataTable<K extends string> extends Component<DataTableProp
           </div>
         </div>
 
-        <Table className={Style.Body} loader={loading} placeholder={placeholder}>
+        <Table className={Style.Body} loading={loading}>
           {children}
         </Table>
 

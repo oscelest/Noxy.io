@@ -8,11 +8,6 @@
   right:                      0;
   overflow-x:                 hidden;
   overflow-y:                 auto;
-  color:                      $background-secondary-color;
-  background-color:           white;
-  border:                     1px solid $border-color;
-  border-bottom-left-radius:  $border-radius;
-  border-bottom-right-radius: $border-radius;
   z-index:                    100;
 
   &[hidden] {

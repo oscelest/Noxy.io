@@ -110,7 +110,7 @@ export default class EntityPicker<V extends {toString(): string}> extends Compon
               {_.map(selected, this.renderSelected)}
             </div>
           </Conditional>
-          <Loader className={Style.Loader} size={Size.NORMAL} show={loading}>
+          <Loader className={Style.Loader} size={Size.NORMAL} value={loading}>
             <div className={Style.Available}>
               {_.map(available, this.renderAvailable)}
             </div>

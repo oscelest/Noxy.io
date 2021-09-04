@@ -1,8 +1,5 @@
 import React from "react";
-import Size from "../../../common/enums/Size";
 import Component from "../Application/Component";
-import Loader from "../UI/Loader";
-import Placeholder from "../UI/Placeholder";
 import Style from "./Dropdown.module.scss";
 
 export default class Dropdown extends Component<DropdownProps, State> {
@@ -15,26 +12,18 @@ export default class Dropdown extends Component<DropdownProps, State> {
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
     
-    const loader_text = typeof this.props.loading === "string" ? this.props.loading : "Loading...";
-    
     return (
-      <div className={classes.join(" ")} hidden={this.props.hidden}>
-        <Loader className={Style.Loader} size={Size.SMALL} show={!!this.props.loading} text={loader_text}>
-          <Placeholder className={Style.Placeholder} show={!this.props.children} text={this.props.placeholder ?? "No options available"}>
-            {this.props.children}
-          </Placeholder>
-        </Loader>
+      <div className={classes.join(" ")} hidden={this.props.collapsed}>
+        {this.props.children}
       </div>
     );
   }
 }
 
 export interface DropdownProps {
-  hidden: boolean
-  loading?: string | boolean
-  placeholder?: string
+  collapsed: boolean;
   
-  className?: string
+  className?: string;
 }
 
 interface State {

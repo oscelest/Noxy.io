@@ -1,6 +1,6 @@
 import React from "react";
-import Style from "./Placeholder.module.scss";
 import Component from "../Application/Component";
+import Style from "./Placeholder.module.scss";
 
 export default class Placeholder extends Component<PlaceholderProps, State> {
   
@@ -9,22 +9,22 @@ export default class Placeholder extends Component<PlaceholderProps, State> {
   }
   
   public render() {
-    if (this.props.show !== true && this.props.children) return this.props.children;
-    
+    if (this.props.value === undefined || this.props.value === false) return this.props.children;
+  
+    const text = typeof this.props.value === "string" ? this.props.value : "";
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
     
     return (
-      <div className={classes.join(" ")}>{this.props.text ?? "Placeholder"}</div>
+      <div className={classes.join(" ")}>{text}</div>
     );
   }
   
 }
 
 export interface PlaceholderProps {
+  value?: string | boolean
   className?: string
-  text?: string
-  show?: boolean
 }
 
 interface State {

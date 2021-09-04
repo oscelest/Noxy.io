@@ -39,8 +39,8 @@ export default class APIKeyIDPage extends Component<APIKeyIDPageProps, State> {
 
   public render() {
     return (
-      <Loader size={Size.LARGE} show={this.state.loading}>
-        <Placeholder show={!this.state.api_key.exists()} text={"API Key with this ID does not exist or you do not have the authority to view it."}>
+      <Loader size={Size.LARGE} value={this.state.loading}>
+        <Placeholder value={!this.state.api_key.exists() || "API Key with this ID does not exist or you do not have the authority to view it."}>
           <div className={Style.Component}>
             <PageHeader title={`Manage API Key for ${this.state.api_key.user?.email} (ID: ${this.state.api_key?.id})`}/>
             <APIKeyUpdateForm entity={this.state.api_key}/>

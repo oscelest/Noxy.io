@@ -103,16 +103,16 @@ export default class FileAliasPage extends Component<FileIDPageProps, State> {
     const isOwner = file && this.context.isCurrentUser(file.user);
 
     return (
-      <Loader size={Size.LARGE} show={file_loading}>
+      <Loader size={Size.LARGE} value={file_loading}>
         <div className={Style.Component}>
-          <Placeholder show={!file?.exists()} text={"File does not exist or you do not have permission to view it."}>
+          <Placeholder value={!file?.exists() || "File does not exist or you do not have permission to view it."}>
             <PageHeader title={file?.name ?? "Loading..."}/>
             <div className={Style.Content}>
               <div className={Style.Viewer} data-file-type={this.state.file?.getFileType()}>
                 {this.renderFile()}
               </div>
               <div className={Style.Sidebar}>
-                <Loader size={Size.NORMAL} show={loading_sidebar}>
+                <Loader size={Size.NORMAL} value={loading_sidebar}>
 
                   <div className={Style.Info}>
                     <span className={Style.Header}>File size</span>

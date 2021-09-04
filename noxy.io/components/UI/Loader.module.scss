@@ -1,28 +1,28 @@
 .Component {
-  display:         flex;
-  flex:            1 1 auto;
-  align-items:     center;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
   justify-content: center;
   grid-column-gap: 5px;
 
   &.Auto .Loader {
-    flex:   0 0 auto;
-    width:  inherit;
+    flex: 0 0 auto;
+    width: inherit;
     height: inherit;
   }
 
   &.Small .Loader {
-    width:  20px;
+    width: 20px;
     height: 20px;
   }
 
   &.Normal .Loader {
-    width:  50px;
+    width: 50px;
     height: 50px;
   }
 
   &.Large .Loader {
-    width:  100px;
+    width: 100px;
     height: 100px;
   }
 

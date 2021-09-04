@@ -122,7 +122,7 @@ export default class Input<T extends string | number = string> extends Component
                  onChange={this.eventInputChange} onBlur={this.eventInputBlur} onFocus={this.eventInputFocus} onKeyDown={this.eventKeyDown}/>
         </label>
         <Conditional condition={this.props.loading || React.Children.toArray(this.props.children).length || this.state.focus || this.props.value}>
-          <Dropdown className={Style.Dropdown} hidden={!dropdown} loading={loading} placeholder={placeholder}>
+          <Dropdown className={Style.Dropdown} collapsed={!dropdown} loading={loading} placeholder={placeholder}>
             <Select className={Style.Select} index={index} onChange={this.eventSelectChange} onCommit={this.eventSelectCommit}>
               {children}
             </Select>

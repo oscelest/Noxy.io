@@ -1,9 +1,9 @@
 import _ from "lodash";
 import React from "react";
+import Component from "../Application/Component";
 import Loader from "../UI/Loader";
 import Placeholder from "../UI/Placeholder";
 import Style from "./Select.module.scss";
-import Component from "../Application/Component";
 
 export default class Select extends Component<SelectProps, State> {
 
@@ -29,7 +29,7 @@ export default class Select extends Component<SelectProps, State> {
     return (
       <div className={classes.join(" ")} onMouseDown={this.eventComponentMouseDown}>
         <Loader className={Style.Loader} show={!!this.props.loader} text={loader_text}>
-          <Placeholder className={Style.Placeholder} show={!!this.props.placeholder} text={placeholder_text}>
+          <Placeholder className={Style.Placeholder} value={!!this.props.placeholder} text={placeholder_text}>
             {_.map(React.Children.toArray(children), this.renderItem)}
           </Placeholder>
         </Loader>

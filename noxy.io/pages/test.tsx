@@ -2,7 +2,7 @@ import {NextPageContext} from "next";
 import React from "react";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import Component from "../components/Application/Component";
-import List from "../components/Base/List";
+import {AutoComplete} from "../components/Base/AutoComplete";
 
 // noinspection JSUnusedGlobalSymbols
 export default class IndexPage extends Component<PageProps, State> {
@@ -11,32 +11,39 @@ export default class IndexPage extends Component<PageProps, State> {
     return {permission: PermissionLevel.ADMIN};
   }
   
+  private static values = ["Test", "Hello", "Test!", "Test1!", "Test2!"];
+  
   constructor(props: {}) {
     super(props);
     
     this.state = {
+      value: "",
       index: -1,
     };
   }
   
   public render() {
     return (
-      <List index={this.state.index} onCommit={this.eventCommit} onChange={this.eventChange}>
-        {[]}
-      </List>
+      <div style={{flexFlow: "column", width: "200px"}}>
+        <AutoComplete required={true} label={"Test"} value={this.state.value} index={this.state.index}
+                      onChange={this.eventChange} onReset={this.eventInputReset}>
+          {IndexPage.values}
+        </AutoComplete>
+      </div>
     );
   }
   
-  
   private readonly eventChange = (index: number, value: string) => {
-    this.setState({index: index});
+    console.log("changing in top level", index, value)
+    this.setState({index, value});
   };
   
-  private readonly eventCommit = (index: number) => {
-    this.setState({index: index});
+  private readonly eventInputReset = () => {
+    this.setState({index: -1});
   };
 }
 
 interface State {
+  value: string;
   index: number;
 }

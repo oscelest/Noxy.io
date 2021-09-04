@@ -1,49 +1,49 @@
-import {AxiosResponse} from "axios";
+import {AxiosError} from "axios";
 import IsEmail from "isemail";
 import _ from "lodash";
 import React from "react";
+import Component from "../components/Application/Component";
 import Dialog from "../components/Application/Dialog";
+import Form from "../components/Base/Form";
 import Button from "../components/Form/Button";
 import Input from "../components/Form/Input";
 import TitleText from "../components/Text/TitleText";
-import Form from "../components/Base/Form";
 import IconType from "../enums/IconType";
 import InputType from "../enums/InputType";
 import Style from "./LogInForm.module.scss";
 import PasswordResetRequestForm from "./PasswordResetRequestForm";
-import Component from "../components/Application/Component";
 
 export default class LogInForm extends Component<LogInFormProps, State> {
-
+  
   constructor(props: LogInFormProps) {
     super(props);
     this.state = {
       loading:      false,
       field_errors: {},
-
+      
       email:    "",
       password: "",
     };
   }
-
+  
   public readonly submit = async () => {
     const {email, password} = this.state;
     const next_state = {field_errors: {}} as State;
-
+    
     if (!email.length) {
       next_state.field_errors.email = new Error("Please enter your email");
     }
     else if (!IsEmail.validate(email)) {
       next_state.field_errors.email = new Error("Email address is invalid");
     }
-
+    
     if (!password.length) {
       next_state.field_errors.password = new Error("Please enter your password");
     }
     else if (password.length < 12) {
       next_state.field_errors.password = new Error("Password is too short");
     }
-
+    
     if (!_.size(next_state.field_errors)) {
       next_state.loading = true;
       try {
@@ -52,8 +52,8 @@ export default class LogInForm extends Component<LogInFormProps, State> {
         next_state.error = undefined;
       }
       catch (error) {
-        const response = error.response as AxiosResponse<APIRequest<unknown>>;
-
+        const {response} = error as AxiosError<APIRequest<unknown>>;
+        
         if (response?.status === 400) {
           next_state.error = new Error("Incorrect email and/or password");
         }
@@ -65,16 +65,16 @@ export default class LogInForm extends Component<LogInFormProps, State> {
         }
       }
     }
-
+    
     next_state.loading = false;
     this.setState(next_state);
   };
-
+  
   public render() {
     const {email, password, loading, error, field_errors} = this.state;
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
-
+    
     return (
       <Form className={classes.join(" ")} loading={loading} error={error} onSubmit={this.submit}>
         <div className={Style.Wrapper}>
@@ -87,18 +87,18 @@ export default class LogInForm extends Component<LogInFormProps, State> {
           <Button icon={IconType.QUESTION} onClick={this.eventButtonPasswordClick}/>
         </div>
       </Form>
-
+    
     );
   }
-
+  
   private readonly eventInputEmailChange = (email: string) => {
     this.setState({email});
   };
-
+  
   private readonly eventInputPasswordChange = (password: string) => {
     this.setState({password});
   };
-
+  
   private readonly eventButtonEmailClick = () => {
     this.setState({
       dialog: Dialog.show(
@@ -111,7 +111,7 @@ export default class LogInForm extends Component<LogInFormProps, State> {
       ),
     });
   };
-
+  
   private readonly eventButtonPasswordClick = () => {
     this.setState({
       dialog: Dialog.show(
@@ -128,17 +128,17 @@ export default class LogInForm extends Component<LogInFormProps, State> {
 }
 
 export interface LogInFormProps {
-  className?: string
-  onSubmit?(): void
+  className?: string;
+  onSubmit?(): void;
 }
 
 interface State {
-  dialog?: string
-
-  loading: boolean
-  error?: Error
-  field_errors: Partial<Record<keyof Omit<State, "loading" | "error" | "field_errors">, Error>>
-
-  email: string
-  password: string
+  dialog?: string;
+  
+  loading: boolean;
+  error?: Error;
+  field_errors: Partial<Record<keyof Omit<State, "loading" | "error" | "field_errors">, Error>>;
+  
+  email: string;
+  password: string;
 }

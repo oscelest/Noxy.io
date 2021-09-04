@@ -16,7 +16,7 @@ import Style from "./_app.module.scss";
 
 // noinspection JSUnusedGlobalSymbols
 export default class Application extends App {
-
+  
   public render() {
     return (
       <Global.Provider>
@@ -25,13 +25,13 @@ export default class Application extends App {
           <meta charSet="UTF-8"/>
           <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
           <meta httpEquiv="X-UA-Compatible" content="ie=edge"/>
-
+          
           <meta property="og:title" content="Noxy.io"/>
           <meta property="og:description" content="Something coming soon™"/>
           <meta property="og:type" content="website"/>
           <meta property="og:url" content="https://noxy.io/"/>
           <meta property="og:image" content="https://noxy.io/static/preview.png"/>
-
+          
           <meta name="viewport" content="initial-scale=1.0, width=device-width"/>
           <link rel="shortcut icon" type="image/x-icon" href="/static/favicon.ico"/>
           <style>
@@ -66,7 +66,7 @@ export default class Application extends App {
 }
 
 class Header extends Component {
-
+  
   public render() {
     return (
       <div className={Style.Header}>
@@ -89,27 +89,27 @@ class Header extends Component {
 }
 
 class Content extends Component<{}, {permission?: PermissionLevel | null}> {
-
+  
   constructor(props: {}) {
     super(props);
     this.state = {permission: null};
   }
-
+  
   private readonly getPermission = () => {
     return (router as unknown as Router)?.components?.[router.route]?.props?.pageProps?.permission;
   };
-
+  
   public componentDidMount(): void {
     this.setState({permission: this.getPermission()});
   }
-
+  
   public componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<{permission?: PermissionLevel | null}>, snapshot?: any): void {
     const permission = this.getPermission();
     if (permission !== this.state.permission) {
       this.setState({permission});
     }
   }
-
+  
   public render() {
     return (
       <div className={Style.Content}>
@@ -119,5 +119,5 @@ class Content extends Component<{}, {permission?: PermissionLevel | null}> {
       </div>
     );
   }
-
+  
 }

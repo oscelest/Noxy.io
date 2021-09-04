@@ -15,15 +15,13 @@ export default class Table extends Component<TableProps, State> {
   
   public render() {
     const classes = [Style.Component];
-    const loader_text = typeof this.props.loader === "string" ? this.props.loader : undefined;
-    const placeholder_text = typeof this.props.placeholder === "string" ? this.props.placeholder : "No options available";
     
     if (this.props.className) classes.push(this.props.className);
     
     return (
       <div className={classes.join(" ")}>
-        <Loader className={Style.Loader} size={Size.LARGE} show={!!this.props.loader} text={loader_text}>
-          <Placeholder className={Style.Placeholder} show={!this.props.children} text={placeholder_text}>
+        <Loader className={Style.Loader} size={Size.LARGE} value={this.props.loading}>
+          <Placeholder className={Style.Placeholder} value={!this.props.children || "No options available"}>
             {_.map(_.concat(this.props.children), this.renderChild)}
           </Placeholder>
         </Loader>
@@ -42,8 +40,7 @@ export default class Table extends Component<TableProps, State> {
 
 
 export interface TableProps {
-  loader?: string | boolean
-  placeholder?: string
+  loading?: string | boolean
   
   className?: string
 }

@@ -1,11 +1,10 @@
-import _ from "lodash";
-import React from "react";
 import Axios from "axios";
+import _ from "lodash";
 import Router from "next/router";
-import UserEntity from "./entities/UserEntity";
-import FatalException from "./exceptions/FatalException";
-import RequestHeader from "../common/enums/RequestHeader";
+import React from "react";
 import PermissionLevel from "../common/enums/PermissionLevel";
+import RequestHeader from "../common/enums/RequestHeader";
+import UserEntity from "./entities/UserEntity";
 
 namespace Global {
 
@@ -55,7 +54,7 @@ namespace Global {
 
     public refreshLogIn = async () => {
       const jwt = localStorage[RequestHeader.AUTHORIZATION];
-      if (!jwt) throw new FatalException("Could not refresh login", "No JSONWebToken present in Local Storage.");
+      if (!jwt) return this.performLogOut();
 
       this.setState({loading: true});
       Axios.defaults.headers.common[RequestHeader.AUTHORIZATION] = jwt;
@@ -66,7 +65,7 @@ namespace Global {
       }
 
       try {
-        return this.assignUser(await UserEntity.postLogIn());
+        this.assignUser(await UserEntity.postLogIn());
       }
       catch (error) {
         this.performLogOut();
@@ -86,7 +85,7 @@ namespace Global {
 
     private assignUser = (user: UserEntity) => {
       const api_key = user.getCurrentAPIKey();
-      if (!api_key) throw new FatalException("User has no API Key", "A user must be granted an API Key.");
+      if (!api_key) throw new Error("User has no API Key");
 
       const next_state = {} as State;
       next_state.loading = false;

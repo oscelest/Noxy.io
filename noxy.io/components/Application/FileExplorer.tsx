@@ -154,7 +154,7 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
 
           <div className={Style.Content}>
             <DragDrop className={Style.DragDrop} title={drag_drop_title} message={drag_drop_text} onDrop={this.openUploadDialog}>
-              <Loader className={Style.Loader} show={file_loading} size={Size.LARGE}>
+              <Loader className={Style.Loader} value={file_loading} size={Size.LARGE}>
                 <ElementBrowser className={Style.Browser} selection={file_selected} onSelect={this.eventSelect} onDelete={this.openFileDeleteDialog} onContextMenu={this.eventContextMenu}>
                   {_.map(file_list, this.renderFile)}
                 </ElementBrowser>
