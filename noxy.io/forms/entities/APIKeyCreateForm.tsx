@@ -76,10 +76,10 @@ export default class APIKeyCreateForm extends Component<APIKeyCreateFormProps, S
       <Form className={classes.join(" ")} loading={loading} error={error} onSubmit={this.submit}>
         <div className={Style.InputList}>
           <EntityInput className={Style.ComboBox} label={"User"} value={user} error={field_errors.user} property={"email"} method={this.eventUserSearch} onChange={this.eventUserChange}/>
-          <Input className={Style.ComboBox} type={InputType.NUMBER} label={"Limit per 10 seconds"} value={limit_per_decasecond} error={field_errors.limit_per_decasecond}
-                 onChange={this.eventInputLimitPerDecasecondChange}/>
-          <Input className={Style.ComboBox} type={InputType.NUMBER} label={"Limit per minute"} value={limit_per_minute} error={field_errors.limit_per_minute}
-                 onChange={this.eventInputLimitPerMinuteChange}/>
+          <Input className={Style.ComboBox} type={InputType.NUMBER} label={"Limit per 10 seconds"} value={limit_per_decasecond.toString()} error={field_errors.limit_per_decasecond}
+                 onChange={this.eventLimitPerDecasecondChange}/>
+          <Input className={Style.ComboBox} type={InputType.NUMBER} label={"Limit per minute"} value={limit_per_minute.toString()} error={field_errors.limit_per_minute}
+                 onChange={this.eventLimitPerMinuteChange}/>
         </div>
         <PermissionExplorer permission={permission} onChange={this.eventPermissionChange}/>
         <Button loading={loading} onClick={this.submit}>Submit</Button>
@@ -88,7 +88,6 @@ export default class APIKeyCreateForm extends Component<APIKeyCreateFormProps, S
   }
   
   private readonly eventUserSearch = async (email: string) => {
-    if (!email) return [];
     return await UserEntity.getMany({email}, {skip: 0, limit: 10, order: {email: Order.ASC}});
   };
   
@@ -100,12 +99,14 @@ export default class APIKeyCreateForm extends Component<APIKeyCreateFormProps, S
     this.setState({entity: new APIKeyEntity({...this.state.entity, permission})});
   };
   
-  private readonly eventInputLimitPerDecasecondChange = (limit_per_decasecond: number) => {
-    this.setState({entity: new APIKeyEntity({...this.state.entity, limit_per_decasecond})});
+  private readonly eventLimitPerDecasecondChange = (value: string) => {
+    const limit_per_decasecond = +value;
+    if (!isNaN(limit_per_decasecond)) this.setState({entity: new APIKeyEntity({...this.state.entity, limit_per_decasecond})});
   };
   
-  private readonly eventInputLimitPerMinuteChange = (limit_per_minute: number) => {
-    this.setState({entity: new APIKeyEntity({...this.state.entity, limit_per_minute})});
+  private readonly eventLimitPerMinuteChange = (value: string) => {
+    const limit_per_minute = +value;
+    if (!isNaN(limit_per_minute)) this.setState({entity: new APIKeyEntity({...this.state.entity, limit_per_minute})});
   };
   
 }

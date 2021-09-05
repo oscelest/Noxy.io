@@ -2,7 +2,7 @@ import {NextPageContext} from "next";
 import React from "react";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import Component from "../components/Application/Component";
-import {AutoComplete} from "../components/Base/AutoComplete";
+import AutoComplete from "../components/Form/AutoComplete";
 
 // noinspection JSUnusedGlobalSymbols
 export default class IndexPage extends Component<PageProps, State> {

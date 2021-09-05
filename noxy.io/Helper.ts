@@ -6,10 +6,11 @@ namespace Helper {
   
   export const Canvas = process.browser ? document.createElement("canvas") : null;
   export const FontFamilyList = ["Arial", "Helvetica", "Verdana", "Georgia", "Times New Roman", "Tahoma", "Trebuchet MS", "Nunito", "Garamond", "Courier New", "Brush Script MT"];
-  export const FontSizeList = ["cm", "mm", "in", "px", "pt", "pc", "em", "ex", "ch", "rem", "vw", "vmax", "%"];
+  export const FontSizeList = ["8", "9", "10", "11", "12", "14", "18", "24", "30", "36", "48", "60", "72", "84", "96"];
+  export const FontLengthList = ["px", "pt", "em", "rem", "vw", "vmax", "%", "cm", "mm", "in", "pc", "ex", "ch"];
   
   export function isValidLengthType(length_type: string) {
-    return FontSizeList.includes(length_type.toLowerCase());
+    return FontLengthList.includes(length_type.toLowerCase());
   }
   
   export function getKeyboardEventCommand(event: React.KeyboardEvent): KeyboardCommand {

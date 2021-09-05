@@ -1,17 +1,17 @@
 import _ from "lodash";
 import Moment from "moment";
 import React from "react";
+import Util from "../../../common/services/Util";
+import Component from "../../components/Application/Component";
+import Form from "../../components/Base/Form";
 import Button from "../../components/Form/Button";
 import Input from "../../components/Form/Input";
 import ErrorText from "../../components/Text/ErrorText";
 import TitleText from "../../components/Text/TitleText";
-import Form from "../../components/Base/Form";
 import Preview from "../../components/UI/Preview";
 import FileEntity from "../../entities/File/FileEntity";
 import FatalException from "../../exceptions/FatalException";
 import Style from "./FileRenameForm.module.scss";
-import Component from "../../components/Application/Component";
-import Util from "../../../common/services/Util";
 
 export default class FileRenameForm extends Component<FileRenameFormProps, State> {
 
@@ -53,8 +53,7 @@ export default class FileRenameForm extends Component<FileRenameFormProps, State
 
   private readonly updateSelection = (text: string) => {
     if (!this.state.ref.current) throw new FatalException("Fatal Exception", "Input field has not yet been instantiated.");
-    const {start = 0, end = 0} = this.state.ref.current.getSelection() ?? {};
-    this.state.ref.current.element?.focus();
+    const {start, end} = this.state.ref.current.getSelection();
     Util.schedule(this.state.ref.current.setSelection, start + text.length + 2);
     return `${this.state.name.substring(0, start)}{${text}}${this.state.name.substring(end)}`;
   };

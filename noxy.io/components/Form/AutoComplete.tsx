@@ -3,13 +3,13 @@ import InputType from "enums/InputType";
 import React from "react";
 import EventCode from "../../../common/enums/EventCode";
 import IconType from "../../enums/IconType";
-import Icon from "../Form/Icon";
+import Dropdown from "../Base/Dropdown";
+import Index from "../Base/Index";
 import Style from "./AutoComplete.module.scss";
-import Dropdown from "./Dropdown";
-import Index from "./Index";
-import {InputField} from "./InputField";
+import Icon from "./Icon";
+import Input from "./Input";
 
-export class AutoComplete extends Component<AutoCompleteProps, State> {
+export default class AutoComplete extends Component<AutoCompleteProps, State> {
   
   constructor(props: AutoCompleteProps) {
     super(props);
@@ -25,13 +25,11 @@ export class AutoComplete extends Component<AutoCompleteProps, State> {
     const index = this.getValueIndex(value);
     this.setState({collapsed: collapse, value, index});
     if (this.state.value !== value) this.props.onInputChange?.(value);
-    if (this.state.index !== index) this.props.onIndexChange?.(index);
   }
   
   public setIndex(index: number, collapse: boolean = false) {
     const value = this.props.onRender?.(index) ?? this.getValueList()[index] ?? "";
     this.setState({collapsed: collapse, value, index});
-    if (this.state.value !== value) this.props.onInputChange?.(value);
     if (this.state.index !== index) this.props.onIndexChange?.(index);
   }
   
@@ -102,13 +100,13 @@ export class AutoComplete extends Component<AutoCompleteProps, State> {
     
     return (
       <label className={classes.join(" ")}>
-        <InputField className={Style.Input} value={value} autoComplete={this.props.autoComplete} label={this.props.label} type={this.props.type}
-                    onChange={this.eventInputChange} onBlur={this.eventInputBlur} onClick={this.eventInputClick} onKeyDown={this.eventInputKeyDown}/>
+        <Input className={Style.Input} value={value} autoComplete={this.props.autoComplete} label={this.props.label} type={this.props.type}
+               onChange={this.eventInputChange} onBlur={this.eventInputBlur} onClick={this.eventInputClick} onKeyDown={this.eventInputKeyDown}/>
         <div className={Style.Arrow} onMouseDown={this.eventArrowMouseDown} onClick={this.eventArrowClick}>
           <Icon type={IconType.CARET_DOWN}/>
         </div>
         <Dropdown className={Style.Dropdown} collapsed={this.state.collapsed}>
-          <Index ref={this.state.ref_index} className={Style.Select} index={index}
+          <Index ref={this.state.ref_index} className={Style.Select} index={index} loading={this.props.loading} placeholder={this.props.placeholder}
                  onChange={this.eventIndexChange} onCommit={this.eventIndexCommit} onMouseEnter={this.eventIndexMouseEnter} onMouseLeave={this.eventIndexMouseLeave}>
             {this.props.children}
           </Index>
@@ -130,15 +128,15 @@ export class AutoComplete extends Component<AutoCompleteProps, State> {
   
   private readonly eventInputChange = (value: string) => {
     this.setValue(value);
-  }
+  };
   
   private readonly eventIndexChange = (index: number) => {
     this.setIndex(index);
-  }
+  };
   
   private readonly eventIndexCommit = () => {
     this.commit();
-  }
+  };
   
   private readonly eventInputBlur = () => {
     this.commit();
@@ -186,7 +184,7 @@ export class AutoComplete extends Component<AutoCompleteProps, State> {
   
   private readonly eventIndexMouseLeave = () => {
     if (!this.state.active) return;
-    this.setState({active: false, index: -1, value: ""})
+    this.setState({active: false, index: -1, value: ""});
   };
 }
 
@@ -200,7 +198,9 @@ export interface AutoCompleteProps {
   
   type?: InputType;
   error?: Error;
+  loading?: string | boolean;
   required?: boolean;
+  placeholder?: string | boolean;
   autoComplete?: string;
   
   onReset?(): void;

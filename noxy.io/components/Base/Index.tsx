@@ -2,7 +2,7 @@ import React from "react";
 import Component from "../Application/Component";
 import Loader from "../UI/Loader";
 import Placeholder from "../UI/Placeholder";
-import Style from "./List.module.scss";
+import Style from "./Index.module.scss";
 
 export default class Index extends Component<IndexProps, State> {
   

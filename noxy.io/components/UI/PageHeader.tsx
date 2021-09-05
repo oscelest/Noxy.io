@@ -30,7 +30,7 @@ export default class PageHeader extends Component<PageHeaderProps, State> {
 
     return (
       <div className={classes.join(" ")}>
-        <Loader className={Style.Loader} value={this.props.loading || "Loading..."}>
+        <Loader className={Style.Loader} value={this.props.loading && "Loading..."}>
           <div className={Style.Title}>
             {this.props.title}
           </div>

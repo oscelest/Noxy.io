@@ -1,16 +1,17 @@
 .Component {
-  flex: 0 0 auto;
+  flex:  0 0 auto;
+  width: 170px;
 
-  > .Button {
-    width: 38px;
-    height: 38px;
+  .Button {
+    width:     38px;
+    height:    38px;
     font-size: 22px;
   }
 
-  > .Input {
-    flex: 1 1 auto;
-    width: auto;
-    margin: 0 10px;
+  .Input {
+    flex:    1 1 auto;
+    width:   auto;
+    margin:  0 10px;
     padding: 0 10px;
 
     input {

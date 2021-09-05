@@ -38,7 +38,7 @@ export default class AccountPage extends Component<AccountPageProps, State> {
     
     return {
       [AccountPageQuery.page]:  +(Array.isArray(page) ? page[0] : page) || 1,
-      [AccountPageQuery.size]:  +(Array.isArray(size) ? size[0] : size) || DataTable.defaultPageSize[0],
+      [AccountPageQuery.size]:  +(Array.isArray(size) ? size[0] : size) || +DataTable.defaultPageSize[0],
       [AccountPageQuery.order]: _.reduce(_.concat(order), (result, value) => _.set(result, value.replace(/^-/, ""), value[0] === "-" ? Order.ASC : Order.DESC), {}),
     };
   }
@@ -56,7 +56,7 @@ export default class AccountPage extends Component<AccountPageProps, State> {
       
       data:  [],
       page:  +(Array.isArray(props.page) ? props.page[0] : props.page) || 1,
-      size:  +(Array.isArray(props.size) ? props.size[0] : props.size) || 1 || DataTable.defaultPageSize[0],
+      size:  +(Array.isArray(props.size) ? props.size[0] : props.size) || 1 || +DataTable.defaultPageSize[0],
       order: {
         id:                   {order: props.order["id"], text: "ID", icon: IconType.ID},
         limit_per_decasecond: {order: props.order["limit_per_decasecond"], text: "Limit/10 sec", icon: IconType.GEAR},

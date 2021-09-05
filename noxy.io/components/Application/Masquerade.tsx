@@ -4,8 +4,8 @@ import PermissionLevel from "../../../common/enums/PermissionLevel";
 import UserEntity from "../../entities/UserEntity";
 import EntityInput from "../Form/EntityInput";
 import Authorized from "./Authorized";
-import Style from "./Masquerade.module.scss";
 import Component from "./Component";
+import Style from "./Masquerade.module.scss";
 
 export class Masquerade extends Component<UserComboBoxProps, State> {
 
@@ -34,7 +34,6 @@ export class Masquerade extends Component<UserComboBoxProps, State> {
   }
 
   private readonly eventSearch = async (email: string) => {
-    if (!email) return [];
     return await UserEntity.getMany({email}, {skip: 0, limit: 10, order: {email: Order.ASC}});
   };
 

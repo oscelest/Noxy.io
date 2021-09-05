@@ -15,9 +15,9 @@ export default class Decoration {
   public readonly color: string;
   public readonly background_color: string;
   
-  public static defaultFontFamily = "Nunito";
-  public static defaultFontSize = "14";
-  public static defaultFontSizeLength = "px";
+  public static defaultFontFamily = Helper.FontFamilyList[7];
+  public static defaultFontSize = Helper.FontSizeList[5];
+  public static defaultFontLength = Helper.FontLengthList[0];
   
   constructor(initializer: Initializer<Decoration> = {}) {
     this.bold = initializer.bold ?? false;
@@ -28,7 +28,7 @@ export default class Decoration {
     this.strikethrough = initializer.strikethrough ?? false;
     this.font_family = initializer.font_family ?? Decoration.defaultFontFamily;
     this.font_size = initializer.font_size ?? Decoration.defaultFontSize;
-    this.font_size_length = initializer.font_size_length ?? Decoration.defaultFontSizeLength;
+    this.font_size_length = initializer.font_size_length ?? Decoration.defaultFontLength;
     this.color = initializer.color ?? "";
     this.background_color = initializer.background_color ?? "";
   }
@@ -51,7 +51,7 @@ export default class Decoration {
       const {fontSize, fontFamily, color, backgroundColor} = node.style;
       const [font_size, font_size_length] = fontSize.split(/(?<=[0-9]+)(?=[a-z]+)/);
       initializer.font_size = font_size && !isNaN(+font_size) ? font_size : Decoration.defaultFontSize;
-      initializer.font_size_length = Helper.isValidLengthType(font_size_length) ? font_size_length : Decoration.defaultFontSizeLength;
+      initializer.font_size_length = Helper.isValidLengthType(font_size_length) ? font_size_length : Decoration.defaultFontLength;
       initializer.font_family = fontFamily || Decoration.defaultFontFamily;
       initializer.color = color;
       initializer.background_color = backgroundColor;

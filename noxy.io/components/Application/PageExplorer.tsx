@@ -8,8 +8,8 @@ import Helper from "../../Helper";
 import HeaderBlock from "../Block/HeaderBlock";
 import TableBlock from "../Block/TableBlock";
 import TextBlock from "../Block/TextBlock";
+import AutoComplete from "../Form/AutoComplete";
 import Button from "../Form/Button";
-import Input from "../Form/Input";
 import EditText, {Selection} from "../Text/EditText";
 import Component from "./Component";
 import Conditional from "./Conditional";
@@ -27,22 +27,15 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   constructor(props: PageExplorerProps) {
     super(props);
     this.state = {
-      edit:             true,
-      text_color:       false,
-      decoration:       new Decoration(),
-      font_family:      Decoration.defaultFontFamily,
-      font_size:        Decoration.defaultFontSize,
-      font_size_length: Decoration.defaultFontSizeLength,
+      edit:       true,
+      text_color: false,
+      decoration: new Decoration(),
     };
   }
   
   private decorate(decoration: Initializer<Decoration>) {
     this.state.focus?.decorate(decoration);
-    this.setState({
-      font_family:      decoration.font_family || this.state.font_family,
-      font_size:        decoration.font_size || this.state.font_size,
-      font_size_length: decoration.font_size_length || this.state.font_size_length,
-    });
+    
   }
   
   private readonly addBlock = (block: PageBlockEntity) => {
@@ -66,47 +59,39 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     return this.props.readonly ?? true;
   };
   
-  private readonly eventFontSizeChange = (font_size: string) => {
-    this.setState({font_size});
+  private readonly eventFontFamilyChange = (font_family_index: number, font_family_value: string) => {
+    this.decorate({font_family: font_family_value});
+    this.setState({font_family_index: undefined, font_family_value: undefined});
   };
   
-  private readonly eventFontSizeReset = () => {
-    const {font_size} = this.state;
-    return font_size && !isNaN(+font_size) ? this.state.focus?.decorate({font_size}) : this.setState({font_size: this.state.decoration.font_size});
+  private readonly eventFontFamilyInput = (font_family_value: string) => {
+    this.setState({font_family_value});
   };
   
-  
-  private readonly eventFontIndex = (index: number) => {
-    console.log(index);
-    const font_family = Helper.FontFamilyList[index];
-    console.log(this.state.decoration.font_family, font_family)
-    if (!font_family || this.state.font_family === font_family) return;
-    this.decorate({font_family});
+  private readonly eventFontFamilyIndex = (font_family_index: number) => {
+    this.setState({font_family_index});
   };
   
-  private readonly eventFontChange = (font_family: string) => {
-    console.log("change");
-    this.setState({font_family});
+  private readonly eventFontFamilyReset = () => {
+    this.setState({font_family_index: undefined, font_family_value: undefined});
   };
   
-  private readonly eventFontReset = () => {
-    // console.log("reset?");
-    // const {font_family} = this.state;
-    // if (font_family) {
-    //   const index = Helper.FontFamilyList.findIndex(value => value.toLowerCase() === font_family?.toLowerCase());
-    //   if (index >= 0) {
-    //     return this.state.focus?.decorate({font_family});
-    //   }
-    // }
-    //
-    // this.setState({font_family: this.state.decoration.font_family});
-  };
+  private readonly eventFontSizeChange = (index: number, value: string) => {};
+  private readonly eventFontSizeInput = (value: string) => {};
+  private readonly eventFontSizeIndex = (index: number) => {};
+  
+  private readonly eventFontLengthChange = (index: number, value: string) => {};
+  private readonly eventFontLengthInput = (value: string) => {};
+  private readonly eventFontLengthIndex = (index: number) => {};
   
   
   public render() {
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
     if (this.props.readonly ?? true) classes.push(Style.Readonly);
+    
+    console.log("state", this.state)
+    const font_family = this.state.font_family_value ?? this.state.decoration.font_family;
     
     return (
       <div className={classes.join(" ")}>
@@ -133,16 +118,20 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
             </div>
             
             <div>
-              <Input className={Style.FontFamily} label={"Font"} value={this.state.font_family}
-                     onChange={this.eventFontChange} onReset={this.eventFontReset} onIndexChange={this.eventFontIndex} onIndexCommit={this.eventFontIndex}>
+              <AutoComplete className={Style.FontFamily} index={0} value={font_family} label={"Font"}
+                            onChange={this.eventFontFamilyChange} onInputChange={this.eventFontFamilyInput} onIndexChange={this.eventFontFamilyIndex} onReset={this.eventFontFamilyReset}>
                 {Helper.FontFamilyList}
-              </Input>
+              </AutoComplete>
               
-              <Input className={Style.FontSize} label={"Size"} value={this.state.font_size} onChange={this.eventFontSizeChange} onReset={this.eventFontSizeReset}/>
-              
-              <Input className={Style.FontSizeType} label={"Length"} value={this.state.font_size_length} onChange={() => {}}>
+              <AutoComplete className={Style.FontSize} index={0} value={""} label={"Font"}
+                            onChange={this.eventFontSizeChange} onInputChange={this.eventFontSizeInput} onIndexChange={this.eventFontSizeIndex}>
                 {Helper.FontSizeList}
-              </Input>
+              </AutoComplete>
+              
+              <AutoComplete className={Style.FontLength} index={0} value={""} label={"Length"}
+                            onChange={this.eventFontLengthChange} onInputChange={this.eventFontLengthInput} onIndexChange={this.eventFontLengthIndex}>
+                {Helper.FontLengthList}
+              </AutoComplete>
               
               <Button icon={IconType.FONT}/>
               <Button icon={IconType.FONT}/>
@@ -224,8 +213,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   private readonly eventPageBlockSelect = ({start, end}: Selection, component: EditText) => {
     if (start === end) start = Math.max(0, start - 1);
     const decoration = component.getText().slice(start, end).getTextDecoration();
-    console.log("selection", decoration);
-    this.setState({decoration, font_family: decoration.font_family, font_size: decoration.font_size, font_size_length: decoration.font_size_length});
+    this.setState({decoration});
   };
   
   private readonly eventPageBlockChange = (block: PageBlockEntity<PageBlockType>) => {
@@ -267,9 +255,12 @@ interface State {
   focus?: EditText;
   decoration: Decoration;
   
-  font_family?: string;
-  font_size?: string;
-  font_size_length?: string;
+  font_family_value?: string;
+  font_family_index?: number;
+  font_size_value?: string;
+  font_size_index?: number;
+  font_length_value?: string;
+  font_length_index?: number;
   
   text_color: boolean;
 }

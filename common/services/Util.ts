@@ -39,13 +39,8 @@ namespace Util {
     if (typeof value === "number") return value.toString().length;
     if (typeof value === "boolean") return value ? 1 : 0;
     if (Array.isArray(value)) return value.length;
-    if (typeof value === "object") {
-      let size = 0;
-      for (let key in value) size = value.hasOwnProperty(key) ? size + 1 : size;
-      return size;
-    }
-
-    throw new Error(`Cannot get size of ${typeof value}`);
+    if (typeof value === "object") return Object.entries(value).length;
+    return value.toString().length;
   }
 
   export function renderJSON(content: JSONObject) {
