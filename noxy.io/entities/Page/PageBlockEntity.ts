@@ -1,6 +1,6 @@
 import BaseEntity from "../../../common/classes/Entity/BaseEntity";
 import PageBlockType from "../../../common/enums/PageBlockType";
-import RichText from "../../classes/RichText";
+import Character from "../../classes/Character";
 import PageEntity from "./PageEntity";
 
 export default class PageBlockEntity<Type extends PageBlockType = PageBlockType> extends BaseEntity {
@@ -37,7 +37,7 @@ export default class PageBlockEntity<Type extends PageBlockType = PageBlockType>
   public static parseContent<Type extends PageBlockType>(type: Type, content?: PageBlockContentInput[Type]): PageBlockContentOutput[Type] {
     switch (type) {
       case PageBlockType.HEADER:
-        return {text: new RichText(), size: 1, ...content} as PageBlockContentOutput[typeof type];
+        return {text: [], size: 1, ...content} as PageBlockContentOutput[typeof type];
       case PageBlockType.TABLE:
         return content as PageBlockContentOutput[typeof type];
       case PageBlockType.TEXT:
@@ -49,7 +49,7 @@ export default class PageBlockEntity<Type extends PageBlockType = PageBlockType>
   }
 }
 
-type Text = RichText;
+type Text = Character[];
 
 export interface PageBlockContentInput {
   [PageBlockType.UNKNOWN]: object;

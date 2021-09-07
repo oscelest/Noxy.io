@@ -2,6 +2,10 @@ import Helper from "../Helper";
 
 export default class Decoration {
   
+  public static defaultFontFamily = Helper.FontFamilyList[7];
+  public static defaultFontSize = Helper.FontSizeList[5];
+  public static defaultFontLength = Helper.FontLengthList[0];
+  
   public readonly bold: boolean;
   public readonly code: boolean;
   public readonly mark: boolean;
@@ -14,10 +18,6 @@ export default class Decoration {
   public readonly font_family: string;
   public readonly color: string;
   public readonly background_color: string;
-  
-  public static defaultFontFamily = Helper.FontFamilyList[7];
-  public static defaultFontSize = Helper.FontSizeList[5];
-  public static defaultFontLength = Helper.FontLengthList[0];
   
   constructor(initializer: Initializer<Decoration> = {}) {
     this.bold = initializer.bold ?? false;

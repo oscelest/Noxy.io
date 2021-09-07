@@ -2,7 +2,7 @@ import React from "react";
 import {v4} from "uuid";
 import PageBlockType from "../../../common/enums/PageBlockType";
 import Util from "../../../common/services/Util";
-import RichText from "../../classes/RichText";
+import Character from "../../classes/Character";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
@@ -27,7 +27,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     return new PageBlockEntity<PageBlockType.HEADER>({
       id:      v4(),
       type:    PageBlockType.HEADER,
-      content: {text: new RichText(), size: 1},
+      content: {text: [], size: 1},
     });
   };
   
@@ -74,7 +74,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     );
   };
   
-  private readonly eventChange = (text: RichText) => {
+  private readonly eventChange = (text: Character[]) => {
     this.props.onChange(new PageBlockEntity<PageBlockType.HEADER>({...this.props.block, content: {...this.props.block.content, text}}));
   };
   

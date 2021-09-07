@@ -1,7 +1,7 @@
 import React from "react";
 import {v4} from "uuid";
 import PageBlockType from "../../../common/enums/PageBlockType";
-import RichText from "../../classes/RichText";
+import Character from "../../classes/Character";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import Component from "../Application/Component";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
@@ -24,7 +24,7 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     return new PageBlockEntity({
       id:      v4(),
       type:    PageBlockType.TEXT,
-      content: new RichText(),
+      content: [],
     });
   };
   
@@ -42,7 +42,7 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     );
   }
   
-  private readonly eventChange = (content: RichText) => {
+  private readonly eventChange = (content: Character[]) => {
     this.props.onChange(new PageBlockEntity<PageBlockType.TEXT>({...this.props.block, content}));
   };
   

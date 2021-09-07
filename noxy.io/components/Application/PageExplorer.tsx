@@ -17,13 +17,6 @@ import Style from "./PageExplorer.module.scss";
 
 export default class PageExplorer extends Component<PageExplorerProps, State> {
   
-  private static BoldDecoration: Initializer<Decoration> = {bold: true};
-  private static ItalicDecoration: Initializer<Decoration> = {italic: true};
-  private static MarkDecoration: Initializer<Decoration> = {mark: true};
-  private static StrikethroughDecoration: Initializer<Decoration> = {strikethrough: true};
-  private static UnderlineDecoration: Initializer<Decoration> = {underline: true};
-  private static CodeDecoration: Initializer<Decoration> = {code: true};
-  
   constructor(props: PageExplorerProps) {
     super(props);
     this.state = {
@@ -90,7 +83,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     if (this.props.className) classes.push(this.props.className);
     if (this.props.readonly ?? true) classes.push(Style.Readonly);
     
-    console.log("state", this.state)
     const font_family = this.state.font_family_value ?? this.state.decoration.font_family;
     
     return (
@@ -98,22 +90,22 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
         <div className={Style.Toolbar}>
           <Conditional condition={!this.isReadonly()}>
             <div className={Style.Left}>
-              <Button value={PageExplorer.BoldDecoration} icon={IconType.BOLD} disabled={this.state.focus?.isDecorationDisabled("bold")}
+              <Button value={{bold: !this.state.decoration.bold}} icon={IconType.BOLD} disabled={this.state.focus?.isDecorationDisabled("bold")}
                       onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
               
-              <Button value={PageExplorer.ItalicDecoration} icon={IconType.ITALIC} disabled={this.state.focus?.isDecorationDisabled("italic")}
+              <Button value={{italic: !this.state.decoration.italic}} icon={IconType.ITALIC} disabled={this.state.focus?.isDecorationDisabled("italic")}
                       onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
               
-              <Button value={PageExplorer.StrikethroughDecoration} icon={IconType.STRIKE_THROUGH} disabled={this.state.focus?.isDecorationDisabled("strikethrough")}
+              <Button value={{strikethrough: !this.state.decoration.strikethrough}} icon={IconType.STRIKE_THROUGH} disabled={this.state.focus?.isDecorationDisabled("strikethrough")}
                       onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
               
-              <Button value={PageExplorer.UnderlineDecoration} icon={IconType.UNDERLINE} disabled={this.state.focus?.isDecorationDisabled("underline")}
+              <Button value={{underline: !this.state.decoration.underline}} icon={IconType.UNDERLINE} disabled={this.state.focus?.isDecorationDisabled("underline")}
                       onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
               
-              <Button value={PageExplorer.CodeDecoration} icon={IconType.CODE_ALT} disabled={this.state.focus?.isDecorationDisabled("code")}
+              <Button value={{code: !this.state.decoration.code}} icon={IconType.CODE_ALT} disabled={this.state.focus?.isDecorationDisabled("code")}
                       onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
               
-              <Button value={PageExplorer.MarkDecoration} icon={IconType.MARKER} disabled={this.state.focus?.isDecorationDisabled("mark")}
+              <Button value={{mark: !this.state.decoration.mark}} icon={IconType.MARKER} disabled={this.state.focus?.isDecorationDisabled("mark")}
                       onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
             </div>
             
@@ -198,7 +190,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.state.focus?.decorate(decoration);
   };
   
-  private readonly eventDecorateMouseDown = (decoration: Initializer<Decoration>, event: React.MouseEvent) => {
+  private readonly eventDecorateMouseDown = (property: Initializer<Decoration>, event: React.MouseEvent) => {
     event.preventDefault();
   };
   
@@ -212,8 +204,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   
   private readonly eventPageBlockSelect = ({start, end}: Selection, component: EditText) => {
     if (start === end) start = Math.max(0, start - 1);
-    const decoration = component.getText().slice(start, end).getTextDecoration();
-    this.setState({decoration});
+    this.setState({decoration: component.getDecoration(start, end)});
   };
   
   private readonly eventPageBlockChange = (block: PageBlockEntity<PageBlockType>) => {
