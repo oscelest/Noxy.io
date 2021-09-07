@@ -9,11 +9,16 @@
     color: rgb(255 255 255 / 50%);
   }
 
-  div {
+  &:not(:focus) .Text.Selected {
+    background: #1e90ff;
+    color: white;
+  }
+
+  .Line {
     display: block;
   }
 
-  span {
+  .Text {
     display: inline;
     transition: font-size .2s ease-in-out;
   }

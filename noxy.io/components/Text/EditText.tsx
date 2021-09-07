@@ -36,8 +36,7 @@ export default class EditText extends Component<EditTextProps, State> {
   
   public getSelection(): Selection {
     const selection = getSelection();
-    if (!selection || !selection.focusNode || !selection.anchorNode) return this.state.selection;
-    if (!this.state.ref.current) throw "Could not get reference element.";
+    if (!this.state.ref.current || !selection || !selection.focusNode || !selection.anchorNode) return this.state.selection;
     
     if (this.state.ref.current.contains(selection.focusNode) && this.state.ref.current.contains(selection.anchorNode)) {
       const focus_node = selection.focusNode;
@@ -104,7 +103,7 @@ export default class EditText extends Component<EditTextProps, State> {
     return true;
   }
   
-  public isDecorationDisabled (decoration: keyof Initializer<Decoration>) {
+  public isDecorationDisabled(decoration: keyof Initializer<Decoration>) {
     return !!(this.props.whitelist?.length && !this.props.whitelist.includes(decoration) || this.props.blacklist?.includes(decoration));
   };
   
@@ -122,7 +121,7 @@ export default class EditText extends Component<EditTextProps, State> {
   public decorate(decoration: Initializer<Decoration>, selection: Selection = this.getSelection()) {
     decoration = {...decoration};
     selection = this.parseSelection(selection);
-  
+    
     const entries = Util.getProperties(decoration);
     for (let i = 0; i < entries.length; i++) {
       const key = entries[i];
@@ -130,7 +129,7 @@ export default class EditText extends Component<EditTextProps, State> {
         delete decoration[key];
       }
     }
-  
+    
     const text = this.getText().slice(selection.start, selection.end);
     for (let i = 0; i < text.length; i++) {
       text[i] = text[i].decorate(decoration);
@@ -265,22 +264,25 @@ export default class EditText extends Component<EditTextProps, State> {
   };
   
   private getSegmentCollection({start, end}: Selection) {
+    const selection = this.getSelection();
     const segment_collection = [] as {text: string, decoration: Decoration}[][];
     if (!this.getCharacter(start) || !this.getCharacter(end - 1)) return segment_collection;
-  
+    
     let position: number = start;
     let character: Character = this.getCharacter(position, true);
-    segment_collection.push([{text: "", decoration: character.decoration}]);
+    let decoration: Decoration = selection.start <= position && selection.end > position ? new Decoration({...character.decoration, selected: true}) : character.decoration;
+    segment_collection.push([{text: "", decoration}]);
     
     do {
       const segment_list = segment_collection[segment_collection.length - 1];
       const segment = segment_list[segment_list.length - 1];
+      decoration = selection.start <= position && selection.end > position ? new Decoration({...character.decoration, selected: true}) : character.decoration;
       
       if (character.value === "\n") {
-        segment_collection.push([{text: "", decoration: character.decoration}]);
+        segment_collection.push([{text: "", decoration}]);
       }
-      else if (!segment?.decoration.equals(character.decoration)) {
-        segment_list.push({text: character.value, decoration: character.decoration});
+      else if (!segment?.decoration.equals(decoration)) {
+        segment_list.push({text: character.value, decoration});
       }
       else {
         segment.text += character.value;
@@ -326,7 +328,7 @@ export default class EditText extends Component<EditTextProps, State> {
         const {text, decoration} = segment_collection[i][j];
         children.push(this.renderReactElement(text, decoration, j));
       }
-      result.push(<div key={i}>{children}</div>);
+      result.push(<div className={Style.Line} key={i}>{children}</div>);
     }
     
     return result;
@@ -341,13 +343,15 @@ export default class EditText extends Component<EditTextProps, State> {
     if (decoration.strikethrough) return <s key={key}>{this.renderReactElement(text, new Decoration({...decoration, strikethrough: false}))}</s>;
     
     const styling = {} as React.CSSProperties;
+    const classes = [Style.Text] as string[];
     if (decoration.color) styling.color = decoration.color;
     if (decoration.background_color) styling.backgroundColor = decoration.background_color;
     if (decoration.font_family) styling.fontFamily = decoration.font_family;
     if (decoration.font_size) styling.fontSize = decoration.font_size + decoration.font_size_length;
+    if (decoration.selected) classes.push(Style.Selected)
     
     return (
-      <span key={key} style={styling}>{text.length ? Helper.renderHTMLText(text) : <br/>}</span>
+      <span key={key} className={classes.join(" ")} style={styling}>{text.length ? Helper.renderHTMLText(text) : <br/>}</span>
     );
   };
   

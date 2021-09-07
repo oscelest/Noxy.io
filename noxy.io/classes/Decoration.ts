@@ -19,6 +19,8 @@ export default class Decoration {
   public readonly color: string;
   public readonly background_color: string;
   
+  public readonly selected: boolean;
+  
   constructor(initializer: Initializer<Decoration> = {}) {
     this.bold = initializer.bold ?? false;
     this.code = initializer.code ?? false;
@@ -31,6 +33,7 @@ export default class Decoration {
     this.font_size_length = initializer.font_size_length ?? Decoration.defaultFontLength;
     this.color = initializer.color ?? "";
     this.background_color = initializer.background_color ?? "";
+    this.selected = initializer.selected ?? false;
   }
   
   public equals(decoration: Decoration) {
@@ -61,6 +64,3 @@ export default class Decoration {
   }
   
 }
-
-
-export type StyleInitializer = [number?, number?, string?, string?, string?]
