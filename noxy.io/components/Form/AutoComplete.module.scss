@@ -20,8 +20,12 @@
   }
 
   .Arrow {
+    flex:            1 1 auto;
     align-items:     center;
-    padding:         0 8px;
+    justify-content: center;
+    width:           30%;
+    min-width:       20px;
+    max-width:       30px;
     color:           black;
     cursor:          pointer;
   }

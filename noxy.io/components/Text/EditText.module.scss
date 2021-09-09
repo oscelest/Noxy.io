@@ -1,25 +1,33 @@
 .Component {
   display: block;
-  width: 100%;
+  width:   100%;
   outline: none;
+
+  ::selection:window-inactive {
+    background-color: transparent;
+  }
 
   &:not(.Readonly):empty:before {
     content: "...";
-    cursor: text;
-    color: rgb(255 255 255 / 50%);
+    cursor:  text;
+    color:   rgb(255 255 255 / 50%);
   }
 
-  &:not(:focus) .Text.Selected {
-    background: #1e90ff;
-    color: white;
+  &:not(:focus-visible) .Text.Selected {
+    color:            black;
+    background-color: rgba(165, 165, 165, 0.6);
   }
 
   .Line {
     display: block;
   }
 
-  .Text {
-    display: inline;
+  .Link {
+    text-decoration: none;
+  }
+
+  .Text, .Link {
+    display:    inline;
     transition: font-size .2s ease-in-out;
   }
 }

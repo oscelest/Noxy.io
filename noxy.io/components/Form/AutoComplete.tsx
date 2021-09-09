@@ -24,6 +24,7 @@ export default class AutoComplete extends Component<AutoCompleteProps, State> {
   public setValue(value: string, collapse: boolean = false) {
     const index = this.getValueIndex(value);
     this.setState({collapsed: collapse, value, index});
+    if (this.state.index !== index) this.props.onIndexChange?.(index);
     if (this.state.value !== value) this.props.onInputChange?.(value);
   }
   
@@ -31,6 +32,7 @@ export default class AutoComplete extends Component<AutoCompleteProps, State> {
     const value = this.props.onRender?.(index) ?? this.getValueList()[index] ?? "";
     this.setState({collapsed: collapse, value, index});
     if (this.state.index !== index) this.props.onIndexChange?.(index);
+    if (this.state.value !== value) this.props.onInputChange?.(value);
   }
   
   public commit(index: number = this.state.index ?? -1, value: string = this.state.value ?? "") {
@@ -194,7 +196,7 @@ export interface AutoCompleteProps {
   
   index: number;
   value: string;
-  label: string;
+  label?: string;
   
   type?: InputType;
   error?: Error;

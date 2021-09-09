@@ -111,12 +111,34 @@ export default class EditText extends Component<EditTextProps, State> {
     this.setState({selection: {start, end, forward}});
   };
   
-  public insert(character: string, selection: Selection = this.getSelection()) {
-    if (character.length !== 1) throw "Insert string must be a single character.";
+  public insert(insert: Character | Character[], selection: Selection = this.getSelection(), clear_selection = true) {
+    selection = this.parseSelection(selection);
+    
+    const length = insert instanceof Character ? 1 : insert.length;
+    const start = this.getText().slice(0, selection.start);
+    const end = this.getText().slice(selection.end);
+    const text = insert instanceof Character ? [...start, insert, ...end] : [...start, ...insert, ...end];
+    const next_selection = clear_selection ? {start: selection.start + length, end: selection.start + length, forward: selection.forward} : selection;
+    
+    this.props.onChange(text, this);
+    this.setState({selection: next_selection, redo_history: [], undo_history: [...this.state.undo_history, {text: this.props.children, selection}]});
+  };
+  
+  public insertText(text: string, selection: Selection = this.getSelection()) {
     const position = Math.max(0, selection.start - 1);
     const decoration = this.getCharacter(position)?.decoration;
-    this.insertText(new Character(character, decoration), selection);
+    const segment = [] as Character[];
+    
+    for (let i = 0; i < text.length; i++) {
+      segment.push(new Character(text[i], decoration));
+    }
+    
+    this.insert(segment, selection);
   };
+  
+  public insertHTML(html: Node, selection: Selection = this.getSelection()) {
+    this.insert(Character.parseHTML(html), selection);
+  }
   
   public decorate(decoration: Initializer<Decoration>, selection: Selection = this.getSelection()) {
     decoration = {...decoration};
@@ -135,21 +157,21 @@ export default class EditText extends Component<EditTextProps, State> {
       text[i] = text[i].decorate(decoration);
     }
     
-    this.insertText(text, selection, false);
+    this.insert(text, selection, false);
   };
   
   public deleteForward(selection: Selection = this.getSelection()) {
     if (selection.start === this.getText().length && selection.end === this.getText().length) return;
     if (selection.start === selection.end) selection.end = Math.min(selection.end + 1, this.getText().length);
     
-    this.insertText([], selection);
+    this.insert([], selection);
   };
   
   public deleteBackward(selection: Selection = this.getSelection()) {
     if (!selection.start && !selection.end) return;
     if (selection.start === selection.end) selection.start = Math.max(0, selection.start - 1);
     
-    this.insertText([], selection);
+    this.insert([], selection);
   };
   
   public deleteWordForward(selection: Selection = this.getSelection()) {
@@ -159,7 +181,7 @@ export default class EditText extends Component<EditTextProps, State> {
     selection.end = this.find(this.getCharacter(selection.end, true).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.end) ?? this.getText().length;
     selection.end = this.find(/[^\p{Z}]/u, selection.end) ?? this.getText().length;
     
-    this.insertText([], selection);
+    this.insert([], selection);
   }
   
   public deleteWordBackward(selection: Selection = this.getSelection()) {
@@ -169,7 +191,7 @@ export default class EditText extends Component<EditTextProps, State> {
     selection.start = this.find(this.getCharacter(selection.start, true).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.start, false) ?? 0;
     selection.start = this.find(/[^\p{Z}]/u, selection.start, false) ?? 0;
     
-    this.insertText([], {...selection, start: selection.start ? selection.start + 1 : selection.start});
+    this.insert([], {...selection, start: selection.start ? selection.start + 1 : selection.start});
   }
   
   public undo() {
@@ -196,29 +218,11 @@ export default class EditText extends Component<EditTextProps, State> {
     });
   }
   
-  private insertText(insert: Character | Character[], selection: Selection = this.getSelection(), clear_selection = true) {
-    selection = this.parseSelection(selection);
-    
-    const length = insert instanceof Character ? 1 : insert.length;
-    const start = this.getText().slice(0, selection.start);
-    const end = this.getText().slice(selection.end);
-    const text = insert instanceof Character ? [...start, insert, ...end] : [...start, ...insert, ...end];
-    const next_selection = clear_selection ? {start: selection.start + length, end: selection.start + length, forward: selection.forward} : selection;
-    
-    this.props.onChange(text, this);
-    this.setState({selection: next_selection, redo_history: [], undo_history: [...this.state.undo_history, {text: this.props.children, selection}]});
-  };
-  
   private find(regex: RegExp, position: number, forward: boolean = true): number | undefined {
     position = forward ? position : position - 1;
     const character = this.getCharacter(position);
     if (!character) return undefined;
     return character.value.match(regex) ? position : this.find(regex, forward ? position + 1 : position, forward);
-  };
-  
-  private appendHTMLNode(node: Node, text: string, decoration: Decoration) {
-    node.appendChild(this.renderHTMLNode(text, decoration));
-    return node;
   };
   
   private parseSelection(selection?: Selection): Selection {
@@ -233,9 +237,6 @@ export default class EditText extends Component<EditTextProps, State> {
   
   private getNodeByPosition(position: number, parent: Node | null = this.state.ref.current): {position: number, element: Node} {
     if (!parent) throw "Could not get container element.";
-    
-    // const parent_length = parent.textContent?.length ?? 0;
-    // if (position > parent_length) return {position: parent_length, element: parent};
     
     for (let i = 0; i < parent.childNodes.length; i++) {
       const child = parent.childNodes[i];
@@ -341,14 +342,15 @@ export default class EditText extends Component<EditTextProps, State> {
     if (decoration.italic) return <i key={key}>{this.renderReactElement(text, new Decoration({...decoration, italic: false}))}</i>;
     if (decoration.underline) return <u key={key}>{this.renderReactElement(text, new Decoration({...decoration, underline: false}))}</u>;
     if (decoration.strikethrough) return <s key={key}>{this.renderReactElement(text, new Decoration({...decoration, strikethrough: false}))}</s>;
+    if (decoration.link) return <a className={Style.Link} href={decoration.link} key={key}>{this.renderReactElement(text, new Decoration({...decoration, link: ""}))}</a>;
     
     const styling = {} as React.CSSProperties;
     const classes = [Style.Text] as string[];
     if (decoration.color) styling.color = decoration.color;
     if (decoration.background_color) styling.backgroundColor = decoration.background_color;
     if (decoration.font_family) styling.fontFamily = decoration.font_family;
-    if (decoration.font_size) styling.fontSize = decoration.font_size + decoration.font_size_length;
-    if (decoration.selected) classes.push(Style.Selected)
+    if (decoration.font_size) styling.fontSize = decoration.font_size + decoration.font_length;
+    if (decoration.selected) classes.push(Style.Selected);
     
     return (
       <span key={key} className={classes.join(" ")} style={styling}>{text.length ? Helper.renderHTMLText(text) : <br/>}</span>
@@ -377,19 +379,29 @@ export default class EditText extends Component<EditTextProps, State> {
     if (decoration.italic) return this.appendHTMLNode(document.createElement("i"), text, new Decoration({...decoration, italic: false}));
     if (decoration.underline) return this.appendHTMLNode(document.createElement("u"), text, new Decoration({...decoration, underline: false}));
     if (decoration.strikethrough) return this.appendHTMLNode(document.createElement("s"), text, new Decoration({...decoration, strikethrough: false}));
-    
+    if (decoration.link) {
+      const element = document.createElement("a");
+      element.href = decoration.link;
+      return this.appendHTMLNode(element, text, new Decoration({...decoration, link: ""}));
+    }
+  
     const node = document.createElement("span");
     if (decoration.color) node.style.color = decoration.color;
     if (decoration.background_color) node.style.backgroundColor = decoration.background_color;
     if (decoration.font_family) node.style.fontFamily = decoration.font_family;
-    if (decoration.font_size) node.style.fontSize = decoration.font_size + decoration.font_size_length;
+    if (decoration.font_size) node.style.fontSize = decoration.font_size + decoration.font_length;
     node.append(text.length ? document.createTextNode(Helper.renderHTMLText(text)) : document.createElement("br"));
+    return node;
+  };
+  
+  private appendHTMLNode(node: Node, text: string, decoration: Decoration) {
+    node.appendChild(this.renderHTMLNode(text, decoration));
     return node;
   };
   
   private readonly eventKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
     event.preventDefault();
-    this.insert(event.key);
+    this.insertText(event.key);
   };
   
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -412,7 +424,7 @@ export default class EditText extends Component<EditTextProps, State> {
         return this.select(0, this.props.children.length);
       case KeyboardCommand.NEW_LINE:
       case KeyboardCommand.NEW_LINE_ALT:
-        return this.insert("\n");
+        return this.insertText("\n");
       case KeyboardCommand.NEW_PARAGRAPH:
       case KeyboardCommand.NEW_PARAGRAPH_ALT:
         return this.props.onSubmit?.(this);
@@ -475,7 +487,7 @@ export default class EditText extends Component<EditTextProps, State> {
     event.preventDefault();
     event.clipboardData.setData("text/plain", this.renderHTML(this.getSelection()).textContent ?? "");
     event.clipboardData.setData("text/html", this.renderHTML(this.getSelection()).innerHTML);
-    this.insertText([]);
+    this.insert([]);
   };
   
   private readonly eventPaste = async (event: React.ClipboardEvent) => {
@@ -485,14 +497,12 @@ export default class EditText extends Component<EditTextProps, State> {
       const html = event.clipboardData.getData(ClipboardDataType.TEXT_HTML).match(/<!--StartFragment-->(?<html>.*)<!--EndFragment-->/);
       if (html?.groups?.html) {
         this.template.innerHTML = html.groups.html;
-        return this.insertText(Character.parseHTML(this.template.content));
+        return this.insert(Character.parseHTML(this.template.content));
       }
     }
     
     this.template.innerHTML = event.clipboardData.getData(ClipboardDataType.TEXT_PLAIN);
   };
-  
-  
 }
 
 export type Selection = {start: number, end: number, forward: boolean};

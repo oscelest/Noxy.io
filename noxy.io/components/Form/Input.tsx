@@ -31,6 +31,7 @@ export default class Input extends Component<InputProps, State> {
   }
   
   public render() {
+    const label = this.props.label || "\u00a0";
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
     
@@ -40,7 +41,7 @@ export default class Input extends Component<InputProps, State> {
           <Conditional condition={this.props.required}>
             <span className={Style.Required}>*</span>
           </Conditional>
-          <span>{this.props.label}</span>
+          <span>{label}</span>
           <Conditional condition={this.props.error}>
             <span className={Style.Error}> - {this.props.error}</span>
           </Conditional>
@@ -62,7 +63,7 @@ export interface InputProps {
   type?: InputType;
   error?: Error;
   value: string;
-  label: string;
+  label?: string;
   required?: boolean;
   autoComplete?: string;
   

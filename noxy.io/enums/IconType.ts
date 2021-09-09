@@ -29,6 +29,7 @@ enum IconType {
 
   BOLD           = "\uede3",
   CODE_ALT       = "\uede6",
+  COLOR_BUCKET   = "\uede7",
   COPY           = "\uedea",
   EDIT_ALT       = "\ueded",
   FONT           = "\uedef",

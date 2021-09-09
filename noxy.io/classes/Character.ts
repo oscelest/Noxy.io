@@ -14,23 +14,24 @@ export default class Character {
     return new Character(this.value, Object.assign(this.decoration, decoration));
   }
   
-  public static parseHTML(html: Node, decoration: Decoration = new Decoration()) {
+  public static parseHTML(node: Node, decoration: Decoration = new Decoration()) {
     const text = [] as Character[];
-    for (let i = 0; i < html.childNodes.length; i++) {
-      const child = html.childNodes[i];
-      if (child instanceof HTMLBRElement) {
-        text.push(new Character("\n", decoration));
-      }
-      else if (child instanceof Text) {
-        const content = child.textContent ?? "";
-        for (let j = 0; j < content.length; j++) {
-          text.push(new Character(content[j], decoration));
-        }
-      }
-      else {
-        text.push(...this.parseHTML(child, Decoration.parseHTML(child, decoration)));
+    if (node instanceof HTMLBRElement) {
+      text.push(new Character("\n", decoration));
+    }
+    else if (node instanceof Text) {
+      for (let j = 0; j < node.data.length; j++) {
+        text.push(new Character(node.data[j], decoration));
       }
     }
+    else if (node instanceof HTMLElement) {
+      decoration = Decoration.parseHTML(node, decoration);
+      for (let i = 0; i < node.childNodes.length; i++) {
+        const child = node.childNodes[i];
+        text.push(...this.parseHTML(child, decoration));
+      }
+    }
+
     return text;
   }
 }

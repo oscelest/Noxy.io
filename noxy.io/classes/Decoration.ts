@@ -14,11 +14,12 @@ export default class Decoration {
   public readonly strikethrough: boolean;
   
   public readonly font_size: string;
-  public readonly font_size_length: string;
+  public readonly font_length: string;
   public readonly font_family: string;
   public readonly color: string;
   public readonly background_color: string;
   
+  public readonly link: string;
   public readonly selected: boolean;
   
   constructor(initializer: Initializer<Decoration> = {}) {
@@ -30,9 +31,10 @@ export default class Decoration {
     this.strikethrough = initializer.strikethrough ?? false;
     this.font_family = initializer.font_family ?? Decoration.defaultFontFamily;
     this.font_size = initializer.font_size ?? Decoration.defaultFontSize;
-    this.font_size_length = initializer.font_size_length ?? Decoration.defaultFontLength;
+    this.font_length = initializer.font_length ?? Decoration.defaultFontLength;
     this.color = initializer.color ?? "";
     this.background_color = initializer.background_color ?? "";
+    this.link = initializer.link ?? "";
     this.selected = initializer.selected ?? false;
   }
   
@@ -40,27 +42,27 @@ export default class Decoration {
     return Object.keys(this).every(key => this[key as keyof Decoration] === decoration[key as keyof Decoration]);
   }
   
-  public static parseHTML(node: Node, decoration?: Initializer<Decoration>) {
-    const initializer = {...decoration} as Properties<{ -readonly [P in keyof Decoration]: Decoration[P] }>;
+  public static parseHTML(node: HTMLElement, decoration: Initializer<Decoration> = {}) {
+    const {fontSize, fontFamily, color, backgroundColor} = node.style;
+    const [font_size, font_size_length] = fontSize.split(/(?<=[0-9]+)(?=[a-z]+)/);
     
-    if (node instanceof HTMLElement) {
-      if (node.tagName === "B") initializer.bold = true;
-      if (node.tagName === "I") initializer.italic = true;
-      if (node.tagName === "U") initializer.underline = true;
-      if (node.tagName === "S") initializer.strikethrough = true;
-      if (node.tagName === "CODE") initializer.code = true;
-      if (node.tagName === "MARK") initializer.mark = true;
+    return new Decoration({
+      link:          node instanceof HTMLAnchorElement ? node.href : decoration.link,
+      bold:          node.tagName === "B" || node.tagName === "STRONG" || decoration.bold,
+      italic:        node.tagName === "I" || decoration.italic,
+      underline:     node.tagName === "U" || decoration.underline,
+      strikethrough: node.tagName === "S" || decoration.strikethrough,
+      code:          node.tagName === "CODE" || decoration.code,
+      mark:          node.tagName === "MARK" || decoration.mark,
       
-      const {fontSize, fontFamily, color, backgroundColor} = node.style;
-      const [font_size, font_size_length] = fontSize.split(/(?<=[0-9]+)(?=[a-z]+)/);
-      initializer.font_size = font_size && !isNaN(+font_size) ? font_size : Decoration.defaultFontSize;
-      initializer.font_size_length = Helper.isValidLengthType(font_size_length) ? font_size_length : Decoration.defaultFontLength;
-      initializer.font_family = fontFamily || Decoration.defaultFontFamily;
-      initializer.color = color;
-      initializer.background_color = backgroundColor;
-    }
-    
-    return new Decoration(initializer);
+      font_family:      fontFamily || decoration.font_family || Decoration.defaultFontFamily,
+      font_size:        font_size || decoration.font_size || Decoration.defaultFontSize,
+      font_length:      font_size_length || decoration.font_length || Decoration.defaultFontLength,
+      color:            color || decoration.color || "",
+      background_color: backgroundColor || decoration.background_color || "",
+      
+      selected: decoration.selected ?? false,
+    });
   }
   
 }
