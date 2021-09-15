@@ -49,7 +49,8 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     return this.props.readonly ?? true;
   };
   
-  private readonly eventFontFamilyChange = (index: number, font_family: string) => {
+  private readonly eventFontFamilyChange = (index: number) => {
+    const font_family = Helper.FontFamilyList[index] ?? this.state.decoration.font_family;
     this.state.focus?.decorate({font_family});
     this.setState({decoration: new Decoration({...this.state.decoration, font_family})});
   };

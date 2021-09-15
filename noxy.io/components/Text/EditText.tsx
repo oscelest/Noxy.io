@@ -58,36 +58,12 @@ export default class EditText extends Component<EditTextProps, State> {
     }
   };
   
-  public getDecoration(start: number, end?: number, property_list?: (keyof Initializer<Decoration>)[]): Decoration {
-    const segment = this.getText().slice(start, end);
-    const initializer = {} as Initializer<Decoration>;
-    if (!segment.length) return new Decoration(initializer);
+  public getDecoration(start: number, end: number): Decoration {
+    if (start === 0 && end === 0) return new Decoration();
     
-    for (let i = 0; i < segment.length; i++) {
-      const decoration = this.getCharacter(i, true).decoration as Initializer<Decoration>;
-      const properties = property_list ?? Util.getProperties(decoration);
-      
-      for (let j = 0; j < properties.length; j++) {
-        const property = properties[j];
-        const value = decoration[property];
-        if (value === undefined || properties[j] === undefined) continue;
-        
-        if (typeof value === "string") {
-          if (initializer[property] !== "") {
-            if (initializer[property] === undefined) {
-              Object.assign(initializer, {[property]: value});
-            }
-            else if (value !== initializer[property]) {
-              Object.assign(initializer, {[property]: ""});
-            }
-          }
-        }
-        else {
-          if (initializer[property] === undefined || (initializer[property] !== true && decoration !== false)) {
-            Object.assign(initializer, {[property]: value});
-          }
-        }
-      }
+    let initializer = this.getCharacter(start, true).decoration;
+    for (let i = start + 1; i < end; i++) {
+      initializer = initializer.getIntersection(this.getCharacter(i, true).decoration);
     }
     
     return new Decoration(initializer);
@@ -313,7 +289,8 @@ export default class EditText extends Component<EditTextProps, State> {
     return (
       <div ref={this.state.ref} className={classes.join(" ")} contentEditable={!readonly} suppressContentEditableWarning={!readonly}
            onBlur={this.eventBlur} onFocus={this.eventFocus} onSelect={this.eventSelect}
-           onCopy={this.eventCopy} onPaste={this.eventPaste} onCut={this.eventCut} onKeyDown={this.eventKeyDown} onKeyPress={this.eventKeyPress}>
+           onDragStart={this.eventDragStart} onDrop={this.eventDrop} onCopy={this.eventCopy} onPaste={this.eventPaste} onCut={this.eventCut}
+           onKeyDown={this.eventKeyDown} onKeyPress={this.eventKeyPress}>
         {this.renderReactElementList()}
       </div>
     );
@@ -384,7 +361,7 @@ export default class EditText extends Component<EditTextProps, State> {
       element.href = decoration.link;
       return this.appendHTMLNode(element, text, new Decoration({...decoration, link: ""}));
     }
-  
+    
     const node = document.createElement("span");
     if (decoration.color) node.style.color = decoration.color;
     if (decoration.background_color) node.style.backgroundColor = decoration.background_color;
@@ -477,13 +454,23 @@ export default class EditText extends Component<EditTextProps, State> {
     }
   };
   
+  private readonly eventDragStart = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+  
+  private readonly eventDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  }
+  
   private readonly eventCopy = async (event: React.ClipboardEvent) => {
+    console.log(event);
     event.preventDefault();
     event.clipboardData.setData("text/plain", this.renderHTML(this.getSelection()).textContent ?? "");
     event.clipboardData.setData("text/html", this.renderHTML(this.getSelection()).innerHTML);
   };
   
   private readonly eventCut = async (event: React.ClipboardEvent) => {
+    console.log(event);
     event.preventDefault();
     event.clipboardData.setData("text/plain", this.renderHTML(this.getSelection()).textContent ?? "");
     event.clipboardData.setData("text/html", this.renderHTML(this.getSelection()).innerHTML);
