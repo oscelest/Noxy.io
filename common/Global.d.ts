@@ -22,6 +22,8 @@ declare module "express-serve-static-core" {
 
 declare global {
   
+  export type RecursiveArray<T> = (T | Recursive<T>)[]
+  
   export type Key<V> = (V extends (infer R)[] ? keyof R : keyof V) & string
   
   export type Properties<E> = { [K in keyof Pick<E, { [K in keyof E]: E[K] extends Function ? never : K }[keyof E]>]: E[K] };

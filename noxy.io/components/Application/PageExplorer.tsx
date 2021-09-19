@@ -6,6 +6,7 @@ import PageEntity from "../../entities/Page/PageEntity";
 import IconType from "../../enums/IconType";
 import Helper from "../../Helper";
 import HeaderBlock from "../Block/HeaderBlock";
+import ListBlock from "../Block/ListBlock";
 import TableBlock from "../Block/TableBlock";
 import TextBlock from "../Block/TextBlock";
 import AutoComplete from "../Form/AutoComplete";
@@ -19,6 +20,13 @@ import Style from "./PageExplorer.module.scss";
 
 export default class PageExplorer extends Component<PageExplorerProps, State> {
   
+  public static BlockComponentList = {
+    [PageBlockType.LIST]:   ListBlock,
+    [PageBlockType.TEXT]:   TextBlock,
+    [PageBlockType.HEADER]: HeaderBlock,
+    [PageBlockType.TABLE]:  TableBlock,
+  };
+  
   constructor(props: PageExplorerProps) {
     super(props);
     this.state = {
@@ -28,21 +36,10 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     };
   }
   
+  
+  
   private readonly addBlock = (block: PageBlockEntity) => {
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list: [...this.props.entity.page_block_list, block]}));
-  };
-  
-  private readonly getBlockComponent = (type: PageBlockType) => {
-    switch (type) {
-      case PageBlockType.TEXT:
-        return TextBlock;
-      case PageBlockType.TABLE:
-        return TableBlock;
-      case PageBlockType.HEADER:
-        return HeaderBlock;
-      default:
-        throw "Type has no component.";
-    }
   };
   
   private readonly isReadonly = () => {
@@ -167,6 +164,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
             <Button value={PageBlockType.TEXT} icon={IconType.PLUS} onClick={this.eventBlockAddClick}>Text</Button>
             <Button value={PageBlockType.TABLE} icon={IconType.PLUS} onClick={this.eventBlockAddClick}>Table</Button>
             <Button value={PageBlockType.HEADER} icon={IconType.PLUS} onClick={this.eventBlockAddClick}>Header</Button>
+            <Button value={PageBlockType.LIST} icon={IconType.PLUS} onClick={this.eventBlockAddClick}>List</Button>
           </div>
         </Conditional>
       </div>
@@ -190,7 +188,8 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
   
   private readonly renderPageBlock = (block: PageBlockEntity<PageBlockType>) => {
-    const element = this.getBlockComponent(block.type) as React.ComponentClass<PageExplorerBlockProps>;
+    const element = PageExplorer.BlockComponentList[block.type] as React.ComponentClass<PageExplorerBlockProps>;
+    
     const props: PageExplorerBlockProps = {
       block,
       readonly:  !this.state.edit,
@@ -242,7 +241,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
   
   private readonly eventBlockAddClick = (type: PageBlockType) => {
-    this.addBlock(this.getBlockComponent(type).create());
+    this.addBlock(PageExplorer.BlockComponentList[type].create());
   };
   
   private readonly eventPageBlockFocus = (event: React.FocusEvent<HTMLDivElement>, focus: EditText) => {
@@ -263,7 +262,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   
   private readonly eventPageBlockSubmit = (block: PageBlockEntity<PageBlockType>) => {
     const index = this.props.entity.page_block_list.findIndex(value => value.getPrimaryID() === block.getPrimaryID());
-    const page_block_list = [...this.props.entity.page_block_list.slice(0, index + 1), this.getBlockComponent(block.type).create(), ...this.props.entity.page_block_list.slice(index + 1)];
+    const page_block_list = [...this.props.entity.page_block_list.slice(0, index + 1), PageExplorer.BlockComponentList[block.type].create(), ...this.props.entity.page_block_list.slice(index + 1)];
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list}));
   };
 }

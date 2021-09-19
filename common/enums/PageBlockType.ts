@@ -1,8 +1,8 @@
 enum PageBlockType {
   TEXT    = "text",
+  LIST    = "list",
   HEADER  = "header",
   TABLE   = "table",
-  UNKNOWN = "unknown",
 }
 
 export default PageBlockType;

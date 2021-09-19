@@ -1,0 +1,64 @@
+@import "../../variables";
+
+.Component {
+  flex: 0 0 auto;
+  flex-flow: column;
+  grid-row-gap: 5px;
+  overflow: auto;
+
+  .Row {
+    flex-flow: row;
+    grid-column-gap: 5px;
+  }
+
+  .Table {
+    overflow: auto;
+
+    table {
+      border-radius: $border-radius;
+      //border-collapse: collapse;
+      border-spacing: 0;
+      border-collapse: separate;
+
+      tbody {
+
+        tr {
+          height: 32px;
+
+          &:first-child td {
+            &:first-child {
+              border-top-left-radius: $border-radius;
+            }
+
+            &:last-child {
+              border-top-right-radius: $border-radius;
+            }
+          }
+
+          &:last-child td {
+            border-bottom: $border-width solid $border-color;
+
+            &:first-child {
+              border-bottom-left-radius: $border-radius;
+            }
+
+            &:last-child {
+              border-bottom-right-radius: $border-radius;
+            }
+          }
+
+          td {
+            min-width: 50px;
+            padding: 7.5px;
+            border-top: $border-width solid $border-color;
+            border-left: $border-width solid $border-color;
+
+            &:last-child {
+              border-right: $border-width solid $border-color;
+            }
+          }
+        }
+      }
+    }
+  }
+}
