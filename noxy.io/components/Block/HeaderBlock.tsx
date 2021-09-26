@@ -73,7 +73,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
   };
   
   private readonly eventChange = (text: RichText, component: EditText) => {
-    this.props.onChange(this.props.block.replaceText(text, component.text));
+    this.props.onChange(this.props.block.replaceText(component.text, text));
   };
   
   private readonly eventSubmit = (component: EditText) => {
