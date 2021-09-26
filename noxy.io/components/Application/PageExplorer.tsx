@@ -2,10 +2,6 @@ import React from "react";
 import {v4} from "uuid";
 import PageBlockType from "../../../common/enums/PageBlockType";
 import Decoration from "../../classes/Decoration";
-import HeaderPageBlockEntity from "../../entities/Page/Block/HeaderPageBlockEntity";
-import ListPageBlockEntity from "../../entities/Page/Block/ListPageBlockEntity";
-import TablePageBlockEntity from "../../entities/Page/Block/TablePageBlockEntity";
-import TextPageBlockEntity from "../../entities/Page/Block/TextPageBlockEntity";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import PageEntity from "../../entities/Page/PageEntity";
 import IconType from "../../enums/IconType";
@@ -56,23 +52,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     
     throw new Error(`Page block component type '${type}' is invalid.`);
   }
-  
-  private static createPageBlockEntity(type: PageBlockType) {
-    const initializer = {id: v4()};
-    switch (type) {
-      case PageBlockType.TEXT:
-        return new TextPageBlockEntity(initializer);
-      case PageBlockType.LIST:
-        return new ListPageBlockEntity(initializer);
-      case PageBlockType.TABLE:
-        return new TablePageBlockEntity(initializer);
-      case PageBlockType.HEADER:
-        return new HeaderPageBlockEntity(initializer);
-    }
-    
-    throw new Error(`Page block entity of type '${type}' is invalid.`);
-  }
-  
   
   public render() {
     const classes = [Style.Component];
@@ -265,7 +244,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
   
   private readonly eventBlockAddClick = (type: PageBlockType) => {
-    this.addBlock(PageExplorer.createPageBlockEntity(type));
+    this.addBlock(PageEntity.createPageBlock(type, {id: v4()}));
   };
   
   private readonly eventPageBlockFocus = (event: React.FocusEvent<HTMLDivElement>, focus: EditText) => {
@@ -288,7 +267,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     const index = this.props.entity.page_block_list.findIndex(value => value.getPrimaryID() === block.getPrimaryID());
     const start = this.props.entity.page_block_list.slice(0, index + 1);
     const end = this.props.entity.page_block_list.slice(index + 1);
-    const page_block_list = [...start, PageExplorer.createPageBlockEntity(block.type), ...end];
+    const page_block_list = [...start, PageEntity.createPageBlock(block.type, {id: v4()}), ...end];
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list}));
   };
 }
