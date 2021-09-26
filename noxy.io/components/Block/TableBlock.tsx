@@ -1,8 +1,7 @@
 import React from "react";
-import {v4} from "uuid";
 import PageBlockType from "../../../common/enums/PageBlockType";
-import Character from "../../classes/Character";
-import PageBlockEntity from "../../entities/Page/PageBlockEntity";
+import RichText from "../../classes/RichText";
+import TablePageBlockEntity from "../../entities/Page/Block/TablePageBlockEntity";
 import IconType from "../../enums/IconType";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
@@ -18,24 +17,12 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   
   constructor(props: TableBlockProps) {
     super(props);
+    this.state = {};
   }
   
-  public static create = () => {
-    return new PageBlockEntity({
-      id:      v4(),
-      type:    PageBlockType.TABLE,
-      content: [[[], []], [[], []]],
-    });
-  };
-  
-  private findText = (text: Character[]) => {
-    for (let row = 0; row < this.props.block.content.length; row++) {
-      for (let column = 0; column < this.props.block.content[row].length; column++) {
-        if (text === this.props.block.content[row][column]) return [row, column];
-      }
-    }
-    throw "Text not found.";
-  };
+  public static create(initializer?: Omit<Initializer<TablePageBlockEntity>, "type">) {
+    return new TablePageBlockEntity(initializer);
+  }
   
   public render() {
     const readonly = this.props.readonly ?? true;
@@ -48,7 +35,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
           <div className={Style.Table}>
             <table>
               <tbody>
-                {this.props.block.content.map(this.renderRow)}
+                {this.props.block.content.value.map(this.renderRow)}
               </tbody>
             </table>
           </div>
@@ -65,7 +52,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     );
   }
   
-  private readonly renderRow = (row: Character[][], key: number = 0) => {
+  private readonly renderRow = (row: RichText[], key: number = 0) => {
     return (
       <tr key={key}>
         {row.map(this.renderColumn)}
@@ -73,44 +60,43 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     );
   };
   
-  private readonly renderColumn = (column: Character[], key: number = 0) => {
+  private readonly renderColumn = (text: RichText, key: number = 0) => {
     return (
       <td key={key}>
         <EditText readonly={this.props.readonly} blacklist={TableBlock.blacklist} whitelist={TableBlock.whitelist}
                   onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit}>
-          {column}
+          {text}
         </EditText>
       </td>
     );
   };
   
   private readonly eventAddRowClick = () => {
-    const content = [...this.props.block.content];
-    const count = this.props.block.content.reduce((result, row) => Math.max(row.length, result), 0);
+    const next_row = [];
+    const prev_row = this.props.block.content.value[this.props.block.content.value.length - 1];
     
-    const array = [] as Character[][];
-    for (let i = 0; i < count; i++) array.push([]);
-    content.push(array);
+    for (let x = 0; x < prev_row.length; x++) {
+      next_row.push(new RichText({...prev_row[x], value: ""}));
+    }
     
-    this.props.onChange(new PageBlockEntity<PageBlockType.TABLE>({...this.props.block, content}));
+    this.props.block.content.value.push(next_row);
+    this.props.onChange(this.props.block);
   };
   
   private readonly eventAddColumnClick = () => {
-    const content = [...this.props.block.content];
-    for (let i = 0; i < content.length; i++) content[i] = [...content[i], []];
-    this.props.onChange(new PageBlockEntity<PageBlockType.TABLE>({...this.props.block, content}));
+    for (let y = 0; y < this.props.block.content.value.length; y++) {
+      const prev_column = this.props.block.content.value[y][this.props.block.content.value[y].length - 1];
+      this.props.block.content.value[y].push(new RichText({...prev_column, value: ""}));
+    }
+    this.props.onChange(this.props.block);
   };
   
-  private readonly eventChange = (text: Character[], component: EditText) => {
-    const [row, column] = this.findText(component.getText());
-    const content = [...this.props.block.content];
-    content[row] = [...this.props.block.content[row]];
-    content[row][column] = text;
-    this.props.onChange(new PageBlockEntity<PageBlockType.TABLE>({...this.props.block, content}));
+  private readonly eventChange = (text: RichText, component: EditText) => {
+    this.props.onChange(this.props.block.replaceText(component.text, text));
   };
   
-  private readonly eventSubmit = () => {
-    this.props.onSubmit?.(this.props.block);
+  private readonly eventSubmit = (component: EditText) => {
+    this.props.onSubmit?.(this.props.block, component);
   };
   
 }

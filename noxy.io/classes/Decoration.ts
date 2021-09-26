@@ -1,10 +1,11 @@
+import React from "react";
 import Helper from "../Helper";
 
 export default class Decoration {
   
-  public static defaultFontFamily = Helper.FontFamilyList[7];
-  public static defaultFontSize = Helper.FontSizeList[5];
-  public static defaultFontLength = Helper.FontLengthList[0];
+  public static default_font_family = Helper.FontFamilyList[7];
+  public static default_font_size = Helper.FontSizeList[5];
+  public static default_font_length = Helper.FontLengthList[0];
   
   public readonly bold: boolean;
   public readonly code: boolean;
@@ -30,9 +31,9 @@ export default class Decoration {
     this.underline = initializer.underline ?? false;
     this.strikethrough = initializer.strikethrough ?? false;
     
-    this.font_family = initializer.font_family ?? Decoration.defaultFontFamily;
-    this.font_size = initializer.font_size ?? Decoration.defaultFontSize;
-    this.font_length = initializer.font_length ?? Decoration.defaultFontLength;
+    this.font_family = initializer.font_family ?? Decoration.default_font_family;
+    this.font_size = initializer.font_size ?? Decoration.default_font_size;
+    this.font_length = initializer.font_length ?? Decoration.default_font_length;
     
     this.color = initializer.color ?? "";
     this.background_color = initializer.background_color ?? "";
@@ -43,22 +44,44 @@ export default class Decoration {
   
   public toObject(): DecorationObject {
     return {
-      bold:             this.bold,
-      code:             this.code,
-      mark:             this.mark,
-      italic:           this.italic,
-      underline:        this.underline,
-      strikethrough:    this.strikethrough,
+      bold:          this.bold,
+      code:          this.code,
+      mark:          this.mark,
+      italic:        this.italic,
+      underline:     this.underline,
+      strikethrough: this.strikethrough,
       
-      font_family:      this.font_family,
-      font_size:        this.font_size,
-      font_length:      this.font_length,
+      font_family: this.font_family,
+      font_size:   this.font_size,
+      font_length: this.font_length,
       
       color:            this.color,
       background_color: this.background_color,
       
-      link:             this.link,
+      link: this.link,
     };
+  }
+  
+  public toCSSProperties() {
+    const styling = {} as React.CSSProperties;
+    
+    if (this.color) styling.color = this.color;
+    if (this.background_color) styling.backgroundColor = this.background_color;
+    if (this.font_family !== Decoration.default_font_family) styling.fontFamily = this.font_family;
+    if (this.font_size + this.font_length !== Decoration.default_font_size + Decoration.default_font_length) styling.fontSize = this.font_size + this.font_length;
+    
+    return styling;
+  }
+  
+  public toNode<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: {[key: string]: string} = {}, ...children: Node[]): HTMLElementTagNameMap[K] {
+    const node = Helper.createElementWithChildren(tag, attributes, ...children);
+    
+    if (this.color) node.style.color = this.color;
+    if (this.background_color) node.style.backgroundColor = this.background_color;
+    if (this.font_family !== Decoration.default_font_family) node.style.fontFamily = this.font_family;
+    if (this.font_size + this.font_length !== Decoration.default_font_size + Decoration.default_font_length) node.style.fontSize = this.font_size + this.font_length;
+    
+    return node;
   }
   
   public equals(decoration: Decoration) {
@@ -114,9 +137,9 @@ export default class Decoration {
       code:          node.tagName === "CODE" || decoration.code,
       mark:          node.tagName === "MARK" || decoration.mark,
       
-      font_family:      fontFamily || decoration.font_family || Decoration.defaultFontFamily,
-      font_size:        font_size || decoration.font_size || Decoration.defaultFontSize,
-      font_length:      font_size_length || decoration.font_length || Decoration.defaultFontLength,
+      font_family: fontFamily || decoration.font_family || Decoration.default_font_family,
+      font_size:   font_size || decoration.font_size || Decoration.default_font_size,
+      font_length: font_size_length || decoration.font_length || Decoration.default_font_length,
       
       color:            color || decoration.color || "",
       background_color: backgroundColor || decoration.background_color || "",

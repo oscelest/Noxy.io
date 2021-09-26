@@ -22,7 +22,11 @@ declare module "express-serve-static-core" {
 
 declare global {
   
+  export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
+  
   export type RecursiveArray<T> = (T | Recursive<T>)[]
+  
+  export type NonArray<T> = T extends Array<unknown> ? never : T;
   
   export type Key<V> = (V extends (infer R)[] ? keyof R : keyof V) & string
   
@@ -37,7 +41,7 @@ declare global {
   export interface APIRequest<T> {
     success: boolean;
     message: string;
-    content: T extends (infer R)[] ? Simplify<R>[] : Simplify<T>;
+    content: T extends Array<infer R> ? Simplify<R>[] : Simplify<T>;
     time_started: Date;
     time_completed: Date;
     time_elapsed: Date;
@@ -56,7 +60,9 @@ declare global {
     order: RequestPaginationOrder<O>;
   }
   
-  export type DeepArray<V> = V | DeepArray<V>[]
+  export type HierarchyArray<V = any> = (V | HierarchyArray<V>)[]
+  
+  export type DeepArray<V = any> = V[] | DeepArray<V>[]
   
   export type Unwrap<V> = V extends (infer R)[] ? R : V extends {[key: string]: infer R} ? R : V;
   

@@ -9,6 +9,20 @@ namespace Helper {
   export const FontSizeList = ["8", "9", "10", "11", "12", "14", "18", "24", "30", "36", "48", "60", "72", "84", "96"];
   export const FontLengthList = ["px", "pt", "em", "rem", "vw", "vmax", "%", "cm", "mm", "in", "pc", "ex", "ch"];
   
+  export function createElementWithChildren<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: {[key: string]: string} = {}, ...children: Node[]): HTMLElementTagNameMap[K] {
+    const element = document.createElement(tag);
+    
+    for (let key in attributes) {
+      element.setAttribute(key, attributes[key]);
+    }
+    
+    for (let i = 0; i < children.length; i++) {
+      element.appendChild(children[i]);
+    }
+    
+    return element;
+  }
+  
   export function renderHTMLText(text: string) {
     return text.replace(/(?<!\b)\s(?!\b)?|\s$/g, "\u00A0");
   }

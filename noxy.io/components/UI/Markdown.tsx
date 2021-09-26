@@ -1,9 +1,9 @@
-import React from "react";
-import Style from "./Markdown.module.scss";
-import FatalException from "../../exceptions/FatalException";
 import _ from "lodash";
-import SpoilerText from "../Text/SpoilerText";
+import React from "react";
+import FatalException from "../../exceptions/FatalException";
 import Component from "../Application/Component";
+import SpoilerText from "../Text/SpoilerText";
+import Style from "./Markdown.module.scss";
 
 export default class Markdown extends Component<MarkdownProps, State> {
 
@@ -24,7 +24,6 @@ export default class Markdown extends Component<MarkdownProps, State> {
   private static readonly UnorderedListRegex = new RegExp("^(?<content>\\*+ .+?(?=\\n\\n|$))", "s");
   private static readonly HeaderRegex = new RegExp("^(?<level>#{1,6}) (?<content>.+?)(?=\\n|$)");
   private static readonly ParagraphRegex = new RegExp("^(?<content>.+?(?=\\n\\n|$))", "s");
-  // private static readonly TableRegex = new RegExp("^(?<content>(\\|[\\s\\S]+\\|\\n*?)+)");
 
   private static readonly LinkRegex = new RegExp("\\[(?<content>.+?)]\\((?<link>.+?)(?: \"(?<title>.+?)\")?\\)", "g");
   private static readonly ImageRegex = new RegExp("!\\[(?<content>.+?)]\\((?<link>.+?)(?: \"(?<title>.+?)\")?\\)", "g");
@@ -38,10 +37,10 @@ export default class Markdown extends Component<MarkdownProps, State> {
       const level = new RegExp(`^${pattern}`).exec(value)?.[0].split(new RegExp(`(?=${pattern})`))?.length ?? 1;
       this.getHierarchyLevel(result, level).push(value.replace(new RegExp(`^${pattern} +`), ""));
       return result;
-    }, [] as DeepArray<string>);
+    }, [] as HierarchyArray<string>);
   };
 
-  private readonly getHierarchyLevel = (array: DeepArray<string>, level: number): string[] => {
+  private readonly getHierarchyLevel = (array: HierarchyArray<string>, level: number): string[] => {
     if (level === 1) return array as string[];
     if (!Array.isArray(array)) throw new FatalException("Could not delve into array");
     if (Array.isArray(array[array.length - 1])) return this.getHierarchyLevel(array[array.length - 1], level - 1);
@@ -75,10 +74,6 @@ export default class Markdown extends Component<MarkdownProps, State> {
       else if (!!(result = Markdown.HorizontalRuleRegex.exec(markdown))) {
         segments.push(this.renderHorizontalRuleSegment(segments.length));
       }
-        // // ----- Table ----- //
-        // else if (!!(result = Markdown.TableRegex.exec(markdown))) {
-        //   console.log(result);
-        // }
       // ----- Blockquote ----- //
       else if (!!(result = Markdown.BlockQuoteRegex.exec(markdown))) {
         if (!result.groups || !result.groups.content) throw new FatalException(`Could not parse <blockquote> segment "${result[0]}"`);
@@ -131,7 +126,7 @@ export default class Markdown extends Component<MarkdownProps, State> {
     return <hr key={index}/>;
   };
 
-  private readonly renderBlockQuoteSegment = (current: DeepArray<string>, index: number = 0) => {
+  private readonly renderBlockQuoteSegment = (current: HierarchyArray<string>, index: number = 0) => {
     if (typeof current === "string") return this.parseContent(current);
 
     return (
@@ -141,7 +136,7 @@ export default class Markdown extends Component<MarkdownProps, State> {
     );
   };
 
-  private readonly renderOrderedListSegment = (current: DeepArray<string>, index: number = 0) => {
+  private readonly renderOrderedListSegment = (current: HierarchyArray<string>, index: number = 0) => {
     if (typeof current === "string") return <li key={index}>{this.parseContent(current)}</li>;
 
     return (
@@ -151,7 +146,7 @@ export default class Markdown extends Component<MarkdownProps, State> {
     );
   };
 
-  private readonly renderUnorderedListSegment = (current: DeepArray<string>, index: number = 0) => {
+  private readonly renderUnorderedListSegment = (current: HierarchyArray<string>, index: number = 0) => {
     if (typeof current === "string") return <li key={index}>{this.parseContent(current)}</li>;
 
     return (

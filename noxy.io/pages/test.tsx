@@ -34,7 +34,6 @@ export default class IndexPage extends Component<PageProps, State> {
   }
   
   private readonly eventChange = (index: number, value: string) => {
-    console.log("changing in top level", index, value)
     this.setState({index, value});
   };
   

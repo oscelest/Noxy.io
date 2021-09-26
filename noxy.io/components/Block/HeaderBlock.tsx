@@ -1,9 +1,8 @@
 import React from "react";
-import {v4} from "uuid";
 import PageBlockType from "../../../common/enums/PageBlockType";
 import Util from "../../../common/services/Util";
-import Character from "../../classes/Character";
-import PageBlockEntity from "../../entities/Page/PageBlockEntity";
+import RichText from "../../classes/RichText";
+import HeaderPageBlockEntity from "../../entities/Page/Block/HeaderPageBlockEntity";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
@@ -15,7 +14,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
   
   private static readonly blacklist: EditTextCommandList = ["bold"];
   private static readonly whitelist: EditTextCommandList = [];
-  
+
   constructor(props: HeaderBlockProps) {
     super(props);
     this.state = {
@@ -23,17 +22,13 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     };
   }
   
-  public static create = () => {
-    return new PageBlockEntity<PageBlockType.HEADER>({
-      id:      v4(),
-      type:    PageBlockType.HEADER,
-      content: {text: [], size: 1},
-    });
-  };
+  public static create(initializer?: Omit<Initializer<HeaderPageBlockEntity>, "type">) {
+    return new HeaderPageBlockEntity(initializer);
+  }
   
   public render() {
     const readonly = this.props.readonly ?? true;
-    if (readonly && !this.props.block.content.text.length) return null;
+    if (readonly && !this.props.block.content.value.length) return null;
     
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
@@ -49,14 +44,17 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
   }
   
   private readonly renderHeader = () => {
-    return React.createElement(`h${Util.clamp(this.props.block.content.size, 6)}`, {className: Style.Text, children: this.renderEditText()});
+    return React.createElement(
+      `h${Util.clamp(this.props.block.content.data.level, 6, 1)}`,
+      {className: Style.Text, children: this.renderEditText()},
+    );
   };
   
   private readonly renderEditText = () => {
     return (
       <EditText ref={this.state.ref} readonly={this.props.readonly} whitelist={HeaderBlock.whitelist} blacklist={HeaderBlock.blacklist}
                 onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit}>
-        {this.props.block.content.text}
+        {this.props.block.content.value}
       </EditText>
     );
   };
@@ -74,16 +72,17 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     );
   };
   
-  private readonly eventChange = (text: Character[]) => {
-    this.props.onChange(new PageBlockEntity<PageBlockType.HEADER>({...this.props.block, content: {...this.props.block.content, text}}));
+  private readonly eventChange = (text: RichText, component: EditText) => {
+    this.props.onChange(this.props.block.replaceText(text, component.text));
   };
   
-  private readonly eventSubmit = () => {
-    this.props.onSubmit?.(this.props.block);
+  private readonly eventSubmit = (component: EditText) => {
+    this.props.onSubmit?.(this.props.block, component);
   };
   
-  private readonly eventHeaderLevelClick = (size: number) => {
-    this.props.onChange(new PageBlockEntity<PageBlockType.HEADER>({...this.props.block, content: {...this.props.block.content, size}}));
+  private readonly eventHeaderLevelClick = (level: number) => {
+    this.props.block.content.data.level = level;
+    this.props.onChange(this.props.block);
   };
 }
 

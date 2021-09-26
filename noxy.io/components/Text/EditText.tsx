@@ -10,13 +10,13 @@ import Helper from "../../Helper";
 import Component from "../Application/Component";
 import Style from "./EditText.module.scss";
 
-export default class EditText extends Component<EditTextProps, State> {
+export default class EditText<V = never> extends Component<EditTextProps<V>, State<V>> {
   
-  private template: HTMLTemplateElement;
+  #template: HTMLTemplateElement;
   
-  constructor(props: EditTextProps) {
+  constructor(props: EditTextProps<V>) {
     super(props);
-    this.template = document.createElement("template");
+    this.#template = document.createElement("template");
     this.state = {
       ref:       React.createRef(),
       history:   new History(),
@@ -25,7 +25,7 @@ export default class EditText extends Component<EditTextProps, State> {
   }
   
   public get text() {
-    return this.props.children as EditTextProps["children"];
+    return this.props.children as EditTextProps<V>["children"];
   };
   
   public getSelection(): Selection {
@@ -77,6 +77,10 @@ export default class EditText extends Component<EditTextProps, State> {
     return !!(this.props.whitelist?.length && !this.props.whitelist.includes(decoration) || this.props.blacklist?.includes(decoration));
   };
   
+  public focus() {
+    this.state.ref.current?.focus();
+  }
+  
   public select(start: number = 0, end: number = this.text.length, forward: boolean = true) {
     this.setState({selection: {start, end, forward}});
   };
@@ -87,10 +91,11 @@ export default class EditText extends Component<EditTextProps, State> {
     const length = insert instanceof Character ? 1 : insert.length;
     const start = this.text.slice(0, selection.start);
     const end = this.text.slice(selection.end);
+    const next_text = new RichText({...this.text, value: [start, insert, end]});
     const next_selection = clear_selection ? {start: selection.start + length, end: selection.start + length, forward: selection.forward} : selection;
     
-    this.props.onChange(new RichText(start, insert, end), this);
-    this.setState({selection: next_selection, history: this.state.history.push({text: this.text, selection})});
+    this.props.onChange(next_text, this);
+    this.setState({selection: next_selection, history: this.state.history.push({text: next_text, selection: next_selection})});
   };
   
   public insertText(text: string, selection: Selection = this.getSelection()) {
@@ -174,7 +179,7 @@ export default class EditText extends Component<EditTextProps, State> {
   public redo() {
     const history = this.state.history.forward();
     if (this.state.history === history) return this;
-  
+    
     this.props.onChange(history.value.text, this);
     this.setState({history, selection: history.value.selection});
   }
@@ -255,7 +260,11 @@ export default class EditText extends Component<EditTextProps, State> {
     return segment_collection;
   }
   
-  public componentDidUpdate(prevProps: Readonly<EditTextProps>, prevState: Readonly<State>, snapshot?: any): void {
+  public componentDidMount() {
+    this.setState({history: this.state.history.push({text: this.text, selection: this.getSelection()})});
+  }
+  
+  public componentDidUpdate(prevProps: Readonly<EditTextProps<V>>, prevState: Readonly<State<V>>, snapshot?: any): void {
     if (prevState.selection !== this.state.selection || prevProps.children.length !== this.props.children.length) {
       const {start, end, forward} = this.state.selection;
       const start_node = this.getNodeByPosition(forward ? start : end);
@@ -306,22 +315,18 @@ export default class EditText extends Component<EditTextProps, State> {
     if (decoration.strikethrough) return <s key={key}>{this.renderReactElement(text, new Decoration({...decoration, strikethrough: false}))}</s>;
     if (decoration.link) return <a className={Style.Link} href={decoration.link} key={key}>{this.renderReactElement(text, new Decoration({...decoration, link: ""}))}</a>;
     
-    const styling = {} as React.CSSProperties;
     const classes = [Style.Text] as string[];
-    if (decoration.color) styling.color = decoration.color;
-    if (decoration.background_color) styling.backgroundColor = decoration.background_color;
-    if (decoration.font_family) styling.fontFamily = decoration.font_family;
-    if (decoration.font_size) styling.fontSize = decoration.font_size + decoration.font_length;
     if (decoration.selected) classes.push(Style.Selected);
     
     return (
-      <span key={key} className={classes.join(" ")} style={styling}>{text.length ? Helper.renderHTMLText(text) : <br/>}</span>
+      <span key={key} className={classes.join(" ")} style={decoration.toCSSProperties()}>{text.length ? Helper.renderHTMLText(text) : <br/>}</span>
     );
   };
   
   public readonly renderHTML = (selection?: Selection) => {
     const segment_collection = this.getSegmentCollection(this.parseSelection(selection));
     const container = document.createElement("div");
+    container.setAttribute(RichText.attribute_metadata, JSON.stringify(this.text.metadata));
     
     for (let i = 0; i < segment_collection.length; i++) {
       if (i !== 0) container.append(document.createElement("br"));
@@ -335,29 +340,16 @@ export default class EditText extends Component<EditTextProps, State> {
   };
   
   private readonly renderHTMLNode = (text: string, decoration: Decoration): Node => {
-    if (decoration.bold) return this.appendHTMLNode(document.createElement("b"), text, new Decoration({...decoration, bold: false}));
-    if (decoration.code) return this.appendHTMLNode(document.createElement("code"), text, new Decoration({...decoration, code: false}));
-    if (decoration.mark) return this.appendHTMLNode(document.createElement("mark"), text, new Decoration({...decoration, mark: false}));
-    if (decoration.italic) return this.appendHTMLNode(document.createElement("i"), text, new Decoration({...decoration, italic: false}));
-    if (decoration.underline) return this.appendHTMLNode(document.createElement("u"), text, new Decoration({...decoration, underline: false}));
-    if (decoration.strikethrough) return this.appendHTMLNode(document.createElement("s"), text, new Decoration({...decoration, strikethrough: false}));
-    if (decoration.link) {
-      const element = document.createElement("a");
-      element.href = decoration.link;
-      return this.appendHTMLNode(element, text, new Decoration({...decoration, link: ""}));
-    }
-    
-    const node = document.createElement("span");
-    if (decoration.color) node.style.color = decoration.color;
-    if (decoration.background_color) node.style.backgroundColor = decoration.background_color;
-    if (decoration.font_family) node.style.fontFamily = decoration.font_family;
-    if (decoration.font_size) node.style.fontSize = decoration.font_size + decoration.font_length;
-    node.append(text.length ? document.createTextNode(Helper.renderHTMLText(text)) : document.createElement("br"));
-    return node;
-  };
+    if (decoration.bold) return Helper.createElementWithChildren("b", {}, this.renderHTMLNode(text, new Decoration({...decoration, bold: false})));
+    if (decoration.code) return Helper.createElementWithChildren("code", {}, this.renderHTMLNode(text, new Decoration({...decoration, code: false})));
+    if (decoration.mark) return Helper.createElementWithChildren("mark", {}, this.renderHTMLNode(text, new Decoration({...decoration, mark: false})));
+    if (decoration.italic) return Helper.createElementWithChildren("i", {}, this.renderHTMLNode(text, new Decoration({...decoration, italic: false})));
+    if (decoration.underline) return Helper.createElementWithChildren("u", {}, this.renderHTMLNode(text, new Decoration({...decoration, underline: false})));
+    if (decoration.strikethrough) return Helper.createElementWithChildren("s", {}, this.renderHTMLNode(text, new Decoration({...decoration, strikethrough: false})));
+    if (decoration.link) return Helper.createElementWithChildren("a", {"href": decoration.link}, this.renderHTMLNode(text, new Decoration({...decoration, link: ""})));
   
-  private appendHTMLNode(node: Node, text: string, decoration: Decoration) {
-    node.appendChild(this.renderHTMLNode(text, decoration));
+    const node = decoration.toNode("span");
+    node.append(text.length ? document.createTextNode(Helper.renderHTMLText(text)) : document.createElement("br"));
     return node;
   };
   
@@ -429,7 +421,7 @@ export default class EditText extends Component<EditTextProps, State> {
     this.props.onFocus?.(event, this);
   };
   
-  private readonly eventSelect = (event: React.SyntheticEvent<HTMLElement, MouseEvent | Event>) => {
+  private readonly eventSelect = () => {
     const selection = this.getSelection();
     const {start: prev_start, end: prev_end, forward: prev_forward} = selection;
     const {start: next_start, end: next_end, forward: next_forward} = this.state.selection;
@@ -466,12 +458,12 @@ export default class EditText extends Component<EditTextProps, State> {
     if (event.clipboardData.types.includes(ClipboardDataType.TEXT_HTML)) {
       const html = event.clipboardData.getData(ClipboardDataType.TEXT_HTML).match(/<!--StartFragment-->(?<html>.*)<!--EndFragment-->/);
       if (html?.groups?.html) {
-        this.template.innerHTML = html.groups.html;
-        return this.insert(Character.parseHTML(this.template.content));
+        this.#template.innerHTML = html.groups.html;
+        return this.insert(Character.parseHTML(this.#template.content));
       }
     }
     
-    this.template.innerHTML = event.clipboardData.getData(ClipboardDataType.TEXT_PLAIN);
+    this.#template.innerHTML = event.clipboardData.getData(ClipboardDataType.TEXT_PLAIN);
   };
 }
 
@@ -479,24 +471,24 @@ export type Selection = {start: number, end: number, forward: boolean};
 export type EditTextCommand = keyof Initializer<Decoration>;
 export type EditTextCommandList = EditTextCommand[];
 
-export interface EditTextProps {
-  children: RichText;
+export interface EditTextProps<V> {
+  children: RichText<V>;
   className?: string;
   readonly?: boolean;
   whitelist?: (keyof Initializer<Decoration>)[];
   blacklist?: (keyof Initializer<Decoration>)[];
   
-  onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
-  onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
-  onSelect?(selection: Selection, component: EditText): void;
-  onKeyDown?(event: React.KeyboardEvent<HTMLDivElement>, component: EditText): boolean | void;
+  onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText<V>): void;
+  onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText<V>): void;
+  onSelect?(selection: Selection, component: EditText<V>): void;
+  onKeyDown?(event: React.KeyboardEvent<HTMLDivElement>, component: EditText<V>): boolean | void;
   
-  onChange(text: RichText, component: EditText): void;
-  onSubmit?(component: EditText): void;
+  onChange(text: RichText<V>, component: EditText<V>): void;
+  onSubmit?(component: EditText<V>): void;
 }
 
-interface State {
+interface State<V> {
   ref: React.RefObject<HTMLDivElement>;
-  history: History<{text: RichText, selection: Selection}>;
+  history: History<{text: RichText<V>, selection: Selection}>;
   selection: Selection;
 }

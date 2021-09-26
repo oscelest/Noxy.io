@@ -4,7 +4,32 @@ import Order from "../enums/Order";
 const characters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
 
 namespace Util {
-
+  
+  export function deepFind<V>(value: V, place: V | HierarchyArray): [number, Array<any>] {
+    if (Array.isArray(place)) {
+      for (let i = 0; i < place.length; i++) {
+        if (place[i] === value) return [i, place];
+        if (Array.isArray(place[i])) {
+          const find = deepFind(value, place[i]);
+          if (!find) return find;
+        }
+      }
+    }
+    
+    throw new Error(`Cannot find value inside of ${typeof place}.`);
+  }
+  
+  export function getNextDeepArrayLevel<T>(array: HierarchyArray<NonArray<T>>, level: number): T[] {
+    if (level <= 1) return array as T[];
+    if (!Array.isArray(array)) throw new Error("Could not delve into array");
+    
+    const last = array[array.length - 1];
+    if (Array.isArray(last)) return getNextDeepArrayLevel(last, level - 1);
+    
+    array.push([]);
+    return getNextDeepArrayLevel(array[array.length - 1] as HierarchyArray<NonArray<T>>, level - 1);
+  }
+  
   export function clamp(value: number, max: number, min: number = 0)  {
     return Math.min(Math.max(value, min), max);
   }

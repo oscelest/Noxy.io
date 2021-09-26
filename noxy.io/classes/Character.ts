@@ -1,17 +1,25 @@
 import Decoration from "./Decoration";
 
 export default class Character {
-
-  public readonly value: string;
-  public readonly decoration: Decoration;
-
+  
+  readonly #value: string;
+  readonly #decoration: Decoration;
+  
   constructor(value: string, decoration?: Initializer<Decoration>) {
-    this.value = value[0];
-    this.decoration = new Decoration(decoration);
+    this.#value = value[0];
+    this.#decoration = new Decoration(decoration);
+  }
+  
+  public get value() {
+    return this.#value;
+  }
+  
+  public get decoration() {
+    return new Decoration(this.#decoration);
   }
   
   public decorate(decoration: Initializer<Decoration>) {
-    return new Character(this.value, Object.assign(this.decoration, decoration));
+    return new Character(this.#value, Object.assign(this.#decoration, decoration));
   }
   
   public static parseHTML(node: Node, decoration: Decoration = new Decoration()) {
@@ -31,7 +39,7 @@ export default class Character {
         text.push(...this.parseHTML(child, decoration));
       }
     }
-
+    
     return text;
   }
 }

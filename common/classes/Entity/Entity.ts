@@ -125,7 +125,6 @@ export default function Entity<E>() {
         return object as E;
       }
       catch (error) {
-        console.log(error)
         if (error instanceof Error) {
           if ((error as any).code === "ER_DUP_ENTRY") throw new ServerException(409);
         }
