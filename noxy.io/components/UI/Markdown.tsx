@@ -6,7 +6,7 @@ import SpoilerText from "../Text/SpoilerText";
 import Style from "./Markdown.module.scss";
 
 export default class Markdown extends Component<MarkdownProps, State> {
-
+  
   private static readonly PatternMap: {[key: string]: {width: number, value: number, pattern: RegExp}} = {
     "||":  {width: 2, value: 32, pattern: /(?<!\|)\|\|.+?\|\|(?!\|)/g},
     "__":  {width: 2, value: 16, pattern: /(?<!_)__.+?__(?!_)/g},
@@ -16,7 +16,7 @@ export default class Markdown extends Component<MarkdownProps, State> {
     "*":   {width: 1, value: 2, pattern: /(?<!\*)\*.+?\*(?!\*)/g},
     "`":   {width: 1, value: 1, pattern: /(?<!`)`.+?`(?!`)/g},
   };
-
+  
   private static readonly BlockQuoteRegex = new RegExp("^(?<content>>+ .+?(?=\\n\\n|$))", "s");
   private static readonly HorizontalRuleRegex = new RegExp("^(?<content>\\*{3,}|_{3,}|-{3,})(?=\\n|$)");
   private static readonly PreformattedRegex = new RegExp("^```(?<type>[^\\n]+)?\\n(?<content>.*)\\n```(?=\\n|$)", "s");
@@ -24,14 +24,14 @@ export default class Markdown extends Component<MarkdownProps, State> {
   private static readonly UnorderedListRegex = new RegExp("^(?<content>\\*+ .+?(?=\\n\\n|$))", "s");
   private static readonly HeaderRegex = new RegExp("^(?<level>#{1,6}) (?<content>.+?)(?=\\n|$)");
   private static readonly ParagraphRegex = new RegExp("^(?<content>.+?(?=\\n\\n|$))", "s");
-
+  
   private static readonly LinkRegex = new RegExp("\\[(?<content>.+?)]\\((?<link>.+?)(?: \"(?<title>.+?)\")?\\)", "g");
   private static readonly ImageRegex = new RegExp("!\\[(?<content>.+?)]\\((?<link>.+?)(?: \"(?<title>.+?)\")?\\)", "g");
-
+  
   constructor(props: MarkdownProps) {
     super(props);
   }
-
+  
   private readonly convertSegmentToHierarchy = (content: string, pattern: string) => {
     return _.reduce(content.split(new RegExp(`\\n(?=${pattern})`)), (result, value) => {
       const level = new RegExp(`^${pattern}`).exec(value)?.[0].split(new RegExp(`(?=${pattern})`))?.length ?? 1;
@@ -39,31 +39,31 @@ export default class Markdown extends Component<MarkdownProps, State> {
       return result;
     }, [] as HierarchyArray<string>);
   };
-
-  private readonly getHierarchyLevel = (array: HierarchyArray<string>, level: number): string[] => {
+  
+  private readonly getHierarchyLevel = (array: string | HierarchyArray<string>, level: number): string[] => {
     if (level === 1) return array as string[];
     if (!Array.isArray(array)) throw new FatalException("Could not delve into array");
     if (Array.isArray(array[array.length - 1])) return this.getHierarchyLevel(array[array.length - 1], level - 1);
-
+    
     array.push([]);
     return this.getHierarchyLevel(array[array.length - 1], level - 1);
   };
-
+  
   private readonly getEnclosedText = (value: string, pattern: RegExp) => {
     let match: RegExpMatchArray | null;
     const result = [] as [number, number][];
-
+    
     while (!!(match = pattern.exec(value))) {
       const {index = 0} = match;
       result.push([index, index + match[0].length]);
     }
     return result;
   };
-
+  
   private readonly parseContent = (markdown: string) => {
     const segments = [] as React.ReactNode[];
     let result: RegExpMatchArray | null = null;
-
+    
     do {
       // ----- Preformatted ----- //
       if (!!(result = Markdown.PreformattedRegex.exec(markdown))) {
@@ -99,63 +99,63 @@ export default class Markdown extends Component<MarkdownProps, State> {
         if (!result.groups || !result.groups.content) throw new FatalException(`Could not parse <p> segment "${result[0]}"`);
         segments.push(this.renderParagraphSegment(result.groups as Segment, segments.length));
       }
-
+      
       markdown = markdown.substr(result?.[0].length ?? Infinity).replace(/^\s+/, "");
     }
     while (result !== null);
-
+    
     return segments;
   };
-
+  
   public render() {
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
-
+    
     return (
       <div className={classes.join(" ")}>
         {this.parseContent(typeof this.props.children === "string" ? this.props.children.replace(/^\s+/, "").replace(/\n{2,}/g, "\n\n") : "Markdown could not be parsed")}
       </div>
     );
   };
-
+  
   private readonly renderPreformattedSegment = (segment: PreformattedSegment, index: number = 0) => {
     return <pre key={index}>{segment.content}</pre>;
   };
-
+  
   private readonly renderHorizontalRuleSegment = (index: number = 0) => {
     return <hr key={index}/>;
   };
-
-  private readonly renderBlockQuoteSegment = (current: HierarchyArray<string>, index: number = 0) => {
+  
+  private readonly renderBlockQuoteSegment = (current: string | HierarchyArray<string>, index: number = 0) => {
     if (typeof current === "string") return this.parseContent(current);
-
+    
     return (
       <blockquote key={index}>
         {_.map(current, (value, index) => this.renderBlockQuoteSegment(value, index))}
       </blockquote>
     );
   };
-
-  private readonly renderOrderedListSegment = (current: HierarchyArray<string>, index: number = 0) => {
+  
+  private readonly renderOrderedListSegment = (current: string | HierarchyArray<string>, index: number = 0) => {
     if (typeof current === "string") return <li key={index}>{this.parseContent(current)}</li>;
-
+    
     return (
       <ol key={index}>
         {_.map(current, (value, index) => this.renderOrderedListSegment(value, index))}
       </ol>
     );
   };
-
-  private readonly renderUnorderedListSegment = (current: HierarchyArray<string>, index: number = 0) => {
+  
+  private readonly renderUnorderedListSegment = (current: string | HierarchyArray<string>, index: number = 0) => {
     if (typeof current === "string") return <li key={index}>{this.parseContent(current)}</li>;
-
+    
     return (
       <ul key={index}>
         {_.map(current, (value, index) => this.renderUnorderedListSegment(value, index))}
       </ul>
     );
   };
-
+  
   private readonly renderHeaderSegment = (segment: HeaderSegment, index: number = 0) => {
     switch (segment.level.length) {
       case 1:
@@ -174,19 +174,19 @@ export default class Markdown extends Component<MarkdownProps, State> {
         throw new FatalException(`<h${segment.level.length}> cannot be rendered with content ${segment.content}.`);
     }
   };
-
+  
   private readonly renderParagraphSegment = (segment: Segment, index: number = 0) => {
     return <p key={index}>{_.map(segment.content.split("\n"), this.renderText)}</p>;
   };
-
+  
   private readonly renderText = (text: string, index: number = 0) => {
     const characters = [] as number[];
-
+    
     for (let {pattern, width, value} of Object.values(Markdown.PatternMap)) {
       for (let [start, end] of this.getEnclosedText(text, pattern)) {
         for (let i = start; i < end; i++) {
           if (characters[i] === -1) continue;
-
+          
           if (i >= start + width && i < end - width) {
             characters[i] = (characters[i] & value) == value ? Math.max(characters[i], value) : value + (characters[i] ?? 0);
           }
@@ -196,34 +196,34 @@ export default class Markdown extends Component<MarkdownProps, State> {
         }
       }
     }
-
+    
     if (characters.length) {
       const {fragments} = _.reduce(
         text,
         (result, char, index) => {
           const current = characters[index] ?? 0;
           if (current === -1) return result;
-
+          
           current === result.previous
-            ? result.fragments[result.fragments.length - 1].text += char
-            : result.fragments.push({value: current, text: char});
-
+          ? result.fragments[result.fragments.length - 1].text += char
+          : result.fragments.push({value: current, text: char});
+          
           result.previous = current;
           return result;
         },
         {fragments: [] as Text[], previous: NaN},
       );
-
+      
       return (
         <span key={index}>{_.map(fragments, ({value, text}, index) => this.renderTextFragment(text, value, index))}</span>
       );
     }
-
+    
     return (
       <span key={index}>{this.renderTextContent(text)}</span>
     );
   };
-
+  
   private readonly renderTextFragment = (value: string, type: number, index: number = 0) => {
     if (type >= 32) return <SpoilerText key={index}>{this.renderTextFragment(value, type - 32)}</SpoilerText>;
     if (type >= 16) return <u key={index}>{this.renderTextFragment(value, type - 16)}</u>;
@@ -233,11 +233,11 @@ export default class Markdown extends Component<MarkdownProps, State> {
     if (type >= 1) return <code key={index}>{this.renderTextFragment(value, type - 1)}</code>;
     return value.match(/^ +$/) ? value.replace(/ /g, "\u00a0") : this.renderTextContent(value);
   };
-
-
+  
+  
   private readonly renderTextContent = (text: string) => {
     const segments = [text] as React.ReactNode[];
-
+    
     let result: RegExpMatchArray | null = null;
     do {
       result = null;
@@ -248,23 +248,23 @@ export default class Markdown extends Component<MarkdownProps, State> {
           if (!result.groups || !result.groups.content || !result.groups.link) throw new FatalException(`Could not parse <img> segment "${result[0]}"`);
           const index = result.index ?? 0;
           const segment = result.groups as LinkSegment;
-
+          
           segments.splice(i, 1, text.slice(0, index), <img src={segment.link} alt={segment.content} title={segment.title}/>, text.slice(index + result[0].length));
         }
         else if (!!(result = Markdown.LinkRegex.exec(text))) {
           if (!result.groups || !result.groups.content || !result.groups.link) throw new FatalException(`Could not parse <a> segment "${result[0]}"`);
           const index = result.index ?? 0;
           const segment = result.groups as LinkSegment;
-
+          
           segments.splice(i, 1, text.slice(0, index), <a href={segment.link} title={segment.title}>{segment.content}</a>, text.slice(index + result[0].length));
         }
       }
     }
     while (result !== null);
-
+    
     return _.map(segments, (segment, index) => typeof segment === "object" ? {...segment, key: index} : segment);
   };
-
+  
 }
 
 type Text = {value: number; text: string}
@@ -275,8 +275,8 @@ type LinkSegment = {link: string; title?: string} & Segment
 type HeaderSegment = {level: string} & Segment;
 
 export interface MarkdownProps {
-  children: string
-  className?: string
+  children: string;
+  className?: string;
 }
 
 interface State {
