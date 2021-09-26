@@ -15,10 +15,10 @@ export default class RichText<Metadata = never> {
   
   public static attribute_metadata: string = "data-metadata";
   
-  constructor(initializer: Initializer<Omit<RichText, "value">> & {id?: string, metadata?: Metadata, value?: InitValue | InitValue[]}) {
-    this.#id = initializer?.id ?? v4();
+  constructor(initializer: Initializer<Omit<RichText, "value" | "id">> & {metadata?: Metadata, value?: InitValue | InitValue[]}) {
+    this.#id = v4();
     this.#value = this.parseInitializerValue(initializer.value);
-
+    
     this.alignment = initializer?.alignment ?? "inherit";
     if (initializer?.metadata) this.metadata = initializer.metadata;
   }

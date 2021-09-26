@@ -43,7 +43,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   }
   
   public componentDidUpdate(prevProps: Readonly<ListBlockProps>, prevState: Readonly<State>, snapshot?: any) {
-    if (this.state.ref.current) {
+    if (this.state.ref.current && this.state.inserted_text) {
       this.state.ref.current.focus();
       this.setState({inserted_text: undefined});
     }
@@ -70,7 +70,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   
   private readonly renderElement = (element: ListBlockText | HierarchyArray<ListBlockText>, key: number = 0) => {
     if (Array.isArray(element)) return this.renderList(element, key);
-    const ref = this.state.inserted_text === element ? this.state.ref : undefined;
+    const ref = this.state.inserted_text?.id === element.id ? this.state.ref : undefined;
     
     return (
       <li key={key}>
@@ -103,10 +103,14 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     event.bubbles = false;
     
     switch (command) {
-      case KeyboardCommand.NEXT_FOCUS:
-        return this.shiftContentLevel(component, 1);
-      case KeyboardCommand.PREV_FOCUS:
-        return this.shiftContentLevel(component, -1);
+      case KeyboardCommand.ARROW_DOWN:
+        return this.shiftCursorBy(component, 1);
+      case KeyboardCommand.ARROW_UP:
+        return this.shiftCursorBy(component, -1);
+      case KeyboardCommand.INDENT:
+        return this.shiftLevelBy(component, 1);
+      case KeyboardCommand.OUTDENT:
+        return this.shiftLevelBy(component, -1);
       case KeyboardCommand.NEW_LINE:
       case KeyboardCommand.NEW_LINE_ALT:
         return this.insertNewContent(component);
@@ -118,20 +122,26 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     event.bubbles = true;
   };
   
-  private readonly shiftContentLevel = (component: EditText, level: number) => {
-    this.props.block.content.value[this.getIndex(component.text)].metadata = Util.clamp(level, 5, 1);
+  private readonly shiftCursorBy = (component: EditText, value: number) => {
+    const index = Util.clamp(this.getIndex(component.text) + value, this.props.block.content.value.length - 1, 0);
+    this.setState({inserted_text: this.props.block.content.value[index]});
+  };
+  
+  private readonly shiftLevelBy = (component: EditText, value: number) => {
+    const index = this.getIndex(component.text);
+    this.props.block.content.value[index].metadata = Util.clamp(this.props.block.content.value[index].metadata + value, 5, 1);
     this.props.onChange(this.props.block);
     this.setState({inserted_text: component.text});
   };
   
   private readonly insertNewContent = (component: EditText) => {
-    const index = this.getIndex(component.text);
     const {start, end} = component.getSelection();
-    const text = this.props.block.content.value[index];
-    const next_text = new RichText({...text, value: text.slice(end)});
+    const index = this.getIndex(component.text);
+    const prev_text = this.props.block.content.value[index];
+    const next_text = new RichText({...prev_text, value: prev_text.slice(end)});
     
-    this.props.block.content.value[index] = new RichText({...text, value: text.slice(0, start)});
-    this.props.block.content.value.splice(index, 0, next_text);
+    this.props.block.content.value[index] = new RichText({...prev_text, value: prev_text.slice(0, start)});
+    this.props.block.content.value.splice(index + 1, 0, next_text);
     this.setState({inserted_text: next_text});
     return this.props.onChange(this.props.block);
   };

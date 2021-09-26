@@ -2,6 +2,12 @@ enum KeyboardCommand {
   NEXT_FOCUS           = "Tab",
   PREV_FOCUS           = "Shift+Tab",
   
+  INDENT               = "Shift+Alt+ArrowRight",
+  OUTDENT              = "Shift+Alt+ArrowLeft",
+  
+  ARROW_DOWN           = "ArrowDown",
+  ARROW_UP             = "ArrowUp",
+  
   UNDO                 = "Ctrl+KeyZ",
   UNDO_ALT             = "Ctrl+Shift+KeyY",
   REDO                 = "Ctrl+KeyY",
