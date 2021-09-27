@@ -33,7 +33,6 @@ export default class HeaderPageBlockEntity extends PageBlockEntity {
       }
     };
   }
-  
 }
 
 export type HeaderBlockText = RichText

@@ -13,7 +13,7 @@ import TextBlock from "../Block/TextBlock";
 import AutoComplete from "../Form/AutoComplete";
 import Button from "../Form/Button";
 import Input from "../Form/Input";
-import EditText, {Selection} from "../Text/EditText";
+import EditText, {EditTextSelection} from "../Text/EditText";
 import Component from "./Component";
 import Conditional from "./Conditional";
 import Dialog from "./Dialog";
@@ -251,9 +251,9 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.setState({focus});
   };
   
-  private readonly eventPageBlockSelect = ({start, end}: Selection, component: EditText) => {
+  private readonly eventPageBlockSelect = ({start, end}: EditTextSelection, component: EditText) => {
     if (start === end) start = Math.max(0, start - 1);
-    this.setState({decoration: component.getDecoration(start, end)});
+    this.setState({decoration: component.text.getDecoration(start, end)});
   };
   
   private readonly eventPageBlockChange = (block: PageBlockEntity) => {
@@ -279,7 +279,7 @@ export interface PageExplorerBlockProps<Type extends PageBlockType = PageBlockTy
   
   onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
   onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
-  onSelect?(selection: Selection, component: EditText): void;
+  onSelect?(selection: EditTextSelection, component: EditText): void;
   onChange(block: PageBlockEntity<Type>): void;
   onSubmit?(block: PageBlockEntity<Type>, component: EditText): void;
 }

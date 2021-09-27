@@ -35,6 +35,66 @@ export default class RichText<Metadata = never> {
     return this.#value.length;
   }
   
+  public hasDecoration(property: keyof Initializer<Decoration>, start: number, end: number) {
+    for (let i = start; i < end; i++) {
+      if (!this.at(i, true).decoration[property]) {
+        return false;
+      }
+    }
+    return true;
+  }
+  public at(position: number, safe: true): Character
+  public at(position: number, safe?: false): Character | undefined
+  public at(position: number, safe: boolean = false): Character | undefined {
+    const character = this.value[position];
+    if (!character && safe) throw new Error(`Could not get character at position [${position}]`);
+    return character;
+  }
+  
+  public getDecoration(start: number, end: number): Decoration {
+    if (start === 0 && end === 0) return new Decoration();
+    
+    let initializer = this.at(start, true).decoration;
+    for (let i = start + 1; i < end; i++) {
+      initializer = initializer.getIntersection(this.at(i, true).decoration);
+    }
+    
+    return new Decoration(initializer);
+  }
+  
+  public getSegmentCollection(start: number, end: number, [selection_start, selection_end]: [number, number] = [0, 0]) {
+    const segment_collection = [] as {text: string, decoration: Decoration}[][];
+    if (!this.at(start) || !this.at(end - 1)) return segment_collection;
+    
+    let index: number = start;
+    let character: Character = this.at(index, true);
+    let decoration: Decoration = selection_start <= index && selection_end > index ? new Decoration({...character.decoration, selected: true}) : character.decoration;
+    segment_collection.push([{text: "", decoration}]);
+    
+    do {
+      const segment_list = segment_collection[segment_collection.length - 1];
+      const segment = segment_list[segment_list.length - 1];
+      decoration = selection_start <= index && selection_end > index ? new Decoration({...character.decoration, selected: true}) : character.decoration;
+      
+      if (character.value === "\n") {
+        segment_collection.push([{text: "", decoration}]);
+      }
+      else if (!segment?.decoration.equals(decoration)) {
+        segment_list.push({text: character.value, decoration});
+      }
+      else {
+        segment.text += character.value;
+      }
+    }
+    while (++index < end && (character = this.at(index, true)));
+    
+    return segment_collection;
+  }
+  
+  public slice(start?: number, end?: number) {
+    return this.value.slice(start, end);
+  }
+  
   private parseInitializerValue(initializer?: InitValue | InitValue[]): Character[] {
     const array = [] as Character[];
     if (initializer === undefined) return array;
@@ -65,18 +125,6 @@ export default class RichText<Metadata = never> {
     }
     
     return array;
-  }
-  
-  public at(position: number, safe: true): Character
-  public at(position: number, safe?: false): Character | undefined
-  public at(position: number, safe: boolean = false): Character | undefined {
-    const character = this.value[position];
-    if (!character && safe) throw new Error(`Could not get character at position [${position}]`);
-    return character;
-  }
-  
-  public slice(start?: number, end?: number) {
-    return this.value.slice(start, end);
   }
   
   public static parseHTML(node: string | Element, decoration: Decoration = new Decoration()) {
@@ -112,5 +160,4 @@ export default class RichText<Metadata = never> {
       return previous_value ?? undefined;
     }
   }
-  
 }

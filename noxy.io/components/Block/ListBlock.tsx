@@ -7,7 +7,7 @@ import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
 import Component from "../Application/Component";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
-import EditText, {EditTextCommandList} from "../Text/EditText";
+import EditText, {EditTextCommandList, EditTextSelection} from "../Text/EditText";
 import Style from "./ListBlock.module.scss";
 
 export default class ListBlock extends Component<ListBlockProps, State> {
@@ -43,9 +43,11 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   }
   
   public componentDidUpdate(prevProps: Readonly<ListBlockProps>, prevState: Readonly<State>, snapshot?: any) {
-    if (this.state.ref.current && this.state.inserted_text) {
+    if (this.state.ref.current && this.state.inserted_text && this.state.selection) {
+      const {start, end, forward} = this.state.selection;
       this.state.ref.current.focus();
-      this.setState({inserted_text: undefined});
+      this.state.ref.current.select(start, end, forward);
+      this.setState({inserted_text: undefined, selection: undefined});
     }
   }
   
@@ -103,10 +105,18 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     event.bubbles = false;
     
     switch (command) {
-      case KeyboardCommand.ARROW_DOWN:
-        return this.shiftCursorBy(component, 1);
       case KeyboardCommand.ARROW_UP:
-        return this.shiftCursorBy(component, -1);
+        if (this.shiftVerticallyCursorBy(component, -1)) return;
+        break;
+      case KeyboardCommand.ARROW_DOWN:
+        if (this.shiftVerticallyCursorBy(component, 1)) return;
+        break;
+      case KeyboardCommand.ARROW_LEFT:
+        if (this.shiftHorizontallyCursorBy(component, -1)) return;
+        break;
+      case KeyboardCommand.ARROW_RIGHT:
+        if (this.shiftHorizontallyCursorBy(component, 1)) return;
+        break;
       case KeyboardCommand.INDENT:
         return this.shiftLevelBy(component, 1);
       case KeyboardCommand.OUTDENT:
@@ -122,9 +132,35 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     event.bubbles = true;
   };
   
-  private readonly shiftCursorBy = (component: EditText, value: number) => {
-    const index = Util.clamp(this.getIndex(component.text) + value, this.props.block.content.value.length - 1, 0);
-    this.setState({inserted_text: this.props.block.content.value[index]});
+  private readonly shiftVerticallyCursorBy = (component: EditText, value: number) => {
+    const {forward, start, end} = component.getSelection();
+    const index = this.getIndex(component.text) + value;
+    if (index < 0 || index > this.props.block.content.value.length - 1) return false;
+    
+    const point = Util.clamp(forward ? end : start, this.props.block.content.value[index].length, 0);
+    this.setState({inserted_text: this.props.block.content.value[index], selection: {start: point, end: point, forward: true}});
+    return true;
+  };
+  
+  private readonly shiftHorizontallyCursorBy = (component: EditText, value: number) => {
+    const index = this.getIndex(component.text);
+    const selection = component.getSelection();
+    const point = (selection.forward ? selection.end : selection.start) + value;
+    const next_state = {} as State;
+    if (point < 0 && index > 0) {
+      next_state.inserted_text = this.props.block.content.value[index - 1];
+      next_state.selection = {start: next_state.inserted_text.length, end: next_state.inserted_text.length, forward: false};
+    }
+    else if (point > this.props.block.content.value[index].length && index < this.props.block.content.value.length - 1) {
+      next_state.inserted_text = this.props.block.content.value[index + 1];
+      next_state.selection = {start: 0, end: 0, forward: true};
+    }
+    else {
+      return false;
+    }
+    
+    this.setState(next_state);
+    return true;
   };
   
   private readonly shiftLevelBy = (component: EditText, value: number) => {
@@ -142,10 +178,9 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     
     this.props.block.content.value[index] = new RichText({...prev_text, value: prev_text.slice(0, start)});
     this.props.block.content.value.splice(index + 1, 0, next_text);
-    this.setState({inserted_text: next_text});
+    this.setState({inserted_text: next_text, selection: {start: 0, end: 0, forward: true}});
     return this.props.onChange(this.props.block);
   };
-  
 }
 
 export interface ListBlockProps extends PageExplorerBlockProps<PageBlockType.LIST> {
@@ -154,5 +189,6 @@ export interface ListBlockProps extends PageExplorerBlockProps<PageBlockType.LIS
 
 interface State {
   ref: React.RefObject<EditText>;
+  selection?: EditTextSelection;
   inserted_text?: ListBlockText;
 }
