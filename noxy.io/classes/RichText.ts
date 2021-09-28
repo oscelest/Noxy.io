@@ -62,10 +62,13 @@ export default class RichText<Metadata = never> {
     return new Decoration(initializer);
   }
   
-  public getSegmentCollection(start: number, end: number, [selection_start, selection_end]: [number, number] = [0, 0]) {
+  public getSegmentCollection(start: number, end: number, [selection_start, selection_end]: [number, number] = [0, 0]): {text: string, decoration: Decoration}[][] {
     const segment_collection = [] as {text: string, decoration: Decoration}[][];
-    if (!this.at(start) || !this.at(end - 1)) return segment_collection;
-    
+    if (!this.at(start) || !this.at(end - 1)) {
+      segment_collection.push([{text: "", decoration: new Decoration()}]);
+      return segment_collection;
+    }
+  
     let index: number = start;
     let character: Character = this.at(index, true);
     let decoration: Decoration = selection_start <= index && selection_end > index ? new Decoration({...character.decoration, selected: true}) : character.decoration;

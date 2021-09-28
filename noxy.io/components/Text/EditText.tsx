@@ -12,11 +12,8 @@ import Style from "./EditText.module.scss";
 
 export default class EditText<V = never> extends Component<EditTextProps<V>, State<V>> {
   
-  #template: HTMLTemplateElement;
-  
   constructor(props: EditTextProps<V>) {
     super(props);
-    this.#template = document.createElement("template");
     this.state = {
       ref:       React.createRef(),
       history:   new History(),
@@ -259,7 +256,7 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
         const {text, decoration} = segment_collection[i][j];
         children.push(this.renderReactElement(text, decoration, j));
       }
-      result.push(<div className={Style.Line} key={i}>{children}</div>);
+      result.push(React.createElement(this.props.element ?? "div", {key: i, className: Style.Line, children}));
     }
     
     return result;
@@ -285,7 +282,7 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
   public readonly renderHTML = (selection?: EditTextSelection) => {
     const {start, end} = this.parseSelection(selection);
     const segment_collection = this.text.getSegmentCollection(start, end, this.getPosition());
-    const container = document.createElement("div");
+    const container = document.createElement(this.props.element ?? "div");
     container.setAttribute(RichText.attribute_metadata, JSON.stringify(this.text.metadata));
     
     for (let i = 0; i < segment_collection.length; i++) {
@@ -382,12 +379,11 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
   };
   
   private readonly eventSelect = () => {
-    const selection = this.getSelection();
-    const {start: prev_start, end: prev_end, forward: prev_forward} = selection;
-    const {start: next_start, end: next_end, forward: next_forward} = this.state.selection;
+    const {start: next_start, end: next_end, forward: next_forward} = this.getSelection();
+    const {start: prev_start, end: prev_end, forward: prev_forward} = this.state.selection;
     
     if (next_start !== prev_start || next_end !== prev_end || next_forward !== prev_forward) {
-      this.setState({selection});
+      this.setState({selection: {start: next_start, end: next_end, forward: next_forward}});
     }
   };
   
@@ -418,12 +414,11 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
     if (event.clipboardData.types.includes(ClipboardDataType.TEXT_HTML)) {
       const html = event.clipboardData.getData(ClipboardDataType.TEXT_HTML).match(/<!--StartFragment-->(?<html>.*)<!--EndFragment-->/);
       if (html?.groups?.html) {
-        this.#template.innerHTML = html.groups.html;
-        return this.insert(Character.parseHTML(this.#template.content));
+        return this.insertHTML(html.groups.html);
       }
     }
     
-    this.#template.innerHTML = event.clipboardData.getData(ClipboardDataType.TEXT_PLAIN);
+    return this.insertText(event.clipboardData.getData(ClipboardDataType.TEXT_PLAIN));
   };
 }
 
@@ -433,6 +428,7 @@ export type EditTextCommandList = EditTextCommand[];
 
 export interface EditTextProps<V> {
   active?: boolean;
+  element?: keyof HTMLElementTagNameMap;
   children: RichText<V>;
   className?: string;
   readonly?: boolean;

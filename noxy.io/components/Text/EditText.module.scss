@@ -7,26 +7,40 @@
     background-color: transparent;
   }
 
-  &:not(.Readonly):empty:before {
-    content: "...";
-    cursor:  text;
-    color:   rgb(255 255 255 / 50%);
-  }
-
   &:not(:focus) .Text.Selected {
     color:            black;
     background-color: rgba(165, 165, 165, 0.6);
   }
 
   .Line {
-    display: block;
+    display:    block;
+    word-break: break-word;
+  }
+
+  .Text, .Link {
+    display: inline;
   }
 
   .Link {
     text-decoration: none;
   }
 
-  .Text, .Link {
-    display:    inline;
+
+  &:not(.Readonly) .Text {
+    br {
+      content: "&nbsp;" !important;
+
+      &:after {
+        content: "...";
+        cursor:  text;
+        color:   rgb(255 255 255 / 50%);
+      }
+    }
+  }
+
+  &:not(.Readonly) .Text:empty:before {
+    content: "...";
+    cursor:  text;
+    color:   rgb(255 255 255 / 50%);
   }
 }

@@ -31,11 +31,6 @@ a {
   }
 }
 
-p {
-  margin:      0;
-  line-height: 18px;
-}
-
 html, body, div, img, button, input, span, select, label, a {
   display:    flex;
   position:   relative;
@@ -56,4 +51,50 @@ input {
   margin:  0;
   padding: 0;
   width:   100%;
+}
+
+p, h1, h2, h3, h4, h5, h6 {
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+
+p {
+  padding-block-start: 0.5em;
+  padding-block-end: 0.5em;
+}
+
+h1 {
+  font-size: 2em;
+  padding-block-start: 0.67em;
+  padding-block-end: 0.67em;
+}
+
+h2 {
+  font-size: 1.5em;
+  padding-block-start: 0.83em;
+  padding-block-end: 0.83em;
+}
+
+h3 {
+  font-size: 1.17em;
+  padding-block-start: 1em;
+  padding-block-end: 1em;
+}
+
+h4 {
+  font-size: 1em;
+  padding-block-start: 1.33em;
+  padding-block-end: 1.33em;
+}
+
+h5 {
+  font-size: 0.83em;
+  padding-block-start: 1.67em;
+  padding-block-end: 1.67em;
+}
+
+h6 {
+  font-size: 0.67em;
+  padding-block-start: 2.33em;
+  padding-block-end: 2.33em;
 }

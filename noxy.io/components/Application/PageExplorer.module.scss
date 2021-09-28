@@ -16,7 +16,7 @@
     }
 
     .Font {
-      flex-flow: row;
+      flex-flow:       row;
       grid-column-gap: 5px;
     }
 
@@ -44,19 +44,19 @@
 
   }
 
-  &.Readonly {
+  &.Edit .BlockList {
+    grid-row-gap: 15px;
+  }
 
-    .BlockList {
-      flex:     0 0 auto;
-      overflow: auto;
-    }
+  &.Readonly .BlockList {
+    flex:     0 0 auto;
+    overflow: auto;
   }
 
   .BlockList {
-    flex:         1 1 auto;
-    flex-flow:    column;
-    grid-row-gap: 15px;
-    overflow:     auto;
+    flex:      1 1 auto;
+    flex-flow: column;
+    overflow:  auto;
 
     .Block {
       flex:            0 0 auto;

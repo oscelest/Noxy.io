@@ -32,32 +32,21 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
-    
+  
+    const header = `h${Util.clamp(this.props.block.content.data.level, 6, 1)}` as keyof HTMLElementTagNameMap;
+  
     return (
       <div className={classes.join(" ")}>
         <Conditional condition={!readonly}>
           {this.renderOptionList()}
         </Conditional>
-        {this.renderHeader()}
+        <EditText ref={this.state.ref} readonly={this.props.readonly} whitelist={HeaderBlock.whitelist} blacklist={HeaderBlock.blacklist} element={header}
+                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit}>
+          {this.props.block.content.value}
+        </EditText>
       </div>
     );
   }
-  
-  private readonly renderHeader = () => {
-    return React.createElement(
-      `h${Util.clamp(this.props.block.content.data.level, 6, 1)}`,
-      {className: Style.Text, children: this.renderEditText()},
-    );
-  };
-  
-  private readonly renderEditText = () => {
-    return (
-      <EditText ref={this.state.ref} readonly={this.props.readonly} whitelist={HeaderBlock.whitelist} blacklist={HeaderBlock.blacklist}
-                onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit}>
-        {this.props.block.content.value}
-      </EditText>
-    );
-  };
   
   private readonly renderOptionList = () => {
     return (

@@ -30,7 +30,7 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     
     return (
       <div className={classes.join(" ")}>
-        <EditText readonly={this.props.readonly} blacklist={TextBlock.blacklist} whitelist={TextBlock.whitelist}
+        <EditText className={Style.Text} readonly={this.props.readonly} blacklist={TextBlock.blacklist} whitelist={TextBlock.whitelist} element={"p"}
                   onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit}>
           {this.props.block.content.value}
         </EditText>

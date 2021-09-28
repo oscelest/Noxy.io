@@ -57,6 +57,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
     if (this.props.readonly ?? true) classes.push(Style.Readonly);
+    if (this.state.edit) classes.push(Style.Edit);
     
     const font_size_value = this.state.decoration.font_size;
     const font_family_value = this.state.decoration.font_family;
