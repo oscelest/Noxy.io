@@ -1,7 +1,6 @@
 import React from "react";
 import PageBlockType from "../../../common/enums/PageBlockType";
 import RichText from "../../classes/RichText";
-import TextPageBlockEntity from "../../entities/Page/Block/TextPageBlockEntity";
 import Component from "../Application/Component";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import EditText, {EditTextCommandList} from "../Text/EditText";
@@ -15,10 +14,6 @@ export default class TextBlock extends Component<TextBlockProps, State> {
   constructor(props: TextBlockProps) {
     super(props);
     this.state = {};
-  }
-  
-  public static create(initializer?: Omit<Initializer<TextPageBlockEntity>, "type">) {
-    return new TextPageBlockEntity(initializer);
   }
   
   public render() {

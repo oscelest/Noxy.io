@@ -36,19 +36,19 @@ export default class PageEntity extends BaseEntity {
     return this.id;
   }
   
-  public static parsePageBlock(value: Properties<PageBlockEntity> & {content: any}) {
-    switch (value.type) {
+  public static parsePageBlock(initializer: Properties<PageBlockEntity> & {content: any}) {
+    switch (initializer.type) {
       case PageBlockType.TEXT:
-        return new TextPageBlockEntity({...value, content: TextPageBlockEntity.parseContent(value.content)});
+        return new TextPageBlockEntity({...initializer, content: TextPageBlockEntity.parseContent(initializer.content)});
       case PageBlockType.LIST:
-        return new ListPageBlockEntity({...value, content: ListPageBlockEntity.parseContent(value.content)});
+        return new ListPageBlockEntity({...initializer, content: ListPageBlockEntity.parseContent(initializer.content)});
       case PageBlockType.TABLE:
-        return new TablePageBlockEntity({...value, content: TablePageBlockEntity.parseContent(value.content)});
+        return new TablePageBlockEntity({...initializer, content: TablePageBlockEntity.parseContent(initializer.content)});
       case PageBlockType.HEADER:
-        return new HeaderPageBlockEntity({...value, content: HeaderPageBlockEntity.parseContent(value.content)});
+        return new HeaderPageBlockEntity({...initializer, content: HeaderPageBlockEntity.parseContent(initializer.content)});
     }
     
-    throw new Error(`Page block entity of type '${value.type}' is invalid.`);
+    throw new Error(`Page block entity of type '${initializer.type}' is invalid.`);
   }
   
   public static createPageBlock<T extends PageBlockType>(type: T, initializer?: Initializer<PageBlockEntity<T>>) {

@@ -1,7 +1,6 @@
 import React from "react";
 import PageBlockType from "../../../common/enums/PageBlockType";
 import RichText from "../../classes/RichText";
-import TablePageBlockEntity from "../../entities/Page/Block/TablePageBlockEntity";
 import IconType from "../../enums/IconType";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
@@ -18,10 +17,6 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   constructor(props: TableBlockProps) {
     super(props);
     this.state = {};
-  }
-  
-  public static create(initializer?: Omit<Initializer<TablePageBlockEntity>, "type">) {
-    return new TablePageBlockEntity(initializer);
   }
   
   public render() {

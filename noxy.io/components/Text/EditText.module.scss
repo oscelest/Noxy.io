@@ -25,20 +25,7 @@
     text-decoration: none;
   }
 
-
-  &:not(.Readonly) .Text {
-    br {
-      content: "&nbsp;" !important;
-
-      &:after {
-        content: "...";
-        cursor:  text;
-        color:   rgb(255 255 255 / 50%);
-      }
-    }
-  }
-
-  &:not(.Readonly) .Text:empty:before {
+  &:not(.Readonly) .Line.Empty:after {
     content: "...";
     cursor:  text;
     color:   rgb(255 255 255 / 50%);

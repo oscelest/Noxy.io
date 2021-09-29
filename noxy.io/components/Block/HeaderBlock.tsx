@@ -2,7 +2,6 @@ import React from "react";
 import PageBlockType from "../../../common/enums/PageBlockType";
 import Util from "../../../common/services/Util";
 import RichText from "../../classes/RichText";
-import HeaderPageBlockEntity from "../../entities/Page/Block/HeaderPageBlockEntity";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
@@ -14,16 +13,12 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
   
   private static readonly blacklist: EditTextCommandList = ["bold"];
   private static readonly whitelist: EditTextCommandList = [];
-
+  
   constructor(props: HeaderBlockProps) {
     super(props);
     this.state = {
       ref: React.createRef(),
     };
-  }
-  
-  public static create(initializer?: Omit<Initializer<HeaderPageBlockEntity>, "type">) {
-    return new HeaderPageBlockEntity(initializer);
   }
   
   public render() {
@@ -32,9 +27,9 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
-  
+    
     const header = `h${Util.clamp(this.props.block.content.data.level, 6, 1)}` as keyof HTMLElementTagNameMap;
-  
+    
     return (
       <div className={classes.join(" ")}>
         <Conditional condition={!readonly}>

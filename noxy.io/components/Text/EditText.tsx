@@ -117,6 +117,7 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
   
   // Should maybe be moved to RichText?
   public deleteForward(selection: EditTextSelection = this.getSelection()) {
+    selection = this.parseSelection(selection);
     if (selection.start === this.text.length && selection.end === this.text.length) return;
     if (selection.start === selection.end) selection.end = Math.min(selection.end + 1, this.text.length);
     
@@ -125,6 +126,7 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
   
   // Should maybe be moved to RichText?
   public deleteBackward(selection: EditTextSelection = this.getSelection()) {
+    selection = this.parseSelection(selection);
     if (!selection.start && !selection.end) return;
     if (selection.start === selection.end) selection.start = Math.max(0, selection.start - 1);
     
@@ -133,22 +135,24 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
   
   // Should maybe be moved to RichText?
   public deleteWordForward(selection: EditTextSelection = this.getSelection()) {
+    selection = this.parseSelection(selection);
     if (selection.start !== selection.end || selection.end === this.text.length) return this.deleteBackward(selection);
     
-    selection.end = this.find(/[^\p{Z}]/u, selection.end) ?? this.text.length;
-    selection.end = this.find(this.text.at(selection.end, true).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.end) ?? this.text.length;
-    selection.end = this.find(/[^\p{Z}]/u, selection.end) ?? this.text.length;
+    selection.end = this.text.find(/[^\p{Z}]/u, selection.end) ?? this.text.length;
+    selection.end = this.text.find(this.text.at(selection.end, true).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.end) ?? this.text.length;
+    selection.end = this.text.find(/[^\p{Z}]/u, selection.end) ?? this.text.length;
     
     this.insert([], selection);
   }
   
   // Should maybe be moved to RichText?
   public deleteWordBackward(selection: EditTextSelection = this.getSelection()) {
+    selection = this.parseSelection(selection);
     if (selection.start !== selection.end || !selection.start) return this.deleteBackward(selection);
     
-    selection.start = this.find(/[^\p{Z}]/u, selection.start, false) ?? 0;
-    selection.start = this.find(this.text.at(selection.start, true).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.start, false) ?? 0;
-    selection.start = this.find(/[^\p{Z}]/u, selection.start, false) ?? 0;
+    selection.start = this.text.find(/[^\p{Z}]/u, selection.start, false) ?? 0;
+    selection.start = this.text.find(this.text.at(selection.start, true).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.start, false) ?? 0;
+    selection.start = this.text.find(/[^\p{Z}]/u, selection.start, false) ?? 0;
     
     this.insert([], {...selection, start: selection.start ? selection.start + 1 : selection.start});
   }
@@ -168,14 +172,6 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
     this.props.onChange(history.value.text, this);
     this.setState({history, selection: history.value.selection});
   }
-  
-  // Should maybe be moved to RichText?
-  private find(regex: RegExp, position: number, forward: boolean = true): number | undefined {
-    position = forward ? position : position - 1;
-    const character = this.text.at(position);
-    if (!character) return undefined;
-    return character.value.match(regex) ? position : this.find(regex, forward ? position + 1 : position, forward);
-  };
   
   private parseSelection(selection?: EditTextSelection): EditTextSelection {
     if (!selection) return {start: 0, end: this.text.length, forward: true};
@@ -247,20 +243,22 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
   }
   
   private renderReactElementList = () => {
+    const element = this.props.element ?? "div";
     const segment_collection = this.text.getSegmentCollection(0, this.text.length, this.getPosition());
-    const result = [] as React.ReactNode[];
+    if (!segment_collection.length) return React.createElement(element, {className: [Style.Line, Style.Empty].join(" ")});
     
+    const result = [] as React.ReactNode[];
     for (let i = 0; i < segment_collection.length; i++) {
       const children = [] as React.ReactNode[];
       for (let j = 0; j < segment_collection[i].length; j++) {
         const {text, decoration} = segment_collection[i][j];
         children.push(this.renderReactElement(text, decoration, j));
       }
-      result.push(React.createElement(this.props.element ?? "div", {key: i, className: Style.Line, children}));
+      result.push(React.createElement(element, {key: i, className: Style.Line, children}));
     }
-    
     return result;
   };
+
   
   private renderReactElement = (text: string, decoration: Decoration, key: number = 0): React.ReactNode => {
     if (decoration.bold) return <b key={key}>{this.renderReactElement(text, new Decoration({...decoration, bold: false}))}</b>;

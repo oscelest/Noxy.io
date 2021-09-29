@@ -43,6 +43,7 @@ export default class RichText<Metadata = never> {
     }
     return true;
   }
+  
   public at(position: number, safe: true): Character
   public at(position: number, safe?: false): Character | undefined
   public at(position: number, safe: boolean = false): Character | undefined {
@@ -64,10 +65,7 @@ export default class RichText<Metadata = never> {
   
   public getSegmentCollection(start: number, end: number, [selection_start, selection_end]: [number, number] = [0, 0]): {text: string, decoration: Decoration}[][] {
     const segment_collection = [] as {text: string, decoration: Decoration}[][];
-    if (!this.at(start) || !this.at(end - 1)) {
-      segment_collection.push([{text: "", decoration: new Decoration()}]);
-      return segment_collection;
-    }
+    if (!this.at(start) || !this.at(end - 1)) return segment_collection;
   
     let index: number = start;
     let character: Character = this.at(index, true);
@@ -93,6 +91,14 @@ export default class RichText<Metadata = never> {
     
     return segment_collection;
   }
+  
+  public find(regex: RegExp, position: number, forward: boolean = true): number | undefined {
+    if (!forward && position === 0 || forward && position === this.length) return undefined;
+    position = forward ? position : position - 1;
+    const character = this.at(position);
+    if (!character) return undefined;
+    return character.value.match(regex) ? position : this.find(regex, forward ? position + 1 : position, forward);
+  };
   
   public slice(start?: number, end?: number) {
     return this.value.slice(start, end);
