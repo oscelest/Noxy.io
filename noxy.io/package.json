@@ -23,8 +23,8 @@
     "uuid":                                    "^8.3.2"
   },
   "devDependencies": {
-    "@types/lodash":    "^4.14.174",
-    "@types/node":      "^16.9.6",
+    "@types/lodash":    "^4.14.175",
+    "@types/node":      "^16.10.1",
     "@types/react":     "^17.0.24",
     "@types/react-dom": "^17.0.9",
     "@types/uuid":      "^8.3.1"
