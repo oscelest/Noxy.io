@@ -1,4 +1,4 @@
-import Axios from "axios";
+import Axios, {AxiosResponse} from "axios";
 import _ from "lodash";
 import Permission from "../../common/classes/Permission";
 import Order from "../../common/enums/Order";
@@ -67,7 +67,7 @@ export default class APIKeyEntity extends BaseEntity {
   }
 
   public static async create(parameters: APIKeyEntityCreateParameters) {
-    const result = await Axios.post<APIRequest<APIKeyEntity>>(Helper.getAPIPath(this.URL), new RequestData(parameters).toObject());
+    const result = await Axios.post<{[key: string]: any}, AxiosResponse<APIRequest<APIKeyEntity>>>(Helper.getAPIPath(this.URL), new RequestData(parameters).toObject());
     return new this(result.data.content);
   }
 
