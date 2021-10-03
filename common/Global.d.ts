@@ -22,6 +22,8 @@ declare module "express-serve-static-core" {
 
 declare global {
   
+  export type LambdaFn = (...args: any) => any;
+  
   export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
   
   export type RecursiveArray<T> = (T | Recursive<T>)[]

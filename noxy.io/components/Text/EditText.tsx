@@ -4,7 +4,7 @@ import Util from "../../../common/services/Util";
 import Character from "../../classes/Character";
 import Decoration from "../../classes/Decoration";
 import History from "../../classes/History";
-import RichText from "../../classes/RichText";
+import RichText, {RichTextContent, RichTextFragment, RichTextLine} from "../../classes/RichText";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
 import Component from "../Application/Component";
@@ -25,7 +25,7 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
     return this.props.children as EditTextProps<V>["children"];
   };
   
-  public getSelection(): EditTextSelection {
+  public getSelection() {
     const selection = getSelection();
     if (!this.state.ref.current || !selection || !selection.focusNode || !selection.anchorNode) return this.state.selection;
     
@@ -232,79 +232,95 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
     if (this.props.className) classes.push(this.props.className);
     if (this.props.readonly ?? true) classes.push(Style.Readonly);
     
-    return (
-      <div ref={this.state.ref} className={classes.join(" ")} contentEditable={!readonly} suppressContentEditableWarning={!readonly}
-           onBlur={this.eventBlur} onFocus={this.eventFocus} onSelect={this.eventSelect}
-           onDragStart={this.eventDragStart} onDrop={this.eventDrop} onCopy={this.eventCopy} onPaste={this.eventPaste} onCut={this.eventCut}
-           onKeyDown={this.eventKeyDown} onKeyPress={this.eventKeyPress}>
-        {this.renderReactElementList()}
-      </div>
-    );
+    const content = this.text.getContent(0, this.text.length, this.getPosition());
+    const children = [] as React.ReactNode[];
+    const renderer_line = this.props.rendererLine ?? "div";
+    if (!content.length) {
+      children.push(Helper.renderReactElementList(Helper.invoke(renderer_line, {start: 0, end: 0, index: 0, value: []}), {key: 0, className: [Style.Line, Style.Empty].join(" ")}));
+    }
+    else {
+      for (let i = 0; i < content.length; i++) {
+        const lines = [] as React.ReactNode[];
+        for (let j = 0; j < content[i].value.length; j++) {
+          lines.push(this.renderReactElement(content[i].value[j], j));
+        }
+        children.push(Helper.renderReactElementList(Helper.invoke(renderer_line, content[i]), {key: i, className: Style.Line, children: lines}));
+      }
+    }
+    
+    const renderer_content = this.props.rendererContent ?? "div";
+    return Helper.renderReactElementList(Helper.invoke(renderer_content, content), {
+      ref:                            this.state.ref,
+      className:                      classes.join(" "),
+      contentEditable:                !readonly,
+      suppressContentEditableWarning: !readonly,
+      onBlur:                         this.eventBlur,
+      onFocus:                        this.eventFocus,
+      onSelect:                       this.eventSelect,
+      onDragStart:                    this.eventDragStart,
+      onDrop:                         this.eventDrop,
+      onCopy:                         this.eventCopy,
+      onPaste:                        this.eventPaste,
+      onCut:                          this.eventCut,
+      onKeyDown:                      this.eventKeyDown,
+      onKeyPress:                     this.eventKeyPress,
+      children:                       children,
+    });
   }
   
-  private renderReactElementList = () => {
-    const element = this.props.element ?? "div";
-    const segment_collection = this.text.getSegmentCollection(0, this.text.length, this.getPosition());
-    if (!segment_collection.length) return React.createElement(element, {className: [Style.Line, Style.Empty].join(" ")});
-    
-    const result = [] as React.ReactNode[];
-    for (let i = 0; i < segment_collection.length; i++) {
-      const children = [] as React.ReactNode[];
-      for (let j = 0; j < segment_collection[i].length; j++) {
-        const {text, decoration} = segment_collection[i][j];
-        children.push(this.renderReactElement(text, decoration, j));
-      }
-      result.push(React.createElement(element, {key: i, className: Style.Line, children}));
-    }
-    return result;
-  };
-
-  
-  private renderReactElement = (text: string, decoration: Decoration, key: number = 0): React.ReactNode => {
-    if (decoration.bold) return <b key={key}>{this.renderReactElement(text, new Decoration({...decoration, bold: false}))}</b>;
-    if (decoration.code) return <code key={key}>{this.renderReactElement(text, new Decoration({...decoration, code: false}))}</code>;
-    if (decoration.mark) return <mark key={key}>{this.renderReactElement(text, new Decoration({...decoration, mark: false}))}</mark>;
-    if (decoration.italic) return <i key={key}>{this.renderReactElement(text, new Decoration({...decoration, italic: false}))}</i>;
-    if (decoration.underline) return <u key={key}>{this.renderReactElement(text, new Decoration({...decoration, underline: false}))}</u>;
-    if (decoration.strikethrough) return <s key={key}>{this.renderReactElement(text, new Decoration({...decoration, strikethrough: false}))}</s>;
-    if (decoration.link) return <a className={Style.Link} href={decoration.link} key={key}>{this.renderReactElement(text, new Decoration({...decoration, link: ""}))}</a>;
+  private renderReactElement = ({decoration, ...segment}: RichTextFragment, i: number = 0): React.ReactNode => {
+    if (decoration.bold) return <b key={i}>{this.renderReactElement({...segment, decoration: {...decoration, bold: false}})}</b>;
+    if (decoration.code) return <code key={i}>{this.renderReactElement({...segment, decoration: {...decoration, code: false}})}</code>;
+    if (decoration.mark) return <mark key={i}>{this.renderReactElement({...segment, decoration: {...decoration, mark: false}})}</mark>;
+    if (decoration.italic) return <i key={i}>{this.renderReactElement({...segment, decoration: {...decoration, italic: false}})}</i>;
+    if (decoration.underline) return <u key={i}>{this.renderReactElement({...segment, decoration: {...decoration, underline: false}})}</u>;
+    if (decoration.strikethrough) return <s key={i}>{this.renderReactElement({...segment, decoration: {...decoration, strikethrough: false}})}</s>;
+    if (decoration.link) return <a className={Style.Link} href={decoration.link} key={i}>{this.renderReactElement({...segment, decoration: {...decoration, link: ""}})}</a>;
     
     const classes = [Style.Text] as string[];
     if (decoration.selected && this.props.active !== false) classes.push(Style.Selected);
     
-    return (
-      <span key={key} className={classes.join(" ")} style={decoration.toCSSProperties()}>{text.length ? Helper.renderHTMLText(text) : <br/>}</span>
-    );
+    const renderer_fragment = this.props.rendererFragment ?? "span";
+    return Helper.renderReactElementList(Helper.invoke(renderer_fragment, {...segment, decoration}), {
+      key:       i,
+      className: classes.join(" "),
+      style:     new Decoration(decoration).toCSSProperties(),
+      children:  segment.text.length ? Helper.renderHTMLText(segment.text) : <br/>,
+    });
   };
   
   public readonly renderHTML = (selection?: EditTextSelection) => {
     const {start, end} = this.parseSelection(selection);
-    const segment_collection = this.text.getSegmentCollection(start, end, this.getPosition());
-    const container = document.createElement(this.props.element ?? "div");
-    container.setAttribute(RichText.attribute_metadata, JSON.stringify(this.text.metadata));
+    const content = this.text.getContent(start, end, this.getPosition());
+    if (!content.length) return this.renderHTMLLine({value: [], index: 0, start: 0, end: 0}, {[RichText.attribute_metadata]: JSON.stringify(this.text.metadata)});
     
-    for (let i = 0; i < segment_collection.length; i++) {
-      if (i !== 0) container.append(document.createElement("br"));
-      for (let j = 0; j < segment_collection[i].length; j++) {
-        const {text, decoration} = segment_collection[i][j];
-        container.append(this.renderHTMLNode(text, decoration));
+    const container = Helper.createElementWithChildren("div");
+    for (let i = 0; i < content.length; i++) {
+      const line = this.renderHTMLLine(content[i], {[RichText.attribute_metadata]: JSON.stringify(this.text.metadata)});
+      for (let j = 0; j < content[i].value.length; j++) {
+        line.append(this.renderHTMLNode(content[i].value[j]));
       }
+      container.append(line);
     }
     
     return container;
   };
   
-  private readonly renderHTMLNode = (text: string, decoration: Decoration): Node => {
-    if (decoration.bold) return Helper.createElementWithChildren("b", {}, this.renderHTMLNode(text, new Decoration({...decoration, bold: false})));
-    if (decoration.code) return Helper.createElementWithChildren("code", {}, this.renderHTMLNode(text, new Decoration({...decoration, code: false})));
-    if (decoration.mark) return Helper.createElementWithChildren("mark", {}, this.renderHTMLNode(text, new Decoration({...decoration, mark: false})));
-    if (decoration.italic) return Helper.createElementWithChildren("i", {}, this.renderHTMLNode(text, new Decoration({...decoration, italic: false})));
-    if (decoration.underline) return Helper.createElementWithChildren("u", {}, this.renderHTMLNode(text, new Decoration({...decoration, underline: false})));
-    if (decoration.strikethrough) return Helper.createElementWithChildren("s", {}, this.renderHTMLNode(text, new Decoration({...decoration, strikethrough: false})));
-    if (decoration.link) return Helper.createElementWithChildren("a", {"href": decoration.link}, this.renderHTMLNode(text, new Decoration({...decoration, link: ""})));
+  private renderHTMLLine = (line: RichTextLine, attributes: {[key: string]: string} = {}) => {
+    return Helper.renderHTMLElementList(Helper.invoke(this.props.subdivision ?? "div", line), attributes);
+  };
+  
+  private readonly renderHTMLNode = ({decoration, ...segment}: RichTextFragment): Node => {
+    if (decoration.bold) return Helper.createElementWithChildren("b", {}, this.renderHTMLNode({...segment, decoration: {...decoration, bold: false}}));
+    if (decoration.code) return Helper.createElementWithChildren("code", {}, this.renderHTMLNode({...segment, decoration: {...decoration, code: false}}));
+    if (decoration.mark) return Helper.createElementWithChildren("mark", {}, this.renderHTMLNode({...segment, decoration: {...decoration, mark: false}}));
+    if (decoration.italic) return Helper.createElementWithChildren("i", {}, this.renderHTMLNode({...segment, decoration: {...decoration, italic: false}}));
+    if (decoration.underline) return Helper.createElementWithChildren("u", {}, this.renderHTMLNode({...segment, decoration: {...decoration, underline: false}}));
+    if (decoration.strikethrough) return Helper.createElementWithChildren("s", {}, this.renderHTMLNode({...segment, decoration: {...decoration, strikethrough: false}}));
+    if (decoration.link) return Helper.createElementWithChildren("a", {"href": decoration.link}, this.renderHTMLNode({...segment, decoration: {...decoration, link: ""}}));
     
-    const node = decoration.toNode("span");
-    node.append(text.length ? document.createTextNode(Helper.renderHTMLText(text)) : document.createElement("br"));
+    const node = new Decoration(decoration).toNode("span");
+    node.append(segment.text.length ? document.createTextNode(Helper.renderHTMLText(segment.text)) : document.createElement("br"));
     return node;
   };
   
@@ -329,11 +345,13 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
     event.bubbles = false;
     
     switch (command) {
+      case KeyboardCommand.NEXT_FOCUS:
+        return this.insertText(Character.tab);
       case KeyboardCommand.SELECT_ALL:
         return this.select(0, this.props.children.length);
       case KeyboardCommand.NEW_LINE:
       case KeyboardCommand.NEW_LINE_ALT:
-        return this.insertText("\n");
+        return this.insertText(Character.linebreak);
       case KeyboardCommand.NEW_PARAGRAPH:
       case KeyboardCommand.NEW_PARAGRAPH_ALT:
         return this.props.onSubmit?.(this);
@@ -395,13 +413,13 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
   
   private readonly eventCopy = async (event: React.ClipboardEvent) => {
     event.preventDefault();
-    event.clipboardData.setData("text/plain", this.renderHTML(this.getSelection()).textContent ?? "");
+    event.clipboardData.setData("text/plain", this.renderHTML(this.getSelection()).innerText);
     event.clipboardData.setData("text/html", this.renderHTML(this.getSelection()).innerHTML);
   };
   
   private readonly eventCut = async (event: React.ClipboardEvent) => {
     event.preventDefault();
-    event.clipboardData.setData("text/plain", this.renderHTML(this.getSelection()).textContent ?? "");
+    event.clipboardData.setData("text/plain", this.renderHTML(this.getSelection()).innerText);
     event.clipboardData.setData("text/html", this.renderHTML(this.getSelection()).innerHTML);
     this.insert([]);
   };
@@ -420,13 +438,14 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
   };
 }
 
+export type EditTextElement = keyof HTMLElementTagNameMap | (keyof HTMLElementTagNameMap)[]
 export type EditTextSelection = {start: number, end: number, forward: boolean};
 export type EditTextCommand = keyof Initializer<Decoration>;
 export type EditTextCommandList = EditTextCommand[];
 
 export interface EditTextProps<V> {
   active?: boolean;
-  element?: keyof HTMLElementTagNameMap;
+  subdivision?: (line: RichTextLine) => EditTextElement;
   children: RichText<V>;
   className?: string;
   readonly?: boolean;
@@ -440,6 +459,10 @@ export interface EditTextProps<V> {
   
   onChange(text: RichText<V>, component: EditText<V>): void;
   onSubmit?(component: EditText<V>): void;
+  
+  rendererContent?: EditTextElement | ((content: RichTextContent) => EditTextElement);
+  rendererLine?: EditTextElement | ((line: RichTextLine) => EditTextElement);
+  rendererFragment?: EditTextElement | ((text: RichTextFragment) => EditTextElement);
 }
 
 interface State<V> {

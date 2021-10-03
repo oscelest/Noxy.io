@@ -40,9 +40,7 @@ export default class TextBlock extends Component<TextBlockProps, State> {
   private readonly eventSubmit = (component: EditText) => {
     this.props.onSubmit?.(this.props.block, component);
   };
-  
 }
-
 
 export interface TextBlockProps extends PageExplorerBlockProps<PageBlockType.TEXT> {
 

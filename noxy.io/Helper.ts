@@ -9,6 +9,34 @@ namespace Helper {
   export const FontSizeList = ["8", "9", "10", "11", "12", "14", "18", "24", "30", "36", "48", "60", "72", "84", "96"];
   export const FontLengthList = ["px", "pt", "em", "rem", "vw", "vmax", "%", "cm", "mm", "in", "pc", "ex", "ch"];
   
+  export function invoke<V>(list?: V, ...params: V extends LambdaFn ? Parameters<V> : never): V extends LambdaFn ? ReturnType<V> : V {
+    return typeof list === "function" ? list.apply(null, params) : list;
+  }
+  
+  export function renderReactElementList(list?: keyof HTMLElementTagNameMap | (keyof HTMLElementTagNameMap)[], props?: React.HTMLProps<HTMLElement>) {
+    if (!Array.isArray(list)) return React.createElement(list ?? "div", props);
+    
+    let component = React.createElement(list.at(-1) ?? "div", props);
+    for (let i = list.length - 2; i >= 0; i--) {
+      const item = list.at(i);
+      if (!item) continue;
+      component = React.createElement(item, {key: i, children: component});
+    }
+    return component;
+  }
+  
+  export function renderHTMLElementList(list?: keyof HTMLElementTagNameMap | (keyof HTMLElementTagNameMap)[], attributes?: {[key: string]: string}) {
+    if (!Array.isArray(list)) return Helper.createElementWithChildren(list ?? "div", attributes);
+    
+    let component = Helper.createElementWithChildren(list.at(-1) ?? "div", attributes);
+    for (let i = list.length - 2; i >= 0; i--) {
+      const item = list.at(i);
+      if (!item) continue;
+      component = Helper.createElementWithChildren(item, attributes, component);
+    }
+    return component;
+  }
+  
   export function createElementWithChildren<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: {[key: string]: string} = {}, ...children: Node[]): HTMLElementTagNameMap[K] {
     const element = document.createElement(tag);
     
@@ -31,10 +59,6 @@ namespace Helper {
     if (node.parentElement === null) throw "No parent element exists";
     if (node.parentElement !== parent) return getClosestContainer(node.parentElement, parent);
     return node;
-  }
-  
-  export function isValidLengthType(length_type: string) {
-    return FontLengthList.includes(length_type.toLowerCase());
   }
   
   export function getKeyboardEventCommand(event: React.KeyboardEvent): KeyboardCommand {

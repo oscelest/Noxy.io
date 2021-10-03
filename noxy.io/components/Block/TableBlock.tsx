@@ -103,3 +103,64 @@ export interface TableBlockProps extends PageExplorerBlockProps<PageBlockType.TA
 interface State {
 
 }
+
+
+// private readonly handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, component: EditText) => {
+//   const command = Helper.getKeyboardEventCommand(event);
+//   event.bubbles = false;
+//
+//   switch (command) {
+//     case KeyboardCommand.ARROW_UP:
+//       if (this.shiftVerticallyCursorBy(component, -1)) return;
+//       break;
+//     case KeyboardCommand.ARROW_DOWN:
+//       if (this.shiftVerticallyCursorBy(component, 1)) return;
+//       break;
+//     case KeyboardCommand.ARROW_LEFT:
+//       if (this.shiftHorizontallyCursorBy(component, -1)) return;
+//       break;
+//     case KeyboardCommand.ARROW_RIGHT:
+//       if (this.shiftHorizontallyCursorBy(component, 1)) return;
+//       break;
+//     case KeyboardCommand.INDENT:
+//       return this.shiftLevelBy(component, 1);
+//     case KeyboardCommand.OUTDENT:
+//       return this.shiftLevelBy(component, -1);
+//     case KeyboardCommand.NEW_LINE:
+//     case KeyboardCommand.NEW_LINE_ALT:
+//       return this.insertNewContent(component);
+//   }
+//
+//   event.bubbles = true;
+// };
+
+// private readonly shiftVerticallyCursorBy = (component: EditText, value: number) => {
+//   const {forward, start, end} = component.getSelection();
+//   const index = this.getIndex(component.text) + value;
+//   if (index < 0 || index > this.props.block.content.value.length - 1) return false;
+//
+//   const point = Util.clamp(forward ? end : start, this.props.block.content.value[index].length, 0);
+//   this.setState({focus: this.props.block.content.value[index], selection: {start: point, end: point, forward: true}});
+//   return true;
+// };
+//
+// private readonly shiftHorizontallyCursorBy = (component: EditText, value: number) => {
+//   const index = this.getIndex(component.text);
+//   const selection = component.getSelection();
+//   const point = (selection.forward ? selection.end : selection.start) + value;
+//   const next_state = {} as State;
+//   if (point < 0 && index > 0) {
+//     next_state.focus = this.props.block.content.value[index - 1];
+//     next_state.selection = {start: next_state.focus.length, end: next_state.focus.length, forward: false};
+//   }
+//   else if (point > this.props.block.content.value[index].length && index < this.props.block.content.value.length - 1) {
+//     next_state.focus = this.props.block.content.value[index + 1];
+//     next_state.selection = {start: 0, end: 0, forward: true};
+//   }
+//   else {
+//     return false;
+//   }
+//
+//   this.setState(next_state);
+//   return true;
+// };

@@ -1,7 +1,8 @@
 import {CSSProperties} from "react";
 import {v4} from "uuid";
+import Util from "../../common/services/Util";
 import Character from "./Character";
-import Decoration from "./Decoration";
+import Decoration, {DecorationObject} from "./Decoration";
 
 type InitValue = string | Character | Character[] | RichText;
 
@@ -63,33 +64,43 @@ export default class RichText<Metadata = never> {
     return new Decoration(initializer);
   }
   
-  public getSegmentCollection(start: number, end: number, [selection_start, selection_end]: [number, number] = [0, 0]): {text: string, decoration: Decoration}[][] {
-    const segment_collection = [] as {text: string, decoration: Decoration}[][];
-    if (!this.at(start) || !this.at(end - 1)) return segment_collection;
+  public getLine(position: number): number {
+    let count = 0;
+    position = Util.clamp(position, this.length, 0);
+    for (let i = 0; i < position; i++) {
+      if (this.at(i)?.value === Character.linebreak) count++;
+    }
+    return count;
+  }
   
-    let index: number = start;
-    let character: Character = this.at(index, true);
-    let decoration: Decoration = selection_start <= index && selection_end > index ? new Decoration({...character.decoration, selected: true}) : character.decoration;
-    segment_collection.push([{text: "", decoration}]);
+  public getContent(start: number, end: number, [selection_start, selection_end]: [number, number] = [0, 0]): RichTextContent {
+    const content = [] as RichTextContent;
+    if (!this.at(start) || !this.at(end - 1)) return content;
     
-    do {
-      const segment_list = segment_collection[segment_collection.length - 1];
-      const segment = segment_list[segment_list.length - 1];
-      decoration = selection_start <= index && selection_end > index ? new Decoration({...character.decoration, selected: true}) : character.decoration;
+    content.push({start: 0, end: 0, index: 0, value: [{text: "", decoration: new Decoration().toObject(), start: 0, end: 0}]});
+    for (let i = start; i < end; i++) {
+      const line = content.at(-1);
+      const segment = line?.value.at(-1);
+      if (!line || !segment) continue;
       
-      if (character.value === "\n") {
-        segment_collection.push([{text: "", decoration}]);
+      const character = this.at(i, true);
+      const decoration = {...character.decoration.toObject(), selected: selection_start <= i && selection_end > i};
+      
+      segment.end = i;
+      const start = i + 1;
+      const end = i + 1;
+      if (character.value === Character.linebreak) {
+        content.push({start, end, index: content.length, value: [{text: "", decoration, start, end}]});
       }
-      else if (!segment?.decoration.equals(decoration)) {
-        segment_list.push({text: character.value, decoration});
+      else if (!Util.getProperties(segment.decoration).every(key => segment.decoration[key] === decoration[key])) {
+        line.value.push({text: character.value, decoration, start, end});
       }
       else {
         segment.text += character.value;
       }
     }
-    while (++index < end && (character = this.at(index, true)));
     
-    return segment_collection;
+    return content;
   }
   
   public find(regex: RegExp, position: number, forward: boolean = true): number | undefined {
@@ -122,14 +133,14 @@ export default class RichText<Metadata = never> {
     else {
       if (typeof initializer === "string") {
         for (let j = 0; j < initializer.length; j++) {
-          this.value.push(new Character(initializer[j]));
+          array.push(new Character(initializer[j]));
         }
       }
       else if (initializer instanceof Character) {
-        this.value.push(initializer);
+        array.push(initializer);
       }
       else {
-        this.value.push(...initializer.value);
+        array.push(...initializer.value);
       }
     }
     
@@ -169,4 +180,20 @@ export default class RichText<Metadata = never> {
       return previous_value ?? undefined;
     }
   }
+}
+
+export type RichTextContent = RichTextLine[]
+
+export interface RichTextLine {
+  value: RichTextFragment[];
+  index: number;
+  start: number;
+  end: number;
+}
+
+export interface RichTextFragment {
+  text: string;
+  decoration: DecorationObject;
+  start: number;
+  end: number;
 }

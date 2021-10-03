@@ -58,7 +58,8 @@ export default class Decoration {
       color:            this.color,
       background_color: this.background_color,
       
-      link: this.link,
+      link:     this.link,
+      selected: this.selected,
     };
   }
   
@@ -143,11 +144,9 @@ export default class Decoration {
       
       color:            color || decoration.color || "",
       background_color: backgroundColor || decoration.background_color || "",
-      
-      selected: decoration.selected ?? false,
     });
   }
   
 }
 
-export type DecorationObject = Omit<Writeable<Properties<Decoration>>, "selected">;
+export type DecorationObject = Writeable<Properties<Decoration>>;

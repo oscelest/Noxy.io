@@ -12,27 +12,22 @@ export default class ListPageBlockEntity extends PageBlockEntity {
     super(initializer);
     this.type = PageBlockType.LIST;
     this.content = initializer?.content ?? {
-      value: [
-        new RichText({value: "", metadata: 1}),
-      ],
+      value: new RichText({value: "", metadata: [{indent: 0}]}),
       data:  {type: "unordered"},
     };
   }
   
   public replaceText(old_text: ListBlockText, new_text: ListBlockText): this {
-    for (let i = 0; i < this.content.value.length; i++) {
-        if (this.content.value[i].id !== old_text.id) continue;
-        this.content.value[i] = new_text;
-        return this;
-    }
-    throw new Error("Could not find text in ListBlock.");
+    if (this.content.value.id !== old_text.id) throw new Error("Could not find text in ListBlock.");
+    this.content.value = new_text;
+    return this;
   }
   
   public static parseContent(content?: ContentInitializer<ListBlockContent>): ListBlockContent {
     const {value, data} = content ?? {};
     
     return {
-      value: Array.isArray(value) ? value.map(this.parseContentText) : [new RichText({value: "", metadata: 1})],
+      value: value ? this.parseContentText(value) : new RichText({value: "", metadata: [{indent: 0}]}),
       data:  {
         type: typeof data?.type === "string" && this.type_list.includes(data.type) ? data.type : "ordered",
       },
@@ -40,11 +35,12 @@ export default class ListPageBlockEntity extends PageBlockEntity {
   }
 }
 
-export type ListBlockText = RichText<number>
+export type ListBlockData = {indent: number, group?: number}[]
+export type ListBlockText = RichText<ListBlockData>
 export type ListBlockType = "blockquote" | "ordered" | "unordered"
 
-export interface ListBlockContent extends PageBlockContentValue<number> {
-  value: ListBlockText[];
+export interface ListBlockContent extends PageBlockContentValue<ListBlockData> {
+  value: ListBlockText;
   data: {
     type: ListBlockType
   };

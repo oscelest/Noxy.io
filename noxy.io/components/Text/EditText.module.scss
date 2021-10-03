@@ -13,8 +13,11 @@
   }
 
   .Line {
-    display:    block;
     word-break: break-word;
+
+    &:not(li) {
+      display:    block;
+    }
   }
 
   .Text, .Link {
