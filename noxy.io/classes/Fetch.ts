@@ -1,10 +1,11 @@
 import ProgressHandler from "../../common/classes/ProgressHandler";
 import HTTPMethod from "../../common/enums/HTTPMethod";
 import HTTPStatusCode from "../../common/enums/HTTPStatusCode";
+import RequestHeader from "../../common/enums/RequestHeader";
 import ServerException from "../../common/exceptions/ServerException";
 
 export default class Fetch<T = unknown> {
-
+  
   public readonly path: URL;
   public readonly method: HTTPMethod;
   public readonly data: Collection<(Blob | string)[]>;
@@ -53,7 +54,7 @@ export default class Fetch<T = unknown> {
         if (progress?.cancelled) return request.abort();
         if (request.readyState === XMLHttpRequest.DONE) {
           if (request.status !== 200) {
-            return reject(new ServerException(request.status as keyof typeof HTTPStatusCode, Fetch.parseResponse(request.response, request.responseType)))
+            return reject(new ServerException(request.status as keyof typeof HTTPStatusCode, Fetch.parseResponse(request.response, request.responseType)));
           }
           if (request.status === 200) {
             return resolve(Fetch.parseResponse(request.response, request.responseType));
@@ -80,24 +81,30 @@ export default class Fetch<T = unknown> {
         console.log("Abort", event);
         reject(new Error("Aborted!"));
       });
-
+      
+      let data = undefined;
       if (this.method === HTTPMethod.GET) {
         request.open(this.method, `${this.path}?${this.toURLSearchParameter()}`);
-        request.send();
       }
       else {
         request.open(this.method, this.path);
-        if (this.hasFile()){
-          request.send(this.toFormData());
+        if (this.hasFile()) {
+          data = this.toFormData();
         }
         else {
-          request.setRequestHeader("Content-Type", "application/json")
-          request.send(this.toJSON());
+          request.setRequestHeader("Content-Type", "application/json");
+          data = this.toJSON();
         }
       }
+      
+      const {[RequestHeader.AUTHORIZATION]: authorization, [RequestHeader.MASQUERADE]: masquerade} = localStorage;
+      if (authorization) request.setRequestHeader(RequestHeader.AUTHORIZATION, authorization);
+      if (masquerade) request.setRequestHeader(RequestHeader.MASQUERADE, masquerade);
+      
+      request.send(data);
     });
   }
-
+  
   private hasFile() {
     for (let key in this.data) {
       for (let i = 0; i < this.data[key].length; i++) {
@@ -106,7 +113,7 @@ export default class Fetch<T = unknown> {
     }
     return false;
   }
-
+  
   private toURLSearchParameter() {
     const data = new URLSearchParams();
     for (let key in this.data) {
@@ -127,7 +134,7 @@ export default class Fetch<T = unknown> {
     }
     return data;
   }
-
+  
   private toJSON() {
     const data = {} as Collection<Many<FetchDataType>>;
     for (let key in this.data) {
