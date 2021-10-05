@@ -1,3 +1,4 @@
+import BaseEntity from "../../common/classes/Entity/BaseEntity";
 import ProgressHandler from "../../common/classes/ProgressHandler";
 import HTTPMethod from "../../common/enums/HTTPMethod";
 import HTTPStatusCode from "../../common/enums/HTTPStatusCode";
@@ -30,6 +31,9 @@ export default class Fetch<T = unknown> {
       return;
     }
     else {
+      if (item instanceof BaseEntity) {
+        return this.data[key].push(item.getPrimaryID());
+      }
       if (item instanceof Date) {
         return this.data[key].push(item.toISOString());
       }
@@ -55,9 +59,7 @@ export default class Fetch<T = unknown> {
           if (request.status !== 200) {
             return reject(new ServerException(request.status as keyof typeof HTTPStatusCode, Fetch.parseResponse(request.response, request.responseType), request.statusText));
           }
-          if (request.status === 200) {
-            return resolve(Fetch.parseResponse(request.response, request.responseType));
-          }
+          return resolve(Fetch.parseResponse(request.response, request.responseType));
         }
       });
       
@@ -67,14 +69,17 @@ export default class Fetch<T = unknown> {
       });
       
       request.addEventListener("error", (event) => {
+        console.log(event);
         reject(new Error("Failed!"));
       });
       
       request.addEventListener("timeout", (event) => {
+        console.log(event);
         reject(new Error("Timeout!"));
       });
       
       request.addEventListener("abort", (event) => {
+        console.log(event);
         reject(new Error("Aborted!"));
       });
       

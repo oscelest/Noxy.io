@@ -5,7 +5,7 @@ import InputType from "../../enums/InputType";
 import Component from "../Application/Component";
 import Button from "../Form/Button";
 import Input from "../Form/Input";
-import Style from "./Pagination.module.scss";
+import Style from "./TablePagination.module.scss";
 
 export default class TablePagination extends Component<PaginationProps, State> {
   

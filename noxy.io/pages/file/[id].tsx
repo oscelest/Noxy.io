@@ -88,6 +88,7 @@ export default class FileAliasPage extends Component<FileIDPageProps, State> {
       }
     }
     catch (error) {
+      console.log("error?", error)
       const {code} = error as ServerException;
       this.setState({tag_loading: false, file_loading: false, data_loading: false});
       if (code === 404) return;
@@ -105,7 +106,7 @@ export default class FileAliasPage extends Component<FileIDPageProps, State> {
     return (
       <Loader size={Size.LARGE} value={file_loading}>
         <div className={Style.Component}>
-          <Placeholder value={!file?.exists() || "File does not exist or you do not have permission to view it."}>
+          <Placeholder value={!file?.exists() && "File does not exist or you do not have permission to view it."}>
             <PageHeader title={file?.name ?? "Loading..."}/>
             <div className={Style.Content}>
               <div className={Style.Viewer} data-file-type={this.state.file?.getFileType()}>
