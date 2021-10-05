@@ -55,7 +55,7 @@ export default class APIKeyEntity extends BaseEntity {
   }
   
   public static async get(search: APIKeyEntitySearchParameters = {}, pagination:  Pagination<APIKeyEntity> = new Pagination<APIKeyEntity>(0, 10, {time_created: Order.DESC})) {
-    const result = await Fetch.get<APIKeyEntity[]>(this.URL, {...search, ...pagination});
+    const result = await Fetch.get<APIKeyEntity[]>(this.URL, {...search, ...pagination.toObject()});
     return this.instantiate(result.content);
   }
   

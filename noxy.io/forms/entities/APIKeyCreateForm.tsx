@@ -1,8 +1,7 @@
-import {AxiosError} from "axios";
 import _ from "lodash";
 import React from "react";
 import Permission from "../../../common/classes/Permission";
-import Order from "../../../common/enums/Order";
+import ServerException from "../../../common/exceptions/ServerException";
 import Component from "../../components/Application/Component";
 import PermissionExplorer from "../../components/Application/PermissionExplorer";
 import Form from "../../components/Base/Form";
@@ -46,9 +45,9 @@ export default class APIKeyCreateForm extends Component<APIKeyCreateFormProps, S
         next_state.entity = new APIKeyEntity();
       }
       catch (error) {
-        const {response} = error as AxiosError<APIResponse<unknown>>;
+        const {code} = error as ServerException;
         
-        if (response?.status === 400) {
+        if (code === 400) {
           next_state.error = new Error("Incorrect email and/or password");
         }
         else {
@@ -88,7 +87,7 @@ export default class APIKeyCreateForm extends Component<APIKeyCreateFormProps, S
   }
   
   private readonly eventUserSearch = async (email: string) => {
-    return await UserEntity.getMany({email}, {skip: 0, limit: 10, order: {email: Order.ASC}});
+    return await UserEntity.getMany({email});
   };
   
   private readonly eventUserChange = (user?: UserEntity) => {

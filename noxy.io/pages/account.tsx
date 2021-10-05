@@ -1,4 +1,3 @@
-import {AxiosError} from "axios";
 import _ from "lodash";
 import Moment from "moment";
 import {NextPageContext} from "next";
@@ -6,6 +5,7 @@ import React from "react";
 import Order from "../../common/enums/Order";
 import PermissionLevel from "../../common/enums/PermissionLevel";
 import RequestHeader from "../../common/enums/RequestHeader";
+import ServerException from "../../common/exceptions/ServerException";
 import Component from "../components/Application/Component";
 import Dialog from "../components/Application/Dialog";
 import {Masquerade} from "../components/Application/Masquerade";
@@ -241,8 +241,8 @@ export default class AccountPage extends Component<AccountPageProps, State> {
       await this.context.updateLogIn(this.context.state.masquerade?.id ?? this.context.state.user?.id!, {email: this.state.email});
     }
     catch (error) {
-      const {response} = error as AxiosError<APIResponse<unknown>>;
-      if (response?.status === 400) {
+      const {code} = error as ServerException;
+      if (code=== 400) {
         this.setState({email_error: new Error("Email is invalid")});
       }
       else {
@@ -257,8 +257,8 @@ export default class AccountPage extends Component<AccountPageProps, State> {
       await this.context.updateLogIn(this.context.state.masquerade?.id ?? this.context.state.user?.id!, {username: this.state.username});
     }
     catch (error) {
-      const {response} = error as AxiosError<APIResponse<unknown>>;
-      if (response?.status === 400) {
+      const {code} = error as ServerException;
+      if (code === 400) {
         this.setState({username_error: new Error("Username must be between 3 and 64 characters")});
       }
       else {
@@ -277,8 +277,8 @@ export default class AccountPage extends Component<AccountPageProps, State> {
       this.setState({password: "", confirm: ""});
     }
     catch (error) {
-      const {response} = error as AxiosError<APIResponse<unknown>>;
-      if (response?.status === 400) {
+      const {code} = error as ServerException;
+      if (code === 400) {
         this.setState({password_error: new Error("Password must be at least 12 characters.")});
       }
       else {

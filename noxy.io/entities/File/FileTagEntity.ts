@@ -39,7 +39,7 @@ export default class FileTagEntity extends BaseEntity {
   }
 
   public static async getMany(search: TagEntitySearchParameter = {}, pagination: Pagination<FileTagEntity> = new Pagination<FileTagEntity>(0, 10, {name: Order.ASC})) {
-    const result = await Fetch.get<FileTagEntity[]>(this.URL, {...search, ...pagination});
+    const result = await Fetch.get<FileTagEntity[]>(this.URL, {...search, ...pagination.toObject()});
     return this.instantiate(result.content);
   }
 

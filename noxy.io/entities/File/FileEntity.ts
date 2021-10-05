@@ -68,7 +68,7 @@ export default class FileEntity extends BaseEntity {
   }
 
   public static async getMany(search: FileEntitySearchParameters = {}, pagination: Pagination<FileEntity> = new Pagination<FileEntity>(0, 10, {name: Order.ASC})) {
-    const result = await Fetch.get<FileEntity[]>(this.URL, {...search, ...pagination});
+    const result = await Fetch.get<FileEntity[]>(this.URL, {...search, ...pagination.toObject()});
     return this.instantiate(result.content);
   }
 

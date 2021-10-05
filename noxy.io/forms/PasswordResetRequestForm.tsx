@@ -1,7 +1,7 @@
-import {AxiosError} from "axios";
 import IsEmail from "isemail";
 import _ from "lodash";
 import React from "react";
+import ServerException from "../../common/exceptions/ServerException";
 import Component from "../components/Application/Component";
 import Conditional from "../components/Application/Conditional";
 import Form from "../components/Base/Form";
@@ -42,12 +42,12 @@ export default class PasswordResetRequestForm extends Component<PasswordResetReq
         next_state.error = new Error("An email has been sent.");
       }
       catch (error) {
-        const {response} = error as AxiosError<APIResponse<unknown>>;
+        const {code} = error as ServerException;
         
-        if (response?.status === 400) {
+        if (code === 400) {
           next_state.error = new Error("Email is not valid.");
         }
-        else if (response?.status === 404) {
+        else if (code === 404) {
           next_state.error = new Error("Email does not have an account attached.");
         }
         else {

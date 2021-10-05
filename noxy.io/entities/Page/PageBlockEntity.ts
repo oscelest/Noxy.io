@@ -52,7 +52,7 @@ export default abstract class PageBlockEntity<Type extends PageBlockType = PageB
   };
   
   public static async get(search: APIKeyEntitySearchParameters = {}, pagination: Pagination<PageBlockEntity> = new Pagination<PageBlockEntity>(0, 10, {time_created: Order.DESC})) {
-    const result = await Fetch.get<Array<PageBlockEntity & {content: any}>>(`${this.url}`, {...search, ...pagination});
+    const result = await Fetch.get<Array<PageBlockEntity & {content: any}>>(`${this.url}`, {...search, ...pagination.toObject()});
     return await Promise.all(result.content.map(async value => await PageEntity.parsePageBlock(value)));
   }
 }

@@ -1,5 +1,4 @@
 import React from "react";
-import Order from "../../../common/enums/Order";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
 import UserEntity from "../../entities/UserEntity";
 import EntityInput from "../Form/EntityInput";
@@ -34,7 +33,7 @@ export class Masquerade extends Component<UserComboBoxProps, State> {
   }
 
   private readonly eventSearch = async (email: string) => {
-    return await UserEntity.getMany({email}, {skip: 0, limit: 10, order: {email: Order.ASC}});
+    return await UserEntity.getMany({email});
   };
 
   private readonly eventChange = (user?: UserEntity) => {

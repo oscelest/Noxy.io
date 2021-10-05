@@ -53,7 +53,7 @@ export default class UserEntity extends BaseEntity {
   }
   
   public static async getMany(search: UserEntityGetParameters = {}, pagination: Pagination<UserEntity> = new Pagination<UserEntity>(0, 10, {email: Order.ASC})) {
-    const {content} = await Fetch.get<UserEntity[]>(this.URL, {...search, ...pagination});
+    const {content} = await Fetch.get<UserEntity[]>(this.URL, {...search, ...pagination.toObject()});
     return this.instantiate(content);
   }
   

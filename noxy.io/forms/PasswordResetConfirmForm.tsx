@@ -1,7 +1,7 @@
-import {AxiosError} from "axios";
 import _ from "lodash";
 import Router from "next/router";
 import React from "react";
+import ServerException from "../../common/exceptions/ServerException";
 import Component from "../components/Application/Component";
 import Form from "../components/Base/Form";
 import Input from "../components/Form/Input";
@@ -49,15 +49,15 @@ export default class PasswordResetConfirmForm extends Component<PasswordResetCon
         return Router.push("/account");
       }
       catch (error) {
-        const {response} = error as AxiosError<APIResponse<unknown>>;
+        const {code} = error as ServerException;
         
-        if (response?.status === 400) {
+        if (code === 400) {
           next_state.error = new Error("New password is not valid.");
         }
-        else if (response?.status === 404) {
+        else if (code === 404) {
           next_state.error = new Error("Reset token has been tampered with.");
         }
-        else if (response?.status === 410) {
+        else if (code === 410) {
           next_state.error = new Error("Reset password token has expired.");
         }
         else {

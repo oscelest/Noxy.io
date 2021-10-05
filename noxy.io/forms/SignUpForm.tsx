@@ -1,7 +1,7 @@
-import {AxiosError} from "axios";
 import IsEmail from "isemail";
 import _ from "lodash";
 import React from "react";
+import ServerException from "../../common/exceptions/ServerException";
 import Component from "../components/Application/Component";
 import Form from "../components/Base/Form";
 import Input from "../components/Form/Input";
@@ -63,12 +63,12 @@ export default class LogInForm extends Component<SignUpFormProps, State> {
         await this.props.onSubmit?.(email, username, password);
       }
       catch (error) {
-        const {response} = error as AxiosError<APIResponse<unknown>>;
+        const {code} = error as ServerException;
         
-        if (response?.status === 400) {
+        if (code === 400) {
           next_state.error = new Error("Email and password does not match any account");
         }
-        if (response?.status === 409) {
+        if (code === 409) {
           next_state.error = new Error("Email is already registered.");
         }
         else {

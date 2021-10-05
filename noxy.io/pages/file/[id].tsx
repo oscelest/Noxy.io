@@ -1,4 +1,3 @@
-import {AxiosError} from "axios";
 import _ from "lodash";
 import {NextPageContext} from "next";
 import Router from "next/router";
@@ -8,6 +7,7 @@ import FileTypeName from "../../../common/enums/FileTypeName";
 import Privacy from "../../../common/enums/Privacy";
 import QueuePosition from "../../../common/enums/QueuePosition";
 import Size from "../../../common/enums/Size";
+import ServerException from "../../../common/exceptions/ServerException";
 import Util from "../../../common/services/Util";
 import Component from "../../components/Application/Component";
 import Conditional from "../../components/Application/Conditional";
@@ -88,10 +88,10 @@ export default class FileAliasPage extends Component<FileIDPageProps, State> {
       }
     }
     catch (error) {
-      const exception = error as AxiosError;
+      const {code} = error as ServerException;
       this.setState({tag_loading: false, file_loading: false, data_loading: false});
-      if (exception.response?.status === 404) return;
-      if (exception.response?.status === 403) return;
+      if (code === 404) return;
+      if (code === 403) return;
       throw new FatalException("Unexpected error occurred", "A server error has caused this file to be unable to load. Please try again later. This error has already been reported.");
     }
   }

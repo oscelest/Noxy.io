@@ -1,6 +1,7 @@
 import _ from "lodash";
 import Router from "next/router";
 import React from "react";
+import Pagination from "../../../common/classes/Pagination";
 import FileTypeName from "../../../common/enums/FileTypeName";
 import Order from "../../../common/enums/Order";
 import PermissionLevel from "../../../common/enums/PermissionLevel";
@@ -23,7 +24,7 @@ import EntityPicker from "../Form/EntityPicker";
 import Input from "../Form/Input";
 import Sortable, {SortableCollection} from "../Form/Sortable";
 import Switch from "../Form/Switch";
-import Pagination from "../Table/Pagination";
+import TablePagination from "../Table/TablePagination";
 import EllipsisText from "../Text/EllipsisText";
 import {ContextMenuItem} from "../UI/ContextMenu";
 import DragDrop from "../UI/DragDrop";
@@ -107,8 +108,7 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
         const skip = (next_state.pagination_current - 1) * this.state.pagination_size;
         const limit = next_state.pagination_current * this.state.pagination_size;
         const order = _.mapValues(this.state.file_order, value => value.order);
-
-        next_state.file_list = await FileEntity.getMany(params, {skip, limit, order});
+        next_state.file_list = await FileEntity.getMany(params, new Pagination<FileEntity>(skip, limit, order));
       }
       catch (error) {
         console.error(error);
@@ -162,7 +162,7 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
             </DragDrop>
 
             <Conditional condition={pagination_total > 1}>
-              <Pagination className={Style.Pagination} current={pagination_current} total={pagination_total} onChange={this.eventPaginationChange}/>
+              <TablePagination className={Style.Pagination} current={pagination_current} total={pagination_total} onChange={this.eventPaginationChange}/>
             </Conditional>
           </div>
 

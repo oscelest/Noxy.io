@@ -1,7 +1,7 @@
 import ProgressHandler from "../../common/classes/ProgressHandler";
 import HTTPMethod from "../../common/enums/HTTPMethod";
-import ServerException from "../../common/exceptions/ServerException";
 import HTTPStatusCode from "../../common/enums/HTTPStatusCode";
+import ServerException from "../../common/exceptions/ServerException";
 
 export default class Fetch<T = unknown> {
 
@@ -44,20 +44,7 @@ export default class Fetch<T = unknown> {
       return this.data[key].push(item);
     }
   }
-
-  private parseResponse(response: string, type: XMLHttpRequestResponseType) {
-    try {
-      if (type === "json" || response) {
-        return JSON.parse(response);
-      }
-      return response;
-    }
-    catch (error) {
-      return response.toString();
-    }
-
-  }
-
+  
   public async execute(progress?: ProgressHandler) {
     return new Promise<APIResponse<T>>((resolve, reject) => {
       const request = new XMLHttpRequest();
@@ -66,10 +53,10 @@ export default class Fetch<T = unknown> {
         if (progress?.cancelled) return request.abort();
         if (request.readyState === XMLHttpRequest.DONE) {
           if (request.status !== 200) {
-            return reject(new ServerException(request.status as keyof typeof HTTPStatusCode, this.parseResponse(request.response, request.responseType)))
+            return reject(new ServerException(request.status as keyof typeof HTTPStatusCode, Fetch.parseResponse(request.response, request.responseType)))
           }
           if (request.status === 200) {
-            return resolve(this.parseResponse(request.response, request.responseType));
+            return resolve(Fetch.parseResponse(request.response, request.responseType));
           }
         }
       });
@@ -164,6 +151,18 @@ export default class Fetch<T = unknown> {
   
   public static async delete<T>(path: string, data?: FetchData, progress?: ProgressHandler) {
     return await new this<T>(HTTPMethod.DELETE, path, data).execute(progress);
+  }
+  
+  private static parseResponse(response: any, type: XMLHttpRequestResponseType) {
+    try {
+      if (type === "json" || typeof response === "string") {
+        return JSON.parse(response);
+      }
+      return response;
+    }
+    catch (error) {
+      return response.toString();
+    }
   }
 }
 

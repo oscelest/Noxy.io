@@ -32,7 +32,7 @@ export default class FileExtensionEntity extends BaseEntity {
   }
 
   public static async getMany(search: ExtensionEntitySearchParameter = {}, pagination: Pagination<FileExtensionEntity> = new Pagination<FileExtensionEntity>(0, 10, {name: Order.ASC})) {
-    const result = await Fetch.get<FileExtensionEntity[]>(this.URL, {...search, ...pagination});
+    const result = await Fetch.get<FileExtensionEntity[]>(this.URL, {...search, ...pagination.toObject()});
     return this.instantiate(result.content);
   }
 

@@ -11,7 +11,7 @@ import Button from "../Form/Button";
 import Input from "../Form/Input";
 import Sortable, {SortableCollection} from "../Form/Sortable";
 import Style from "./DataTable.module.scss";
-import Pagination from "./Pagination";
+import TablePagination from "./TablePagination";
 
 export default class DataTable<K extends string> extends Component<DataTableProps<K>, State> {
   
@@ -99,7 +99,7 @@ export default class DataTable<K extends string> extends Component<DataTableProp
           </div>
           
           <div className={Style.Center}>
-            <Pagination className={Style.Pagination} current={page} total={Util.getSampleCount(count, size)} onChange={this.eventPageChange}/>
+            <TablePagination className={Style.Pagination} current={page} total={Util.getSampleCount(count, size)} onChange={this.eventPageChange}/>
           </div>
           
           <div className={Style.Right}>

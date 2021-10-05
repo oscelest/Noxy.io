@@ -7,7 +7,7 @@ import Button from "../Form/Button";
 import Input from "../Form/Input";
 import Style from "./Pagination.module.scss";
 
-export default class Pagination extends Component<PaginationProps, State> {
+export default class TablePagination extends Component<PaginationProps, State> {
   
   constructor(props: PaginationProps) {
     super(props);
