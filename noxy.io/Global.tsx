@@ -1,4 +1,3 @@
-import Axios from "axios";
 import _ from "lodash";
 import Router from "next/router";
 import React from "react";
@@ -21,12 +20,10 @@ namespace Global {
 
     public masquerade = (masquerade?: UserEntity) => {
       if (masquerade && masquerade?.id !== this.state.user?.id) {
-        Axios.defaults.headers.common[RequestHeader.MASQUERADE] = masquerade.id;
         localStorage[RequestHeader.MASQUERADE] = masquerade.id;
         this.setState({masquerade});
       }
       else {
-        delete Axios.defaults.headers.common[RequestHeader.MASQUERADE];
         delete localStorage[RequestHeader.MASQUERADE];
         this.setState({masquerade: undefined});
       }
@@ -57,10 +54,8 @@ namespace Global {
       if (!jwt) return this.performLogOut();
 
       this.setState({loading: true});
-      Axios.defaults.headers.common[RequestHeader.AUTHORIZATION] = jwt;
 
       if (localStorage[RequestHeader.MASQUERADE]) {
-        Axios.defaults.headers.common[RequestHeader.MASQUERADE] = localStorage[RequestHeader.MASQUERADE];
         this.setState({masquerade: await UserEntity.getOne(localStorage[RequestHeader.MASQUERADE])});
       }
 
@@ -75,7 +70,6 @@ namespace Global {
     public performLogOut = () => {
       delete localStorage[RequestHeader.MASQUERADE];
       delete localStorage[RequestHeader.AUTHORIZATION];
-      delete Axios.defaults.headers.common[RequestHeader.AUTHORIZATION];
       Router.reload();
     };
 
@@ -91,7 +85,6 @@ namespace Global {
       next_state.loading = false;
       next_state.user = user;
 
-      Axios.defaults.headers.common[RequestHeader.AUTHORIZATION] = api_key.token;
       localStorage.setItem(RequestHeader.AUTHORIZATION, api_key.token);
 
       this.setState(next_state);

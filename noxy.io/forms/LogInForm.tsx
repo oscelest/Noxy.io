@@ -12,6 +12,7 @@ import IconType from "../enums/IconType";
 import InputType from "../enums/InputType";
 import Style from "./LogInForm.module.scss";
 import PasswordResetRequestForm from "./PasswordResetRequestForm";
+import ServerException from "../../common/exceptions/ServerException";
 
 export default class LogInForm extends Component<LogInFormProps, State> {
   
@@ -52,7 +53,8 @@ export default class LogInForm extends Component<LogInFormProps, State> {
         next_state.error = undefined;
       }
       catch (error) {
-        const {response} = error as AxiosError<APIResponse<unknown>>;
+        console.log(error);
+        const {content} = error as ServerException;
         
         if (response?.status === 400) {
           next_state.error = new Error("Incorrect email and/or password");

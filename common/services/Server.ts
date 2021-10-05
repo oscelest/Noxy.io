@@ -30,6 +30,7 @@ module Server {
   const alias_collection: AliasCollection = {};
   const route_collection: EndpointCollection = {};
   const middleware_collection: Express.RequestHandler[] = [];
+  const multer = Multer({dest: process.env.TMP_PATH, limits: {fileSize: 5242880}});
 
   export function bindRoute(alias: Alias, method: HTTPMethod, path: string | string[], options: EndpointOptions, cb: Express.RequestHandler) {
     path = _.concat(options.prefix ?? [], path);
@@ -128,14 +129,7 @@ module Server {
   function attachFiles(request: Express.Request, response: Express.Response, next: Express.NextFunction) {
     if (!request.locals.endpoint?.upload) return next();
 
-    const middleware = Multer({
-      dest:   process.env.TMP_PATH,
-      limits: {
-        fileSize: 5242880,
-      },
-    });
-
-    middleware.fields(request.locals.endpoint.upload)(request, response, (error: Multer.MulterError | string) => {
+    multer.fields(request.locals.endpoint.upload)(request, response, (error: Multer.MulterError | string) => {
       if (error && error instanceof Error) {
         if (error.code === "LIMIT_UNEXPECTED_FILE") {
           return request.locals.respond(new ServerException(400, {field: error.field}, "File count limit exceeded."));
@@ -244,38 +238,38 @@ module Server {
   export interface Response<ResBody = any, Locals extends Record<string, any> = Record<string, any>> extends Express.Response<ResBody, Locals> {}
 
   export interface ResponseBody<T = any> {
-    success: boolean
-    message: string
-    content: T
-    time_started: string
-    time_completed: string
+    success: boolean;
+    message: string;
+    content: T;
+    time_started: string;
+    time_completed: string;
   }
 
   export interface Endpoint {
-    path?: string
-    method?: HTTPMethod
-    weights?: number[]
-    options?: EndpointOptions
-    callback?: Express.RequestHandler
-    upload?: Multer.Field[]
-    parameter_list?: EndpointParameterCollection
+    path?: string;
+    method?: HTTPMethod;
+    weights?: number[];
+    options?: EndpointOptions;
+    callback?: Express.RequestHandler;
+    upload?: Multer.Field[];
+    parameter_list?: EndpointParameterCollection;
   }
 
   export interface EndpointParameter {
-    type: ValidatorType
-    options: EndpointParameterOptions
-    conditions: any
+    type: ValidatorType;
+    options: EndpointParameterOptions;
+    conditions: any;
   }
 
   export interface EndpointOptions {
-    user?: boolean
-    prefix?: string | string[]
-    permission?: PermissionLevel | PermissionLevel[]
+    user?: boolean;
+    prefix?: string | string[];
+    permission?: PermissionLevel | PermissionLevel[];
   }
 
   export interface EndpointParameterOptions {
-    array?: boolean
-    optional?: boolean
+    array?: boolean;
+    optional?: boolean;
   }
 
   export type AliasCollection = {[path: string]: Alias}
