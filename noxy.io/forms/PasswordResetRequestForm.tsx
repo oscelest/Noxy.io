@@ -42,7 +42,7 @@ export default class PasswordResetRequestForm extends Component<PasswordResetReq
         next_state.error = new Error("An email has been sent.");
       }
       catch (error) {
-        const {response} = error as AxiosError<APIRequest<unknown>>;
+        const {response} = error as AxiosError<APIResponse<unknown>>;
         
         if (response?.status === 400) {
           next_state.error = new Error("Email is not valid.");

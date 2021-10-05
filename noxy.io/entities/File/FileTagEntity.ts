@@ -1,9 +1,8 @@
-import Axios, {AxiosError} from "axios";
-import Order from "../../../common/enums/Order";
-import RequestData from "../../classes/RequestData";
-import UserEntity from "../UserEntity";
-import Helper from "../../Helper";
 import BaseEntity from "../../../common/classes/Entity/BaseEntity";
+import Pagination from "../../../common/classes/Pagination";
+import Order from "../../../common/enums/Order";
+import Fetch from "../../classes/Fetch";
+import UserEntity from "../UserEntity";
 
 export default class FileTagEntity extends BaseEntity {
 
@@ -35,23 +34,23 @@ export default class FileTagEntity extends BaseEntity {
   }
 
   public static async getCount(search: TagEntitySearchParameter = {}) {
-    const result = await Axios.get<APIRequest<number>>(Helper.getAPIPath(this.URL, `count?${new RequestData(search).toString()}`));
-    return result.data.content;
+    const result = await Fetch.get<number>(`${this.URL}/count`, search);
+    return result.content;
   }
 
-  public static async getMany(search: TagEntitySearchParameter = {}, pagination: RequestPagination<FileTagEntity> = {skip: 0, limit: 10, order: {name: Order.ASC}}) {
-    const result = await Axios.get<APIRequest<FileTagEntity[]>>(Helper.getAPIPath(`${this.URL}?${new RequestData(search).paginate(pagination).toString()}`));
-    return this.instantiate(result.data.content);
+  public static async getMany(search: TagEntitySearchParameter = {}, pagination: Pagination<FileTagEntity> = new Pagination<FileTagEntity>(0, 10, {name: Order.ASC})) {
+    const result = await Fetch.get<FileTagEntity[]>(this.URL, {...search, ...pagination});
+    return this.instantiate(result.content);
   }
 
   public static async getOne(id: string | FileTagEntity) {
-    const result = await Axios.get<APIRequest<FileTagEntity>>(Helper.getAPIPath(this.URL, id.toString()));
-    return new this(result.data.content);
+    const result = await Fetch.get<FileTagEntity>(`${this.URL}/${id}`);
+    return new this(result.content);
   }
 
   public static async getOneByName(name: string) {
-    const result = await Axios.get<APIRequest<FileTagEntity>>(Helper.getAPIPath(this.URL, "/by-name/", name));
-    return new this(result.data.content);
+    const result = await Fetch.get<FileTagEntity>(`${this.URL}/by-name/${name}`);
+    return new this(result.content);
   }
 
   public static async createOne(parameters: FileTagEntityCreateParameters, ...caches: FileTagEntity[][]) {
@@ -71,24 +70,24 @@ export default class FileTagEntity extends BaseEntity {
       }
 
       if (result === undefined) {
-        const response = await Axios.post<APIRequest<FileTagEntity>>(Helper.getAPIPath(this.URL), new RequestData(parameters).toObject());
-        result = new this(response.data.content);
+        const response = await Fetch.post<FileTagEntity>(this.URL, parameters);
+        result = new this(response.content);
       }
 
       return result;
     }
     catch (error) {
-      const exception = error as AxiosError;
-      if (exception.response?.status === 409) return await FileTagEntity.getOneByName(parameters.name);
+      const exception = error as Error;
+      // TODO: Fix this
+      // if (exception.response?.status === 409) return await FileTagEntity.getOneByName(parameters.name);
       throw exception;
     }
   }
 
   public static async deleteOne(id: string | FileTagEntity) {
-    const result = await Axios.delete<APIRequest<FileTagEntity>>(Helper.getAPIPath(this.URL, id.toString()));
-    return new this(result.data.content);
+    const result = await Fetch.delete<FileTagEntity>(`${this.URL}/${id}`);
+    return new this(result.content);
   }
-
 }
 
 type TagEntitySearchParameter = {

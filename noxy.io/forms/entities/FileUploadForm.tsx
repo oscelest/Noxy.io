@@ -44,7 +44,7 @@ export default class FileUploadForm extends Component<FileUploadFormProps, State
       this.props.onFileUpload?.(entity);
     }
     catch (exception) {
-      const error = exception as AxiosError<APIRequest<any>>;
+      const error = exception as AxiosError<APIResponse<any>>;
 
       if (error.isAxiosError) {
         if (error.response?.status === 404) {

@@ -1,10 +1,9 @@
-import Axios from "axios";
 import BaseEntity from "../../../common/classes/Entity/BaseEntity";
+import Pagination from "../../../common/classes/Pagination";
 import Order from "../../../common/enums/Order";
 import PageBlockType from "../../../common/enums/PageBlockType";
-import RequestData from "../../classes/RequestData";
+import Fetch from "../../classes/Fetch";
 import RichText from "../../classes/RichText";
-import Helper from "../../Helper";
 import {APIKeyEntitySearchParameters} from "../APIKeyEntity";
 import {HeaderBlockContent} from "./Block/HeaderPageBlockEntity";
 import {ListBlockContent} from "./Block/ListPageBlockEntity";
@@ -42,11 +41,6 @@ export default abstract class PageBlockEntity<Type extends PageBlockType = PageB
   
   public abstract replaceText(old_text: ContentValue<PageBlockContent[Type]["value"]>, new_text: ContentValue<PageBlockContent[Type]["value"]>): this
   
-  public static async get(search: APIKeyEntitySearchParameters = {}, pagination: RequestPagination<PageBlockEntity> = {skip: 0, limit: 10, order: {time_created: Order.DESC}}) {
-    const result = await Axios.get<APIRequest<Array<PageBlockEntity & {content: any}>>>(Helper.getAPIPath(`${this.url}?${new RequestData(search).paginate(pagination).toString()}`));
-    return await Promise.all(result.data.content.map(async value => await PageEntity.parsePageBlock(value)));
-  }
-  
   public static parseContentText = <T>(input?: ContentInitializer<RichText<T>>): RichText<T> => {
     if (input instanceof RichText) return input;
     if (typeof input === "string") return RichText.parseHTML(input);
@@ -57,6 +51,10 @@ export default abstract class PageBlockEntity<Type extends PageBlockType = PageB
     return (typeof input !== "number" || isNaN(+input)) ? 0 : input;
   };
   
+  public static async get(search: APIKeyEntitySearchParameters = {}, pagination: Pagination<PageBlockEntity> = new Pagination<PageBlockEntity>(0, 10, {time_created: Order.DESC})) {
+    const result = await Fetch.get<Array<PageBlockEntity & {content: any}>>(`${this.url}`, {...search, ...pagination});
+    return await Promise.all(result.content.map(async value => await PageEntity.parsePageBlock(value)));
+  }
 }
 
 export interface PageBlockContentValue<T = never> {

@@ -52,7 +52,7 @@ export default class LogInForm extends Component<LogInFormProps, State> {
         next_state.error = undefined;
       }
       catch (error) {
-        const {response} = error as AxiosError<APIRequest<unknown>>;
+        const {response} = error as AxiosError<APIResponse<unknown>>;
         
         if (response?.status === 400) {
           next_state.error = new Error("Incorrect email and/or password");

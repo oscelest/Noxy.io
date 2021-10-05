@@ -49,7 +49,7 @@ export default class PasswordResetConfirmForm extends Component<PasswordResetCon
         return Router.push("/account");
       }
       catch (error) {
-        const {response} = error as AxiosError<APIRequest<unknown>>;
+        const {response} = error as AxiosError<APIResponse<unknown>>;
         
         if (response?.status === 400) {
           next_state.error = new Error("New password is not valid.");

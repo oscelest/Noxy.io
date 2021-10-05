@@ -1,14 +1,15 @@
-import Axios, {Canceler} from "axios";
+import BaseEntity from "../../../common/classes/Entity/BaseEntity";
+import Pagination from "../../../common/classes/Pagination";
+import ProgressHandler from "../../../common/classes/ProgressHandler";
+import FileTypeName from "../../../common/enums/FileTypeName";
 import Order from "../../../common/enums/Order";
 import Privacy from "../../../common/enums/Privacy";
 import SetOperation from "../../../common/enums/SetOperation";
-import RequestData from "../../classes/RequestData";
+import Fetch from "../../classes/Fetch";
 import Helper from "../../Helper";
+import UserEntity from "../UserEntity";
 import FileExtensionEntity from "./FileExtensionEntity";
 import FileTagEntity from "./FileTagEntity";
-import UserEntity from "../UserEntity";
-import FileTypeName from "../../../common/enums/FileTypeName";
-import BaseEntity from "../../../common/classes/Entity/BaseEntity";
 
 export default class FileEntity extends BaseEntity {
 
@@ -62,48 +63,47 @@ export default class FileEntity extends BaseEntity {
   }
 
   public static async getCount(search: FileEntitySearchParameters = {}) {
-    const result = await Axios.get<APIRequest<number>>(Helper.getAPIPath(this.URL, `count?${new RequestData(search).toString()}`));
-    return result.data.content;
+    const result = await Fetch.get<number>(`${this.URL}/count`, search);
+    return result.content;
   }
 
-  public static async getMany(search: FileEntitySearchParameters = {}, pagination: RequestPagination<FileEntity> = {skip: 0, limit: 10, order: {name: Order.ASC}}) {
-    const result = await Axios.get<APIRequest<FileEntity[]>>(Helper.getAPIPath(`${this.URL}?${new RequestData(search).paginate(pagination).toString()}`));
-    return this.instantiate(result.data.content);
+  public static async getMany(search: FileEntitySearchParameters = {}, pagination: Pagination<FileEntity> = new Pagination<FileEntity>(0, 10, {name: Order.ASC})) {
+    const result = await Fetch.get<FileEntity[]>(this.URL, {...search, ...pagination});
+    return this.instantiate(result.content);
   }
 
   public static async getOne(id: string | FileEntity, share_hash?: string) {
-    const result = await Axios.get<APIRequest<FileEntity>>(Helper.getAPIPath(this.URL, id.toString(), "?", new RequestData({share_hash}).toString()));
-    return new this(result.data.content);
+    const result = await Fetch.get<FileEntity>(`${this.URL}/${id}`, {share_hash});
+    return new this(result.content);
   }
 
   public static async getData(data_hash: string) {
-    const result = await Axios.get<string>(Helper.getAPIPath(this.URL, "data", data_hash));
-    return result.data;
+    const result = await Fetch.get<string>(`${this.URL}/data`, {data_hash});
+    return result.content;
   }
 
-  public static async postOne(file: File, parameters: FileEntityCreateParameters, onUploadProgress?: (progress: ProgressEvent) => void, cancel?: (cancel: Canceler) => void) {
-    const cancelToken = cancel ? new Axios.CancelToken(cancel) : undefined;
-    const result = await Axios.post<APIRequest<FileEntity>>(Helper.getAPIPath(this.URL), new RequestData(parameters).appendFile(file).toFormData(), {onUploadProgress, cancelToken});
-    return new this(result.data.content);
+  public static async postOne(file: File, parameters: FileEntityCreateParameters, progress?: ProgressHandler) {
+    const result = await Fetch.post<FileEntity>(this.URL, {...parameters, file}, progress);
+    return new this(result.content);
   }
 
   public static async postRequestDownload(id: string | FileEntity | (string | FileEntity)[]) {
-    const result = await Axios.post<APIRequest<string>>(Helper.getAPIPath(this.URL, "request-download"), new RequestData({id}).toObject());
-    return result.data.content;
+    const result = await Fetch.post<string>(`${this.URL}/request-download`, {id});
+    return result.content;
   }
 
   public static async postConfirmDownload(token: string) {
-    Helper.submitForm(`${FileEntity.URL}/confirm-download`, {token});
+    Helper.submitForm(`${this.URL}/confirm-download`, {token});
   }
 
   public static async putOne(id: string | FileEntity, data: Properties<FileEntity>) {
-    const result = await Axios.put<APIRequest<FileEntity>>(Helper.getAPIPath(this.URL, id.toString()), new RequestData(data).toObject());
-    return new this(result.data.content);
+    const result = await Fetch.put<FileEntity>(`${this.URL}/${id}`, data);
+    return new this(result.content);
   }
 
   public static async deleteOne(id: string | FileEntity) {
-    const result = await Axios.delete<APIRequest<FileEntity>>(Helper.getAPIPath(this.URL, id.toString()));
-    return new this(result.data.content);
+    const result = await Fetch.delete<FileEntity>(`${this.URL}/${id}`);
+    return new this(result.content);
   }
 
 }

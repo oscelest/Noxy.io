@@ -46,7 +46,7 @@ export default class APIKeyCreateForm extends Component<APIKeyCreateFormProps, S
         next_state.entity = new APIKeyEntity();
       }
       catch (error) {
-        const {response} = error as AxiosError<APIRequest<unknown>>;
+        const {response} = error as AxiosError<APIResponse<unknown>>;
         
         if (response?.status === 400) {
           next_state.error = new Error("Incorrect email and/or password");

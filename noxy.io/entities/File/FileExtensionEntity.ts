@@ -1,9 +1,8 @@
-import Axios from "axios";
-import Order from "../../../common/enums/Order";
-import RequestData from "../../classes/RequestData";
-import FileTypeName from "../../../common/enums/FileTypeName";
-import Helper from "../../Helper";
 import BaseEntity from "../../../common/classes/Entity/BaseEntity";
+import Pagination from "../../../common/classes/Pagination";
+import FileTypeName from "../../../common/enums/FileTypeName";
+import Order from "../../../common/enums/Order";
+import Fetch from "../../classes/Fetch";
 
 export default class FileExtensionEntity extends BaseEntity {
 
@@ -32,9 +31,9 @@ export default class FileExtensionEntity extends BaseEntity {
     return this.id;
   }
 
-  public static async getMany(search: ExtensionEntitySearchParameter = {}, pagination: RequestPagination<FileExtensionEntity> = {skip: 0, limit: 10, order: {name: Order.ASC}}) {
-    const result = await Axios.get<APIRequest<FileExtensionEntity[]>>(Helper.getAPIPath(`${this.URL}?${new RequestData(search).paginate(pagination).toString()}`));
-    return this.instantiate(result.data.content);
+  public static async getMany(search: ExtensionEntitySearchParameter = {}, pagination: Pagination<FileExtensionEntity> = new Pagination<FileExtensionEntity>(0, 10, {name: Order.ASC})) {
+    const result = await Fetch.get<FileExtensionEntity[]>(this.URL, {...search, ...pagination});
+    return this.instantiate(result.content);
   }
 
 }

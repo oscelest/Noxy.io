@@ -1,15 +1,14 @@
-import Axios, {AxiosResponse} from "axios";
 import _ from "lodash";
+import BaseEntity from "../../common/classes/Entity/BaseEntity";
+import Pagination from "../../common/classes/Pagination";
 import Permission from "../../common/classes/Permission";
 import Order from "../../common/enums/Order";
 import PermissionLevel from "../../common/enums/PermissionLevel";
-import RequestData from "../classes/RequestData";
+import Fetch from "../classes/Fetch";
 import UserEntity from "./UserEntity";
-import Helper from "../Helper";
-import BaseEntity from "../../common/classes/Entity/BaseEntity";
 
 export default class APIKeyEntity extends BaseEntity {
-
+  
   public id: string;
   public token: string;
   public permission: Permission;
@@ -17,9 +16,9 @@ export default class APIKeyEntity extends BaseEntity {
   public limit_per_minute: number;
   public user: UserEntity;
   public time_created: Date;
-
+  
   public static URL = "api-key";
-
+  
   constructor(entity?: Initializer<APIKeyEntity>) {
     super();
     this.id = entity?.id ?? BaseEntity.defaultID;
@@ -30,57 +29,56 @@ export default class APIKeyEntity extends BaseEntity {
     this.user = new UserEntity(entity?.user);
     this.time_created = new Date(entity?.time_created ?? 0);
   }
-
+  
   public toString() {
     return this.getPrimaryID();
   }
-
+  
   public getPrimaryID(): string {
     return this.id;
   }
-
+  
   public isAdmin() {
     return this.permission[PermissionLevel.ADMIN];
   }
-
+  
   public hasAnyPermission(...permission_list: PermissionLevel[]) {
     return _.some(permission_list, permission => this.permission[permission]);
   }
-
+  
   public hasPermission(...permission_list: PermissionLevel[]) {
     return _.every(permission_list, permission => this.permission[permission]);
   }
-
+  
   public static async count(search: APIKeyEntitySearchParameters = {}) {
-    const result = await Axios.get<APIRequest<number>>(Helper.getAPIPath(this.URL, `count?${new RequestData(search).toString()}`));
-    return result.data.content;
+    return Fetch.get<number>(`${this.URL}/count`, search);
   }
-
-  public static async get(search: APIKeyEntitySearchParameters = {}, pagination: RequestPagination<APIKeyEntity> = {skip: 0, limit: 10, order: {time_created: Order.DESC}}) {
-    const result = await Axios.get<APIRequest<APIKeyEntity[]>>(Helper.getAPIPath(`${this.URL}?${new RequestData(search).paginate(pagination).toString()}`));
-    return this.instantiate(result.data.content);
+  
+  public static async get(search: APIKeyEntitySearchParameters = {}, pagination:  Pagination<APIKeyEntity> = new Pagination<APIKeyEntity>(0, 10, {time_created: Order.DESC})) {
+    const result = await Fetch.get<APIKeyEntity[]>(this.URL, {...search, ...pagination});
+    return this.instantiate(result.content);
   }
-
+  
   public static async getByID(id: string | APIKeyEntity) {
-    const result = await Axios.get<APIRequest<APIKeyEntity>>(Helper.getAPIPath(this.URL, id.toString()));
-    return new this(result.data.content);
+    const result = await Fetch.get<APIKeyEntity>(`${this.URL}/${id}`);
+    return new this(result.content);
   }
-
+  
   public static async create(parameters: APIKeyEntityCreateParameters) {
-    const result = await Axios.post<{[key: string]: any}, AxiosResponse<APIRequest<APIKeyEntity>>>(Helper.getAPIPath(this.URL), new RequestData(parameters).toObject());
-    return new this(result.data.content);
+    const result = await Fetch.post<APIKeyEntity>(this.URL, parameters);
+    return new this(result.content);
   }
-
+  
   public static async update(id: string | APIKeyEntity, parameters: APIKeyEntityUpdateParameters) {
-    const result = await Axios.put<APIRequest<APIKeyEntity>>(Helper.getAPIPath(this.URL, id.toString()), new RequestData(parameters).toObject());
-    return new this(result.data.content);
+    const result = await Fetch.put<APIKeyEntity>(`${this.URL}/${id}`, parameters);
+    return new this(result.content);
   }
-
+  
   public static async delete(id: string | APIKeyEntity) {
-    const result = await Axios.delete<APIRequest<APIKeyEntity>>(Helper.getAPIPath(this.URL, id.toString()));
-    return new this(result.data.content);
+    const result = await Fetch.delete<APIKeyEntity>(`${this.URL}/${id}`);
+    return new this(result.content);
   }
-
+  
 }
 
 export type APIKeyEntitySearchParameters = {

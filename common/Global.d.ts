@@ -22,25 +22,43 @@ declare module "express-serve-static-core" {
 
 declare global {
   
-  export type LambdaFn = (...args: any) => any;
+  export type Collection<T> = {[key: string]: T}
+  
+  export type Many<A> = A | A[]
+  
+  export type LambdaFn<A = any, R = any> = (...args: A) => R;
   
   export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
   
   export type RecursiveArray<T> = (T | Recursive<T>)[]
   
-  export type NonArray<T> = T extends Array<unknown> ? never : T;
+  export type NonArray<T> = T extends Array<unknown> ? never : T
   
   export type Key<V> = (V extends (infer R)[] ? keyof R : keyof V) & string
   
-  export type Properties<E> = { [K in keyof Pick<E, { [K in keyof E]: E[K] extends Function ? never : K }[keyof E]>]: E[K] };
+  export type Properties<E> = { [K in keyof Pick<E, { [K in keyof E]: E[K] extends Function ? never : K }[keyof E]>]: E[K] }
   
-  export type Initializer<E> = Writeable<Partial<Properties<E>>>;
+  export type Initializer<E> = Writeable<Partial<Properties<E>>>
   
-  export type Writeable<T> = { -readonly [K in keyof T]: T[K] };
+  export type Writeable<T> = { -readonly [K in keyof T]: T[K] }
   
   export type DecoratorConstructor = {new(...args: any[]): any}
   
-  export interface APIRequest<T> {
+  export type HierarchyArray<V = any> = (V | HierarchyArray<V>)[]
+  
+  export type DeepArray<V = any> = V[] | DeepArray<V>[]
+  
+  export type Unwrap<V> = V extends (infer R)[] ? R : V extends {[key: string]: infer R} ? R : V
+  
+  export type Simplify<O> = (O extends object ? Properties<O> : O)
+  
+  export type JSONObject = null | boolean | number | string | JSONObject[] | {[prop: string]: JSONObject}
+  
+  
+  
+  export type PageProps = {permission?: string | null}
+  
+  export interface APIResponse<T> {
     success: boolean;
     message: string;
     content: T extends Array<infer R> ? Simplify<R>[] : Simplify<T>;
@@ -56,25 +74,7 @@ declare global {
     };
   }
   
-  export interface RequestPagination<O extends {}> {
-    skip: number;
-    limit: number;
-    order: RequestPaginationOrder<O>;
-  }
-  
-  export type HierarchyArray<V = any> = (V | HierarchyArray<V>)[]
-  
-  export type DeepArray<V = any> = V[] | DeepArray<V>[]
-  
-  export type Unwrap<V> = V extends (infer R)[] ? R : V extends {[key: string]: infer R} ? R : V;
-  
-  export type Simplify<O> = (O extends object ? Properties<O> : O)
-  
-  export type RequestPaginationOrder<O extends {}> = { [K in keyof Pick<O, { [K in keyof O]: O[K] extends Function ? never : K }[keyof O]>]?: "ASC" | "DESC" }
-  
-  export type PageProps = {permission?: string | null}
-  
-  export type JSONObject = null | boolean | number | string | JSONObject[] | {[prop: string]: JSONObject}
+
   
   export interface File {
     fieldname: string;

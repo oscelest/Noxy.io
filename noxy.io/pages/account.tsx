@@ -241,7 +241,7 @@ export default class AccountPage extends Component<AccountPageProps, State> {
       await this.context.updateLogIn(this.context.state.masquerade?.id ?? this.context.state.user?.id!, {email: this.state.email});
     }
     catch (error) {
-      const {response} = error as AxiosError<APIRequest<unknown>>;
+      const {response} = error as AxiosError<APIResponse<unknown>>;
       if (response?.status === 400) {
         this.setState({email_error: new Error("Email is invalid")});
       }
@@ -257,7 +257,7 @@ export default class AccountPage extends Component<AccountPageProps, State> {
       await this.context.updateLogIn(this.context.state.masquerade?.id ?? this.context.state.user?.id!, {username: this.state.username});
     }
     catch (error) {
-      const {response} = error as AxiosError<APIRequest<unknown>>;
+      const {response} = error as AxiosError<APIResponse<unknown>>;
       if (response?.status === 400) {
         this.setState({username_error: new Error("Username must be between 3 and 64 characters")});
       }
@@ -277,7 +277,7 @@ export default class AccountPage extends Component<AccountPageProps, State> {
       this.setState({password: "", confirm: ""});
     }
     catch (error) {
-      const {response} = error as AxiosError<APIRequest<unknown>>;
+      const {response} = error as AxiosError<APIResponse<unknown>>;
       if (response?.status === 400) {
         this.setState({password_error: new Error("Password must be at least 12 characters.")});
       }

@@ -63,7 +63,7 @@ export default class LogInForm extends Component<SignUpFormProps, State> {
         await this.props.onSubmit?.(email, username, password);
       }
       catch (error) {
-        const {response} = error as AxiosError<APIRequest<unknown>>;
+        const {response} = error as AxiosError<APIResponse<unknown>>;
         
         if (response?.status === 400) {
           next_state.error = new Error("Email and password does not match any account");

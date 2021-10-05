@@ -1,5 +1,6 @@
 import _ from "lodash";
 import React from "react";
+import RequestHeader from "../common/enums/RequestHeader";
 import KeyboardCommand from "./enums/KeyboardCommand";
 
 namespace Helper {
@@ -8,6 +9,17 @@ namespace Helper {
   export const FontFamilyList = ["Arial", "Helvetica", "Verdana", "Georgia", "Times New Roman", "Tahoma", "Trebuchet MS", "Nunito", "Garamond", "Courier New", "Brush Script MT"];
   export const FontSizeList = ["8", "9", "10", "11", "12", "14", "18", "24", "30", "36", "48", "60", "72", "84", "96"];
   export const FontLengthList = ["px", "pt", "em", "rem", "vw", "vmax", "%", "cm", "mm", "in", "pc", "ex", "ch"];
+  
+  export async function request<Response = any, Request extends FormData = FormData>(url: string, form_data?: Request) {
+    const response = await fetch(url, {
+      body: form_data,
+      headers: {
+        [RequestHeader.AUTHORIZATION]: localStorage.getItem(RequestHeader.AUTHORIZATION) ?? "",
+      }
+    });
+    const result = await response.json()
+    return result as Response;
+  }
   
   export function invoke<V>(list?: V, ...params: V extends LambdaFn ? Parameters<V> : never): V extends LambdaFn ? ReturnType<V> : V {
     return typeof list === "function" ? list.apply(null, params) : list;
