@@ -50,11 +50,10 @@ export default class Fetch<T = unknown> {
     return new Promise<APIResponse<T>>((resolve, reject) => {
       const request = new XMLHttpRequest();
       request.addEventListener("readystatechange", (event) => {
-        console.log("State change", event);
         if (progress?.cancelled) return request.abort();
         if (request.readyState === XMLHttpRequest.DONE) {
           if (request.status !== 200) {
-            return reject(new ServerException(request.status as keyof typeof HTTPStatusCode, Fetch.parseResponse(request.response, request.responseType)));
+            return reject(new ServerException(request.status as keyof typeof HTTPStatusCode, Fetch.parseResponse(request.response, request.responseType), request.statusText));
           }
           if (request.status === 200) {
             return resolve(Fetch.parseResponse(request.response, request.responseType));
@@ -68,17 +67,14 @@ export default class Fetch<T = unknown> {
       });
       
       request.addEventListener("error", (event) => {
-        console.log("Error", event);
         reject(new Error("Failed!"));
       });
       
       request.addEventListener("timeout", (event) => {
-        console.log("Timeout", event);
         reject(new Error("Timeout!"));
       });
       
       request.addEventListener("abort", (event) => {
-        console.log("Abort", event);
         reject(new Error("Aborted!"));
       });
       
