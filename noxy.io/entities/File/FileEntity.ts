@@ -82,8 +82,8 @@ export default class FileEntity extends BaseEntity {
     return result.content;
   }
 
-  public static async postOne(file: File, parameters: FileEntityCreateParameters, progress?: ProgressHandler<File>) {
-    const result = await Fetch.post<FileEntity>(this.URL, {...parameters, file}, progress);
+  public static async postOne(data: File, parameters: FileEntityCreateParameters, progress?: ProgressHandler<File>) {
+    const result = await Fetch.post<FileEntity>(this.URL, {...parameters, data}, progress);
     return new this(result.content);
   }
 

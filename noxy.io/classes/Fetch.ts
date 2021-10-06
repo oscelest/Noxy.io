@@ -32,6 +32,9 @@ export default class Fetch<T = unknown> {
       return;
     }
     else {
+      if (item instanceof File) {
+        return this.data[key].push(item);
+      }
       if (item instanceof BaseEntity) {
         return this.data[key].push(item.getPrimaryID());
       }
@@ -51,13 +54,13 @@ export default class Fetch<T = unknown> {
     }
   }
   
-  public async execute(progress: ProgressHandler = new ProgressHandler()) {
+  public async execute(handler: ProgressHandler = new ProgressHandler()) {
     return new Promise<APIResponse<T>>((resolve, reject) => {
       const request = new XMLHttpRequest();
       request.addEventListener("readystatechange", (event) => {
-        progress.state = request.readyState;
-        if (progress?.cancelled) return request.abort();
-        if (progress.state === XHRState.DONE) {
+        handler.state = request.readyState;
+        if (handler.error?.code === 0) return request.abort();
+        if (handler.state === XHRState.DONE) {
           if (request.status !== 200) {
             return reject(new ServerException(request.status as HTTPStatusCode, Fetch.parseResponse(request.response, request.responseType), request.statusText));
           }
@@ -66,9 +69,9 @@ export default class Fetch<T = unknown> {
       });
       
       request.addEventListener("progress", (event) => {
-        progress.progress = +(event.loaded / event.total * 100).toFixed(2);
-        if (progress.cancelled) return request.abort();
-        if (progress.progress_handler) progress.progress_handler(event);
+        handler.progress = +(event.loaded / event.total * 100).toFixed(2);
+        if (handler.error?.code === 0) return request.abort();
+        if (handler.progress_handler) handler.progress_handler(handler, event);
       });
       
       request.addEventListener("error", (event) => {
@@ -85,6 +88,9 @@ export default class Fetch<T = unknown> {
         console.log(event);
         reject(new ServerException(0, {}));
       });
+      
+      console.log(this)
+      console.log(this.hasFile())
       
       let data = undefined;
       if (this.method === HTTPMethod.GET) {
@@ -153,6 +159,7 @@ export default class Fetch<T = unknown> {
   }
   
   public static async post<T>(path: string, data?: FetchData, progress?: ProgressHandler) {
+    console.log(path, data);
     return await new this<T>(HTTPMethod.POST, path, data).execute(progress);
   }
   
