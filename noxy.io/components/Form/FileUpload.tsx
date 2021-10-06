@@ -1,14 +1,14 @@
 import _ from "lodash";
 import React from "react";
-import FileTransfer from "../../../common/classes/File/FileTransfer";
+import ProgressHandler from "../../../common/classes/ProgressHandler";
 import FileTypeName from "../../../common/enums/FileTypeName";
+import Component from "../Application/Component";
+import Conditional from "../Application/Conditional";
 import Preview from "../UI/Preview";
 import Button from "./Button";
 import Style from "./FileUpload.module.scss";
 import Input from "./Input";
 import ProgressBar from "./ProgressBar";
-import Conditional from "../Application/Conditional";
-import Component from "../Application/Component";
 
 export default class FileUpload extends Component<FileUploadProps, State> {
 
@@ -21,11 +21,11 @@ export default class FileUpload extends Component<FileUploadProps, State> {
   }
 
   private readonly getPath = () => {
-    return URL.createObjectURL(this.props.transfer.file);
+    return URL.createObjectURL(this.props.transfer.data);
   };
 
   private readonly getType = () => {
-    return this.props.transfer.file.type.split("/")[0] as FileTypeName;
+    return this.props.transfer.data.type.split("/")[0] as FileTypeName;
   };
 
   private readonly getUploadText = () => {
@@ -53,7 +53,7 @@ export default class FileUpload extends Component<FileUploadProps, State> {
   public componentDidUpdate(prevProps: Readonly<FileUploadProps>) {
     const next_state = {} as State;
 
-    if (prevProps.transfer.file !== this.props.transfer.file) {
+    if (prevProps.transfer.data !== this.props.transfer.data) {
       next_state.path = this.getPath();
       next_state.type = this.getType();
     }
@@ -76,42 +76,43 @@ export default class FileUpload extends Component<FileUploadProps, State> {
             <ProgressBar progress={this.props.transfer.progress ?? 0}>{this.getProgressBarText()}</ProgressBar>
           </Conditional>
           <Conditional condition={!this.props.transfer.progress}>
-            <Input label={"Name"} error={this.props.transfer.error} value={this.props.transfer.name} onChange={this.eventNameChange}/>
+            <Input label={"Name"} error={this.props.transfer.error} value={this.props.transfer.data.name} onChange={this.eventChange}/>
           </Conditional>
           <div className={Style.FileActionList}>
             <Conditional condition={!this.props.transfer.progress}>
-              <Button className={Style.FileAction} onClick={this.eventUploadClick}>{this.getUploadText()}</Button>
+              <Button className={Style.FileAction} onClick={this.eventUpload}>{this.getUploadText()}</Button>
             </Conditional>
-            <Button className={Style.FileAction} onClick={this.eventCancelClick}>{this.getCancelText()}</Button>
+            <Button className={Style.FileAction} onClick={this.eventCancel}>{this.getCancelText()}</Button>
           </div>
         </div>
       </div>
     );
   }
 
-  private readonly eventNameChange = (name: string) => {
+  private readonly eventChange = (name: string) => {
     this.props.onChange?.(name, this.props.transfer);
   };
 
-  private readonly eventCancelClick = () => {
+  private readonly eventCancel = () => {
+    this.props.transfer.cancel();
     this.props.onCancel?.(this.props.transfer);
   };
 
-  private readonly eventUploadClick = () => {
+  private readonly eventUpload = () => {
     this.props.onUpload?.(this.props.transfer);
   };
 
 }
 
 export interface FileUploadProps {
-  transfer: FileTransfer
+  transfer: ProgressHandler<File>
 
   children?: never
   className?: string
 
-  onChange?: (name: string, file: FileTransfer) => void
-  onUpload?: (file: FileTransfer) => void
-  onCancel?: (file: FileTransfer) => void
+  onChange(name: string, file: ProgressHandler<File>): void
+  onUpload?(file: ProgressHandler<File>): void
+  onCancel?(file: ProgressHandler<File>): void
 }
 
 interface State {

@@ -3,6 +3,7 @@ import ProgressHandler from "../../common/classes/ProgressHandler";
 import HTTPMethod from "../../common/enums/HTTPMethod";
 import HTTPStatusCode from "../../common/enums/HTTPStatusCode";
 import RequestHeader from "../../common/enums/RequestHeader";
+import XHRState from "../../common/enums/XHRState";
 import ServerException from "../../common/exceptions/ServerException";
 
 export default class Fetch<T = unknown> {
@@ -50,37 +51,39 @@ export default class Fetch<T = unknown> {
     }
   }
   
-  public async execute(progress?: ProgressHandler) {
+  public async execute(progress: ProgressHandler = new ProgressHandler()) {
     return new Promise<APIResponse<T>>((resolve, reject) => {
       const request = new XMLHttpRequest();
       request.addEventListener("readystatechange", (event) => {
+        progress.state = request.readyState;
         if (progress?.cancelled) return request.abort();
-        if (request.readyState === XMLHttpRequest.DONE) {
+        if (progress.state === XHRState.DONE) {
           if (request.status !== 200) {
-            return reject(new ServerException(request.status as keyof typeof HTTPStatusCode, Fetch.parseResponse(request.response, request.responseType), request.statusText));
+            return reject(new ServerException(request.status as HTTPStatusCode, Fetch.parseResponse(request.response, request.responseType), request.statusText));
           }
           return resolve(Fetch.parseResponse(request.response, request.responseType));
         }
       });
       
       request.addEventListener("progress", (event) => {
-        if (progress?.cancelled) return request.abort();
-        if (progress?.progress_handler) progress?.progress_handler(event);
+        progress.progress = +(event.loaded / event.total * 100).toFixed(2);
+        if (progress.cancelled) return request.abort();
+        if (progress.progress_handler) progress.progress_handler(event);
       });
       
       request.addEventListener("error", (event) => {
         console.log(event);
-        reject(new Error("Failed!"));
+        reject(new ServerException(request.status as HTTPStatusCode, {}));
       });
       
       request.addEventListener("timeout", (event) => {
         console.log(event);
-        reject(new Error("Timeout!"));
+        reject(new ServerException(408, {}));
       });
       
       request.addEventListener("abort", (event) => {
         console.log(event);
-        reject(new Error("Aborted!"));
+        reject(new ServerException(0, {}));
       });
       
       let data = undefined;

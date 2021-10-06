@@ -9,5 +9,9 @@ export default class Component<P = {}, S = {}> extends React.Component<P, S> {
   constructor(props: P) {
     super(props);
   }
+  
+  public updateState = () => {
+    return this.setState({});
+  }
 
 }

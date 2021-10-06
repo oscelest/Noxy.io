@@ -4,7 +4,10 @@ export default class FileTransfer {
   public name: string;
   public progress: number;
   public error?: Error;
-  public canceler?: (message?: string) => void;
+  public completed: boolean;
+  public cancelled: boolean;
+  public cancel_handler?: (message?: string) => void;
+  public progress_handler: ProgressEventHandler
 
   constructor(file: File | FileTransfer) {
     if (file instanceof FileTransfer) file = file.file;
@@ -14,9 +17,9 @@ export default class FileTransfer {
   }
 
   public cancel() {
-    if (this.canceler) this.canceler();
     this.progress =  Number.NEGATIVE_INFINITY;
     this.error = undefined;
+    this.cancelled = true;
     return this;
   }
 
@@ -37,3 +40,5 @@ export default class FileTransfer {
   }
 
 }
+
+export type ProgressEventHandler = (event: ProgressEvent<XMLHttpRequestEventTarget>) => void;

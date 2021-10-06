@@ -1,26 +1,33 @@
-export default class ProgressHandler {
+import {v4} from "uuid";
+import XHRState from "../enums/XHRState";
+
+export default class ProgressHandler<Data = any> {
   
-  #cancelled: boolean
+  public id: string;
+  public data: Data
+  public state: XHRState;
+  public error: Error;
+  public progress: number;
+  public cancelled: boolean;
+  public progress_handler: ProgressEventHandler<Data> | undefined;
   
-  readonly #progress_handler: ProgressEventHandler | undefined;
-  
-  constructor(progress_handler?: ProgressEventHandler) {
-    this.#cancelled = false;
-    this.#progress_handler = progress_handler;
+  constructor(data?: Data, progress_handler?: ProgressEventHandler<Data>) {
+    this.id = v4();
+    this.data = data as any;
+    this.state = XHRState.UNSENT;
+    this.progress = 0;
+    this.cancelled = false;
+    this.progress_handler = progress_handler;
   }
   
-  public get cancelled() {
-    return this.#cancelled;
-  }
-  
-  public get progress_handler() {
-    return this.#progress_handler;
+  public fail(error: Error) {
+    this.error = error;
   }
   
   public cancel() {
-    this.#cancelled = true;
+    this.cancelled = true;
   }
   
 }
 
-export type ProgressEventHandler = (event: ProgressEvent<XMLHttpRequestEventTarget>) => void;
+export type ProgressEventHandler<Data = any> = (handler: ProgressHandler<Data>, event: ProgressEvent<XMLHttpRequestEventTarget>) => void;

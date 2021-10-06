@@ -3,6 +3,7 @@ import React from "react";
 import FileTransfer from "../../../common/classes/File/FileTransfer";
 import ProgressHandler from "../../../common/classes/ProgressHandler";
 import QueuePosition from "../../../common/enums/QueuePosition";
+import XHRState from "../../../common/enums/XHRState";
 import ServerException from "../../../common/exceptions/ServerException";
 import Component from "../../components/Application/Component";
 import Dialog from "../../components/Application/Dialog";
@@ -21,45 +22,44 @@ export default class FileUploadForm extends Component<FileUploadFormProps, State
   constructor(props: FileUploadFormProps) {
     super(props);
     
+    const {file_tag_list = [], file_list = []} = this.props;
     this.state = {
       tag_search:         "",
       tag_loading:        false,
       tag_available_list: [],
-      tag_selected_list:  this.props.file_tag_list ?? [],
-      
-      file_list: _.map(this.props.file_list, file => new FileTransfer(file)),
+      tag_selected_list:  file_tag_list,
+      file_list:          file_list.map(file => new ProgressHandler<File>(file, this.eventFileProgress)),
     };
   }
   
-  private readonly upload = async (transfer: FileTransfer) => {
-    if (!transfer.name) return transfer.fail("Field cannot be empty");
+  private getIndex(handler: ProgressHandler<File>) {
+    const index = this.state.file_list.findIndex(value => handler.id === value.id);
+    if (index < 0) throw new Error("Could not find progress handler in list of progress handlers.");
+    return index;
+  }
+  
+  private readonly eventFileProgress = (handler: ProgressHandler<File>, event: ProgressEvent<XMLHttpRequestEventTarget>) => {
+    this.state.file_list[this.getIndex(handler)] = handler;
+    this.setState({file_list: this.state.file_list});
+  };
+  
+  private readonly upload = async (transfer: ProgressHandler<File>) => {
+    if (!transfer.data.name) return transfer.fail(new Error("Name missing"));
     
     try {
       // TODO: This does not work currently as it should be using the new Progress Handler to cancel.
-      const entity = await FileEntity.postOne(
-        new File([transfer.file.slice(0, transfer.file.size, transfer.file.type)], transfer.name, {type: transfer.file.type}),
-        {file_tag_list: this.state.tag_selected_list},
-        new ProgressHandler((event) => this.advanceFileTransfer(transfer, {error: undefined, progress: +(event.loaded / event.total * 100).toFixed(2)})),
-        // (event: ProgressEvent) => ),
-        // (cancel: Canceler) => this.advanceFileTransfer(transfer, {canceler: cancel}),
-      );
-      this.advanceFileTransfer(transfer, {error: undefined, progress: Number.POSITIVE_INFINITY});
+      const entity = await FileEntity.postOne(transfer.data, {file_tag_list: this.state.tag_selected_list}, transfer);
       this.props.onFileUpload?.(entity);
     }
     catch (exception) {
       const {code, content, message} = exception as ServerException;
       if (code === 404) {
         if (content.entity === "FileExtension") {
+          this;
           return this.failFileTransfer(transfer, `"${content.params.mime_type}" is not supported.`, true);
         }
       }
-      
-      this.failFileTransfer(transfer, message);
     }
-  };
-  
-  private readonly advanceFileTransfer = (transfer: FileTransfer, next: Partial<FileTransfer>) => {
-    this.setState({file_list: _.map(this.state.file_list, value => value === transfer ? transfer.advance(next) : value)});
   };
   
   private readonly failFileTransfer = (transfer: FileTransfer, next: string | Error, fatal = false) => {
@@ -70,9 +70,14 @@ export default class FileUploadForm extends Component<FileUploadFormProps, State
     Dialog.close(this.state.dialog);
   };
   
+  private appendFileList = (file_list: File[] | FileList) => {
+    this.state.file_list.push(...[...file_list].map(value => new ProgressHandler(value, this.eventFileProgress)));
+    this.setState({file_list: this.state.file_list});
+  };
+  
   public componentDidUpdate(prevProps: Readonly<FileUploadFormProps>, prevState: Readonly<State>, snapshot?: any): void {
-    if (prevProps.file_list !== this.props.file_list) {
-      this.setState({file_list: [...this.state.file_list, ..._.map(this.props.file_list, file => new FileTransfer(file))]});
+    if (this.props.file_list && prevProps.file_list !== this.props.file_list) {
+      this.appendFileList(this.props.file_list);
     }
   }
   
@@ -101,9 +106,9 @@ export default class FileUploadForm extends Component<FileUploadFormProps, State
     );
   }
   
-  private readonly renderFileUpload = (transfer: FileTransfer, key: number = 0) => {
+  private readonly renderFileUpload = (transfer: ProgressHandler<File>, key: number = 0) => {
     return (
-      <FileUpload key={key} transfer={transfer} onChange={this.eventFileChange} onUpload={this.upload} onCancel={this.eventFileCancel}/>
+      <FileUpload key={key} transfer={transfer} onChange={this.eventFileChange} onUpload={this.upload}/>
     );
   };
   
@@ -138,32 +143,33 @@ export default class FileUploadForm extends Component<FileUploadFormProps, State
     return file_tag;
   };
   
-  private readonly eventBrowseChange = (file_list: FileList) => {
-    this.setState({file_list: _.concat(this.state.file_list, _.map(file_list, file => new FileTransfer(file)))});
+  private readonly eventBrowseChange = (file_list: File[] | FileList) => {
+    this.state.file_list.push(...[...file_list].map(value => new ProgressHandler(value, this.eventFileProgress)));
+    this.setState({file_list: this.state.file_list});
   };
   
-  private readonly eventFileChange = (name: string, transfer: FileTransfer) => {
-    this.advanceFileTransfer(transfer, {name});
+  private readonly eventFileChange = (name: string, transfer: ProgressHandler<File>) => {
+    this.state.file_list[this.getIndex(transfer)].data = new File([transfer.data.slice(0, transfer.data.size, transfer.data.type)], name);
+    this.setState({file_list: this.state.file_list});
   };
   
-  private readonly eventFileCancel = (transfer: FileTransfer) => {
-    transfer.cancel();
-    this.setState({file_list: _.filter(this.state.file_list, value => value !== transfer)});
-  };
-  
-  private readonly eventFileUploadAll = async () => {
-    for (let handle of this.state.file_list) {
-      if (!handle.progress) await this.upload(handle);
+  private readonly eventFileUploadAll = () => {
+    for (let i = 0; i < this.state.file_list.length; i++) {
+      const file = this.state.file_list.at(i);
+      if (file?.state === XHRState.UNSENT) this.upload(file);
     }
   };
   
   private readonly eventFileCancelAll = () => {
-    this.setState({file_list: _.filter(this.state.file_list, handle => !!handle.cancel?.().error)});
+    for (let i = 0; i < this.state.file_list.length; i++) {
+      const file = this.state.file_list.at(i);
+      if (file && file.state !== XHRState.UNSENT && file.state !== XHRState.DONE) file.cancel();
+    }
   };
 }
 
 export interface FileUploadFormProps {
-  file_list?: File[];
+  file_list?: File[] | FileList;
   file_tag_list?: FileTagEntity[];
   
   className?: string;
@@ -176,7 +182,7 @@ interface State {
   dialog?: string;
   error?: Error;
   
-  file_list: FileTransfer[];
+  file_list: ProgressHandler<File>[];
   
   tag_search: string;
   tag_loading: boolean;

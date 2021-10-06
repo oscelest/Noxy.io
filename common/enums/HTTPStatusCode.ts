@@ -1,4 +1,5 @@
 const HTTPStatusCode = {
+  0:   "Unknown",
   100: "Continue",
   101: "Switching Protocols",
   102: "Processing",
@@ -56,5 +57,7 @@ const HTTPStatusCode = {
   510: "Not Extended",
   511: "Network Authentication Required",
 };
+
+type HTTPStatusCode = keyof typeof HTTPStatusCode;
 
 export default HTTPStatusCode;
