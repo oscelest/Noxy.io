@@ -53,6 +53,7 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
     this.state = {
       ref_context_menu:  React.createRef(),
       ref_entity_picker: React.createRef(),
+      ref_upload_dialog: React.createRef(),
 
       dialog_change_tag:  false,
       dialog_change_file: false,
@@ -210,16 +211,21 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
   // region    ----- Dialogs -----    region //
 
   private readonly openUploadDialog = (event?: React.MouseEvent | React.DragEvent) => {
-    const file_list = (event as React.DragEvent)?.dataTransfer?.files ?? [];
     if (!this.context.hasPermission(PermissionLevel.FILE_CREATE)) return;
+    const file_list = [...(event as React.DragEvent)?.dataTransfer?.files ?? []];
+    const {ref_upload_dialog, tag_selected_list} = this.state;
 
     this.setState({
       dialog: Dialog.show(
-        <FileUploadForm file_list={_.values(file_list)} file_tag_list={this.state.tag_selected_list} onFileUpload={this.eventUploadFileCreate} onTagCreate={this.eventUploadTagCreate}/>,
-        {id: "file-explorer-drag-drop", title: "Upload file(s)", onClose: this.eventUploadDialogClose, drag: {title: "Test", message: "Test", onDrop: this.openUploadDialog}},
+        <FileUploadForm ref={ref_upload_dialog} file_list={_.values(file_list)} file_tag_list={tag_selected_list} onFileUpload={this.eventUploadFileCreate} onTagCreate={this.eventUploadTagCreate}/>,
+        {id: "file-explorer-drag-drop", title: "Upload file(s)", onClose: this.eventUploadDialogClose, drag: {title: "Drop file here to upload", message: "", onDrop: this.dropUploadDialog}},
       ),
     });
   };
+  
+  private readonly dropUploadDialog = (event: React.DragEvent<HTMLDivElement>) => {
+    this.state.ref_upload_dialog.current?.appendFileList(event.dataTransfer.files);
+  }
 
   private readonly eventUploadTagCreate = () => {
     this.setState({dialog_change_tag: true});
@@ -409,6 +415,7 @@ export interface FileBrowserProps {
 interface State {
   ref_context_menu: React.RefObject<HTMLDivElement>
   ref_entity_picker: React.RefObject<EntityPicker<FileTagEntity>>
+  ref_upload_dialog: React.RefObject<FileUploadForm>
 
   dialog?: string
   dialog_change_file: boolean

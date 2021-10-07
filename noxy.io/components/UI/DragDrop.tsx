@@ -1,11 +1,11 @@
 import React from "react";
 import {v4} from "uuid";
+import Component from "../Application/Component";
 import Dialog from "../Application/Dialog";
 import Style from "./DragDrop.module.scss";
-import Component from "../Application/Component";
 
 export default class DragDrop<C extends typeof Component, I extends InstanceType<C>> extends Component<DragDropProps<C, I>, State> {
-
+  
   constructor(props: DragDropProps<C, I>) {
     super(props);
     this.state = {
@@ -13,13 +13,13 @@ export default class DragDrop<C extends typeof Component, I extends InstanceType
       flag_overlay: 0,
     };
   }
-
+  
   private dragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
     this.props.onDragOver?.(event);
   };
-
+  
   private dragEnter = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -29,32 +29,33 @@ export default class DragDrop<C extends typeof Component, I extends InstanceType
     this.setState({flag_overlay: this.state.flag_overlay + 1});
     this.props.onDragEnter?.(event);
   };
-
+  
   private dragLeave = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
     const next_state = {} as State;
     next_state.flag_overlay = this.state.flag_overlay - 1;
-    if (!next_state.flag_overlay) {
+    if (!next_state.flag_overlay && this.state.dialog) {
       Dialog.close(this.state.dialog);
       next_state.dialog = undefined;
     }
     this.props.onDragLeave?.(event);
     this.setState(next_state);
   };
-
+  
   private drop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    if (!this.state.dialog) return;
     Dialog.close(this.state.dialog);
     this.setState({flag_overlay: 0, dialog: undefined});
     this.props.onDrop?.(event);
   };
-
+  
   public render() {
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
-
+    
     return (
       <div className={classes.join(" ")} onDragOver={this.dragOver} onDragEnter={this.dragEnter} onDragLeave={this.dragLeave} onDrop={this.drop}>
         {this.props.children}
@@ -65,20 +66,19 @@ export default class DragDrop<C extends typeof Component, I extends InstanceType
 }
 
 export interface DragDropProps<C extends typeof Component, I extends InstanceType<C>> {
-  className?: string
-
-  title: string
-  message: string
-  // listener: DialogListenerType
-
-  onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void
-  onDragEnter?: (event: React.DragEvent<HTMLDivElement>) => void
-  onDragLeave?: (event: React.DragEvent<HTMLDivElement>) => void
-  onDrop?: (event: React.DragEvent<HTMLDivElement>) => void
+  className?: string;
+  
+  title: string;
+  message: string;
+  
+  onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnter?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragLeave?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDrop?: (event: React.DragEvent<HTMLDivElement>) => void;
 }
 
 interface State {
-  id: string
-  dialog?: string
-  flag_overlay: number
+  id: string;
+  dialog?: string;
+  flag_overlay: number;
 }

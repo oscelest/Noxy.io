@@ -1,7 +1,6 @@
 import _ from "lodash";
 import React from "react";
 import ProgressHandler from "../../../common/classes/ProgressHandler";
-import QueuePosition from "../../../common/enums/QueuePosition";
 import XHRState from "../../../common/enums/XHRState";
 import ServerException from "../../../common/exceptions/ServerException";
 import Component from "../../components/Application/Component";
@@ -31,6 +30,11 @@ export default class FileUploadForm extends Component<FileUploadFormProps, State
     };
   }
   
+  public appendFileList(file_list: File[] | FileList) {
+    this.state.file_list.push(...[...file_list].map(value => new ProgressHandler(value, this.eventFileProgress)));
+    this.setState({file_list: this.state.file_list});
+  };
+  
   private getIndex(handler: ProgressHandler<File>) {
     const index = this.state.file_list.findIndex(value => handler.id === value.id);
     if (index < 0) throw new Error("Could not find progress handler in list of progress handlers.");
@@ -59,18 +63,13 @@ export default class FileUploadForm extends Component<FileUploadFormProps, State
       dialog:
         Dialog.show(
           <ConfirmForm value={value} onAccept={this.eventTagDelete} onDecline={this.closeDialog}/>,
-          {position: QueuePosition.FIRST, title: "Permanently delete tag?"},
+          {title: "Permanently delete tag?"},
         ),
     });
   };
   
   private closeDialog() {
     Dialog.close(this.state.dialog);
-  };
-  
-  private appendFileList(file_list: File[] | FileList) {
-    this.state.file_list.push(...[...file_list].map(value => new ProgressHandler(value, this.eventFileProgress)));
-    this.setState({file_list: this.state.file_list});
   };
   
   public componentDidUpdate(prevProps: Readonly<FileUploadFormProps>, prevState: Readonly<State>, snapshot?: any) {
@@ -106,7 +105,7 @@ export default class FileUploadForm extends Component<FileUploadFormProps, State
   
   private readonly renderFileUpload = (transfer: ProgressHandler<File>, key: number = 0) => {
     return (
-      <FileUpload key={key} transfer={transfer} onChange={this.eventFileChange} onUpload={this.eventFileUpload}/>
+      <FileUpload key={key} transfer={transfer} onChange={this.eventFileChange} onUpload={this.eventFileUpload} onCancel={this.eventFileCancel}/>
     );
   };
   
@@ -142,13 +141,20 @@ export default class FileUploadForm extends Component<FileUploadFormProps, State
   private readonly eventCancelAll = () => {
     for (let i = 0; i < this.state.file_list.length; i++) {
       const file = this.state.file_list.at(i);
-      if (file && file.state !== XHRState.UNSENT && file.state !== XHRState.DONE) file.cancel();
+      if (!file) continue;
+      file.cancel();
+      this.state.file_list.splice(i--, 1);
     }
+    this.setState({file_list: this.state.file_list});
   };
   
   private readonly eventFileUpload = (handler: ProgressHandler<File>) => {
     return this.upload(handler);
-  }
+  };
+  
+  private readonly eventFileCancel = (handler: ProgressHandler<File>) => {
+    this.setState({file_list: [...this.state.file_list.slice(0, this.getIndex(handler)), ...this.state.file_list.slice(this.getIndex(handler) + 1)]});
+  };
   
   private readonly eventFileProgress = (handler: ProgressHandler<File>) => {
     this.state.file_list[this.getIndex(handler)] = handler;

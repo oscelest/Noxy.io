@@ -1,7 +1,7 @@
-import _ from "lodash";
 import React from "react";
 import ProgressHandler from "../../../common/classes/ProgressHandler";
 import FileTypeName from "../../../common/enums/FileTypeName";
+import XHRState from "../../../common/enums/XHRState";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
 import Preview from "../UI/Preview";
@@ -34,31 +34,22 @@ export default class FileUpload extends Component<FileUploadProps, State> {
   };
 
   private readonly getCancelText = () => {
-    if (this.props.transfer.progress === Number.POSITIVE_INFINITY) return "Clear";
-    if (this.props.transfer.progress === Number.NEGATIVE_INFINITY) return "Remove";
+    if (this.props.transfer.error) return "Remove";
+    if (this.props.transfer.state === XHRState.DONE) return "Clear";
     return "Cancel";
   };
 
   private readonly getProgressBarText = () => {
     if (this.props.transfer.error) return this.props.transfer.error.message;
-    if (this.props.transfer.progress === Number.POSITIVE_INFINITY) return "Upload successful";
-    if (this.props.transfer.progress === 100) return "Validating...";
+    if (this.props.transfer.state === XHRState.UNSENT ||this.props.transfer.state === XHRState.OPENED || this.props.transfer.state === XHRState.HEADERS_RECEIVED) return "Ready";
+    if (this.props.transfer.state === XHRState.LOADING) return "Sending...";
+    if (this.props.transfer.progress === 100 && this.props.transfer.state !== XHRState.DONE) return "Validating...";
+    if (this.props.transfer.state === XHRState.DONE) return "Upload successful";
     return `${this.props.transfer.progress}%`;
   };
 
   public componentDidMount() {
     this.setState({path: this.getPath(), type: this.getType()});
-  }
-
-  public componentDidUpdate(prevProps: Readonly<FileUploadProps>) {
-    const next_state = {} as State;
-
-    if (prevProps.transfer.data !== this.props.transfer.data) {
-      next_state.path = this.getPath();
-      next_state.type = this.getType();
-    }
-
-    if (_.size(next_state)) this.setState(next_state);
   }
 
   public render() {
@@ -94,7 +85,6 @@ export default class FileUpload extends Component<FileUploadProps, State> {
   };
 
   private readonly eventCancel = () => {
-    this.props.transfer.cancel();
     this.props.onCancel?.(this.props.transfer);
   };
 

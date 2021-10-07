@@ -1,13 +1,13 @@
 import {Collection} from "@mikro-orm/core";
-import {customAlphabet} from "nanoid";
 import _ from "lodash";
+import {customAlphabet} from "nanoid";
 
 export default class BaseEntity {
 
   public static database: any;
   public static defaultID = "00000000-0000-0000-0000-000000000000";
 
-  public static generateDataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~()'!@,;", 64);
+  public static generateDataHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_~()!@", 64);
   public static generateShareHash = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_", 32);
 
   public static regexDataHash = new RegExp("^[a-zA-Z0-9-._~()'!@,;]{64}$");

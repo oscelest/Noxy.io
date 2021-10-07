@@ -57,13 +57,15 @@ export default class Fetch<T = unknown> {
   public async execute(handler: ProgressHandler = new ProgressHandler()) {
     return new Promise<APIResponse<T>>((resolve, reject) => {
       const request = new XMLHttpRequest();
-      request.addEventListener("readystatechange", (event) => {
+      request.addEventListener("readystatechange", () => {
         handler.state = request.readyState;
         if (handler.error?.code === 0) return request.abort();
         if (handler.state === XHRState.DONE) {
           if (request.status !== 200) {
-            return reject(new ServerException(request.status as HTTPStatusCode, Fetch.parseResponse(request.response, request.responseType), request.statusText));
+            handler.fail(new ServerException(request.status as HTTPStatusCode, Fetch.parseResponse(request.response, request.responseType), request.statusText))
+            return reject(handler.error);
           }
+          handler.complete();
           return resolve(Fetch.parseResponse(request.response, request.responseType));
         }
       });
@@ -88,9 +90,6 @@ export default class Fetch<T = unknown> {
         console.log(event);
         reject(new ServerException(0, {}));
       });
-      
-      console.log(this)
-      console.log(this.hasFile())
       
       let data = undefined;
       if (this.method === HTTPMethod.GET) {
@@ -159,7 +158,6 @@ export default class Fetch<T = unknown> {
   }
   
   public static async post<T>(path: string, data?: FetchData, progress?: ProgressHandler) {
-    console.log(path, data);
     return await new this<T>(HTTPMethod.POST, path, data).execute(progress);
   }
   

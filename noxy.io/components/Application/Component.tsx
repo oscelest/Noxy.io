@@ -1,4 +1,5 @@
 import React from "react";
+import Util from "../../../common/services/Util";
 import Global from "../../Global";
 
 export default class Component<P = {}, S = {}> extends React.Component<P, S> {
@@ -10,8 +11,8 @@ export default class Component<P = {}, S = {}> extends React.Component<P, S> {
     super(props);
   }
   
-  public updateState = () => {
-    return this.setState({});
+  public updateState = (delay?: boolean) => {
+    return delay ? Util.schedule(() => this.setState({})) : this.setState({});
   }
 
 }

@@ -19,6 +19,12 @@ export default class ProgressHandler<Data = any> {
     this.progress_handler = progress_handler;
   }
   
+  public complete() {
+    this.state = XHRState.DONE;
+    this.error = undefined;
+    this.progress = 100;
+  }
+  
   public fail(error: ServerException) {
     this.error = error;
     this.state = XHRState.DONE;
