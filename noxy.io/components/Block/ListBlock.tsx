@@ -3,7 +3,7 @@ import PageBlockType from "../../../common/enums/PageBlockType";
 import Util from "../../../common/services/Util";
 import Character from "../../classes/Character";
 import RichText, {RichTextLine} from "../../classes/RichText";
-import ListPageBlockEntity, {ListBlockText, ListBlockData} from "../../entities/Page/Block/ListPageBlockEntity";
+import ListPageBlockEntity, {ListBlockData, ListBlockText} from "../../entities/Page/Block/ListPageBlockEntity";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
 import Component from "../Application/Component";
@@ -58,6 +58,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   };
 
   private readonly eventChange = (text: ListBlockText, component: EditText) => {
+    
     this.props.onChange(this.props.block.replaceText(component.text, text));
   };
 
