@@ -1,60 +1,47 @@
 import {v4} from "uuid";
+import Decoration from "../Decoration";
 import RichTextCharacter, {RichTextCharacterValueInit} from "./RichTextCharacter";
 
 export default class RichTextSection {
   
-  #id: string;
-  #value: RichTextCharacter[];
-  #decoration: (keyof HTMLElementTagNameMap)[];
+  public readonly id: string;
+  public readonly value: RichTextCharacter[];
+  public readonly decoration: (keyof HTMLElementTagNameMap)[];
   
   constructor(value?: RichTextCharacterValueInit, decoration: (keyof HTMLElementTagNameMap)[] = []) {
-    this.#id = v4();
-    this.#value = RichTextCharacter.parseText(value);
-    this.#decoration = decoration;
+    this.id = v4();
+    this.value = RichTextCharacter.parseText(value);
+    this.decoration = decoration;
   }
   
   public get length() {
-    return this.#value.length;
+    return this.value.length;
   }
   
-  public get id() {
-    return this.#id;
+  public splitAt(position: number) {
+    return [new RichTextSection(this.value.slice(0, position)), new RichTextSection(this.value.slice(position))];
   }
   
-  public get value() {
-    return [...this.#value];
-  }
-  
-  public get decoration() {
-    return this.#decoration;
-  }
-  
-  public at(id: number) {
-    return this.#value.at(id);
-  }
-  
-  public slice(start: number = this.length, end: number = start) {
-    return new RichTextSection(this.#value.slice(start, end));
-  }
-  
-  public splice(insert: RichTextCharacter | RichTextCharacter[], start: number = this.length, end: number = start) {
-    const first = this.#value.slice(0, start);
-    const last = this.#value.slice(end);
-    return new RichTextSection([...first, ...(Array.isArray(insert) ? insert : [insert]), ...last], this.decoration);
-  }
-  
-  public insert(insert: RichTextCharacter | RichTextCharacter[], position?: number) {
-    const value = Array.isArray(insert) ? insert : [insert];
-    return !position
-           ? new RichTextSection([...this.#value, ...value])
-           : new RichTextSection([...this.#value.slice(0, position), ...value, ...this.#value.slice(position)]);
-  }
-  
-  public getCharacter(id: number | string, safe?: true): RichTextCharacter
-  public getCharacter(id: number | string, safe?: false): RichTextCharacter | undefined
-  public getCharacter(id: number | string, safe: boolean = false): RichTextCharacter | undefined {
-    const value = typeof id === "number" ? this.#value.at(id) : this.#value.find(section => section.id === id);
+  public getCharacter(id?: number | string, safe?: true): RichTextCharacter
+  public getCharacter(id?: number | string, safe?: false): RichTextCharacter | undefined
+  public getCharacter(id?: number | string, safe: boolean = false): RichTextCharacter | undefined {
+    const value = typeof id === "string" ? this.value.find(section => section.id === id) : (typeof id === "number" ? this.value.at(id) : undefined);
     if (!value && safe) throw new Error("Could not find section");
+    return value;
+  }
+  
+  public remove({start_character = 0, end_character = this.length}: RichTextSectionSelection = {}) {
+    return new RichTextSection([...this.value.slice(0, start_character), ...this.value.slice(end_character)]);
+  }
+  
+  public decorate(decoration: Initializer<Decoration>, {start_character = 0, end_character = this.length}: RichTextSectionSelection = {}) {
+    const value = new RichTextSection(this.value);
+    
+    for (let i = start_character; i <= end_character; i++) {
+      const character = value.getCharacter(i, true);
+      value.value[i] = new RichTextCharacter(character.value, {...character.decoration, ...decoration});
+    }
+    
     return value;
   }
   
@@ -104,3 +91,8 @@ export default class RichTextSection {
 }
 
 export type RichTextSectionValueInit = RichTextSection | string | (RichTextSection | string)[]
+
+export interface RichTextSectionSelection {
+  start_character?: number;
+  end_character?: number;
+}

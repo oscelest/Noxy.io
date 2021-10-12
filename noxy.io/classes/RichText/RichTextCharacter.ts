@@ -10,10 +10,10 @@ export default class RichTextCharacter {
   public static tab: string = "\t";
   public static linebreak: string = "\n";
   
-  constructor(value: string, decoration: Decoration = new Decoration()) {
+  constructor(value: string, decoration?: Initializer<Decoration>) {
     this.#id = v4();
     this.#value = value.charAt(0) ?? " ";
-    this.#decoration = new Decoration();
+    this.#decoration = new Decoration(decoration);
   }
   
   public get id() {

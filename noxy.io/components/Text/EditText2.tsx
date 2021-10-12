@@ -3,7 +3,7 @@ import ClipboardDataType from "../../../common/enums/ClipboardDataType";
 import Util from "../../../common/services/Util";
 import Character from "../../classes/Character";
 import Decoration from "../../classes/Decoration";
-import RichText from "../../classes/RichText/RichText";
+import RichText, {RichTextSelection} from "../../classes/RichText/RichText";
 import RichTextCharacter from "../../classes/RichText/RichTextCharacter";
 import RichTextSection from "../../classes/RichText/RichTextSection";
 import KeyboardCommand from "../../enums/KeyboardCommand";
@@ -36,14 +36,14 @@ export default class EditText extends Component<EditTextProps, State> {
           start_section:   anchorSection,
           start_character: anchorPosition,
           end_section:     focusSection,
-          end_character:   focusPosition + focusOffset,
+          end_character:   focusPosition,
           forward:         true,
         };
       }
       
       return {
         start_section:   focusSection,
-        start_character: focusPosition + focusOffset,
+        start_character: focusPosition,
         end_section:     anchorSection,
         end_character:   anchorPosition,
         forward:         false,
@@ -68,53 +68,10 @@ export default class EditText extends Component<EditTextProps, State> {
     return value;
   }
   
-  public insert(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: EditTextSelection, clear_selection: boolean = true) {
-    let {start_section, start_character, end_section, end_character} = selection;
-    const value = Array.isArray(insert) ? insert : [insert];
-    
-    
-    // let text = this.text.remove(start_section, start_character, end_section, end_character).insert(insert, start_section, start_character);
-    
-    let text = this.text;
-    for (let i = 0; i < value.length; i++) {
-      if (insert instanceof RichTextSection) {
-        
-        text = text.splice(text.getSection(start_section).slice(0, start_character), start_section, start_section);
-        text = text.splice(insert, start_section + 1, start_section + 1);
-      }
-      else if (insert instanceof RichTextCharacter) {
-      
-      }
-      end_section = start_section;
-      end_character = start_character += 1;
-    }
-    
-    
-    if (start_section === end_section) {
-      const section = this.text.getSection(start_section, true).splice(start_character, end_character - start_character, insert);
-      const text = this.text.splice(section, start_section, end_section);
-      this.props.onChange(text, this);
-      
-      start_character = start_character + (Array.isArray(insert) ? insert.length : 1);
-      end_character = start_character;
-      this.setState({selection: {start_section, end_section, start_character, end_character, forward: true}});
-    }
-    else {
-    
-    }
-    
-    //
-    //
-    // const length = insert instanceof Character ? 1 : insert.length;
-    // const start = this.text.slice(0, selection.start);
-    // const end = this.text.slice(selection.end);
-    // const next_text = new RichText({...this.text, value: [start, insert, end]});
-    // const next_selection = clear_selection ? {start: selection.start + length, end: selection.start + length, forward: selection.forward} : selection;
-    //
-    // this.props.onChange(next_text, this);
-    // this.setState({selection: next_selection, history: this.state.history.push({text: next_text, selection: next_selection})});
+  public insert(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: EditTextSelection) {
+    this.props.onChange(this.text.insert(insert, selection), this);
+    this.setState({selection});
   };
-  
   
   public isDecorationDisabled(decoration: keyof Initializer<Decoration>) {
     return !!(this.props.whitelist?.length && !this.props.whitelist.includes(decoration) || this.props.blacklist?.includes(decoration));
@@ -124,43 +81,33 @@ export default class EditText extends Component<EditTextProps, State> {
     this.state.ref.current?.focus();
   }
   
-  public select(start: number = 0, end: number = this.text.length, forward: boolean = true) {
-    this.setState({selection: {start, end, forward}});
+  public select(start_section: number, start_character: number, end_section: number, end_character: number, forward: boolean = true) {
+    this.setState({selection: {start_section, end_section, start_character, end_character, forward}});
   };
   
-  // public insert(insert: Character | Character[], selection: EditTextSelection, clear_selection = true) {
-  //   selection = this.parseSelection(selection);
-  //
-  //   const length = insert instanceof Character ? 1 : insert.length;
-  //   const start = this.text.slice(0, selection.start);
-  //   const end = this.text.slice(selection.end);
-  //   const next_text = new RichText({...this.text, value: [start, insert, end]});
-  //   const next_selection = clear_selection ? {start: selection.start + length, end: selection.start + length, forward: selection.forward} : selection;
-  //
-  //   this.props.onChange(next_text, this);
-  //   this.setState({selection: next_selection, history: this.state.history.push({text: next_text, selection: next_selection})});
-  // };
-  
-  public insertText(text: string, selection: EditTextSelection = this.getSelection()) {
-    const position = Math.max(0, selection.start - 1);
-    const decoration = this.text.at(position)?.decoration;
-    const segment = [] as Character[];
+  public insertText(text: string, selection?: EditTextSelection) {
+    if (!selection) return;
+    
+    const decoration = this.text.at(selection.start_section, selection.start_character)?.decoration;
+    const segment = [] as RichTextCharacter[];
     
     for (let i = 0; i < text.length; i++) {
-      segment.push(new Character(text[i], decoration));
+      segment.push(new RichTextCharacter(text[i], decoration));
     }
     
     this.insert(segment, selection);
   };
   
-  public insertHTML(html: string | Element, selection: EditTextSelection = this.getSelection()) {
+  public insertHTML(html: string | HTMLElement, selection?: EditTextSelection) {
+    if (!selection) return;
+    
     this.insert(RichText.parseHTML(html).value, selection);
   }
   
-  public decorate(decoration: Initializer<Decoration>, selection: EditTextSelection = this.getSelection()) {
-    decoration = {...decoration};
-    selection = this.parseSelection(selection);
+  public decorate(decoration: Initializer<Decoration>, selection: EditTextSelection) {
+    if (!selection) return;
     
+    decoration = {...decoration};
     const entries = Util.getProperties(decoration);
     for (let i = 0; i < entries.length; i++) {
       const key = entries[i];
@@ -169,7 +116,7 @@ export default class EditText extends Component<EditTextProps, State> {
       }
     }
     
-    const text = this.text.slice(selection.start, selection.end);
+    const text = this.text.decorate(decoration, selection);
     for (let i = 0; i < text.length; i++) {
       text[i] = text[i].decorate(decoration);
     }
@@ -501,11 +448,7 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 }
 
-interface EditTextSelection {
-  start_section: number;
-  start_character: number;
-  end_section: number;
-  end_character: number;
+interface EditTextSelection extends RichTextSelection {
   forward: boolean;
 }
 
