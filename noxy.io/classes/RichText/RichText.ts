@@ -38,7 +38,7 @@ export default class RichText {
     return true;
   }
   
-  public insert(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: RichTextSelection) {
+  public replace(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: RichTextSelection) {
     const text = new RichText(this.value);
     
     selection.start_section = selection.start_section ?? 0;
@@ -73,22 +73,12 @@ export default class RichText {
     
     return text;
   }
-  
-  public remove({start_section = 0, end_section = this.length, ...section}: RichTextSelection = {}) {
-    const text = new RichText(this.value);
+
+  public remove(selection: RichTextSelection) {
+    const text = new RichText((this.value));
+
     
-    for (let i = start_section; i <= end_section; i++) {
-      const item = this.getSection(i, true);
-      if (item && (i === start_section || i === end_section)) {
-        const start_character = i === start_section ? section.start_character : 0;
-        const end_character = i === end_section ? section.end_character : item.length;
-        text.value[i] = item.remove({start_character, end_character});
-      }
-      else {
-        text.value.splice(i--, 1);
-      }
-    }
-    
+
     return text;
   }
   

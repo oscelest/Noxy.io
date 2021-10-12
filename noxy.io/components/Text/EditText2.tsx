@@ -69,7 +69,7 @@ export default class EditText extends Component<EditTextProps, State> {
   }
   
   public insert(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: EditTextSelection) {
-    this.props.onChange(this.text.insert(insert, selection), this);
+    this.props.onChange(this.text.replace(insert, selection), this);
     this.setState({selection});
   };
   
@@ -105,23 +105,8 @@ export default class EditText extends Component<EditTextProps, State> {
   }
   
   public decorate(decoration: Initializer<Decoration>, selection: EditTextSelection) {
-    if (!selection) return;
-    
-    decoration = {...decoration};
-    const entries = Util.getProperties(decoration);
-    for (let i = 0; i < entries.length; i++) {
-      const key = entries[i];
-      if (this.props.whitelist?.length && !this.props.whitelist.includes(key) || this.props.blacklist?.includes(key)) {
-        delete decoration[key];
-      }
-    }
-    
-    const text = this.text.decorate(decoration, selection);
-    for (let i = 0; i < text.length; i++) {
-      text[i] = text[i].decorate(decoration);
-    }
-    
-    this.insert(text, selection, false);
+    this.props.onChange(this.text.decorate(decoration, selection), this);
+    this.setState({selection});
   };
   
   // Should maybe be moved to RichText?
@@ -165,32 +150,6 @@ export default class EditText extends Component<EditTextProps, State> {
     
     this.insert([], {...selection, start: selection.start ? selection.start + 1 : selection.start});
   }
-  
-  public undo() {
-    const history = this.state.history.backward();
-    if (this.state.history === history) return this;
-    
-    this.props.onChange(history.value.text, this);
-    this.setState({history, selection: history.value.selection});
-  }
-  
-  public redo() {
-    const history = this.state.history.forward();
-    if (this.state.history === history) return this;
-    
-    this.props.onChange(history.value.text, this);
-    this.setState({history, selection: history.value.selection});
-  }
-  
-  private parseSelection(selection?: EditTextSelection): EditTextSelection {
-    if (!selection) return {start: 0, end: this.text.length, forward: true};
-    if (isNaN(+selection.start)) selection.start = 0;
-    if (isNaN(+selection.end)) selection.end = this.text.length;
-    
-    selection.start = Math.max(Math.min(selection.start, selection.end), 0);
-    selection.end = Math.min(Math.max(selection.start, selection.end), this.text.length);
-    return selection;
-  };
   
   private getNodeByPosition(position: number, parent: Node): {position: number, element: Node} {
     if (!parent) throw "Could not get container element.";
