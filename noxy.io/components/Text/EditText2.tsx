@@ -1,8 +1,8 @@
 import React from "react";
 import ClipboardDataType from "../../../common/enums/ClipboardDataType";
-import Util from "../../../common/services/Util";
 import Character from "../../classes/Character";
 import Decoration from "../../classes/Decoration";
+import {RichTextFragment} from "../../classes/RichText";
 import RichText, {RichTextSelection} from "../../classes/RichText/RichText";
 import RichTextCharacter from "../../classes/RichText/RichTextCharacter";
 import RichTextSection from "../../classes/RichText/RichTextSection";
@@ -24,7 +24,7 @@ export default class EditText extends Component<EditTextProps, State> {
     return this.props.children as EditTextProps["children"];
   };
   
-  public getSelection(): EditTextSelection | undefined {
+  public getSelection(): EditTextSelection {
     const {focusNode, anchorNode, focusOffset = 0, anchorOffset = 0} = getSelection() ?? {};
     
     if (this.state.ref.current && focusNode && anchorNode && this.state.ref.current.contains(focusNode) && this.state.ref.current.contains(anchorNode)) {
@@ -49,8 +49,9 @@ export default class EditText extends Component<EditTextProps, State> {
         forward:         false,
       };
     }
+    throw new Error("Shit");
   };
-  
+
   private getSectionAndCharacterByNode(node: Node, container: Node, offset: number = 0): [number, number] {
     if (!container || !node.parentNode) throw new Error("Node does not exist inside container element.");
     if (node.parentNode === container) {
@@ -68,11 +69,6 @@ export default class EditText extends Component<EditTextProps, State> {
     return value;
   }
   
-  public insert(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: EditTextSelection) {
-    this.props.onChange(this.text.replace(insert, selection), this);
-    this.setState({selection});
-  };
-  
   public isDecorationDisabled(decoration: keyof Initializer<Decoration>) {
     return !!(this.props.whitelist?.length && !this.props.whitelist.includes(decoration) || this.props.blacklist?.includes(decoration));
   };
@@ -81,13 +77,16 @@ export default class EditText extends Component<EditTextProps, State> {
     this.state.ref.current?.focus();
   }
   
-  public select(start_section: number, start_character: number, end_section: number, end_character: number, forward: boolean = true) {
-    this.setState({selection: {start_section, end_section, start_character, end_character, forward}});
+  public select(selection: EditTextSelection) {
+    this.setState({selection});
   };
   
-  public insertText(text: string, selection?: EditTextSelection) {
-    if (!selection) return;
-    
+  public insert(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: EditTextSelection = this.getSelection()) {
+    this.props.onChange(this.text.replace(insert, selection), this);
+    this.setState({selection});
+  };
+  
+  public insertText(text: string, selection: EditTextSelection = this.getSelection()) {
     const decoration = this.text.at(selection.start_section, selection.start_character)?.decoration;
     const segment = [] as RichTextCharacter[];
     
@@ -98,127 +97,129 @@ export default class EditText extends Component<EditTextProps, State> {
     this.insert(segment, selection);
   };
   
-  public insertHTML(html: string | HTMLElement, selection?: EditTextSelection) {
-    if (!selection) return;
-    
+  public insertHTML(html: string | HTMLElement, selection: EditTextSelection = this.getSelection()) {
     this.insert(RichText.parseHTML(html).value, selection);
   }
   
-  public decorate(decoration: Initializer<Decoration>, selection: EditTextSelection) {
+  public decorate(decoration: Initializer<Decoration>, selection: EditTextSelection = this.getSelection()) {
     this.props.onChange(this.text.decorate(decoration, selection), this);
     this.setState({selection});
   };
   
-  // Should maybe be moved to RichText?
   public deleteForward(selection: EditTextSelection = this.getSelection()) {
-    selection = this.parseSelection(selection);
-    if (selection.start === this.text.length && selection.end === this.text.length) return;
-    if (selection.start === selection.end) selection.end = Math.min(selection.end + 1, this.text.length);
+    if (selection.start_section === selection.end_section && selection.start_character === selection.end_character) {
+      if (selection.start_character === this.text.getSection(selection.start_section, true).length) {
+        if (selection.start_section === this.text.value.length) return;
+        selection.end_section++;
+        selection.end_character = 0;
+      }
+      else {
+        selection.end_character++;
+      }
+    }
     
-    this.insert([], selection);
+    this.props.onChange(this.text.remove(selection), this);
+    this.setState({selection});
   };
   
-  // Should maybe be moved to RichText?
   public deleteBackward(selection: EditTextSelection = this.getSelection()) {
-    selection = this.parseSelection(selection);
-    if (!selection.start && !selection.end) return;
-    if (selection.start === selection.end) selection.start = Math.max(0, selection.start - 1);
-    
-    this.insert([], selection);
-  };
-  
-  // Should maybe be moved to RichText?
-  public deleteWordForward(selection: EditTextSelection = this.getSelection()) {
-    selection = this.parseSelection(selection);
-    if (selection.start !== selection.end || selection.end === this.text.length) return this.deleteBackward(selection);
-    
-    selection.end = this.text.find(/[^\p{Z}]/u, selection.end) ?? this.text.length;
-    selection.end = this.text.find(this.text.at(selection.end, true).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.end) ?? this.text.length;
-    selection.end = this.text.find(/[^\p{Z}]/u, selection.end) ?? this.text.length;
-    
-    this.insert([], selection);
-  }
-  
-  // Should maybe be moved to RichText?
-  public deleteWordBackward(selection: EditTextSelection = this.getSelection()) {
-    selection = this.parseSelection(selection);
-    if (selection.start !== selection.end || !selection.start) return this.deleteBackward(selection);
-    
-    selection.start = this.text.find(/[^\p{Z}]/u, selection.start, false) ?? 0;
-    selection.start = this.text.find(this.text.at(selection.start, true).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.start, false) ?? 0;
-    selection.start = this.text.find(/[^\p{Z}]/u, selection.start, false) ?? 0;
-    
-    this.insert([], {...selection, start: selection.start ? selection.start + 1 : selection.start});
-  }
-  
-  private getNodeByPosition(position: number, parent: Node): {position: number, element: Node} {
-    if (!parent) throw "Could not get container element.";
-    
-    for (let i = 0; i < parent.childNodes.length; i++) {
-      const child = parent.childNodes[i];
-      const content = child.textContent?.length ?? 0;
-      if (content >= position) return this.getNodeByPosition(position, child);
-      if (parent === this.state.ref.current) position -= 1;
-      position -= content;
+    if (selection.start_section === selection.end_section && selection.start_character === selection.end_character) {
+      if (selection.start_character === 0) {
+        if (selection.start_section === 0) return;
+        selection.start_section--;
+        selection.start_character = this.text.getSection(selection.start_section, true).length;
+      }
+      else {
+        selection.start_character--;
+      }
     }
     
-    return {position, element: parent};
+    this.props.onChange(this.text.remove(selection), this);
+    this.setState({selection});
   };
   
-  private getPositionByNode(node: Node, container: Node): number {
-    if (node === container) return 0;
-    
-    
-    const container = Helper.getClosestContainer(node, parent);
-    
-    let length = 0;
-    for (let i = 0; i < parent.childNodes.length; i++) {
-      const child = parent.childNodes[i];
-      if (child === container) return length + this.getPositionByNode(node, child);
-      if (parent === this.state.ref.current) length += 1;
-      length += (child.textContent?.length ?? 0);
-    }
-    return length;
-  };
+  // // Should maybe be moved to RichText?
+  // public deleteWordForward(selection: EditTextSelection = this.getSelection()) {
+  //   selection = this.parseSelection(selection);
+  //   if (selection.start !== selection.end || selection.end === this.text.length) return this.deleteBackward(selection);
+  //
+  //   selection.end = this.text.find(/[^\p{Z}]/u, selection.end) ?? this.text.length;
+  //   selection.end = this.text.find(this.text.at(selection.end, true).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.end) ?? this.text.length;
+  //   selection.end = this.text.find(/[^\p{Z}]/u, selection.end) ?? this.text.length;
+  //
+  //   this.insert([], selection);
+  // }
+  //
+  // // Should maybe be moved to RichText?
+  // public deleteWordBackward(selection: EditTextSelection = this.getSelection()) {
+  //   selection = this.parseSelection(selection);
+  //   if (selection.start !== selection.end || !selection.start) return this.deleteBackward(selection);
+  //
+  //   selection.start = this.text.find(/[^\p{Z}]/u, selection.start, false) ?? 0;
+  //   selection.start = this.text.find(this.text.at(selection.start, true).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.start, false) ?? 0;
+  //   selection.start = this.text.find(/[^\p{Z}]/u, selection.start, false) ?? 0;
+  //
+  //   this.insert([], {...selection, start: selection.start ? selection.start + 1 : selection.start});
+  // }
   
-  public componentDidMount() {
-    this.setState({history: this.state.history.push({text: this.text, selection: this.getSelection()})});
-  }
+  // private getNodeByPosition(position: number, parent: Node): {position: number, element: Node} {
+  //   if (!parent) throw "Could not get container element.";
+  //
+  //   for (let i = 0; i < parent.childNodes.length; i++) {
+  //     const child = parent.childNodes[i];
+  //     const content = child.textContent?.length ?? 0;
+  //     if (content >= position) return this.getNodeByPosition(position, child);
+  //     if (parent === this.state.ref.current) position -= 1;
+  //     position -= content;
+  //   }
+  //
+  //   return {position, element: parent};
+  // };
+  //
+  // private getPositionByNode(node: Node, container: Node): number {
+  //   if (node === container) return 0;
+  //
+  //
+  //   const container = Helper.getClosestContainer(node, parent);
+  //
+  //   let length = 0;
+  //   for (let i = 0; i < parent.childNodes.length; i++) {
+  //     const child = parent.childNodes[i];
+  //     if (child === container) return length + this.getPositionByNode(node, child);
+  //     if (parent === this.state.ref.current) length += 1;
+  //     length += (child.textContent?.length ?? 0);
+  //   }
+  //   return length;
+  // };
   
   public componentDidUpdate(prevProps: Readonly<EditTextProps>, prevState: Readonly<State>, snapshot?: any): void {
-    if (prevState.selection !== this.state.selection || prevProps.children.length !== this.props.children.length) {
-      const {start, end, forward} = this.state.selection;
-      const start_node = this.getNodeByPosition(forward ? start : end);
-      const end_node = this.getNodeByPosition(forward ? end : start);
-      getSelection()?.setBaseAndExtent(start_node.element, start_node.position, end_node.element, end_node.position);
-      this.props.onSelect?.(this.state.selection, this);
+    if (this.state.selection) {
+      // const start_node = this.getNodeByPosition(forward ? start : end);
+      // const end_node = this.getNodeByPosition(forward ? end : start);
+      // getSelection()?.setBaseAndExtent(start_node.element, start_node.position, end_node.element, end_node.position);
+      // this.props.onSelect?.(this.state.selection, this);
     }
   }
   
   public render() {
     const readonly = this.props.readonly ?? true;
     const classes = [Style.Component];
+    const children = [] as React.ReactNode[];
     if (this.props.className) classes.push(this.props.className);
     if (this.props.readonly ?? true) classes.push(Style.Readonly);
     
-    const content = this.text.getContent(0, this.text.length, this.getPosition());
-    const children = [] as React.ReactNode[];
-    const renderer_line = this.props.rendererLine ?? "div";
-    if (!content.length) {
-      children.push(Helper.renderReactElementList(Helper.invoke(renderer_line, {start: 0, end: 0, index: 0, value: []}), {key: 0, className: [Style.Line, Style.Empty].join(" ")}));
-    }
-    else {
-      for (let i = 0; i < content.length; i++) {
-        const lines = [] as React.ReactNode[];
-        for (let j = 0; j < content[i].value.length; j++) {
-          lines.push(this.renderReactElement(content[i].value[j], j));
-        }
-        children.push(Helper.renderReactElementList(Helper.invoke(renderer_line, content[i]), {key: i, className: Style.Line, children: lines}));
-      }
+    const content = this.text.getContent(this.getSelection());
+    for (let i = 0; i < content.length; i++) {
+      const item = content.at(0) ?? [];
+      
+      const classes = [Style.Section];
+      if (!item.length) classes.push(Style.Empty);
+      
+      const section = React.createElement("div", {key: i, className: classes.join(" "), children: item.map(this.renderReactElement)});
+      children.push(section);
     }
     
-    const renderer_content = this.props.rendererContent ?? "div";
-    return Helper.renderReactElementList(Helper.invoke(renderer_content, content), {
+    return Helper.renderReactElementList("div", {
       ref:                            this.state.ref,
       className:                      classes.join(" "),
       contentEditable:                !readonly,
@@ -249,8 +250,7 @@ export default class EditText extends Component<EditTextProps, State> {
     const classes = [Style.Text] as string[];
     if (decoration.selected && this.props.active !== false) classes.push(Style.Selected);
     
-    const renderer_fragment = this.props.rendererFragment ?? "span";
-    return Helper.renderReactElementList(Helper.invoke(renderer_fragment, {...segment, decoration}), {
+    return Helper.renderReactElementList("span", {
       key:       i,
       className: classes.join(" "),
       style:     new Decoration(decoration).toCSSProperties(),
@@ -258,25 +258,8 @@ export default class EditText extends Component<EditTextProps, State> {
     });
   };
   
-  public readonly renderHTML = (selection?: EditTextSelection) => {
-    const {start, end} = this.parseSelection(selection);
-    const content = this.text.getContent(start, end, this.getPosition());
-    if (!content.length) return this.renderHTMLLine({value: [], index: 0, start: 0, end: 0}, {[RichText.attribute_metadata]: JSON.stringify(this.text.metadata)});
-    
-    const container = Helper.createElementWithChildren("div");
-    for (let i = 0; i < content.length; i++) {
-      const line = this.renderHTMLLine(content[i], {[RichText.attribute_metadata]: JSON.stringify(this.text.metadata)});
-      for (let j = 0; j < content[i].value.length; j++) {
-        line.append(this.renderHTMLNode(content[i].value[j]));
-      }
-      container.append(line);
-    }
-    
-    return container;
-  };
-  
-  private renderHTMLLine = (line: RichTextLine, attributes: {[key: string]: string} = {}) => {
-    return Helper.renderHTMLElementList(Helper.invoke(this.props.subdivision ?? "div", line), attributes);
+  public readonly renderHTML = (selection: EditTextSelection) => {
+    return Helper.createElementWithChildren("div", {}, ...this.text.getContent().map(item => Helper.createElementWithChildren("div", {}, ...item.map(this.renderHTMLNode))));
   };
   
   private readonly renderHTMLNode = ({decoration, ...segment}: RichTextFragment): Node => {
@@ -317,7 +300,7 @@ export default class EditText extends Component<EditTextProps, State> {
       case KeyboardCommand.NEXT_FOCUS:
         return this.insertText(Character.tab);
       case KeyboardCommand.SELECT_ALL:
-        return this.select(0, this.props.children.length);
+        return this.select({start_section: 0, start_character: 0, end_section: this.text.value.length - 1, end_character: this.text.getSection(this.text.value.length - 1, true).length, forward: true});
       case KeyboardCommand.NEW_LINE:
       case KeyboardCommand.NEW_LINE_ALT:
         return this.insertText(Character.linebreak);
@@ -325,31 +308,31 @@ export default class EditText extends Component<EditTextProps, State> {
       case KeyboardCommand.NEW_PARAGRAPH_ALT:
         return this.props.onSubmit?.(this);
       case KeyboardCommand.DELETE_FORWARD:
-        return this.deleteForward();
-      case KeyboardCommand.DELETE_WORD_FORWARD:
-        return this.deleteWordForward();
+        return this.deleteForward(this.getSelection() ?? {start_section: 0, end_section: 0, start_character: 0, end_character: 0, forward: true});
+      // case KeyboardCommand.DELETE_WORD_FORWARD:
+      // return this.deleteWordForward();
       case KeyboardCommand.DELETE_BACKWARD:
-        return this.deleteBackward();
-      case KeyboardCommand.DELETE_WORD_BACKWARD:
-        return this.deleteWordBackward();
-      case KeyboardCommand.REDO:
-      case KeyboardCommand.REDO_ALT:
-        return this.redo();
-      case KeyboardCommand.UNDO:
-      case KeyboardCommand.UNDO_ALT:
-        return this.undo();
+        return this.deleteBackward(this.getSelection() ?? {start_section: 0, end_section: 0, start_character: 0, end_character: 0, forward: true});
+      // case KeyboardCommand.DELETE_WORD_BACKWARD:
+      //   return this.deleteWordBackward();
+      // case KeyboardCommand.REDO:
+      // case KeyboardCommand.REDO_ALT:
+      //   return this.redo();
+      // case KeyboardCommand.UNDO:
+      // case KeyboardCommand.UNDO_ALT:
+      //   return this.undo();
       case KeyboardCommand.BOLD_TEXT:
-        return this.decorate({bold: !this.text.hasDecoration("bold", ...this.getPosition())});
+        return this.decorate({bold: !this.text.hasDecoration("bold", this.getSelection())});
       case KeyboardCommand.ITALIC_TEXT:
-        return this.decorate({italic: !this.text.hasDecoration("italic", ...this.getPosition())});
+        return this.decorate({italic: !this.text.hasDecoration("italic", this.getSelection())});
       case KeyboardCommand.UNDERLINE_TEXT:
-        return this.decorate({underline: !this.text.hasDecoration("underline", ...this.getPosition())});
+        return this.decorate({underline: !this.text.hasDecoration("underline", this.getSelection())});
       case KeyboardCommand.MARK_TEXT:
-        return this.decorate({mark: !this.text.hasDecoration("mark", ...this.getPosition())});
+        return this.decorate({mark: !this.text.hasDecoration("mark", this.getSelection())});
       case KeyboardCommand.CODE_TEXT:
-        return this.decorate({code: !this.text.hasDecoration("code", ...this.getPosition())});
+        return this.decorate({code: !this.text.hasDecoration("code", this.getSelection())});
       case KeyboardCommand.STRIKETHROUGH_TEXT:
-        return this.decorate({strikethrough: !this.text.hasDecoration("strikethrough", ...this.getPosition())});
+        return this.decorate({strikethrough: !this.text.hasDecoration("strikethrough", this.getSelection())});
     }
     
     event.bubbles = true;
@@ -364,12 +347,7 @@ export default class EditText extends Component<EditTextProps, State> {
   };
   
   private readonly eventSelect = () => {
-    const {start: next_start, end: next_end, forward: next_forward} = this.getSelection();
-    const {start: prev_start, end: prev_end, forward: prev_forward} = this.state.selection;
-    
-    if (next_start !== prev_start || next_end !== prev_end || next_forward !== prev_forward) {
-      this.setState({selection: {start: next_start, end: next_end, forward: next_forward}});
-    }
+    this.setState({selection: this.getSelection()});
   };
   
   private readonly eventDragStart = (event: React.DragEvent<HTMLDivElement>) => {

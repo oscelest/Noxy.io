@@ -1,5 +1,7 @@
 import {v4} from "uuid";
+import Util from "../../../common/services/Util";
 import Decoration from "../Decoration";
+import {RichTextFragment} from "../RichText";
 import RichTextCharacter, {RichTextCharacterValueInit} from "./RichTextCharacter";
 
 export default class RichTextSection {
@@ -22,22 +24,42 @@ export default class RichTextSection {
     return [new RichTextSection(this.value.slice(0, position)), new RichTextSection(this.value.slice(position))];
   }
   
-  public getCharacter(id?: number | string, safe?: true): RichTextCharacter
-  public getCharacter(id?: number | string, safe?: false): RichTextCharacter | undefined
-  public getCharacter(id?: number | string, safe: boolean = false): RichTextCharacter | undefined {
+  public getCharacter(id: number | string | undefined, safe: true): RichTextCharacter
+  public getCharacter(id: number | string | undefined, safe?: false): RichTextCharacter | undefined
+  public getCharacter(id: number | string | undefined, safe: boolean = false): RichTextCharacter | undefined {
     const value = typeof id === "string" ? this.value.find(section => section.id === id) : (typeof id === "number" ? this.value.at(id) : undefined);
     if (!value && safe) throw new Error("Could not find section");
     return value;
   }
   
-  public remove({start_character = 0, end_character = this.length}: RichTextSectionSelection = {}) {
-    return new RichTextSection([...this.value.slice(0, start_character), ...this.value.slice(end_character)]);
+  public getFragmentList(selection?: RichTextSectionSelection): RichTextFragment[] {
+    const content = [] as RichTextFragment[];
+    
+    for (let i = 0; i < this.length; i++) {
+      const fragment = content.at(-1);
+      const character = this.getCharacter(i, true);
+      const decoration = {...character.decoration.toObject(), selected: !!selection && selection.start_character <= i && selection.end_character > i};
+      
+      if (fragment && Util.getProperties(fragment.decoration).every(key => fragment.decoration[key] === decoration[key])) {
+        fragment.text += character.value;
+        fragment.end = i;
+      }
+      else {
+        content.push({text: character.value, decoration, start: i, end: i});
+      }
+    }
+    
+    return content;
   }
   
-  public decorate(decoration: Initializer<Decoration>, {start_character = 0, end_character = this.length}: RichTextSectionSelection = {}) {
+  public remove(selection: RichTextSectionSelection) {
+    return new RichTextSection([...this.value.slice(0, selection.start_character), ...this.value.slice(selection.end_character)]);
+  }
+  
+  public decorate(decoration: Initializer<Decoration>, selection: RichTextSectionSelection) {
     const value = new RichTextSection(this.value);
     
-    for (let i = start_character; i <= end_character; i++) {
+    for (let i = selection.start_character; i <= selection.end_character; i++) {
       const character = value.getCharacter(i, true);
       value.value[i] = new RichTextCharacter(character.value, {...character.decoration, ...decoration});
     }
@@ -93,6 +115,6 @@ export default class RichTextSection {
 export type RichTextSectionValueInit = RichTextSection | string | (RichTextSection | string)[]
 
 export interface RichTextSectionSelection {
-  start_character?: number;
-  end_character?: number;
+  start_character: number;
+  end_character: number;
 }
