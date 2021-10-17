@@ -10,14 +10,49 @@ namespace Helper {
   export const FontSizeList = ["8", "9", "10", "11", "12", "14", "18", "24", "30", "36", "48", "60", "72", "84", "96"];
   export const FontLengthList = ["px", "pt", "em", "rem", "vw", "vmax", "%", "cm", "mm", "in", "pc", "ex", "ch"];
   
+  export function getChildNodeByTextLength(node: Node, text_length: number): [Node, number] {
+    for (let i = 0; i < node.childNodes.length; i++) {
+      const item = node.childNodes.item(i);
+      const length = Helper.getNodeTextLength(item);
+      
+      if (length < text_length) {
+        text_length -= length;
+      }
+      else if (item instanceof Text) {
+        return [item, text_length];
+      }
+      else {
+        return getChildNodeByTextLength(item, text_length);
+      }
+    }
+    
+    return [node, text_length]
+  }
+  
+  export function getNodeTextLength(node: Node) {
+    if (node instanceof Text) return node.length;
+
+    let value = 0;
+    for (let i = 0; i < node.childNodes.length; i++) {
+      const item = node.childNodes.item(i);
+      if (item instanceof Text) {
+        value += item.length;
+      }
+      else {
+        value += getNodeTextLength(item);
+      }
+    }
+    return value;
+  }
+  
   export async function request<Response = any, Request extends FormData = FormData>(url: string, form_data?: Request) {
     const response = await fetch(url, {
-      body: form_data,
+      body:    form_data,
       headers: {
         [RequestHeader.AUTHORIZATION]: localStorage.getItem(RequestHeader.AUTHORIZATION) ?? "",
-      }
+      },
     });
-    const result = await response.json()
+    const result = await response.json();
     return result as Response;
   }
   

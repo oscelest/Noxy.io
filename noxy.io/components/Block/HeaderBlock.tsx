@@ -1,12 +1,13 @@
+import EditText from "components/Text/EditText";
 import React from "react";
 import PageBlockType from "../../../common/enums/PageBlockType";
 import Util from "../../../common/services/Util";
-import RichText from "../../classes/RichText";
+import RichText from "../../classes/RichText/RichText";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import Button from "../Form/Button";
-import EditText, {EditTextCommandList} from "../Text/EditText";
+import {EditTextCommandList} from "../Text/EditTextOld";
 import Style from "./HeaderBlock.module.scss";
 
 export default class HeaderBlock extends Component<HeaderBlockProps, State> {

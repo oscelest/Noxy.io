@@ -3,29 +3,44 @@ import Decoration from "../Decoration";
 import RichTextCharacter from "./RichTextCharacter";
 import RichTextSection, {RichTextSectionSelection, RichTextSectionValueInit} from "./RichTextSection";
 
-export default class RichText {
+export default class RichText<Metadata = never> {
   
   public readonly id: string;
   public readonly value: RichTextSection[];
+  public readonly metadata: Metadata;
   
-  constructor(value: RichTextSectionValueInit) {
+  constructor(value?: RichTextSectionValueInit) {
     this.id = v4();
     this.value = RichTextSection.parseText(value);
   }
   
-  public get length() {
+  public get text() {
+    return this.value.map(section => section.text);
+  }
+  
+  public get size() {
     return this.value.reduce((result, section) => result + section.length, 0);
   }
   
-  public at(section_id?: number, character_id?: number) {
-    return this.getSection(section_id)?.getCharacter(character_id);
+  public get length() {
+    return this.value.length;
   }
   
-  public getSection(id: number | string | undefined, safe: true): RichTextSection
-  public getSection(id: number | string | undefined, safe?: false): RichTextSection | undefined
-  public getSection(id: number | string | undefined, safe: boolean = false): RichTextSection | undefined {
-    const value = typeof id === "string" ? this.value.find(section => section.id === id) : (typeof id === "number" ? this.value.at(id) : undefined);
-    if (!value && safe) throw new Error("Could not find section");
+  public getSection(id: number | string | undefined): RichTextSection {
+    let value: RichTextSection | undefined;
+    
+    if (typeof id === "string") {
+      value = this.value.find(section => section.id === id);
+      if (!value) throw new Error(`Could not find section with ID: '${id}'.`);
+    }
+    else if (typeof id === "number") {
+      value = this.value.at(id);
+      if (!value) throw new Error(`Could not find section at index '${id}'.`);
+    }
+    else {
+      throw new Error(`Could not find section - Incompatible key given: '${id}'.`);
+    }
+    
     return value;
   }
   
@@ -34,10 +49,10 @@ export default class RichText {
     for (let i = 0; i < this.value.length; i++) {
       const item = this.value.at(i);
       if (!item) continue;
-      if (selection && selection.start_section <= i && selection.end_section > i) {
-        const start_character = selection.start_section === i ? selection.start_character : 0;
-        const end_character = selection.end_section === i ? selection.start_character : item.length;
-        fragment_list.push(item.getFragmentList({start_character, end_character}));
+      if (selection && selection.section <= i && selection.section_offset > i) {
+        const start_character = selection.section === i ? selection.character : 0;
+        const end_character = selection.section_offset === i ? selection.character : item.length;
+        fragment_list.push(item.getFragmentList({character: start_character, character_offset: end_character}));
       }
       else {
         fragment_list.push(item.getFragmentList());
@@ -48,71 +63,142 @@ export default class RichText {
   }
   
   public hasDecoration(property: keyof Initializer<Decoration>, selection: RichTextSelection) {
-    for (let i = selection.start_section; i < selection.end_section; i++) {
-      const start_character = i === selection.start_section ? selection.start_character : 0;
-      const end_character = i === selection.end_section ? selection.end_character : this.getSection(selection.end_section, true).length;
-      for (let j = start_character; j < end_character; j++) {
-        if (!this.at(i, j)?.decoration[property]) {
-          return false;
-        }
-      }
-    }
+    // TODO: FIX
+    // for (let i = selection.section; i < selection.section_offset; i++) {
+    //   const start_character = i === selection.section ? selection.character : 0;
+    //   const end_character = i === selection.section_offset ? selection.character_offset : this.getSection(selection.section_offset).length;
+    //   for (let j = start_character; j < end_character; j++) {
+    //     if (!this.at(i, j)?.decoration[property]) {
+    //       return false;
+    //     }
+    //   }
+    // }
     return true;
   }
   
-  public replace(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: RichTextSelection) {
-    const text = this.remove(selection);
-    
-    insert = Array.isArray(insert) ? insert : [insert];
-    for (let i = 0; i < insert.length; i++) {
-      const item = insert.at(i);
-      const section = text.getSection(selection.start_section, true);
-      if (item instanceof RichTextSection) {
-        const [first, last] = section.splitAt(selection.start_character!);
-        text.value.splice(selection.start_section!, 1, first, section, last);
-        selection.start_section!++;
-        selection.start_character = section.length;
-      }
-      else if (item instanceof RichTextCharacter) {
-        section.value.splice(selection.start_character!++, 0, item);
-      }
+  public insertCharacter<S extends Pick<RichTextSelection, "section" | "character">>(value: RichTextCharacter, selection: S): S {
+    selection = this.ensureSection(selection);
+    return this.getSection(selection.section).insert(value, selection);
+  }
+  
+  public insertSection<S extends Pick<RichTextSelection, "section" | "character">>(value: RichTextSection | RichTextSection[], selection: S): S {
+    selection = this.ensureSection(selection);
+    const section = this.getSection(selection.section);
+    if (selection.character) {
+      section.ensureCharacter(selection);
     }
     
-    return text;
-  }
-  
-  public remove(selection: RichTextSelection) {
-    const text = new RichText(this.value);
-    
-    text.value.splice(selection.start_section, selection.end_section - selection.start_section, new RichTextSection([
-      ...text.getSection(selection.start_section, true).value.slice(0, selection.start_character),
-      ...text.getSection(selection.end_section, true).value.slice(selection.end_character),
-    ]));
-    
-    selection.end_section = selection.start_section;
-    selection.end_character = selection.start_character;
-    
-    return text;
-  }
-  
-  public decorate(decoration: Initializer<Decoration>, {start_section = 0, end_section = this.length, ...section}: RichTextSelection) {
-    const text = new RichText(this.value);
-    
-    for (let i = start_section; i <= end_section; i++) {
-      const item = this.getSection(i, true);
-      if (i === start_section || i === end_section) {
-        const start_character = i === start_section ? section.start_character : 0;
-        const end_character = i === end_section ? section.end_character : item.length;
-        text.value[i] = item.decorate(decoration, {start_character, end_character});
+    value = Array.isArray(value) ? value : [value];
+    for (let i = 0; i < value.length; i++) {
+      const item = value.at(i);
+      if (!item) continue;
+      if (selection.character === section.length) {
+        this.value.splice(++selection.section, 0, item);
+        selection.character = item.length;
       }
       else {
-        text.value[i] = item.decorate(decoration, {start_character: 0, end_character: item.length});
+        const section_overflow = section.value.splice(selection.character, section.length - selection.character);
+        selection.character = item.length;
+        item.insert(section_overflow, selection);
+        this.value.splice(++selection.section, 0, item);
       }
     }
     
-    return text;
+    return selection;
   }
   
+  public remove<S extends RichTextSelection>(selection: S): S {
+    if (selection.section > selection.section_offset) return selection;
+    
+    const start = this.value.at(selection.section);
+    if (selection.section === selection.section_offset) {
+      if (!start || selection.character > selection.character_offset) return selection;
+      return {...selection, ...start.remove(selection)};
+    }
+    
+    const end = this.value.at(selection.section_offset);
+    for (let i = 0; i < this.value.length; i++) {
+      if (i >= selection.section || i <= selection.section_offset) {
+        this.value.splice(i--, 1);
+      }
+    }
+    
+    if (start && end) {
+      this.value.splice(selection.section, 0, new RichTextSection([...start.value.slice(0, selection.character), ...end.value.slice(selection.character_offset)]));
+    }
+    else if (start) {
+      this.value.splice(selection.section, 0, new RichTextSection(start.value.slice(0, selection.character)));
+    }
+    else if (end) {
+      this.value.splice(selection.section, 0, new RichTextSection(end.value.slice(selection.character_offset)));
+    }
+    
+    return {...selection, section_offset: selection.section, character_offset: selection.character};
+  }
+  
+  public replace<S extends RichTextSelection>(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: S): S {
+    if (selection.section !== selection.section_offset || selection.character !== selection.character_offset) {
+      selection = this.remove(selection);
+    }
+  
+    if (insert instanceof RichTextCharacter) {
+      selection = this.insertCharacter(insert, selection);
+    }
+    else if (insert instanceof RichTextSection) {
+      selection = this.insertSection(insert, selection);
+    }
+    else if (Array.isArray(insert)) {
+      for (let i = 0; i < insert.length; i++) {
+        const item = insert.at(i);
+        if (item instanceof RichTextCharacter) {
+          selection = this.insertCharacter(item, selection);
+        }
+        else if (item instanceof RichTextSection) {
+          selection = this.insertSection(item, selection);
+        }
+      }
+    }
+
+    selection.section_offset = selection.section;
+    selection.character_offset = selection.character;
+    
+    return selection;
+  }
+  
+  public decorate<S extends RichTextSelection>(decoration: Initializer<Decoration>, selection: S): S {
+    for (let i = selection.section; i < selection.section_offset; i++) {
+      const section = this.value.at(i);
+      if (!section) continue;
+      if (i === selection.section || i === selection.section_offset) {
+        const start_character = i === selection.section ? selection.section : 0;
+        const end_character = i === selection.section_offset ? selection.section_offset : section.length;
+        section.decorate(decoration, {character: start_character, character_offset: end_character});
+      }
+      else {
+        section.decorate(decoration, {character: 0, character_offset: section.length});
+      }
+    }
+    
+    return selection;
+  }
+  
+  public ensureSection<S extends Pick<RichTextSelection, "section">>(selection: S): S {
+    selection = {...selection, section: selection.section < 0 ? Math.max(0, this.length + selection.section) : selection.section};
+    
+    if (this.value.length <= selection.section) {
+      for (let i = 0; i <= selection.section; i++) {
+        if (!this.value.at(i)) {
+          this.value[i] = new RichTextSection();
+        }
+      }
+    }
+    
+    return selection;
+  }
+  
+  public clone() {
+    return new RichText(this.value.map(section => section.clone()));
+  }
   
   public static parseHTML(node: string | HTMLElement) {
     if (node instanceof HTMLElement) {
@@ -127,9 +213,8 @@ export default class RichText {
   
 }
 
-export type RichTextInsertSelection = Required<Pick<RichTextSelection, "start_section" | "start_character">>
 
 export interface RichTextSelection extends RichTextSectionSelection {
-  start_section: number;
-  end_section: number;
+  section: number;
+  section_offset: number;
 }

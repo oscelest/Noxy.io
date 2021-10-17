@@ -1,5 +1,5 @@
 import PageBlockType from "../../../../common/enums/PageBlockType";
-import RichText from "../../../classes/RichText";
+import RichText from "../../../classes/RichText/RichText";
 import PageBlockEntity, {ContentInitializer, PageBlockContentValue} from "../PageBlockEntity";
 
 export default class TextPageBlockEntity extends PageBlockEntity {
@@ -10,7 +10,7 @@ export default class TextPageBlockEntity extends PageBlockEntity {
     super(initializer);
     this.type = PageBlockType.TEXT;
     this.content = initializer?.content ?? {
-      value: new RichText({value: ""}),
+      value: new RichText(),
     };
   }
   

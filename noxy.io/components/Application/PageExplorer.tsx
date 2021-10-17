@@ -232,12 +232,12 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
   
   private readonly eventDecorateLinkSubmit = (value: string) => {
-    const element = document.createElement("a");
-    const link = document.createElement("u");
-    element.href = value;
-    link.innerText = value;
-    element.append(link);
-    this.state.focus?.insertHTML(element);
+    // const element = document.createElement("a");
+    // const link = document.createElement("u");
+    // element.href = value;
+    // link.innerText = value;
+    // element.append(link);
+    // this.state.focus?.insertHTML(element);
   };
   
   private readonly eventDecorateMouseDown = (property: Initializer<Decoration>, event: React.MouseEvent) => {
@@ -253,8 +253,9 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
   
   private readonly eventPageBlockSelect = ({start, end}: EditTextSelection, component: EditText) => {
-    if (start === end) start = Math.max(0, start - 1);
-    this.setState({decoration: component.text.getDecoration(start, end)});
+    // if (start === end) start = Math.max(0, start - 1);
+    // TODO: Fix this.
+    // this.setState({decoration: component.text.getDecoration(start, end)});
   };
   
   private readonly eventPageBlockChange = (block: PageBlockEntity) => {

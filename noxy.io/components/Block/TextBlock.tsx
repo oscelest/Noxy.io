@@ -1,6 +1,6 @@
 import React from "react";
 import PageBlockType from "../../../common/enums/PageBlockType";
-import RichText from "../../classes/RichText";
+import RichText from "../../classes/RichText/RichText";
 import Component from "../Application/Component";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import EditText, {EditTextCommandList} from "../Text/EditText";
@@ -25,7 +25,7 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     
     return (
       <div className={classes.join(" ")}>
-        <EditText className={Style.Text} readonly={this.props.readonly} blacklist={TextBlock.blacklist} whitelist={TextBlock.whitelist} rendererLine={"p"}
+        <EditText className={Style.Text} readonly={this.props.readonly} blacklist={TextBlock.blacklist} whitelist={TextBlock.whitelist}
                   onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit}>
           {this.props.block.content.value}
         </EditText>

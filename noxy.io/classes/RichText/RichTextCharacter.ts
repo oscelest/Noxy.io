@@ -3,12 +3,13 @@ import Decoration from "../Decoration";
 
 export default class RichTextCharacter {
   
-  #id: string;
-  #value: string;
-  #decoration: Decoration;
+  readonly #id: string;
+  readonly #value: string;
+  readonly #decoration: Decoration;
   
   public static tab: string = "\t";
   public static linebreak: string = "\n";
+  public static space: string = " ";
   
   constructor(value: string, decoration?: Initializer<Decoration>) {
     this.#id = v4();

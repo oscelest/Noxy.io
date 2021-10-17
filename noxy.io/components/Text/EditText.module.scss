@@ -11,7 +11,7 @@
     background-color: rgba(165, 165, 165, 0.6);
   }
 
-  .Line {
+  .Section, .Line {
     word-break: break-word;
 
     &:not(li) {
@@ -27,7 +27,7 @@
     text-decoration: none;
   }
 
-  &:not(.Readonly) .Line.Empty:after {
+  &:not(.Readonly) .Section:empty:after {
     content: "...";
     cursor:  text;
     color:   rgb(255 255 255 / 50%);

@@ -1,57 +1,97 @@
 import React from "react";
 import ClipboardDataType from "../../../common/enums/ClipboardDataType";
-import Util from "../../../common/services/Util";
 import Character from "../../classes/Character";
 import Decoration from "../../classes/Decoration";
-import History from "../../classes/History";
-import RichText, {RichTextContent, RichTextFragment, RichTextLine} from "../../classes/RichText";
+import {RichTextFragment} from "../../classes/RichText";
+import RichText, {RichTextSelection} from "../../classes/RichText/RichText";
+import RichTextCharacter from "../../classes/RichText/RichTextCharacter";
+import RichTextSection, {RichTextSectionContent, RichTextSectionContentLine} from "../../classes/RichText/RichTextSection";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
 import Component from "../Application/Component";
 import Style from "./EditText.module.scss";
 
-export default class EditText<V = never> extends Component<EditTextProps<V>, State<V>> {
+export default class EditText extends Component<EditTextProps, State> {
   
-  constructor(props: EditTextProps<V>) {
+  constructor(props: EditTextProps) {
     super(props);
     this.state = {
-      ref:       React.createRef(),
-      history:   new History(),
-      selection: {start: 0, end: 0, forward: true},
+      ref: React.createRef(),
     };
   }
   
   public get text() {
-    return this.props.children as EditTextProps<V>["children"];
+    return this.props.children as EditTextProps["children"];
   };
   
-  public getSelection() {
-    const selection = getSelection();
-    if (!this.state.ref.current || !selection || !selection.focusNode || !selection.anchorNode) return this.state.selection;
+  public getSelection(): EditTextSelection {
+    const {focusNode, anchorNode, focusOffset = 0, anchorOffset = 0} = getSelection() ?? {};
     
-    if (this.state.ref.current.contains(selection.focusNode) && this.state.ref.current.contains(selection.anchorNode)) {
-      const focus_node = selection.focusNode;
-      const anchor_node = selection.anchorNode;
-      const focus_offset = selection.focusOffset;
-      const anchor_offset = selection.anchorOffset;
+    if (this.state.ref.current && focusNode && anchorNode) {
+      const [focusSection, focusPosition] = this.getSectionAndCharacterByNode(focusNode, focusOffset);
+      const [anchorSection, anchorPosition] = this.getSectionAndCharacterByNode(anchorNode, anchorOffset);
       
-      const focus_position = this.getPositionByNode(focus_node) + focus_offset;
-      const anchor_position = this.getPositionByNode(anchor_node) + anchor_offset;
-      
-      return {
-        start:   Math.max(Math.min(focus_position, anchor_position), 0),
-        end:     Math.min(Math.max(focus_position, anchor_position), this.props.children.length),
-        forward: focus_position >= anchor_position,
-      };
+      return anchorSection <= focusSection && anchorPosition <= focusPosition
+             ? {section: anchorSection, character: anchorPosition, section_offset: focusSection, character_offset: focusPosition, forward: true}
+             : {section: focusSection, character: focusPosition, section_offset: anchorSection, character_offset: anchorPosition, forward: false};
     }
-    else {
-      return this.state.selection;
-    }
+    
+    return {section: 0, section_offset: 0, character_offset: 0, character: 0, forward: true};
   };
   
-  public getPosition(): [number, number] {
-    const {start, end} = this.getSelection();
-    return [start, end];
+  private getSectionAndCharacterByNode(node: Node, offset: number = 0): [number, number] {
+    if (!this.state.ref.current) throw Error("Component is not being rendered.");
+    
+    const value = [0, offset] as [number, number];
+    while (true) {
+      if (!node.parentNode || node === this.state.ref.current) break;
+      
+      for (let i = 0; node.parentNode.childNodes.length; i++) {
+        const child = node.parentNode.childNodes.item(i);
+        if (node === child) {
+          node = node.parentNode;
+          break;
+        }
+        
+        if (node instanceof HTMLElement) {
+          if (node.classList.contains(Style.Section)) {
+            value[0]++;
+            continue;
+          }
+          if (node.classList.contains(Style.Line)) {
+            value[1]++;
+          }
+        }
+        value[1] += Helper.getNodeTextLength(child);
+      }
+    }
+    
+    return value;
+  }
+  
+  private getNodeBySectionAndCharacter(section_id: number, character_id: number): [Node, number] {
+    if (!this.state.ref.current) throw Error("Component is not being rendered.");
+    
+    const section = this.state.ref.current.childNodes.item(section_id);
+    const value = [section, character_id] as [Node, number];
+    
+    for (let i = 0; i < section.childNodes.length; i++) {
+      const line = section.childNodes.item(i);
+      const length = Helper.getNodeTextLength(line);
+      if (length >= value[1]) {
+        for (let j = 0; j < line.childNodes.length; j++) {
+          const fragment = line.childNodes.item(j);
+          const length = Helper.getNodeTextLength(fragment);
+          if (length >= value[1]) {
+            return Helper.getChildNodeByTextLength(fragment, value[1]);
+          }
+          value[1] -= length;
+        }
+      }
+      value[1] -= length + 1;
+    }
+    
+    return value;
   }
   
   public isDecorationDisabled(decoration: keyof Initializer<Decoration>) {
@@ -62,194 +102,95 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
     this.state.ref.current?.focus();
   }
   
-  public select(start: number = 0, end: number = this.text.length, forward: boolean = true) {
-    this.setState({selection: {start, end, forward}});
+  public select(selection: EditTextSelection) {
+    this.setState({selection});
   };
   
-  public insert(insert: Character | Character[], selection: EditTextSelection = this.getSelection(), clear_selection = true) {
-    selection = this.parseSelection(selection);
-    
-    const length = insert instanceof Character ? 1 : insert.length;
-    const start = this.text.slice(0, selection.start);
-    const end = this.text.slice(selection.end);
-    const next_text = new RichText({...this.text, value: [start, insert, end]});
-    const next_selection = clear_selection ? {start: selection.start + length, end: selection.start + length, forward: selection.forward} : selection;
-    
-    this.props.onChange(next_text, this);
-    this.setState({selection: next_selection, history: this.state.history.push({text: next_text, selection: next_selection})});
+  public insert(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: EditTextSelection = this.getSelection()) {
+    this.setState({selection: this.text.replace(insert, selection)});
+    this.props.onChange(this.text.clone(), this);
   };
   
   public insertText(text: string, selection: EditTextSelection = this.getSelection()) {
-    const position = Math.max(0, selection.start - 1);
-    const decoration = this.text.at(position)?.decoration;
-    const segment = [] as Character[];
+    const decoration = this.text.value.at(selection.section)?.value.at(selection.character)?.decoration;
     
-    for (let i = 0; i < text.length; i++) {
-      segment.push(new Character(text[i], decoration));
+    if (text.length > 1) {
+      const fragment = [] as RichTextCharacter[];
+      for (let i = 0; i < text.length; i++) {
+        fragment.push(new RichTextCharacter(text[i], decoration));
+      }
+      this.insert(fragment, selection);
     }
-    
-    this.insert(segment, selection);
+    else {
+      this.insert(new RichTextCharacter(text, decoration));
+    }
   };
   
-  public insertHTML(html: string | Element, selection: EditTextSelection = this.getSelection()) {
-    this.insert(RichText.parseHTML(html).value, selection);
-  }
+  // TODO: FIX
+  // public insertHTML(html: string | HTMLElement, selection: EditTextSelection = this.getSelection()) {
+  //   this.insert(RichText.parseHTML(html).value, selection);
+  // }
   
   public decorate(decoration: Initializer<Decoration>, selection: EditTextSelection = this.getSelection()) {
-    decoration = {...decoration};
-    selection = this.parseSelection(selection);
-    
-    const entries = Util.getProperties(decoration);
-    for (let i = 0; i < entries.length; i++) {
-      const key = entries[i];
-      if (this.props.whitelist?.length && !this.props.whitelist.includes(key) || this.props.blacklist?.includes(key)) {
-        delete decoration[key];
+    this.setState({selection: this.text.decorate(decoration, selection)});
+    this.props.onChange(this.text.clone(), this);
+  };
+  
+  public delete(selection: EditTextSelection = this.getSelection()) {
+    this.setState({selection: this.text.remove(selection)});
+    this.props.onChange(this.text.clone(), this);
+  }
+  
+  public deleteForward(selection: EditTextSelection = this.getSelection()) {
+    if (!this.text.length) return;
+    if (selection.section === selection.section_offset && selection.character === selection.character_offset) {
+      if (selection.character === this.text.getSection(selection.section).length) {
+        if (selection.section === this.text.value.length) return;
+        selection.section_offset++;
+        selection.character_offset = 0;
+      }
+      else {
+        selection.character_offset++;
       }
     }
-    
-    const text = this.text.slice(selection.start, selection.end);
-    for (let i = 0; i < text.length; i++) {
-      text[i] = text[i].decorate(decoration);
-    }
-    
-    this.insert(text, selection, false);
+    this.delete(selection);
   };
   
-  // Should maybe be moved to RichText?
-  public deleteForward(selection: EditTextSelection = this.getSelection()) {
-    selection = this.parseSelection(selection);
-    if (selection.start === this.text.length && selection.end === this.text.length) return;
-    if (selection.start === selection.end) selection.end = Math.min(selection.end + 1, this.text.length);
-    
-    this.insert([], selection);
-  };
-  
-  // Should maybe be moved to RichText?
   public deleteBackward(selection: EditTextSelection = this.getSelection()) {
-    selection = this.parseSelection(selection);
-    if (!selection.start && !selection.end) return;
-    if (selection.start === selection.end) selection.start = Math.max(0, selection.start - 1);
-    
-    this.insert([], selection);
-  };
-  
-  // Should maybe be moved to RichText?
-  public deleteWordForward(selection: EditTextSelection = this.getSelection()) {
-    selection = this.parseSelection(selection);
-    if (selection.start !== selection.end || selection.end === this.text.length) return this.deleteBackward(selection);
-    
-    selection.end = this.text.find(/[^\p{Z}]/u, selection.end) ?? this.text.length;
-    selection.end = this.text.find(this.text.at(selection.end, true).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.end) ?? this.text.length;
-    selection.end = this.text.find(/[^\p{Z}]/u, selection.end) ?? this.text.length;
-    
-    this.insert([], selection);
-  }
-  
-  // Should maybe be moved to RichText?
-  public deleteWordBackward(selection: EditTextSelection = this.getSelection()) {
-    selection = this.parseSelection(selection);
-    if (selection.start !== selection.end || !selection.start) return this.deleteBackward(selection);
-    
-    selection.start = this.text.find(/[^\p{Z}]/u, selection.start, false) ?? 0;
-    selection.start = this.text.find(this.text.at(selection.start, true).value.match(/[\p{L}\p{N}]/u) ? /[^\p{L}\p{N}]/u : /[\p{L}\p{N}\p{Z}]/u, selection.start, false) ?? 0;
-    selection.start = this.text.find(/[^\p{Z}]/u, selection.start, false) ?? 0;
-    
-    this.insert([], {...selection, start: selection.start ? selection.start + 1 : selection.start});
-  }
-  
-  public undo() {
-    const history = this.state.history.backward();
-    if (this.state.history === history) return this;
-    
-    this.props.onChange(history.value.text, this);
-    this.setState({history, selection: history.value.selection});
-  }
-  
-  public redo() {
-    const history = this.state.history.forward();
-    if (this.state.history === history) return this;
-    
-    this.props.onChange(history.value.text, this);
-    this.setState({history, selection: history.value.selection});
-  }
-  
-  private parseSelection(selection?: EditTextSelection): EditTextSelection {
-    if (!selection) return {start: 0, end: this.text.length, forward: true};
-    if (isNaN(+selection.start)) selection.start = 0;
-    if (isNaN(+selection.end)) selection.end = this.text.length;
-    
-    selection.start = Math.max(Math.min(selection.start, selection.end), 0);
-    selection.end = Math.min(Math.max(selection.start, selection.end), this.text.length);
-    return selection;
-  };
-  
-  private getNodeByPosition(position: number, parent: Node | null = this.state.ref.current): {position: number, element: Node} {
-    if (!parent) throw "Could not get container element.";
-    
-    for (let i = 0; i < parent.childNodes.length; i++) {
-      const child = parent.childNodes[i];
-      const content = child.textContent?.length ?? 0;
-      if (content >= position) return this.getNodeByPosition(position, child);
-      if (parent === this.state.ref.current) position -= 1;
-      position -= content;
+    if (!this.text.length) return;
+    if (selection.section === selection.section_offset && selection.character === selection.character_offset) {
+      if (selection.character === 0) {
+        if (selection.section === 0) return;
+        selection.section--;
+        selection.character = this.text.getSection(selection.section).length;
+      }
+      else {
+        selection.character--;
+      }
     }
-    
-    return {position, element: parent};
+    this.delete(selection);
   };
   
-  private getPositionByNode(node: Node, parent: Node | null = this.state.ref.current): number {
-    if (!parent) throw "Could not get container element.";
-    if (node === parent) return 0;
-    const container = Helper.getClosestContainer(node, parent);
-    
-    let length = 0;
-    for (let i = 0; i < parent.childNodes.length; i++) {
-      const child = parent.childNodes[i];
-      if (child === container) return length + this.getPositionByNode(node, child);
-      if (parent === this.state.ref.current) length += 1;
-      length += (child.textContent?.length ?? 0);
-    }
-    return length;
-  };
-  
-  public componentDidMount() {
-    this.setState({history: this.state.history.push({text: this.text, selection: this.getSelection()})});
-  }
-  
-  public componentDidUpdate(prevProps: Readonly<EditTextProps<V>>, prevState: Readonly<State<V>>, snapshot?: any): void {
-    if (prevState.selection !== this.state.selection || prevProps.children.length !== this.props.children.length) {
-      const {start, end, forward} = this.state.selection;
-      const start_node = this.getNodeByPosition(forward ? start : end);
-      const end_node = this.getNodeByPosition(forward ? end : start);
-      getSelection()?.setBaseAndExtent(start_node.element, start_node.position, end_node.element, end_node.position);
-      this.props.onSelect?.(this.state.selection, this);
+  public componentDidUpdate(prevProps: Readonly<EditTextProps>, prevState: Readonly<State>, snapshot?: any): void {
+    if (this.state.selection) {
+      const [start_node, start_offset] = this.getNodeBySectionAndCharacter(this.state.selection.section, this.state.selection.character);
+      const [end_node, end_offset] = this.getNodeBySectionAndCharacter(this.state.selection.section_offset, this.state.selection.character_offset);
+      getSelection()?.setBaseAndExtent(start_node, start_offset, end_node, end_offset);
+      this.setState({selection: undefined});
+      // TODO: FIX
+      // this.props.onSelect?.(this.state.selection, this);
     }
   }
   
   public render() {
     const readonly = this.props.readonly ?? true;
     const classes = [Style.Component];
+    const content = this.text.getContent(this.getSelection());
     if (this.props.className) classes.push(this.props.className);
     if (this.props.readonly ?? true) classes.push(Style.Readonly);
+    if (!this.text.length) classes.push(Style.Empty);
     
-    const content = this.text.getContent(0, this.text.length, this.getPosition());
-    const children = [] as React.ReactNode[];
-    const renderer_line = this.props.rendererLine ?? "div";
-    if (!content.length) {
-      children.push(Helper.renderReactElementList(Helper.invoke(renderer_line, {start: 0, end: 0, index: 0, value: []}), {key: 0, className: [Style.Line, Style.Empty].join(" ")}));
-    }
-    else {
-      for (let i = 0; i < content.length; i++) {
-        const lines = [] as React.ReactNode[];
-        for (let j = 0; j < content[i].value.length; j++) {
-          lines.push(this.renderReactElement(content[i].value[j], j));
-        }
-        children.push(Helper.renderReactElementList(Helper.invoke(renderer_line, content[i]), {key: i, className: Style.Line, children: lines}));
-      }
-    }
-    
-    const renderer_content = this.props.rendererContent ?? "div";
-    return Helper.renderReactElementList(Helper.invoke(renderer_content, content), {
+    return Helper.renderReactElementList("div", {
       ref:                            this.state.ref,
       className:                      classes.join(" "),
       contentEditable:                !readonly,
@@ -264,50 +205,53 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
       onCut:                          this.eventCut,
       onKeyDown:                      this.eventKeyDown,
       onKeyPress:                     this.eventKeyPress,
-      children:                       children,
+      children:                       content.length ? content.map(this.renderReactSection) : this.renderReactSection(new RichTextSection().getFragmentList()),
     });
   }
   
-  private renderReactElement = ({decoration, ...segment}: RichTextFragment, i: number = 0): React.ReactNode => {
-    if (decoration.bold) return <b key={i}>{this.renderReactElement({...segment, decoration: {...decoration, bold: false}})}</b>;
-    if (decoration.code) return <code key={i}>{this.renderReactElement({...segment, decoration: {...decoration, code: false}})}</code>;
-    if (decoration.mark) return <mark key={i}>{this.renderReactElement({...segment, decoration: {...decoration, mark: false}})}</mark>;
-    if (decoration.italic) return <i key={i}>{this.renderReactElement({...segment, decoration: {...decoration, italic: false}})}</i>;
-    if (decoration.underline) return <u key={i}>{this.renderReactElement({...segment, decoration: {...decoration, underline: false}})}</u>;
-    if (decoration.strikethrough) return <s key={i}>{this.renderReactElement({...segment, decoration: {...decoration, strikethrough: false}})}</s>;
-    if (decoration.link) return <a className={Style.Link} href={decoration.link} key={i}>{this.renderReactElement({...segment, decoration: {...decoration, link: ""}})}</a>;
+  private renderReactSection = (section: RichTextSectionContent, index: number = 0) => {
+    return Helper.renderReactElementList("p", {
+      key:       index,
+      className: Style.Section,
+      children:  section.map(this.renderReactLine),
+    });
+  };
+  
+  private renderReactLine = (line: RichTextSectionContentLine, index: number = 0) => {
+    return Helper.renderReactElementList("span", {
+      key:       index,
+      className: Style.Line,
+      children:  line.text.map(this.renderReactFragment),
+    });
+  };
+  
+  private renderReactFragment = ({decoration, ...fragment}: RichTextFragment, i: number = 0): React.ReactNode => {
+    if (decoration.bold) return <b key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, bold: false}})}</b>;
+    if (decoration.code) return <code key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, code: false}})}</code>;
+    if (decoration.mark) return <mark key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, mark: false}})}</mark>;
+    if (decoration.italic) return <i key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, italic: false}})}</i>;
+    if (decoration.underline) return <u key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, underline: false}})}</u>;
+    if (decoration.strikethrough) return <s key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, strikethrough: false}})}</s>;
+    if (decoration.link) return <a className={Style.Link} href={decoration.link} key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, link: ""}})}</a>;
     
     const classes = [Style.Text] as string[];
     if (decoration.selected && this.props.active !== false) classes.push(Style.Selected);
     
-    const renderer_fragment = this.props.rendererFragment ?? "span";
-    return Helper.renderReactElementList(Helper.invoke(renderer_fragment, {...segment, decoration}), {
+    return Helper.renderReactElementList("span", {
       key:       i,
       className: classes.join(" "),
       style:     new Decoration(decoration).toCSSProperties(),
-      children:  segment.text.length ? Helper.renderHTMLText(segment.text) : <br/>,
+      children:  this.renderReactText(fragment.text),
     });
   };
   
-  public readonly renderHTML = (selection?: EditTextSelection) => {
-    const {start, end} = this.parseSelection(selection);
-    const content = this.text.getContent(start, end, this.getPosition());
-    if (!content.length) return this.renderHTMLLine({value: [], index: 0, start: 0, end: 0}, {[RichText.attribute_metadata]: JSON.stringify(this.text.metadata)});
-    
-    const container = Helper.createElementWithChildren("div");
-    for (let i = 0; i < content.length; i++) {
-      const line = this.renderHTMLLine(content[i], {[RichText.attribute_metadata]: JSON.stringify(this.text.metadata)});
-      for (let j = 0; j < content[i].value.length; j++) {
-        line.append(this.renderHTMLNode(content[i].value[j]));
-      }
-      container.append(line);
-    }
-    
-    return container;
+  private renderReactText = (text: string) => {
+    return text.length ? Helper.renderHTMLText(text) : <br/>;
   };
   
-  private renderHTMLLine = (line: RichTextLine, attributes: {[key: string]: string} = {}) => {
-    return Helper.renderHTMLElementList(Helper.invoke(this.props.subdivision ?? "div", line), attributes);
+  // TODO: FIX
+  public readonly renderHTML = (selection: EditTextSelection) => {
+    return Helper.createElementWithChildren("div", {}, ...this.text.getContent().map(item => Helper.createElementWithChildren("div", {}, ...item.map(this.renderHTMLNode))));
   };
   
   private readonly renderHTMLNode = ({decoration, ...segment}: RichTextFragment): Node => {
@@ -326,7 +270,7 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
   
   private readonly eventKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
     event.preventDefault();
-    this.insertText(event.key);
+    this.insert(new RichTextCharacter(event.key));
   };
   
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -348,41 +292,40 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
       case KeyboardCommand.NEXT_FOCUS:
         return this.insertText(Character.tab);
       case KeyboardCommand.SELECT_ALL:
-        return this.select(0, this.props.children.length);
+        return this.select({section: 0, character: 0, section_offset: this.text.value.length - 1, character_offset: this.text.getSection(this.text.value.length - 1).length, forward: true});
       case KeyboardCommand.NEW_LINE:
       case KeyboardCommand.NEW_LINE_ALT:
         return this.insertText(Character.linebreak);
       case KeyboardCommand.NEW_PARAGRAPH:
       case KeyboardCommand.NEW_PARAGRAPH_ALT:
-        return this.props.onSubmit?.(this);
+        return this.insert(new RichTextSection());
       case KeyboardCommand.DELETE_FORWARD:
-        return this.deleteForward();
-      case KeyboardCommand.DELETE_WORD_FORWARD:
-        return this.deleteWordForward();
+        return this.deleteForward(this.getSelection() ?? {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: true});
       case KeyboardCommand.DELETE_BACKWARD:
-        return this.deleteBackward();
+        return this.deleteBackward(this.getSelection() ?? {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: true});
+      case KeyboardCommand.DELETE_WORD_FORWARD:
+        return;
+      // TODO: FIX
+      // return this.deleteWordForward();
       case KeyboardCommand.DELETE_WORD_BACKWARD:
-        return this.deleteWordBackward();
-      case KeyboardCommand.REDO:
-      case KeyboardCommand.REDO_ALT:
-        return this.redo();
-      case KeyboardCommand.UNDO:
-      case KeyboardCommand.UNDO_ALT:
-        return this.undo();
+        return;
+      // TODO: FIX
+      // return this.deleteWordBackward();
       case KeyboardCommand.BOLD_TEXT:
-        return this.decorate({bold: !this.text.hasDecoration("bold", ...this.getPosition())});
+        console.log(this.text.hasDecoration("bold", this.getSelection()));
+        return this.decorate({bold: !this.text.hasDecoration("bold", this.getSelection())});
       case KeyboardCommand.ITALIC_TEXT:
-        return this.decorate({italic: !this.text.hasDecoration("italic", ...this.getPosition())});
+        return this.decorate({italic: !this.text.hasDecoration("italic", this.getSelection())});
       case KeyboardCommand.UNDERLINE_TEXT:
-        return this.decorate({underline: !this.text.hasDecoration("underline", ...this.getPosition())});
+        return this.decorate({underline: !this.text.hasDecoration("underline", this.getSelection())});
       case KeyboardCommand.MARK_TEXT:
-        return this.decorate({mark: !this.text.hasDecoration("mark", ...this.getPosition())});
+        return this.decorate({mark: !this.text.hasDecoration("mark", this.getSelection())});
       case KeyboardCommand.CODE_TEXT:
-        return this.decorate({code: !this.text.hasDecoration("code", ...this.getPosition())});
+        return this.decorate({code: !this.text.hasDecoration("code", this.getSelection())});
       case KeyboardCommand.STRIKETHROUGH_TEXT:
-        return this.decorate({strikethrough: !this.text.hasDecoration("strikethrough", ...this.getPosition())});
+        return this.decorate({strikethrough: !this.text.hasDecoration("strikethrough", this.getSelection())});
     }
-    
+  
     event.bubbles = true;
   };
   
@@ -394,13 +337,10 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
     this.props.onFocus?.(event, this);
   };
   
+  // TODO: FIX
   private readonly eventSelect = () => {
-    const {start: next_start, end: next_end, forward: next_forward} = this.getSelection();
-    const {start: prev_start, end: prev_end, forward: prev_forward} = this.state.selection;
-    
-    if (next_start !== prev_start || next_end !== prev_end || next_forward !== prev_forward) {
-      this.setState({selection: {start: next_start, end: next_end, forward: next_forward}});
-    }
+    // console.log(this.getSelection());
+    // this.setState({selection: this.getSelection()});
   };
   
   private readonly eventDragStart = (event: React.DragEvent<HTMLDivElement>) => {
@@ -424,49 +364,46 @@ export default class EditText<V = never> extends Component<EditTextProps<V>, Sta
     this.insert([]);
   };
   
+  // TODO: FIX
   private readonly eventPaste = async (event: React.ClipboardEvent) => {
     event.preventDefault();
     if (event.clipboardData.types.includes(ClipboardDataType.FILES)) return;
-    if (event.clipboardData.types.includes(ClipboardDataType.TEXT_HTML)) {
-      const html = event.clipboardData.getData(ClipboardDataType.TEXT_HTML).match(/<!--StartFragment-->(?<html>.*)<!--EndFragment-->/);
-      if (html?.groups?.html) {
-        return this.insertHTML(html.groups.html);
-      }
-    }
+    // if (event.clipboardData.types.includes(ClipboardDataType.TEXT_HTML)) {
+    //   const html = event.clipboardData.getData(ClipboardDataType.TEXT_HTML).match(/<!--StartFragment-->(?<html>.*)<!--EndFragment-->/);
+    //   if (html?.groups?.html) {
+    //     return this.insertHTML(html.groups.html);
+    //   }
+    // }
     
     return this.insertText(event.clipboardData.getData(ClipboardDataType.TEXT_PLAIN));
   };
 }
 
-export type EditTextElement = keyof HTMLElementTagNameMap | (keyof HTMLElementTagNameMap)[]
-export type EditTextSelection = {start: number, end: number, forward: boolean};
-export type EditTextCommand = keyof Initializer<Decoration>;
-export type EditTextCommandList = EditTextCommand[];
+export interface EditTextSelection extends RichTextSelection {
+  forward: boolean;
+}
 
-export interface EditTextProps<V> {
+export type EditTextElement = keyof HTMLElementTagNameMap | (keyof HTMLElementTagNameMap)[]
+export type EditTextCommandList = (keyof Initializer<Decoration>)[];
+
+export interface EditTextProps {
   active?: boolean;
-  subdivision?: (line: RichTextLine) => EditTextElement;
-  children: RichText<V>;
+  children: RichText;
   className?: string;
   readonly?: boolean;
   whitelist?: (keyof Initializer<Decoration>)[];
   blacklist?: (keyof Initializer<Decoration>)[];
   
-  onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText<V>): void;
-  onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText<V>): void;
-  onSelect?(selection: EditTextSelection, component: EditText<V>): void;
-  onKeyDown?(event: React.KeyboardEvent<HTMLDivElement>, component: EditText<V>): boolean | void;
+  onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
+  onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
+  onSelect?(selection: EditTextSelection, component: EditText): void;
+  onKeyDown?(event: React.KeyboardEvent<HTMLDivElement>, component: EditText): boolean | void;
   
-  onChange(text: RichText<V>, component: EditText<V>): void;
-  onSubmit?(component: EditText<V>): void;
-  
-  rendererContent?: EditTextElement | ((content: RichTextContent) => EditTextElement);
-  rendererLine?: EditTextElement | ((line: RichTextLine) => EditTextElement);
-  rendererFragment?: EditTextElement | ((text: RichTextFragment) => EditTextElement);
+  onChange(text: RichText, component: EditText): void;
+  onSubmit?(component: EditText): void;
 }
 
-interface State<V> {
+interface State {
   ref: React.RefObject<HTMLDivElement>;
-  history: History<{text: RichText<V>, selection: EditTextSelection}>;
-  selection: EditTextSelection;
+  selection?: EditTextSelection;
 }

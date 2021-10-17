@@ -3,7 +3,7 @@ import Pagination from "../../../common/classes/Pagination";
 import Order from "../../../common/enums/Order";
 import PageBlockType from "../../../common/enums/PageBlockType";
 import Fetch from "../../classes/Fetch";
-import RichText from "../../classes/RichText";
+import RichText from "../../classes/RichText/RichText";
 import {APIKeyEntitySearchParameters} from "../APIKeyEntity";
 import {HeaderBlockContent} from "./Block/HeaderPageBlockEntity";
 import {ListBlockContent} from "./Block/ListPageBlockEntity";
@@ -41,10 +41,10 @@ export default abstract class PageBlockEntity<Type extends PageBlockType = PageB
   
   public abstract replaceText(old_text: ContentValue<PageBlockContent[Type]["value"]>, new_text: ContentValue<PageBlockContent[Type]["value"]>): this
   
-  public static parseContentText = <T>(input?: ContentInitializer<RichText<T>>): RichText<T> => {
+  public static parseContentText = (input?: ContentInitializer<RichText>): RichText => {
     if (input instanceof RichText) return input;
     if (typeof input === "string") return RichText.parseHTML(input);
-    return new RichText({value: ""});
+    return new RichText("");
   };
   
   public static parseContentNumber = (input?: number) => {
