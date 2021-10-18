@@ -26,6 +26,20 @@ export default class RichText<Metadata = never> {
     return this.value.length;
   }
   
+  public slice({...selection}: RichTextSelection) {
+    const text = new RichText();
+    selection.section = this.parseSection(selection.section);
+    selection.section_offset = this.parseSection(selection.section_offset);
+    for (let i = selection.section; i < selection.section_offset; i++) {
+      const section = this.value.at(i);
+      if (!section) continue;
+      const start = i === selection.section ? section.parseCharacter(selection.character) : 0;
+      const end = i === selection.section ? section.parseCharacter(selection.character_offset) : section.length;
+      text.value.push(new RichTextSection(section.value.slice(start, end)));
+    }
+    return text;
+  }
+  
   public getSection(id: number | string | undefined): RichTextSection {
     let value: RichTextSection | undefined;
     
@@ -74,6 +88,10 @@ export default class RichText<Metadata = never> {
     //   }
     // }
     return true;
+  }
+  
+  public parseSection(section: number) {
+    return section < 0 ? Math.max(0, this.length + section) : section;
   }
   
   public insertCharacter<S extends Pick<RichTextSelection, "section" | "character">>(value: RichTextCharacter, selection: S): S {
@@ -140,7 +158,7 @@ export default class RichText<Metadata = never> {
     if (selection.section !== selection.section_offset || selection.character !== selection.character_offset) {
       selection = this.remove(selection);
     }
-  
+    
     if (insert instanceof RichTextCharacter) {
       selection = this.insertCharacter(insert, selection);
     }
@@ -158,7 +176,7 @@ export default class RichText<Metadata = never> {
         }
       }
     }
-
+    
     selection.section_offset = selection.section;
     selection.character_offset = selection.character;
     
@@ -183,7 +201,7 @@ export default class RichText<Metadata = never> {
   }
   
   public ensureSection<S extends Pick<RichTextSelection, "section">>(selection: S): S {
-    selection = {...selection, section: selection.section < 0 ? Math.max(0, this.length + selection.section) : selection.section};
+    selection = {...selection, section: this.parseSection(selection.section)};
     
     if (this.value.length <= selection.section) {
       for (let i = 0; i <= selection.section; i++) {

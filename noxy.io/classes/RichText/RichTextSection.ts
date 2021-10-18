@@ -75,6 +75,10 @@ export default class RichTextSection {
     return content;
   }
   
+  public parseCharacter(character: number) {
+    return character < 0 ? Math.max(0, this.length + character) : character;
+  }
+  
   public insert<S extends Pick<RichTextSectionSelection, "character">>(insert: RichTextCharacter | RichTextCharacter[], selection: S): S {
     if (selection.character) selection = this.ensureCharacter(selection);
     

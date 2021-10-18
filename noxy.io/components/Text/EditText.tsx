@@ -1,11 +1,11 @@
 import React from "react";
 import ClipboardDataType from "../../../common/enums/ClipboardDataType";
 import Character from "../../classes/Character";
-import Decoration from "../../classes/Decoration";
+import Decoration, {DecorationObject} from "../../classes/Decoration";
 import {RichTextFragment} from "../../classes/RichText";
 import RichText, {RichTextSelection} from "../../classes/RichText/RichText";
 import RichTextCharacter from "../../classes/RichText/RichTextCharacter";
-import RichTextSection, {RichTextSectionContent, RichTextSectionContentLine} from "../../classes/RichText/RichTextSection";
+import RichTextSection, {RichTextSectionContent, RichTextSectionContentFragment, RichTextSectionContentLine} from "../../classes/RichText/RichTextSection";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
 import Component from "../Application/Component";
@@ -249,24 +249,47 @@ export default class EditText extends Component<EditTextProps, State> {
     return text.length ? Helper.renderHTMLText(text) : <br/>;
   };
   
-  // TODO: FIX
   public readonly renderHTML = (selection: EditTextSelection) => {
-    return Helper.createElementWithChildren("div", {}, ...this.text.getContent().map(item => Helper.createElementWithChildren("div", {}, ...item.map(this.renderHTMLNode))));
+    return Helper.createElementWithChildren("div", {}, ...this.text.slice(selection).getContent().map(this.renderHTMLSection));
   };
   
-  private readonly renderHTMLNode = ({decoration, ...segment}: RichTextFragment): Node => {
-    if (decoration.bold) return Helper.createElementWithChildren("b", {}, this.renderHTMLNode({...segment, decoration: {...decoration, bold: false}}));
-    if (decoration.code) return Helper.createElementWithChildren("code", {}, this.renderHTMLNode({...segment, decoration: {...decoration, code: false}}));
-    if (decoration.mark) return Helper.createElementWithChildren("mark", {}, this.renderHTMLNode({...segment, decoration: {...decoration, mark: false}}));
-    if (decoration.italic) return Helper.createElementWithChildren("i", {}, this.renderHTMLNode({...segment, decoration: {...decoration, italic: false}}));
-    if (decoration.underline) return Helper.createElementWithChildren("u", {}, this.renderHTMLNode({...segment, decoration: {...decoration, underline: false}}));
-    if (decoration.strikethrough) return Helper.createElementWithChildren("s", {}, this.renderHTMLNode({...segment, decoration: {...decoration, strikethrough: false}}));
-    if (decoration.link) return Helper.createElementWithChildren("a", {"href": decoration.link}, this.renderHTMLNode({...segment, decoration: {...decoration, link: ""}}));
-    
-    const node = new Decoration(decoration).toNode("span");
-    node.append(segment.text.length ? document.createTextNode(Helper.renderHTMLText(segment.text)) : document.createElement("br"));
-    return node;
+  private readonly renderHTMLSection = (section: RichTextSectionContent) => {
+    const list = [];
+    for (let j = 0; j < section.length; j++) {
+      const value = section.at(j);
+      if (!value) continue;
+      list.push(this.renderHTMLLine(value));
+    }
+    return Helper.createElementWithChildren("p", {}, ...list);
   };
+  
+  private readonly renderHTMLLine = (line: RichTextSectionContentLine) => {
+    const list = [];
+    for (let i = 0; i < line.text.length; i++) {
+      const value = line.text.at(i);
+      if (!value) continue;
+      list.push(this.renderHTMLFragment(value));
+    }
+    return Helper.createElementWithChildren("span", {}, ...list);
+  };
+  
+  private readonly renderHTMLFragment = ({decoration, ...segment}: RichTextSectionContentFragment): Node => {
+    if (decoration.bold) return Helper.createElementWithChildren("b", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, bold: false}}));
+    if (decoration.code) return Helper.createElementWithChildren("code", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, code: false}}));
+    if (decoration.mark) return Helper.createElementWithChildren("mark", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, mark: false}}));
+    if (decoration.italic) return Helper.createElementWithChildren("i", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, italic: false}}));
+    if (decoration.underline) return Helper.createElementWithChildren("u", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, underline: false}}));
+    if (decoration.strikethrough) return Helper.createElementWithChildren("s", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, strikethrough: false}}));
+    if (decoration.link) return Helper.createElementWithChildren("a", {"href": decoration.link}, this.renderHTMLFragment({...segment, decoration: {...decoration, link: ""}}));
+    
+    return this.renderHTMLText(segment.text, decoration);
+  };
+  
+  private readonly renderHTMLText = (text: string, decoration?: DecorationObject) => {
+    const node = new Decoration(decoration).toNode("span");
+    node.append(document.createTextNode(Helper.renderHTMLText(text)));
+    return node;
+  }
   
   private readonly eventKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -325,7 +348,7 @@ export default class EditText extends Component<EditTextProps, State> {
       case KeyboardCommand.STRIKETHROUGH_TEXT:
         return this.decorate({strikethrough: !this.text.hasDecoration("strikethrough", this.getSelection())});
     }
-  
+    
     event.bubbles = true;
   };
   
