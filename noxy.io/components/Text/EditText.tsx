@@ -1,10 +1,8 @@
 import React from "react";
 import ClipboardDataType from "../../../common/enums/ClipboardDataType";
-import Character from "../../classes/Character";
-import Decoration, {DecorationObject} from "../../classes/Decoration";
-import {RichTextFragment} from "../../classes/RichText";
 import RichText, {RichTextSelection} from "../../classes/RichText/RichText";
 import RichTextCharacter from "../../classes/RichText/RichTextCharacter";
+import RichTextDecoration, {DecorationObject} from "../../classes/RichText/RichTextDecoration";
 import RichTextSection, {RichTextSectionContent, RichTextSectionContentFragment, RichTextSectionContentLine} from "../../classes/RichText/RichTextSection";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
@@ -94,7 +92,7 @@ export default class EditText extends Component<EditTextProps, State> {
     return value;
   }
   
-  public isDecorationDisabled(decoration: keyof Initializer<Decoration>) {
+  public isDecorationDisabled(decoration: keyof Initializer<RichTextDecoration>) {
     return !!(this.props.whitelist?.length && !this.props.whitelist.includes(decoration) || this.props.blacklist?.includes(decoration));
   };
   
@@ -112,7 +110,7 @@ export default class EditText extends Component<EditTextProps, State> {
   };
   
   public insertText(text: string, selection: EditTextSelection = this.getSelection()) {
-    const decoration = this.text.value.at(selection.section)?.value.at(selection.character)?.decoration;
+    const decoration = this.text.section_list.at(selection.section)?.character_list.at(selection.character)?.decoration;
     
     if (text.length > 1) {
       const fragment = [] as RichTextCharacter[];
@@ -131,7 +129,7 @@ export default class EditText extends Component<EditTextProps, State> {
   //   this.insert(RichText.parseHTML(html).value, selection);
   // }
   
-  public decorate(decoration: Initializer<Decoration>, selection: EditTextSelection = this.getSelection()) {
+  public decorate(decoration: Initializer<RichTextDecoration>, selection: EditTextSelection = this.getSelection()) {
     this.setState({selection: this.text.decorate(decoration, selection)});
     this.props.onChange(this.text.clone(), this);
   };
@@ -145,7 +143,7 @@ export default class EditText extends Component<EditTextProps, State> {
     if (!this.text.length) return;
     if (selection.section === selection.section_offset && selection.character === selection.character_offset) {
       if (selection.character === this.text.getSection(selection.section).length) {
-        if (selection.section === this.text.value.length) return;
+        if (selection.section === this.text.section_list.length) return;
         selection.section_offset++;
         selection.character_offset = 0;
       }
@@ -190,7 +188,7 @@ export default class EditText extends Component<EditTextProps, State> {
     if (this.props.readonly ?? true) classes.push(Style.Readonly);
     if (!this.text.length) classes.push(Style.Empty);
     
-    return Helper.renderReactElementList("div", {
+    return Helper.renderReactElementList(content.element, {
       ref:                            this.state.ref,
       className:                      classes.join(" "),
       contentEditable:                !readonly,
@@ -205,15 +203,17 @@ export default class EditText extends Component<EditTextProps, State> {
       onCut:                          this.eventCut,
       onKeyDown:                      this.eventKeyDown,
       onKeyPress:                     this.eventKeyPress,
-      children:                       content.length ? content.map(this.renderReactSection) : this.renderReactSection(new RichTextSection().getFragmentList()),
+      children:                       content.section_list.length
+                                      ? content.section_list.map(this.renderReactSection)
+                                      : this.renderReactSection(new RichTextSection().getFragmentList()),
     });
   }
   
   private renderReactSection = (section: RichTextSectionContent, index: number = 0) => {
-    return Helper.renderReactElementList("p", {
+    return Helper.renderReactElementList(section.element, {
       key:       index,
       className: Style.Section,
-      children:  section.map(this.renderReactLine),
+      children:  section.line_list.map(this.renderReactLine),
     });
   };
   
@@ -221,11 +221,11 @@ export default class EditText extends Component<EditTextProps, State> {
     return Helper.renderReactElementList("span", {
       key:       index,
       className: Style.Line,
-      children:  line.text.map(this.renderReactFragment),
+      children:  line.fragment_list.map(this.renderReactFragment),
     });
   };
   
-  private renderReactFragment = ({decoration, ...fragment}: RichTextFragment, i: number = 0): React.ReactNode => {
+  private renderReactFragment = ({decoration, ...fragment}: RichTextSectionContentFragment, i: number = 0): React.ReactNode => {
     if (decoration.bold) return <b key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, bold: false}})}</b>;
     if (decoration.code) return <code key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, code: false}})}</code>;
     if (decoration.mark) return <mark key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, mark: false}})}</mark>;
@@ -240,7 +240,7 @@ export default class EditText extends Component<EditTextProps, State> {
     return Helper.renderReactElementList("span", {
       key:       i,
       className: classes.join(" "),
-      style:     new Decoration(decoration).toCSSProperties(),
+      style:     new RichTextDecoration(decoration).toCSSProperties(),
       children:  this.renderReactText(fragment.text),
     });
   };
@@ -250,27 +250,29 @@ export default class EditText extends Component<EditTextProps, State> {
   };
   
   public readonly renderHTML = (selection: EditTextSelection) => {
-    return Helper.createElementWithChildren("div", {}, ...this.text.slice(selection).getContent().map(this.renderHTMLSection));
+    const content = this.text.slice(selection).getContent();
+    return Helper.renderHTMLElementList(content.element, {class: "text"}, ...content.section_list.map(this.renderHTMLSection));
   };
   
   private readonly renderHTMLSection = (section: RichTextSectionContent) => {
     const list = [];
-    for (let j = 0; j < section.length; j++) {
-      const value = section.at(j);
-      if (!value) continue;
-      list.push(this.renderHTMLLine(value));
+    for (let j = 0; j < section.line_list.length; j++) {
+      const line = section.line_list.at(j);
+      if (!line) continue;
+      list.push(this.renderHTMLLine(line));
     }
-    return Helper.createElementWithChildren("p", {}, ...list);
+    
+    return Helper.renderHTMLElementList(section.element, {class: "text"}, ...section.line_list.map(this.renderHTMLLine));
   };
   
   private readonly renderHTMLLine = (line: RichTextSectionContentLine) => {
     const list = [];
-    for (let i = 0; i < line.text.length; i++) {
-      const value = line.text.at(i);
-      if (!value) continue;
-      list.push(this.renderHTMLFragment(value));
+    for (let i = 0; i < line.fragment_list.length; i++) {
+      const fragment = line.fragment_list.at(i);
+      if (!fragment) continue;
+      list.push(this.renderHTMLFragment(fragment));
     }
-    return Helper.createElementWithChildren("span", {}, ...list);
+    return Helper.createElementWithChildren("span", {class: "line"}, ...list);
   };
   
   private readonly renderHTMLFragment = ({decoration, ...segment}: RichTextSectionContentFragment): Node => {
@@ -286,10 +288,10 @@ export default class EditText extends Component<EditTextProps, State> {
   };
   
   private readonly renderHTMLText = (text: string, decoration?: DecorationObject) => {
-    const node = new Decoration(decoration).toNode("span");
+    const node = new RichTextDecoration(decoration).toNode("span");
     node.append(document.createTextNode(Helper.renderHTMLText(text)));
     return node;
-  }
+  };
   
   private readonly eventKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -313,12 +315,12 @@ export default class EditText extends Component<EditTextProps, State> {
     
     switch (command) {
       case KeyboardCommand.NEXT_FOCUS:
-        return this.insertText(Character.tab);
+        return this.insertText(RichTextCharacter.tab);
       case KeyboardCommand.SELECT_ALL:
-        return this.select({section: 0, character: 0, section_offset: this.text.value.length - 1, character_offset: this.text.getSection(this.text.value.length - 1).length, forward: true});
+        return this.select({section: 0, character: 0, section_offset: this.text.section_list.length - 1, character_offset: this.text.getSection(this.text.section_list.length - 1).length, forward: true});
       case KeyboardCommand.NEW_LINE:
       case KeyboardCommand.NEW_LINE_ALT:
-        return this.insertText(Character.linebreak);
+        return this.insertText(RichTextCharacter.linebreak);
       case KeyboardCommand.NEW_PARAGRAPH:
       case KeyboardCommand.NEW_PARAGRAPH_ALT:
         return this.insert(new RichTextSection());
@@ -376,6 +378,7 @@ export default class EditText extends Component<EditTextProps, State> {
   
   private readonly eventCopy = async (event: React.ClipboardEvent) => {
     event.preventDefault();
+    console.log(this.renderHTML(this.getSelection()));
     event.clipboardData.setData("text/plain", this.renderHTML(this.getSelection()).innerText);
     event.clipboardData.setData("text/html", this.renderHTML(this.getSelection()).innerHTML);
   };
@@ -407,15 +410,15 @@ export interface EditTextSelection extends RichTextSelection {
 }
 
 export type EditTextElement = keyof HTMLElementTagNameMap | (keyof HTMLElementTagNameMap)[]
-export type EditTextCommandList = (keyof Initializer<Decoration>)[];
+export type EditTextCommandList = (keyof Initializer<RichTextDecoration>)[];
 
 export interface EditTextProps {
   active?: boolean;
   children: RichText;
   className?: string;
   readonly?: boolean;
-  whitelist?: (keyof Initializer<Decoration>)[];
-  blacklist?: (keyof Initializer<Decoration>)[];
+  whitelist?: (keyof Initializer<RichTextDecoration>)[];
+  blacklist?: (keyof Initializer<RichTextDecoration>)[];
   
   onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
   onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;

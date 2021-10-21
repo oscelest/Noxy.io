@@ -1,6 +1,6 @@
 import PageBlockType from "../../../../common/enums/PageBlockType";
 import RichText from "../../../classes/RichText/RichText";
-import PageBlockEntity, {ContentInitializer, PageBlockContentValue} from "../PageBlockEntity";
+import PageBlockEntity from "../PageBlockEntity";
 
 export default class TablePageBlockEntity extends PageBlockEntity {
   
@@ -11,8 +11,8 @@ export default class TablePageBlockEntity extends PageBlockEntity {
     this.type = PageBlockType.TABLE;
     this.content = initializer?.content ?? {
       value: [
-        [new RichText({value: ""}), new RichText({value: ""})],
-        [new RichText({value: ""}), new RichText({value: ""})],
+        [new RichText(), new RichText()],
+        [new RichText(), new RichText()],
       ],
     };
   }
@@ -28,27 +28,27 @@ export default class TablePageBlockEntity extends PageBlockEntity {
     throw new Error("Could not find text in TableBlock.");
   }
   
-  public static parseContent(content?: ContentInitializer<TableBlockContent>): TableBlockContent {
-    const {value} = content ?? {};
-    const table = [] as TableBlockText[][];
-    
-    const y_max = value?.length ?? 2;
-    for (let y = 0; y < y_max; y++) {
-      table[y] = [];
-      
-      const x_max = value?.[y]?.length ?? 2;
-      for (let x = 0; x < x_max; x++) {
-        table[y][x] = this.parseContentText(value?.[y]?.[x]);
-      }
-    }
-    
-    return {value: table};
-  }
+  // public static parseContent(content?: ContentInitializer<TableBlockContent>): TableBlockContent {
+  //   const {value} = content ?? {};
+  //   const table = [] as TableBlockText[][];
+  //
+  //   const y_max = value?.length ?? 2;
+  //   for (let y = 0; y < y_max; y++) {
+  //     table[y] = [];
+  //
+  //     const x_max = value?.[y]?.length ?? 2;
+  //     for (let x = 0; x < x_max; x++) {
+  //       table[y][x] = this.parseContentText(value?.[y]?.[x]);
+  //     }
+  //   }
+  //
+  //   return {value: table};
+  // }
   
 }
 
 export type TableBlockText = RichText
 
-export interface TableBlockContent extends PageBlockContentValue {
+export interface TableBlockContent {
   value: TableBlockText[][];
 }

@@ -1,6 +1,7 @@
 import PageBlockType from "../../../../common/enums/PageBlockType";
 import RichText from "../../../classes/RichText/RichText";
-import PageBlockEntity, {ContentInitializer, PageBlockContentValue} from "../PageBlockEntity";
+import RichTextSection from "../../../classes/RichText/RichTextSection";
+import PageBlockEntity from "../PageBlockEntity";
 
 export default class HeaderPageBlockEntity extends PageBlockEntity {
   
@@ -10,10 +11,7 @@ export default class HeaderPageBlockEntity extends PageBlockEntity {
     super(initializer);
     this.type = PageBlockType.HEADER;
     this.content = initializer?.content ?? {
-      value: new RichText(""),
-      data:  {
-        level: 1,
-      },
+      value: new RichText({value: new RichTextSection({element: "h1"})}),
     };
   }
   
@@ -22,24 +20,10 @@ export default class HeaderPageBlockEntity extends PageBlockEntity {
     this.content.value = new_text;
     return this;
   }
-  
-  public static parseContent(content?: ContentInitializer<HeaderBlockContent>): HeaderBlockContent {
-    const {value, data} = content ?? {};
-    
-    return {
-      value: this.parseContentText(value),
-      data: {
-        level: this.parseContentNumber(data?.level)
-      }
-    };
-  }
 }
 
 export type HeaderBlockText = RichText
 
-export interface HeaderBlockContent extends PageBlockContentValue {
+export interface HeaderBlockContent {
   value: HeaderBlockText;
-  data: {
-    level: number
-  };
 }

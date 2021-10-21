@@ -1,20 +1,20 @@
 import {v4} from "uuid";
-import Decoration from "../Decoration";
+import RichTextDecoration from "./RichTextDecoration";
 
 export default class RichTextCharacter {
   
   readonly #id: string;
   readonly #value: string;
-  readonly #decoration: Decoration;
+  readonly #decoration: RichTextDecoration;
   
   public static tab: string = "\t";
   public static linebreak: string = "\n";
   public static space: string = " ";
   
-  constructor(value: string, decoration?: Initializer<Decoration>) {
+  constructor(value: string, decoration?: Initializer<RichTextDecoration>) {
     this.#id = v4();
     this.#value = value.charAt(0) ?? " ";
-    this.#decoration = new Decoration(decoration);
+    this.#decoration = new RichTextDecoration(decoration);
   }
   
   public get id() {
@@ -51,7 +51,7 @@ export default class RichTextCharacter {
     return value;
   }
   
-  public static parseHTML(node: Node, decoration?: Decoration) {
+  public static parseHTML(node: Node, decoration?: RichTextDecoration) {
     const value = [] as RichTextCharacter[];
 
     if (node instanceof HTMLBRElement) {
@@ -64,7 +64,7 @@ export default class RichTextCharacter {
       }
     }
     else if (node instanceof HTMLElement) {
-      decoration = Decoration.parseHTML(node, decoration);
+      decoration = RichTextDecoration.parseHTML(node, decoration);
       for (let i = 0; i < node.children.length; i++) {
         const item = node.childNodes.item(i);
         if (item) value.push(...this.parseHTML(item, decoration));

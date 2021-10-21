@@ -1,13 +1,11 @@
-import EditText from "components/Text/EditText";
+import EditText, {EditTextCommandList} from "components/Text/EditText";
 import React from "react";
-import PageBlockType from "../../../common/enums/PageBlockType";
-import Util from "../../../common/services/Util";
 import RichText from "../../classes/RichText/RichText";
+import HeaderPageBlockEntity from "../../entities/Page/Block/HeaderPageBlockEntity";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import Button from "../Form/Button";
-import {EditTextCommandList} from "../Text/EditTextOld";
 import Style from "./HeaderBlock.module.scss";
 
 export default class HeaderBlock extends Component<HeaderBlockProps, State> {
@@ -29,14 +27,12 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
     
-    const header = `h${Util.clamp(this.props.block.content.data.level, 6, 1)}` as keyof HTMLElementTagNameMap;
-    
     return (
       <div className={classes.join(" ")}>
         <Conditional condition={!readonly}>
           {this.renderOptionList()}
         </Conditional>
-        <EditText ref={this.state.ref} readonly={this.props.readonly} whitelist={HeaderBlock.whitelist} blacklist={HeaderBlock.blacklist} rendererContent={header}
+        <EditText ref={this.state.ref} readonly={this.props.readonly} whitelist={HeaderBlock.whitelist} blacklist={HeaderBlock.blacklist}
                   onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit}>
           {this.props.block.content.value}
         </EditText>
@@ -66,12 +62,12 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
   };
   
   private readonly eventHeaderLevelClick = (level: number) => {
-    this.props.block.content.data.level = level;
     this.props.onChange(this.props.block);
   };
+  
 }
 
-export interface HeaderBlockProps extends PageExplorerBlockProps<PageBlockType.HEADER> {
+export interface HeaderBlockProps extends PageExplorerBlockProps<HeaderPageBlockEntity> {
 
 }
 

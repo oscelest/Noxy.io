@@ -1,14 +1,11 @@
 import React from "react";
-import PageBlockType from "../../../common/enums/PageBlockType";
-import Util from "../../../common/services/Util";
-import {RichTextLine} from "../../classes/RichText";
-import ListPageBlockEntity, {ListBlockText} from "../../entities/Page/Block/ListPageBlockEntity";
+import RichText from "../../classes/RichText/RichText";
+import ListPageBlockEntity from "../../entities/Page/Block/ListPageBlockEntity";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
 import Component from "../Application/Component";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
-import EditText, {EditTextSelection} from "../Text/EditText";
-import {EditTextCommandList, EditTextElement} from "../Text/EditTextOld";
+import EditText, {EditTextCommandList, EditTextSelection} from "../Text/EditText";
 import Style from "./ListBlock.module.scss";
 
 export default class ListBlock extends Component<ListBlockProps, State> {
@@ -23,17 +20,17 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     };
   }
   
-  private static getLevel(level: number) {
-    return Util.clamp(level, ListPageBlockEntity.indent_max, ListPageBlockEntity.indent_min);
-  }
+  // private static getLevel(level: number) {
+  //   return Util.clamp(level, ListPageBlockEntity.indent_max, ListPageBlockEntity.indent_min);
+  // }
   
-  public componentDidUpdate(prevProps: Readonly<ListBlockProps>, prevState: Readonly<State>, snapshot?: any) {
-    if (this.state.ref.current && this.state.selection) {
-      const {start, end, forward} = this.state.selection;
-      this.state.ref.current.select(start, end, forward);
-      this.setState({selection: undefined});
-    }
-  }
+  // public componentDidUpdate(prevProps: Readonly<ListBlockProps>, prevState: Readonly<State>, snapshot?: any) {
+  //   if (this.state.ref.current && this.state.selection) {
+  //     const {start, end, forward} = this.state.selection;
+  //     this.state.ref.current.select(start, end, forward);
+  //     this.setState({selection: undefined});
+  //   }
+  // }
   
   public render() {
     const classes = [Style.Component];
@@ -42,7 +39,6 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     return (
       <div className={classes.join(" ")}>
         <EditText ref={this.state.ref} readonly={this.props.readonly} blacklist={ListBlock.blacklist} whitelist={ListBlock.whitelist}
-                  rendererContent={"ul"} rendererLine={this.renderLine}
                   onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit} onKeyDown={this.eventKeyDown}>
           {this.props.block.content.value}
         </EditText>
@@ -50,14 +46,14 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     );
   }
   
-  private readonly renderLine = (line: RichTextLine) => {
-    const metadata = this.props.block.content.value.metadata;
-    const {group, indent} = metadata.at(line.index) ?? {};
-    const value = group ? metadata.at(group)?.indent ?? indent : indent;
-    return [...Array(value).fill("ul"), group ? "div" : "li"] as EditTextElement;
-  };
+  // private readonly renderLine = (line: RichTextLine) => {
+  //   const metadata = this.props.block.content.value.metadata;
+  //   const {group, indent} = metadata.at(line.index) ?? {};
+  //   const value = group ? metadata.at(group)?.indent ?? indent : indent;
+  //   return [...Array(value).fill("ul"), group ? "div" : "li"] as EditTextElement;
+  // };
   
-  private readonly eventChange = (text: ListBlockText, component: EditText) => {
+  private readonly eventChange = (text: RichText, component: EditText) => {
     
     this.props.onChange(this.props.block.replaceText(component.text, text));
   };
@@ -124,7 +120,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   // };
 }
 
-export interface ListBlockProps extends PageExplorerBlockProps<PageBlockType.LIST> {
+export interface ListBlockProps extends PageExplorerBlockProps<ListPageBlockEntity> {
 
 }
 

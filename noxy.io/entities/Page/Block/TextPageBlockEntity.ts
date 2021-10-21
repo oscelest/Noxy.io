@@ -1,36 +1,40 @@
 import PageBlockType from "../../../../common/enums/PageBlockType";
-import RichText from "../../../classes/RichText/RichText";
-import PageBlockEntity, {ContentInitializer, PageBlockContentValue} from "../PageBlockEntity";
+import RichText, {RichTextContent} from "../../../classes/RichText/RichText";
+import PageBlockEntity, {PageBlockInitializer} from "../PageBlockEntity";
 
-export default class TextPageBlockEntity extends PageBlockEntity {
+export default class TextPageBlockEntity extends PageBlockEntity<PageBlockType.TEXT> {
   
   public content: TextBlockContent;
   
-  constructor(initializer?: Omit<Initializer<TextPageBlockEntity>, "type">) {
+  constructor(initializer?: TextBlockInitializer) {
     super(initializer);
     this.type = PageBlockType.TEXT;
-    this.content = initializer?.content ?? {
-      value: new RichText(),
+    this.content = {
+      value: TextPageBlockEntity.parseInitializerValue(initializer?.content.value),
     };
   }
   
-  public replaceText(old_text: TextBlockText, new_text: TextBlockText): this {
+  public replaceText(old_text: TextBlockText, new_text: TextBlockText) {
     if (this.content.value.id !== old_text.id) throw new Error("Could not find text in TextBlock.");
     this.content.value = new_text;
     return this;
   }
   
-  public static parseContent(content?: ContentInitializer<TextBlockContent>): TextBlockContent {
-    const {value} = content ?? {};
-    
-    return {
-      value: this.parseContentText(value),
-    };
+  private static parseInitializerValue(value?: TextBlockInitializer["content"]["value"]): RichText {
+    if (!value) return new RichText();
+    if (value instanceof RichText) return value;
+    return new RichText(value);
   }
 }
 
 export type TextBlockText = RichText
 
-export interface TextBlockContent extends PageBlockContentValue {
-  value: TextBlockText;
+export interface TextBlockContent {
+  value: RichText;
+}
+
+export interface TextBlockInitializer extends PageBlockInitializer {
+  content: {
+    value: RichText | RichTextContent
+  }
 }

@@ -1,29 +1,30 @@
 import {v4} from "uuid";
-import Decoration from "../Decoration";
 import RichTextCharacter from "./RichTextCharacter";
-import RichTextSection, {RichTextSectionSelection, RichTextSectionValueInit} from "./RichTextSection";
+import RichTextDecoration from "./RichTextDecoration";
+import RichTextSection, {RichTextSectionContent, RichTextSectionSelection, RichTextSectionValueInit} from "./RichTextSection";
 
-export default class RichText<Metadata = never> {
+export default class RichText {
   
   public readonly id: string;
-  public readonly value: RichTextSection[];
-  public readonly metadata: Metadata;
+  public readonly section_list: RichTextSection[];
+  public readonly element: HTMLTag[];
   
-  constructor(value?: RichTextSectionValueInit) {
+  constructor(initializer: {value?: RichTextSectionValueInit, element?: RichTextElement} = {}) {
     this.id = v4();
-    this.value = RichTextSection.parseText(value);
+    this.section_list = RichTextSection.parseText(initializer.value);
+    this.element = Array.isArray(initializer.element) ? initializer.element : [initializer.element ?? "div"];
   }
   
   public get text() {
-    return this.value.map(section => section.text);
+    return this.section_list.map(section => section.text);
   }
   
   public get size() {
-    return this.value.reduce((result, section) => result + section.length, 0);
+    return this.section_list.reduce((result, section) => result + section.length, 0);
   }
   
   public get length() {
-    return this.value.length;
+    return this.section_list.length;
   }
   
   public slice({...selection}: RichTextSelection) {
@@ -31,11 +32,11 @@ export default class RichText<Metadata = never> {
     selection.section = this.parseSection(selection.section);
     selection.section_offset = this.parseSection(selection.section_offset);
     for (let i = selection.section; i < selection.section_offset; i++) {
-      const section = this.value.at(i);
+      const section = this.section_list.at(i);
       if (!section) continue;
       const start = i === selection.section ? section.parseCharacter(selection.character) : 0;
       const end = i === selection.section ? section.parseCharacter(selection.character_offset) : section.length;
-      text.value.push(new RichTextSection(section.value.slice(start, end)));
+      text.section_list.push(new RichTextSection({value: section.character_list.slice(start, end)}));
     }
     return text;
   }
@@ -44,11 +45,11 @@ export default class RichText<Metadata = never> {
     let value: RichTextSection | undefined;
     
     if (typeof id === "string") {
-      value = this.value.find(section => section.id === id);
+      value = this.section_list.find(section => section.id === id);
       if (!value) throw new Error(`Could not find section with ID: '${id}'.`);
     }
     else if (typeof id === "number") {
-      value = this.value.at(id);
+      value = this.section_list.at(id);
       if (!value) throw new Error(`Could not find section at index '${id}'.`);
     }
     else {
@@ -58,25 +59,24 @@ export default class RichText<Metadata = never> {
     return value;
   }
   
-  public getContent(selection?: RichTextSelection) {
-    const fragment_list = [];
-    for (let i = 0; i < this.value.length; i++) {
-      const item = this.value.at(i);
-      if (!item) continue;
+  public getContent(selection?: RichTextSelection): RichTextContent {
+    const content = {section_list: [], element: this.element} as RichTextContent;
+    for (let i = 0; i < this.section_list.length; i++) {
+      const section = this.section_list.at(i);
+      if (!section) continue;
       if (selection && selection.section <= i && selection.section_offset > i) {
         const start_character = selection.section === i ? selection.character : 0;
-        const end_character = selection.section_offset === i ? selection.character : item.length;
-        fragment_list.push(item.getFragmentList({character: start_character, character_offset: end_character}));
+        const end_character = selection.section_offset === i ? selection.character : section.length;
+        content.section_list.push(section.getFragmentList({character: start_character, character_offset: end_character}));
       }
       else {
-        fragment_list.push(item.getFragmentList());
+        content.section_list.push(section.getFragmentList());
       }
-      
     }
-    return fragment_list;
+    return content;
   }
   
-  public hasDecoration(property: keyof Initializer<Decoration>, selection: RichTextSelection) {
+  public hasDecoration(property: keyof Initializer<RichTextDecoration>, selection: RichTextSelection) {
     // TODO: FIX
     // for (let i = selection.section; i < selection.section_offset; i++) {
     //   const start_character = i === selection.section ? selection.character : 0;
@@ -111,14 +111,14 @@ export default class RichText<Metadata = never> {
       const item = value.at(i);
       if (!item) continue;
       if (selection.character === section.length) {
-        this.value.splice(++selection.section, 0, item);
+        this.section_list.splice(++selection.section, 0, item);
         selection.character = item.length;
       }
       else {
-        const section_overflow = section.value.splice(selection.character, section.length - selection.character);
+        const section_overflow = section.character_list.splice(selection.character, section.length - selection.character);
         selection.character = item.length;
         item.insert(section_overflow, selection);
-        this.value.splice(++selection.section, 0, item);
+        this.section_list.splice(++selection.section, 0, item);
       }
     }
     
@@ -128,27 +128,27 @@ export default class RichText<Metadata = never> {
   public remove<S extends RichTextSelection>(selection: S): S {
     if (selection.section > selection.section_offset) return selection;
     
-    const start = this.value.at(selection.section);
+    const start = this.section_list.at(selection.section);
     if (selection.section === selection.section_offset) {
       if (!start || selection.character > selection.character_offset) return selection;
       return {...selection, ...start.remove(selection)};
     }
     
-    const end = this.value.at(selection.section_offset);
-    for (let i = 0; i < this.value.length; i++) {
+    const end = this.section_list.at(selection.section_offset);
+    for (let i = 0; i < this.section_list.length; i++) {
       if (i >= selection.section || i <= selection.section_offset) {
-        this.value.splice(i--, 1);
+        this.section_list.splice(i--, 1);
       }
     }
     
     if (start && end) {
-      this.value.splice(selection.section, 0, new RichTextSection([...start.value.slice(0, selection.character), ...end.value.slice(selection.character_offset)]));
+      this.section_list.splice(selection.section, 0, new RichTextSection({value: [...start.character_list.slice(0, selection.character), ...end.character_list.slice(selection.character_offset)]}));
     }
     else if (start) {
-      this.value.splice(selection.section, 0, new RichTextSection(start.value.slice(0, selection.character)));
+      this.section_list.splice(selection.section, 0, new RichTextSection({value: start.character_list.slice(0, selection.character)}));
     }
     else if (end) {
-      this.value.splice(selection.section, 0, new RichTextSection(end.value.slice(selection.character_offset)));
+      this.section_list.splice(selection.section, 0, new RichTextSection({value: end.character_list.slice(selection.character_offset)}));
     }
     
     return {...selection, section_offset: selection.section, character_offset: selection.character};
@@ -183,9 +183,9 @@ export default class RichText<Metadata = never> {
     return selection;
   }
   
-  public decorate<S extends RichTextSelection>(decoration: Initializer<Decoration>, selection: S): S {
+  public decorate<S extends RichTextSelection>(decoration: Initializer<RichTextDecoration>, selection: S): S {
     for (let i = selection.section; i < selection.section_offset; i++) {
-      const section = this.value.at(i);
+      const section = this.section_list.at(i);
       if (!section) continue;
       if (i === selection.section || i === selection.section_offset) {
         const start_character = i === selection.section ? selection.section : 0;
@@ -203,10 +203,10 @@ export default class RichText<Metadata = never> {
   public ensureSection<S extends Pick<RichTextSelection, "section">>(selection: S): S {
     selection = {...selection, section: this.parseSection(selection.section)};
     
-    if (this.value.length <= selection.section) {
+    if (this.section_list.length <= selection.section) {
       for (let i = 0; i <= selection.section; i++) {
-        if (!this.value.at(i)) {
-          this.value[i] = new RichTextSection();
+        if (!this.section_list.at(i)) {
+          this.section_list[i] = new RichTextSection();
         }
       }
     }
@@ -215,22 +215,31 @@ export default class RichText<Metadata = never> {
   }
   
   public clone() {
-    return new RichText(this.value.map(section => section.clone()));
+    return new RichText({
+      value:   this.section_list.map(section => section.clone()),
+      element: this.element,
+    });
   }
   
   public static parseHTML(node: string | HTMLElement) {
     if (node instanceof HTMLElement) {
-      return new RichText(RichTextSection.parseHTML(node));
+      return new RichText({value: RichTextSection.parseHTML(node)});
     }
     
     const element = document.createElement("template");
     element.innerHTML = node;
     
-    return new RichText(RichTextSection.parseHTML(element.content));
+    return new RichText({value: RichTextSection.parseHTML(element.content)});
   }
   
 }
 
+export type RichTextElement = HTMLTag | HTMLTag[]
+
+export interface RichTextContent {
+  element: HTMLTag[];
+  section_list: RichTextSectionContent[];
+}
 
 export interface RichTextSelection extends RichTextSectionSelection {
   section: number;

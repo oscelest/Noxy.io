@@ -19,7 +19,6 @@ declare module "express-serve-static-core" {
   }
 }
 
-
 declare global {
   
   export type Collection<T> = {[key: string]: T}
@@ -54,7 +53,7 @@ declare global {
   
   export type JSONObject = null | boolean | number | string | JSONObject[] | {[prop: string]: JSONObject}
   
-  
+  export type HTMLTag = keyof HTMLElementTagNameMap
   
   export type PageProps = {permission?: string | null}
   
@@ -74,8 +73,6 @@ declare global {
     };
   }
   
-
-  
   export interface File {
     fieldname: string;
     originalname: string;
@@ -86,5 +83,4 @@ declare global {
     path: string;
     size: number;
   }
-  
 }

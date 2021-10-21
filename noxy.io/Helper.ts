@@ -26,12 +26,12 @@ namespace Helper {
       }
     }
     
-    return [node, text_length]
+    return [node, text_length];
   }
   
   export function getNodeTextLength(node: Node) {
     if (node instanceof Text) return node.length;
-
+    
     let value = 0;
     for (let i = 0; i < node.childNodes.length; i++) {
       const item = node.childNodes.item(i);
@@ -72,10 +72,11 @@ namespace Helper {
     return component;
   }
   
-  export function renderHTMLElementList(list?: keyof HTMLElementTagNameMap | (keyof HTMLElementTagNameMap)[], attributes?: {[key: string]: string}) {
-    if (!Array.isArray(list)) return Helper.createElementWithChildren(list ?? "div", attributes);
+  export function renderHTMLElementList(list?: HTMLTag | HTMLTag[], attributes?: {[key: string]: string}, ...children: Node[]) {
+    if (!Array.isArray(list)) return Helper.createElementWithChildren(list ?? "div", attributes, ...children);
+    if (list.length === 0) return Helper.createElementWithChildren("div", attributes);
     
-    let component = Helper.createElementWithChildren(list.at(-1) ?? "div", attributes);
+    let component = Helper.createElementWithChildren(list.at(-1) ?? "div", attributes, ...children);
     for (let i = list.length - 2; i >= 0; i--) {
       const item = list.at(i);
       if (!item) continue;

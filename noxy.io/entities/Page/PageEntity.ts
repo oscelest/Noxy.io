@@ -36,22 +36,24 @@ export default class PageEntity extends BaseEntity {
     return this.id;
   }
   
-  public static parsePageBlock(initializer: Properties<PageBlockEntity> & {content: any}) {
+  // TODO: Wrong initializer
+  public static parsePageBlock(initializer: any) {
     switch (initializer.type) {
       case PageBlockType.TEXT:
-        return new TextPageBlockEntity({...initializer, content: TextPageBlockEntity.parseContent(initializer.content)});
+        return new TextPageBlockEntity(initializer);
       case PageBlockType.LIST:
-        return new ListPageBlockEntity({...initializer, content: ListPageBlockEntity.parseContent(initializer.content)});
+        return new ListPageBlockEntity(initializer);
       case PageBlockType.TABLE:
-        return new TablePageBlockEntity({...initializer, content: TablePageBlockEntity.parseContent(initializer.content)});
+        return new TablePageBlockEntity(initializer);
       case PageBlockType.HEADER:
-        return new HeaderPageBlockEntity({...initializer, content: HeaderPageBlockEntity.parseContent(initializer.content)});
+        return new HeaderPageBlockEntity(initializer);
     }
     
     throw new Error(`Page block entity of type '${initializer.type}' is invalid.`);
   }
   
-  public static createPageBlock<T extends PageBlockType>(type: T, initializer?: Initializer<PageBlockEntity<T>>) {
+  // TODO: Wrong initializer
+  public static createPageBlock<T extends PageBlockType>(type: T, initializer?: any) {
     switch (type) {
       case PageBlockType.TEXT:
         return new TextPageBlockEntity(initializer);

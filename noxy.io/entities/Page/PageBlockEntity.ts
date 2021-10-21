@@ -8,13 +8,13 @@ import {APIKeyEntitySearchParameters} from "../APIKeyEntity";
 import {HeaderBlockContent} from "./Block/HeaderPageBlockEntity";
 import {ListBlockContent} from "./Block/ListPageBlockEntity";
 import {TableBlockContent} from "./Block/TablePageBlockEntity";
+import {TextBlockContent} from "./Block/TextPageBlockEntity";
 import PageEntity from "./PageEntity";
 
 export default abstract class PageBlockEntity<Type extends PageBlockType = PageBlockType> extends BaseEntity {
   
   public id: string;
   public type: Type;
-  public content: PageBlockContent[Type];
   public weight: number;
   public page: PageEntity;
   public time_created: Date;
@@ -41,44 +41,24 @@ export default abstract class PageBlockEntity<Type extends PageBlockType = PageB
   
   public abstract replaceText(old_text: ContentValue<PageBlockContent[Type]["value"]>, new_text: ContentValue<PageBlockContent[Type]["value"]>): this
   
-  public static parseContentText = (input?: ContentInitializer<RichText>): RichText => {
-    if (input instanceof RichText) return input;
-    if (typeof input === "string") return RichText.parseHTML(input);
-    return new RichText("");
-  };
-  
-  public static parseContentNumber = (input?: number) => {
-    return (typeof input !== "number" || isNaN(+input)) ? 0 : input;
-  };
-  
   public static async get(search: APIKeyEntitySearchParameters = {}, pagination: Pagination<PageBlockEntity> = new Pagination<PageBlockEntity>(0, 10, {time_created: Order.DESC})) {
     const result = await Fetch.get<Array<PageBlockEntity & {content: any}>>(`${this.url}`, {...search, ...pagination.toObject()});
     return await Promise.all(result.content.map(async value => await PageEntity.parsePageBlock(value)));
   }
 }
 
-export interface PageBlockContentValue<T = never> {
-  value: RichText<T> | DeepArray<RichText<T>>;
-}
-
-interface PageBlockContent {
+export interface PageBlockContent {
   [PageBlockType.TEXT]: TextBlockContent;
   [PageBlockType.LIST]: ListBlockContent;
   [PageBlockType.TABLE]: TableBlockContent;
   [PageBlockType.HEADER]: HeaderBlockContent;
 }
 
-export type ContentInitializer<T> = T extends Array<infer R> ? Array<ContentInitializer<R>> :
-                                    T extends RichText<infer K> ? RichText<K> | string :
-                                    T extends object ? { [K in keyof T]?: ContentInitializer<T[K]> } :
-                                    T
+export interface PageBlockInitializer<Type extends PageBlockType = PageBlockType> extends Initializer<Omit<PageBlockEntity, "type">> {
 
-type ContentValue<T> = T extends Array<infer R> ? ContentValue<R> : T extends RichText<infer K> ? RichText<K> : T
-
-export interface TextBlockContent extends PageBlockContentValue {
-  value: RichText;
 }
 
+type ContentValue<T> = T extends Array<infer R> ? ContentValue<R> : T extends RichText ? RichText : T
 
 
 

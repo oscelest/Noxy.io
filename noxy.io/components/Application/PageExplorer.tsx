@@ -1,7 +1,11 @@
 import React from "react";
 import {v4} from "uuid";
 import PageBlockType from "../../../common/enums/PageBlockType";
-import Decoration from "../../classes/Decoration";
+import RichTextDecoration from "../../classes/RichText/RichTextDecoration";
+import HeaderPageBlockEntity from "../../entities/Page/Block/HeaderPageBlockEntity";
+import ListPageBlockEntity from "../../entities/Page/Block/ListPageBlockEntity";
+import TablePageBlockEntity from "../../entities/Page/Block/TablePageBlockEntity";
+import TextPageBlockEntity from "../../entities/Page/Block/TextPageBlockEntity";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import PageEntity from "../../entities/Page/PageEntity";
 import IconType from "../../enums/IconType";
@@ -26,7 +30,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.state = {
       edit:       true,
       text_color: false,
-      decoration: new Decoration(),
+      decoration: new RichTextDecoration(),
     };
   }
   
@@ -38,16 +42,16 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     return this.props.readonly ?? true;
   };
   
-  private static createPageBlockComponent<T extends PageBlockType>(type: T, props: PageExplorerBlockProps<T>) {
+  private static createPageBlockComponent<T extends PageBlockType>(type: T, props: PageExplorerBlockProps) {
     switch (type) {
       case PageBlockType.TEXT:
-        return React.createElement(TextBlock, props as PageExplorerBlockProps<PageBlockType.TEXT>);
+        return React.createElement(TextBlock, props as PageExplorerBlockProps<TextPageBlockEntity>);
       case PageBlockType.LIST:
-        return React.createElement(ListBlock, props as PageExplorerBlockProps<PageBlockType.LIST>);
+        return React.createElement(ListBlock, props as PageExplorerBlockProps<ListPageBlockEntity>);
       case PageBlockType.TABLE:
-        return React.createElement(TableBlock, props as PageExplorerBlockProps<PageBlockType.TABLE>);
+        return React.createElement(TableBlock, props as PageExplorerBlockProps<TablePageBlockEntity>);
       case PageBlockType.HEADER:
-        return React.createElement(HeaderBlock, props as PageExplorerBlockProps<PageBlockType.HEADER>);
+        return React.createElement(HeaderBlock, props as PageExplorerBlockProps<HeaderPageBlockEntity>);
     }
     
     throw new Error(`Page block component type '${type}' is invalid.`);
@@ -171,7 +175,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.setState({edit: !this.state.edit});
   };
   
-  private readonly eventDecorateClick = (decoration: Initializer<Decoration>) => {
+  private readonly eventDecorateClick = (decoration: Initializer<RichTextDecoration>) => {
     this.state.focus?.decorate(decoration);
   };
   
@@ -194,7 +198,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   private readonly eventFontFamilyChange = (index: number) => {
     const font_family = Helper.FontFamilyList[index] ?? this.state.decoration.font_family;
     this.state.focus?.decorate({font_family});
-    this.setState({decoration: new Decoration({...this.state.decoration, font_family})});
+    this.setState({decoration: new RichTextDecoration({...this.state.decoration, font_family})});
   };
   
   private readonly eventFontFamilyIndex = (index: number) => {
@@ -207,7 +211,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   
   private readonly eventFontSizeChange = (index: number, font_size: string) => {
     this.state.focus?.decorate({font_size});
-    this.setState({decoration: new Decoration({...this.state.decoration, font_size})});
+    this.setState({decoration: new RichTextDecoration({...this.state.decoration, font_size})});
   };
   
   private readonly eventFontSizeIndex = (index: number) => {
@@ -220,7 +224,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   
   private readonly eventFontLengthChange = (index: number, font_length: string) => {
     this.state.focus?.decorate({font_length});
-    this.setState({decoration: new Decoration({...this.state.decoration, font_length})});
+    this.setState({decoration: new RichTextDecoration({...this.state.decoration, font_length})});
   };
   
   private readonly eventFontLengthIndex = (index: number) => {
@@ -240,7 +244,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     // this.state.focus?.insertHTML(element);
   };
   
-  private readonly eventDecorateMouseDown = (property: Initializer<Decoration>, event: React.MouseEvent) => {
+  private readonly eventDecorateMouseDown = (property: Initializer<RichTextDecoration>, event: React.MouseEvent) => {
     event.preventDefault();
   };
   
@@ -252,7 +256,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.setState({focus});
   };
   
-  private readonly eventPageBlockSelect = ({start, end}: EditTextSelection, component: EditText) => {
+  private readonly eventPageBlockSelect = (selection: EditTextSelection, component: EditText) => {
     // if (start === end) start = Math.max(0, start - 1);
     // TODO: Fix this.
     // this.setState({decoration: component.text.getDecoration(start, end)});
@@ -274,16 +278,16 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
 }
 
-export interface PageExplorerBlockProps<Type extends PageBlockType = PageBlockType> extends React.PropsWithChildren<any> {
-  block: PageBlockEntity<Type>;
+export interface PageExplorerBlockProps<Block extends PageBlockEntity = PageBlockEntity> extends React.PropsWithChildren<{}> {
+  block: Block;
   readonly?: boolean;
   className?: string;
   
   onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
   onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
   onSelect?(selection: EditTextSelection, component: EditText): void;
-  onChange(block: PageBlockEntity<Type>): void;
-  onSubmit?(block: PageBlockEntity<Type>, component: EditText): void;
+  onChange(block: Block): void;
+  onSubmit?(block: Block, component: EditText): void;
 }
 
 export interface PageExplorerProps {
@@ -298,7 +302,7 @@ interface State {
   edit: boolean;
   focus?: EditText;
   dialog?: string;
-  decoration: Decoration;
+  decoration: RichTextDecoration;
   
   text_color: boolean;
 }

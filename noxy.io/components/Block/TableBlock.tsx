@@ -1,13 +1,12 @@
 import React from "react";
-import PageBlockType from "../../../common/enums/PageBlockType";
 import RichText from "../../classes/RichText/RichText";
+import TablePageBlockEntity from "../../entities/Page/Block/TablePageBlockEntity";
 import IconType from "../../enums/IconType";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import Button from "../Form/Button";
-import EditText from "../Text/EditText";
-import {EditTextCommandList} from "../Text/EditTextOld";
+import EditText, {EditTextCommandList} from "../Text/EditText";
 import Style from "./TableBlock.module.scss";
 
 export default class TableBlock extends Component<TableBlockProps, State> {
@@ -60,7 +59,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     return (
       <td key={key}>
         <EditText readonly={this.props.readonly} blacklist={TableBlock.blacklist} whitelist={TableBlock.whitelist}
-                     onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit}>
+                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit}>
           {text}
         </EditText>
       </td>
@@ -97,7 +96,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   
 }
 
-export interface TableBlockProps extends PageExplorerBlockProps<PageBlockType.TABLE> {
+export interface TableBlockProps extends PageExplorerBlockProps<TablePageBlockEntity> {
 
 }
 
