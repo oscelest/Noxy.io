@@ -183,7 +183,7 @@ export default class EditText extends Component<EditTextProps, State> {
   public render() {
     const readonly = this.props.readonly ?? true;
     const classes = [Style.Component];
-    const content = this.text.getContent(this.getSelection());
+    const content = this.text.toObject(this.getSelection());
     if (this.props.className) classes.push(this.props.className);
     if (this.props.readonly ?? true) classes.push(Style.Readonly);
     if (!this.text.length) classes.push(Style.Empty);
@@ -202,10 +202,11 @@ export default class EditText extends Component<EditTextProps, State> {
       onPaste:                        this.eventPaste,
       onCut:                          this.eventCut,
       onKeyDown:                      this.eventKeyDown,
+      onBeforeInput:                  (event) => console.log(event),
       onKeyPress:                     this.eventKeyPress,
       children:                       content.section_list.length
                                       ? content.section_list.map(this.renderReactSection)
-                                      : this.renderReactSection(new RichTextSection().getFragmentList()),
+                                      : this.renderReactSection(new RichTextSection().toObject()),
     });
   }
   
@@ -213,7 +214,7 @@ export default class EditText extends Component<EditTextProps, State> {
     return Helper.renderReactElementList(section.element, {
       key:       index,
       className: Style.Section,
-      children:  section.line_list.map(this.renderReactLine),
+      children:  section.character_list.map(this.renderReactLine),
     });
   };
   
@@ -250,19 +251,19 @@ export default class EditText extends Component<EditTextProps, State> {
   };
   
   public readonly renderHTML = (selection: EditTextSelection) => {
-    const content = this.text.slice(selection).getContent();
+    const content = this.text.slice(selection).toObject();
     return Helper.renderHTMLElementList(content.element, {class: "text"}, ...content.section_list.map(this.renderHTMLSection));
   };
   
   private readonly renderHTMLSection = (section: RichTextSectionContent) => {
     const list = [];
-    for (let j = 0; j < section.line_list.length; j++) {
-      const line = section.line_list.at(j);
+    for (let j = 0; j < section.character_list.length; j++) {
+      const line = section.character_list.at(j);
       if (!line) continue;
       list.push(this.renderHTMLLine(line));
     }
     
-    return Helper.renderHTMLElementList(section.element, {class: "text"}, ...section.line_list.map(this.renderHTMLLine));
+    return Helper.renderHTMLElementList(section.element, {class: "text"}, ...section.character_list.map(this.renderHTMLLine));
   };
   
   private readonly renderHTMLLine = (line: RichTextSectionContentLine) => {
@@ -409,7 +410,6 @@ export interface EditTextSelection extends RichTextSelection {
   forward: boolean;
 }
 
-export type EditTextElement = keyof HTMLElementTagNameMap | (keyof HTMLElementTagNameMap)[]
 export type EditTextCommandList = (keyof Initializer<RichTextDecoration>)[];
 
 export interface EditTextProps {
@@ -426,7 +426,6 @@ export interface EditTextProps {
   onKeyDown?(event: React.KeyboardEvent<HTMLDivElement>, component: EditText): boolean | void;
   
   onChange(text: RichText, component: EditText): void;
-  onSubmit?(component: EditText): void;
 }
 
 interface State {

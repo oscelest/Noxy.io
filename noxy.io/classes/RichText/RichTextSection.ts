@@ -1,8 +1,7 @@
 import {v4} from "uuid";
 import Util from "../../../common/services/Util";
-import {RichTextElement} from "./RichText";
-import RichTextCharacter, {RichTextCharacterValueInit} from "./RichTextCharacter";
-import RichTextDecoration, {DecorationObject} from "./RichTextDecoration";
+import RichTextCharacter, {RichTextCharacterContent, RichTextCharacterValueInit} from "./RichTextCharacter";
+import RichTextDecoration from "./RichTextDecoration";
 
 
 export default class RichTextSection {
@@ -11,10 +10,15 @@ export default class RichTextSection {
   public readonly character_list: RichTextCharacter[];
   public readonly element: (keyof HTMLElementTagNameMap)[];
   
-  constructor(initializer: {value?: RichTextCharacterValueInit, element?: RichTextElement} = {}) {
+  constructor(initializer: RichTextSection | RichTextSectionContent | {character_list?: RichTextCharacterValueInit, element?: HTMLTag | HTMLTag[]} = {}) {
     this.id = v4();
-    this.character_list = RichTextCharacter.parseText(initializer.value);
     this.element = Array.isArray(initializer.element) ? initializer.element : [initializer.element ?? "p"];
+
+    if (initializer instanceof RichTextSection) {
+      this.character_list = initializer.character_list;
+    }
+    if (initializer.character_list)
+    this.character_list = RichTextCharacter.parseText(initializer.character_list);
   }
   
   public get length() {
@@ -25,31 +29,13 @@ export default class RichTextSection {
     return this.character_list.map(character => character.value).join("");
   }
   
-  public getCharacter(id?: number | string): RichTextCharacter {
-    let value: RichTextCharacter | undefined;
-    
-    if (typeof id === "string") {
-      value = this.character_list.find(section => section.id === id);
-      if (!value) throw new Error(`Could not find character with ID: '${id}'.`);
-    }
-    else if (typeof id === "number") {
-      value = this.character_list.at(id);
-      if (!value) throw new Error(`Could not find character at index '${id}'.`);
-    }
-    else {
-      throw new Error(`Could not find character - Incompatible key given: '${id}'.`);
-    }
-    
-    return value;
-  }
-  
-  public getFragmentList(selection?: RichTextSectionSelection): RichTextSectionContent {
-    const content = {line_list: [], element: this.element} as RichTextSectionContent;
+  public toObject(selection?: RichTextSectionSelection): RichTextSectionContent {
+    const content = {character_list: [], element: this.element} as RichTextSectionContent;
     if (!this.length) return content;
     
-    content.line_list.push({start: 0, end: 0, index: 0, fragment_list: [{text: "", decoration: new RichTextDecoration().toObject(), start: 0, end: 0}]});
+    content.character_list.push({start: 0, end: 0, index: 0, fragment_list: [{text: "", decoration: new RichTextDecoration().toObject(), start: 0, end: 0}]});
     for (let i = 0; i < this.length; i++) {
-      const line = content.line_list.at(-1);
+      const line = content.character_list.at(-1);
       const character = this.getCharacter(i);
       const decoration = {...character.decoration.toObject(), selected: !!selection && selection.character <= i && selection.character_offset > i};
       
@@ -68,11 +54,29 @@ export default class RichTextSection {
       else {
         const text = character.value !== RichTextCharacter.linebreak ? character.value : "";
         const start = i + 1, end = start;
-        content.line_list.push({start, end, index: content.line_list.length, fragment_list: [{start, end, text, decoration}]});
+        content.character_list.push({start, end, index: content.character_list.length, fragment_list: [{start, end, text, decoration}]});
       }
     }
     
     return content;
+  }
+  
+  public getCharacter(id?: number | string): RichTextCharacter {
+    let value: RichTextCharacter | undefined;
+    
+    if (typeof id === "string") {
+      value = this.character_list.find(section => section.id === id);
+      if (!value) throw new Error(`Could not find character with ID: '${id}'.`);
+    }
+    else if (typeof id === "number") {
+      value = this.character_list.at(id);
+      if (!value) throw new Error(`Could not find character at index '${id}'.`);
+    }
+    else {
+      throw new Error(`Could not find character - Incompatible key given: '${id}'.`);
+    }
+    
+    return value;
   }
   
   public parseCharacter(character: number): number {
@@ -175,6 +179,10 @@ export default class RichTextSection {
   
 }
 
+export interface RichTextSectionInitializer {
+
+}
+
 export type RichTextSectionValueInit = RichTextSection | string | (RichTextSection | string)[]
 
 export interface RichTextSectionSelection {
@@ -184,19 +192,5 @@ export interface RichTextSectionSelection {
 
 export type RichTextSectionContent = {
   element: HTMLTag[]
-  line_list: RichTextSectionContentLine[]
-}
-
-export interface RichTextSectionContentLine {
-  fragment_list: RichTextSectionContentFragment[];
-  index: number;
-  start: number;
-  end: number;
-}
-
-export interface RichTextSectionContentFragment {
-  text: string;
-  decoration: DecorationObject;
-  start: number;
-  end: number;
+  character_list: RichTextCharacterContent[]
 }

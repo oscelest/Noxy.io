@@ -20,9 +20,11 @@ export default abstract class PageBlockEntity<Type extends PageBlockType = PageB
   public time_created: Date;
   public time_updated: Date;
   
+  public abstract content: PageBlockContent[Type];
+  
   public static url = "page-block";
   
-  protected constructor(entity?: Initializer<PageBlockEntity<Type>>) {
+  protected constructor(entity?: PageBlockInitializer<Type>) {
     super();
     this.id = entity?.id ?? BaseEntity.defaultID;
     this.weight = entity?.weight ?? 0;
@@ -43,7 +45,7 @@ export default abstract class PageBlockEntity<Type extends PageBlockType = PageB
   
   public static async get(search: APIKeyEntitySearchParameters = {}, pagination: Pagination<PageBlockEntity> = new Pagination<PageBlockEntity>(0, 10, {time_created: Order.DESC})) {
     const result = await Fetch.get<Array<PageBlockEntity & {content: any}>>(`${this.url}`, {...search, ...pagination.toObject()});
-    return await Promise.all(result.content.map(async value => await PageEntity.parsePageBlock(value)));
+    return result.content.map(PageEntity.createPageBlock);
   }
 }
 
@@ -54,11 +56,8 @@ export interface PageBlockContent {
   [PageBlockType.HEADER]: HeaderBlockContent;
 }
 
-export interface PageBlockInitializer<Type extends PageBlockType = PageBlockType> extends Initializer<Omit<PageBlockEntity, "type">> {
-
-}
-
-type ContentValue<T> = T extends Array<infer R> ? ContentValue<R> : T extends RichText ? RichText : T
+export type PageBlockInitializer<Type extends PageBlockType = PageBlockType> = Initializer<Omit<PageBlockEntity, "type" | "content">>;
+export type ContentValue<T> = T extends Array<infer R> ? ContentValue<R> : T extends RichText ? RichText : T
 
 
 

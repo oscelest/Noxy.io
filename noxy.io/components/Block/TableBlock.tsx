@@ -59,7 +59,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     return (
       <td key={key}>
         <EditText readonly={this.props.readonly} blacklist={TableBlock.blacklist} whitelist={TableBlock.whitelist}
-                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit}>
+                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange}>
           {text}
         </EditText>
       </td>
@@ -88,10 +88,6 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   
   private readonly eventChange = (text: RichText, component: EditText) => {
     this.props.onChange(this.props.block.replaceText(component.text, text));
-  };
-  
-  private readonly eventSubmit = (component: EditText) => {
-    this.props.onSubmit?.(this.props.block, component);
   };
   
 }

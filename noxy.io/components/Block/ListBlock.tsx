@@ -39,7 +39,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     return (
       <div className={classes.join(" ")}>
         <EditText ref={this.state.ref} readonly={this.props.readonly} blacklist={ListBlock.blacklist} whitelist={ListBlock.whitelist}
-                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onSubmit={this.eventSubmit} onKeyDown={this.eventKeyDown}>
+                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onKeyDown={this.eventKeyDown}>
           {this.props.block.content.value}
         </EditText>
       </div>
@@ -56,10 +56,6 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   private readonly eventChange = (text: RichText, component: EditText) => {
     
     this.props.onChange(this.props.block.replaceText(component.text, text));
-  };
-  
-  private readonly eventSubmit = (component: EditText) => {
-    this.props.onSubmit?.(this.props.block, component);
   };
   
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, component: EditText) => {

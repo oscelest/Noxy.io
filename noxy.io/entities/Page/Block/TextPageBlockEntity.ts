@@ -1,5 +1,6 @@
 import PageBlockType from "../../../../common/enums/PageBlockType";
 import RichText, {RichTextContent} from "../../../classes/RichText/RichText";
+import RichTextSection from "../../../classes/RichText/RichTextSection";
 import PageBlockEntity, {PageBlockInitializer} from "../PageBlockEntity";
 
 export default class TextPageBlockEntity extends PageBlockEntity<PageBlockType.TEXT> {
@@ -10,7 +11,13 @@ export default class TextPageBlockEntity extends PageBlockEntity<PageBlockType.T
     super(initializer);
     this.type = PageBlockType.TEXT;
     this.content = {
-      value: TextPageBlockEntity.parseInitializerValue(initializer?.content.value),
+      value: new RichText({
+        value:   initializer?.content?.value?.section_list.map(section => new RichTextSection({
+          value:   section,
+          element: "p",
+        })) ?? [],
+        element: "div",
+      }),
     };
   }
   
@@ -18,12 +25,6 @@ export default class TextPageBlockEntity extends PageBlockEntity<PageBlockType.T
     if (this.content.value.id !== old_text.id) throw new Error("Could not find text in TextBlock.");
     this.content.value = new_text;
     return this;
-  }
-  
-  private static parseInitializerValue(value?: TextBlockInitializer["content"]["value"]): RichText {
-    if (!value) return new RichText();
-    if (value instanceof RichText) return value;
-    return new RichText(value);
   }
 }
 
@@ -34,7 +35,7 @@ export interface TextBlockContent {
 }
 
 export interface TextBlockInitializer extends PageBlockInitializer {
-  content: {
-    value: RichText | RichTextContent
-  }
+  content?: {
+    value?: RichText | RichTextContent
+  };
 }

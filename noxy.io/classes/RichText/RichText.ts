@@ -7,12 +7,12 @@ export default class RichText {
   
   public readonly id: string;
   public readonly section_list: RichTextSection[];
-  public readonly element: HTMLTag[];
+  public readonly element: HTMLTag;
   
-  constructor(initializer: {value?: RichTextSectionValueInit, element?: RichTextElement} = {}) {
+  constructor(initializer: {value?: RichTextSectionValueInit, element?: HTMLTag} = {}) {
     this.id = v4();
     this.section_list = RichTextSection.parseText(initializer.value);
-    this.element = Array.isArray(initializer.element) ? initializer.element : [initializer.element ?? "div"];
+    this.element = initializer.element ?? "div";
   }
   
   public get text() {
@@ -25,6 +25,23 @@ export default class RichText {
   
   public get length() {
     return this.section_list.length;
+  }
+  
+  public toObject(selection?: RichTextSelection): RichTextContent {
+    const content = {section_list: [], element: this.element} as RichTextContent;
+    for (let i = 0; i < this.section_list.length; i++) {
+      const section = this.section_list.at(i);
+      if (!section) continue;
+      if (selection && selection.section <= i && selection.section_offset > i) {
+        const start_character = selection.section === i ? selection.character : 0;
+        const end_character = selection.section_offset === i ? selection.character : section.length;
+        content.section_list.push(section.toObject({character: start_character, character_offset: end_character}));
+      }
+      else {
+        content.section_list.push(section.toObject());
+      }
+    }
+    return content;
   }
   
   public slice({...selection}: RichTextSelection) {
@@ -59,22 +76,6 @@ export default class RichText {
     return value;
   }
   
-  public getContent(selection?: RichTextSelection): RichTextContent {
-    const content = {section_list: [], element: this.element} as RichTextContent;
-    for (let i = 0; i < this.section_list.length; i++) {
-      const section = this.section_list.at(i);
-      if (!section) continue;
-      if (selection && selection.section <= i && selection.section_offset > i) {
-        const start_character = selection.section === i ? selection.character : 0;
-        const end_character = selection.section_offset === i ? selection.character : section.length;
-        content.section_list.push(section.getFragmentList({character: start_character, character_offset: end_character}));
-      }
-      else {
-        content.section_list.push(section.getFragmentList());
-      }
-    }
-    return content;
-  }
   
   public hasDecoration(property: keyof Initializer<RichTextDecoration>, selection: RichTextSelection) {
     // TODO: FIX
@@ -117,7 +118,7 @@ export default class RichText {
       else {
         const section_overflow = section.character_list.splice(selection.character, section.length - selection.character);
         selection.character = item.length;
-        item.insert(section_overflow, selection);
+        item.character_list.splice(selection.character, 0, ...section_overflow);
         this.section_list.splice(++selection.section, 0, item);
       }
     }
@@ -159,21 +160,14 @@ export default class RichText {
       selection = this.remove(selection);
     }
     
-    if (insert instanceof RichTextCharacter) {
-      selection = this.insertCharacter(insert, selection);
-    }
-    else if (insert instanceof RichTextSection) {
-      selection = this.insertSection(insert, selection);
-    }
-    else if (Array.isArray(insert)) {
-      for (let i = 0; i < insert.length; i++) {
-        const item = insert.at(i);
-        if (item instanceof RichTextCharacter) {
-          selection = this.insertCharacter(item, selection);
-        }
-        else if (item instanceof RichTextSection) {
-          selection = this.insertSection(item, selection);
-        }
+    insert = Array.isArray(insert) ? insert : [insert];
+    for (let i = 0; i < insert.length; i++) {
+      const item = insert.at(i);
+      if (item instanceof RichTextCharacter) {
+        selection = this.insertCharacter(item, selection);
+      }
+      else if (item instanceof RichTextSection) {
+        selection = this.insertSection(item, selection);
       }
     }
     
@@ -234,11 +228,9 @@ export default class RichText {
   
 }
 
-export type RichTextElement = HTMLTag | HTMLTag[]
-
 export interface RichTextContent {
-  element: HTMLTag[];
-  section_list: RichTextSectionContent[];
+  readonly element: HTMLTag;
+  readonly section_list: RichTextSectionContent[];
 }
 
 export interface RichTextSelection extends RichTextSectionSelection {

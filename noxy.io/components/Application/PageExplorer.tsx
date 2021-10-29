@@ -34,10 +34,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     };
   }
   
-  private addBlock(block: PageBlockEntity) {
-    this.props.onChange(new PageEntity({...this.props.entity, page_block_list: [...this.props.entity.page_block_list, block]}));
-  };
-  
   private isReadonly() {
     return this.props.readonly ?? true;
   };
@@ -167,7 +163,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
       onFocus:   this.eventPageBlockFocus,
       onSelect:  this.eventPageBlockSelect,
       onChange:  this.eventPageBlockChange,
-      onSubmit:  this.eventPageBlockSubmit,
     });
   };
   
@@ -249,7 +244,15 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
   
   private readonly eventBlockAddClick = (type: PageBlockType) => {
-    this.addBlock(PageEntity.createPageBlock(type, {id: v4()}));
+    this.props.onChange(
+      new PageEntity({
+        ...this.props.entity,
+        page_block_list: [
+          ...this.props.entity.page_block_list,
+          PageEntity.createPageBlock({id: v4(), type, content: {}}),
+        ],
+      }),
+    );
   };
   
   private readonly eventPageBlockFocus = (event: React.FocusEvent<HTMLDivElement>, focus: EditText) => {
@@ -266,14 +269,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     const index = this.props.entity.page_block_list.findIndex(value => value.getPrimaryID() === block.getPrimaryID());
     const offset = index < 0 ? this.props.entity.page_block_list.length : index;
     const page_block_list = [...this.props.entity.page_block_list.slice(0, offset), block, ...this.props.entity.page_block_list.slice(offset + 1)];
-    this.props.onChange(new PageEntity({...this.props.entity, page_block_list}));
-  };
-  
-  private readonly eventPageBlockSubmit = (block: PageBlockEntity) => {
-    const index = this.props.entity.page_block_list.findIndex(value => value.getPrimaryID() === block.getPrimaryID());
-    const start = this.props.entity.page_block_list.slice(0, index + 1);
-    const end = this.props.entity.page_block_list.slice(index + 1);
-    const page_block_list = [...start, PageEntity.createPageBlock(block.type, {id: v4()}), ...end];
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list}));
   };
 }

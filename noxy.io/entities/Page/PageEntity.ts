@@ -23,7 +23,7 @@ export default class PageEntity extends BaseEntity {
     this.id = entity?.id ?? BaseEntity.defaultID;
     this.name = entity?.name ?? "";
     this.url = entity?.url ?? "";
-    this.page_block_list = entity?.page_block_list?.map(block => PageEntity.parsePageBlock(block)) ?? [];
+    this.page_block_list = entity?.page_block_list?.map(block => PageEntity.createPageBlock(block)) ?? [];
     this.user = new UserEntity(entity?.user);
     this.time_created = new Date(entity?.time_created ?? 0);
   }
@@ -37,7 +37,7 @@ export default class PageEntity extends BaseEntity {
   }
   
   // TODO: Wrong initializer
-  public static parsePageBlock(initializer: any) {
+  public static createPageBlock<T extends PageBlockType>(initializer: any) {
     switch (initializer.type) {
       case PageBlockType.TEXT:
         return new TextPageBlockEntity(initializer);
@@ -50,22 +50,6 @@ export default class PageEntity extends BaseEntity {
     }
     
     throw new Error(`Page block entity of type '${initializer.type}' is invalid.`);
-  }
-  
-  // TODO: Wrong initializer
-  public static createPageBlock<T extends PageBlockType>(type: T, initializer?: any) {
-    switch (type) {
-      case PageBlockType.TEXT:
-        return new TextPageBlockEntity(initializer);
-      case PageBlockType.LIST:
-        return new ListPageBlockEntity(initializer);
-      case PageBlockType.TABLE:
-        return new TablePageBlockEntity(initializer);
-      case PageBlockType.HEADER:
-        return new HeaderPageBlockEntity(initializer);
-    }
-    
-    throw new Error(`Page block entity of type '${type}' is invalid.`);
   }
   
 }
