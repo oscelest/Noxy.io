@@ -71,7 +71,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     const prev_row = this.props.block.content.value[this.props.block.content.value.length - 1];
     
     for (let x = 0; x < prev_row.length; x++) {
-      next_row.push(new RichText({...prev_row[x], value: ""}));
+      next_row.push(new RichText({...prev_row[x], section_list: ""}));
     }
     
     this.props.block.content.value.push(next_row);
@@ -81,7 +81,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   private readonly eventAddColumnClick = () => {
     for (let y = 0; y < this.props.block.content.value.length; y++) {
       const prev_column = this.props.block.content.value[y][this.props.block.content.value[y].length - 1];
-      this.props.block.content.value[y].push(new RichText({...prev_column, value: ""}));
+      this.props.block.content.value[y].push(new RichText({...prev_column, section_list: ""}));
     }
     this.props.onChange(this.props.block);
   };

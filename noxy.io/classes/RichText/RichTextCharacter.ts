@@ -19,7 +19,7 @@ export default class RichTextCharacter {
   
   public static parseText(text?: string, decoration?: DecorationInitializer): RichTextCharacter[] {
     const value = [] as RichTextCharacter[];
-
+    
     if (typeof text === "string") {
       for (let i = 0; i < text.length; i++) {
         const item = text.at(i);
@@ -72,13 +72,13 @@ export interface RichTextCharacterInitializer {
 }
 
 export interface RichTextCharacterContent {
-  fragment_list: RichTextSectionContentFragment[];
+  fragment_list: RichTextFragmentContent[];
   index: number;
   start: number;
   end: number;
 }
 
-export interface RichTextSectionContentFragment {
+export interface RichTextFragmentContent {
   text: string;
   decoration: DecorationObject;
   start: number;

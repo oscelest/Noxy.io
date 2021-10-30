@@ -85,17 +85,19 @@ export default class RichText {
     return value;
   }
   
-  public hasDecoration(property: keyof Initializer<RichTextDecoration>, selection: RichTextSelection) {
-    // TODO: FIX
-    // for (let i = selection.section; i < selection.section_offset; i++) {
-    //   const start_character = i === selection.section ? selection.character : 0;
-    //   const end_character = i === selection.section_offset ? selection.character_offset : this.getSection(selection.section_offset).length;
-    //   for (let j = start_character; j < end_character; j++) {
-    //     if (!this.at(i, j)?.decoration[property]) {
-    //       return false;
-    //     }
-    //   }
-    // }
+  public hasDecoration(property: keyof Initializer<RichTextDecoration>, {section, section_offset, character, character_offset}: RichTextSelection) {
+    section = this.parseSectionPosition(section);
+    section_offset = this.parseSectionPosition(section_offset);
+    
+    for (let i = section; i < section_offset; i++) {
+      const current_section = this.getSection(i);
+      const start_character = i === section ? current_section.parseCharacter(character) : 0;
+      const end_character = i === section_offset ? current_section.parseCharacter(character_offset) : this.getSection(section_offset).length;
+      for (let j = start_character; j < end_character; j++) {
+        const current_character = current_section.getCharacter(j);
+        if (!current_character.decoration[property]) return false;
+      }
+    }
     return true;
   }
   

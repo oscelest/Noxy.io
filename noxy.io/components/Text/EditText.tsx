@@ -1,9 +1,9 @@
 import React from "react";
 import ClipboardDataType from "../../../common/enums/ClipboardDataType";
 import RichText, {RichTextSelection} from "../../classes/RichText/RichText";
-import RichTextCharacter from "../../classes/RichText/RichTextCharacter";
+import RichTextCharacter, {RichTextCharacterContent, RichTextFragmentContent} from "../../classes/RichText/RichTextCharacter";
 import RichTextDecoration, {DecorationObject} from "../../classes/RichText/RichTextDecoration";
-import RichTextSection, {RichTextSectionContent, RichTextSectionContentFragment, RichTextSectionContentLine} from "../../classes/RichText/RichTextSection";
+import RichTextSection, {RichTextSectionContent} from "../../classes/RichText/RichTextSection";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
 import Component from "../Application/Component";
@@ -115,12 +115,12 @@ export default class EditText extends Component<EditTextProps, State> {
     if (text.length > 1) {
       const fragment = [] as RichTextCharacter[];
       for (let i = 0; i < text.length; i++) {
-        fragment.push(new RichTextCharacter(text[i], decoration));
+        fragment.push(new RichTextCharacter({value: text[i], decoration}));
       }
       this.insert(fragment, selection);
     }
     else {
-      this.insert(new RichTextCharacter(text, decoration));
+      this.insert(new RichTextCharacter({value: text, decoration}));
     }
   };
   
@@ -218,7 +218,7 @@ export default class EditText extends Component<EditTextProps, State> {
     });
   };
   
-  private renderReactLine = (line: RichTextSectionContentLine, index: number = 0) => {
+  private renderReactLine = (line: RichTextCharacterContent, index: number = 0) => {
     return Helper.renderReactElementList("span", {
       key:       index,
       className: Style.Line,
@@ -226,7 +226,7 @@ export default class EditText extends Component<EditTextProps, State> {
     });
   };
   
-  private renderReactFragment = ({decoration, ...fragment}: RichTextSectionContentFragment, i: number = 0): React.ReactNode => {
+  private renderReactFragment = ({decoration, ...fragment}: RichTextFragmentContent, i: number = 0): React.ReactNode => {
     if (decoration.bold) return <b key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, bold: false}})}</b>;
     if (decoration.code) return <code key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, code: false}})}</code>;
     if (decoration.mark) return <mark key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, mark: false}})}</mark>;
@@ -266,7 +266,7 @@ export default class EditText extends Component<EditTextProps, State> {
     return Helper.renderHTMLElementList(section.element, {class: "text"}, ...section.character_list.map(this.renderHTMLLine));
   };
   
-  private readonly renderHTMLLine = (line: RichTextSectionContentLine) => {
+  private readonly renderHTMLLine = (line: RichTextCharacterContent) => {
     const list = [];
     for (let i = 0; i < line.fragment_list.length; i++) {
       const fragment = line.fragment_list.at(i);
@@ -276,7 +276,7 @@ export default class EditText extends Component<EditTextProps, State> {
     return Helper.createElementWithChildren("span", {class: "line"}, ...list);
   };
   
-  private readonly renderHTMLFragment = ({decoration, ...segment}: RichTextSectionContentFragment): Node => {
+  private readonly renderHTMLFragment = ({decoration, ...segment}: RichTextFragmentContent): Node => {
     if (decoration.bold) return Helper.createElementWithChildren("b", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, bold: false}}));
     if (decoration.code) return Helper.createElementWithChildren("code", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, code: false}}));
     if (decoration.mark) return Helper.createElementWithChildren("mark", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, mark: false}}));
@@ -296,7 +296,7 @@ export default class EditText extends Component<EditTextProps, State> {
   
   private readonly eventKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
     event.preventDefault();
-    this.insert(new RichTextCharacter(event.key));
+    this.insert(new RichTextCharacter({value: event.key}));
   };
   
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {

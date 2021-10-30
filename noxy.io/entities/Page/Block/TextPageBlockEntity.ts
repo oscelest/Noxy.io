@@ -12,11 +12,12 @@ export default class TextPageBlockEntity extends PageBlockEntity<PageBlockType.T
     this.type = PageBlockType.TEXT;
     this.content = {
       value: new RichText({
-        value:   initializer?.content?.value?.section_list.map(section => new RichTextSection({
-          value:   section,
-          element: "p",
-        })) ?? [],
-        element: "div",
+        section_list: initializer?.content?.value?.section_list.map(
+          section => new RichTextSection({
+            character_list: section.character_list,
+            element:        "p",
+          })) ?? [],
+        element:      "div",
       }),
     };
   }

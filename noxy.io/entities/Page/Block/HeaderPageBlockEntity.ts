@@ -26,7 +26,7 @@ export default class HeaderPageBlockEntity extends PageBlockEntity {
   }
   
   private static parseInitializerValue(value?: HeaderBlockInitializer["content"]["value"]): RichText {
-    if (!value) return new RichText({value: new RichTextSection({element: "h1"})});
+    if (!value) return new RichText({section_list: [new RichTextSection({element: "h1"})]});
     
     for (let i = 0; i < value.section_list.length; i++) {
       const item = value.section_list[i].element;
@@ -34,8 +34,8 @@ export default class HeaderPageBlockEntity extends PageBlockEntity {
     }
     
     return new RichText({
-      value:   value.section_list.map(value => new RichTextSection(value)),
-      element: value.element,
+      section_list: value.section_list.map(value => new RichTextSection(value)),
+      element:      value.element,
     });
   }
 }
