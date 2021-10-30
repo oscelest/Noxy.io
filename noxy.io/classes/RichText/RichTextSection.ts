@@ -1,6 +1,6 @@
 import {v4} from "uuid";
 import Util from "../../../common/services/Util";
-import RichTextCharacter, {RichTextCharacterContent, RichTextCharacterValueInit} from "./RichTextCharacter";
+import RichTextCharacter, {RichTextCharacterContent} from "./RichTextCharacter";
 import RichTextDecoration from "./RichTextDecoration";
 
 
@@ -10,23 +10,33 @@ export default class RichTextSection {
   public readonly character_list: RichTextCharacter[];
   public readonly element: (keyof HTMLElementTagNameMap)[];
   
-  constructor(initializer: RichTextSection | RichTextSectionContent | {character_list?: RichTextCharacterValueInit, element?: HTMLTag | HTMLTag[]} = {}) {
-    this.id = v4();
-    this.element = Array.isArray(initializer.element) ? initializer.element : [initializer.element ?? "p"];
-
-    if (initializer instanceof RichTextSection) {
-      this.character_list = initializer.character_list;
-    }
-    if (initializer.character_list)
-    this.character_list = RichTextCharacter.parseText(initializer.character_list);
-  }
-  
   public get length() {
     return this.character_list.length;
   }
   
   public get text() {
     return this.character_list.map(character => character.value).join("");
+  }
+  
+  constructor(initializer: RichTextSectionInitializer = {}) {
+    this.id = v4();
+    this.element = Array.isArray(initializer.element) ? initializer.element : [initializer.element ?? "p"];
+    if (typeof initializer.character_list === "string") {
+      this.character_list = RichTextCharacter.parseText(initializer.character_list);
+    }
+    else if (Array.isArray(initializer.character_list)) {
+      this.character_list = [];
+      for (let i = 0; i < initializer.character_list.length; i++) {
+        const item = initializer.character_list.at(i);
+        if (!item) continue;
+        if (item instanceof RichTextCharacter) {
+          this.character_list.push(item);
+        }
+        else {
+          this.character_list.push(...RichTextCharacter.parseContent(item));
+        }
+      }
+    }
   }
   
   public toObject(selection?: RichTextSectionSelection): RichTextSectionContent {
@@ -108,7 +118,7 @@ export default class RichTextSection {
     for (let i = selection.character; i <= selection.character_offset; i++) {
       const character = this.character_list.at(i);
       if (!character) continue;
-      this.character_list[i] = new RichTextCharacter(character.value, {...character.decoration, ...decoration});
+      this.character_list[i] = new RichTextCharacter({value: character.value, decoration: {...character.decoration, ...decoration}});
     }
     
     return selection;
@@ -119,12 +129,12 @@ export default class RichTextSection {
     
     if (selection.character >= this.length) {
       if (selection.character > 0 && !this.character_list.at(0)) {
-        this.character_list[0] = new RichTextCharacter(RichTextCharacter.space);
+        this.character_list[0] = new RichTextCharacter({value: RichTextCharacter.space});
       }
       
       for (let i = 1; i < selection.character; i++) {
         if (this.character_list.at(i)) continue;
-        this.character_list[i] = new RichTextCharacter(RichTextCharacter.space, this.getCharacter(i - 1).decoration);
+        this.character_list[i] = new RichTextCharacter({value: RichTextCharacter.space, decoration: this.getCharacter(i - 1).decoration});
       }
     }
     
@@ -133,23 +143,22 @@ export default class RichTextSection {
   
   public clone() {
     return new RichTextSection({
-      value:   this.character_list,
-      element: this.element,
+      character_list: this.character_list,
+      element:        this.element,
     });
   }
   
-  public static parseText(text?: RichTextSectionValueInit) {
+  public static parseText(text?: string | string[], element?: HTMLTag | HTMLTag[]): RichTextSection[] {
     const value = [] as RichTextSection[];
-    if (!text) return value;
     
-    text = Array.isArray(text) ? text : [text];
-    for (let i = 0; i < text.length; i++) {
-      const item = text.at(i);
-      if (item instanceof RichTextSection) {
-        value.push(item);
-      }
-      else if (typeof item === "string") {
-        value.push(new RichTextSection({value: RichTextCharacter.parseText(item)}));
+    if (typeof text === "string") {
+      value.push(new RichTextSection({character_list: RichTextCharacter.parseText(text), element}));
+    }
+    
+    if (Array.isArray(text)) {
+      for (let i = 0; i < text.length; i++) {
+        const item = text.at(i);
+        if (item) value.push(new RichTextSection({character_list: RichTextCharacter.parseText(item), element}));
       }
     }
     
@@ -169,7 +178,7 @@ export default class RichTextSection {
       const value = [] as RichTextSection[];
       for (let i = 0; i < node.children.length; i++) {
         const item = node.childNodes.item(i);
-        if (item) value.push(new RichTextSection({value: RichTextCharacter.parseHTML(item)}));
+        if (item) value.push(new RichTextSection({character_list: RichTextCharacter.parseHTML(item)}));
       }
       return value;
     }
@@ -180,17 +189,16 @@ export default class RichTextSection {
 }
 
 export interface RichTextSectionInitializer {
-
+  readonly element?: HTMLTag | HTMLTag[];
+  readonly character_list?: string | RichTextCharacter[] | RichTextCharacterContent[];
 }
 
-export type RichTextSectionValueInit = RichTextSection | string | (RichTextSection | string)[]
+export type RichTextSectionContent = {
+  readonly  element: HTMLTag[]
+  readonly character_list: RichTextCharacterContent[]
+}
 
 export interface RichTextSectionSelection {
   character: number;
   character_offset: number;
-}
-
-export type RichTextSectionContent = {
-  element: HTMLTag[]
-  character_list: RichTextCharacterContent[]
 }

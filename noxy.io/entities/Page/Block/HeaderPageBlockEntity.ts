@@ -1,5 +1,5 @@
 import PageBlockType from "../../../../common/enums/PageBlockType";
-import RichText, {RichTextContent} from "../../../classes/RichText/RichText";
+import RichText, {RichTextObject} from "../../../classes/RichText/RichText";
 import RichTextSection from "../../../classes/RichText/RichTextSection";
 import PageBlockEntity, {PageBlockInitializer} from "../PageBlockEntity";
 
@@ -46,6 +46,6 @@ export interface HeaderBlockContent {
 
 export interface HeaderBlockInitializer extends PageBlockInitializer {
   content: {
-    value: RichText | RichTextContent
+    value: RichText | RichTextObject
   };
 }

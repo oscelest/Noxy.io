@@ -23,7 +23,7 @@ export default class RichTextDecoration {
   public readonly link: string;
   public readonly selected: boolean;
   
-  constructor(initializer: Initializer<RichTextDecoration> = {}) {
+  constructor(initializer: DecorationInitializer = {}) {
     this.bold = initializer.bold ?? false;
     this.code = initializer.code ?? false;
     this.mark = initializer.mark ?? false;
@@ -150,3 +150,4 @@ export default class RichTextDecoration {
 }
 
 export type DecorationObject = Writeable<Properties<RichTextDecoration>>;
+export type DecorationInitializer = Initializer<RichTextDecoration>;
