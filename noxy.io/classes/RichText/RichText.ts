@@ -24,13 +24,12 @@ export default class RichText {
   constructor(initializer: RichTextInitializer = {}) {
     this.id = v4();
     this.element = initializer.element ?? "div";
+    this.section_list = [];
     
     if (typeof initializer.section_list === "string") {
-      this.section_list = RichTextSection.parseText(initializer.section_list);
+      this.section_list.push(...RichTextSection.parseText(initializer.section_list));
     }
     else if (Array.isArray(initializer.section_list)) {
-      this.section_list = [];
-      
       for (let i = 0; i < initializer.section_list.length; i++) {
         const item = initializer.section_list.at(i);
         if (!item) continue;
@@ -139,12 +138,18 @@ export default class RichText {
   public remove<S extends RichTextSelection>(selection: S): S {
     if (selection.section > selection.section_offset) return selection;
     
+    console.log(selection);
+  
+    // Assign start as we will use it to check if start and end section is the same
     const start = this.section_list.at(selection.section);
     if (selection.section === selection.section_offset) {
+      // If section doesn't exist or start character is greater than end character, exit.
       if (!start || selection.character > selection.character_offset) return selection;
+      // Else remove characters from section
       return {...selection, ...start.remove(selection)};
     }
     
+    // TODO: deletes too much
     const end = this.section_list.at(selection.section_offset);
     for (let i = 0; i < this.section_list.length; i++) {
       if (i >= selection.section || i <= selection.section_offset) {

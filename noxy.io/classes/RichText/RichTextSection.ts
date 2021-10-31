@@ -21,6 +21,8 @@ export default class RichTextSection {
   constructor(initializer: RichTextSectionInitializer = {}) {
     this.id = v4();
     this.element = Array.isArray(initializer.element) ? initializer.element : [initializer.element ?? "p"];
+    this.character_list = [];
+    
     if (typeof initializer.character_list === "string") {
       this.character_list = RichTextCharacter.parseText(initializer.character_list);
     }

@@ -8,12 +8,12 @@
     "update": "npm outdated && npm update --save"
   },
   "dependencies":    {
-    "@babel/plugin-transform-unicode-escapes": "^7.14.5",
-    "@babel/plugin-transform-unicode-regex":   "^7.14.5",
+    "@babel/plugin-transform-unicode-escapes": "^7.16.0",
+    "@babel/plugin-transform-unicode-regex":   "^7.16.0",
     "isemail":                                 "^3.2.0",
     "lodash":                                  "^4.17.21",
     "moment":                                  "^2.29.1",
-    "next":                                    "^12.0.1",
+    "next":                                    "^12.0.2",
     "pretty-bytes":                            "^5.6.0",
     "react":                                   "^17.0.2",
     "react-dom":                               "^17.0.2",

@@ -104,7 +104,7 @@ export default class EditText extends Component<EditTextProps, State> {
     this.setState({selection});
   };
   
-  public insert(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: EditTextSelection = this.getSelection()) {
+  public write(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: EditTextSelection = this.getSelection()) {
     this.setState({selection: this.text.replace(insert, selection)});
     this.props.onChange(this.text.clone(), this);
   };
@@ -117,10 +117,10 @@ export default class EditText extends Component<EditTextProps, State> {
       for (let i = 0; i < text.length; i++) {
         fragment.push(new RichTextCharacter({value: text[i], decoration}));
       }
-      this.insert(fragment, selection);
+      this.write(fragment, selection);
     }
     else {
-      this.insert(new RichTextCharacter({value: text, decoration}));
+      this.write(new RichTextCharacter({value: text, decoration}));
     }
   };
   
@@ -296,7 +296,7 @@ export default class EditText extends Component<EditTextProps, State> {
   
   private readonly eventKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
     event.preventDefault();
-    this.insert(new RichTextCharacter({value: event.key}));
+    this.write(new RichTextCharacter({value: event.key}));
   };
   
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -324,7 +324,7 @@ export default class EditText extends Component<EditTextProps, State> {
         return this.insertText(RichTextCharacter.linebreak);
       case KeyboardCommand.NEW_PARAGRAPH:
       case KeyboardCommand.NEW_PARAGRAPH_ALT:
-        return this.insert(new RichTextSection());
+        return this.write(new RichTextSection());
       case KeyboardCommand.DELETE_FORWARD:
         return this.deleteForward(this.getSelection() ?? {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: true});
       case KeyboardCommand.DELETE_BACKWARD:
@@ -363,10 +363,9 @@ export default class EditText extends Component<EditTextProps, State> {
     this.props.onFocus?.(event, this);
   };
   
-  // TODO: FIX
   private readonly eventSelect = () => {
-    // console.log(this.getSelection());
-    // this.setState({selection: this.getSelection()});
+    if (!this.state.selection) return;
+    this.setState({selection: this.getSelection()});
   };
   
   private readonly eventDragStart = (event: React.DragEvent<HTMLDivElement>) => {
@@ -388,7 +387,7 @@ export default class EditText extends Component<EditTextProps, State> {
     event.preventDefault();
     event.clipboardData.setData("text/plain", this.renderHTML(this.getSelection()).innerText);
     event.clipboardData.setData("text/html", this.renderHTML(this.getSelection()).innerHTML);
-    this.insert([]);
+    this.write([]);
   };
   
   // TODO: FIX
