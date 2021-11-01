@@ -19,7 +19,7 @@ export default class RichTextSection {
   }
   
   constructor(initializer: RichTextSectionInitializer = {}) {
-    this.id = v4();
+    this.id = initializer.id ?? v4();
     this.element = Array.isArray(initializer.element) ? initializer.element : [initializer.element ?? "p"];
     this.character_list = [];
     
@@ -31,18 +31,18 @@ export default class RichTextSection {
       for (let i = 0; i < initializer.character_list.length; i++) {
         const item = initializer.character_list.at(i);
         if (!item) continue;
-        if (item instanceof RichTextCharacter) {
-          this.character_list.push(item);
+        if (!(item instanceof RichTextCharacter)) {
+          this.character_list.push(...RichTextCharacter.parseContent(item));
         }
         else {
-          this.character_list.push(...RichTextCharacter.parseContent(item));
+          this.character_list.push(item);
         }
       }
     }
   }
   
   public toObject(selection?: RichTextSectionSelection): RichTextSectionContent {
-    const content = {character_list: [], element: this.element} as RichTextSectionContent;
+    const content = {id: this.id, character_list: [], element: this.element} as RichTextSectionContent;
     if (!this.length) return content;
     
     content.character_list.push({start: 0, end: 0, index: 0, fragment_list: [{text: "", decoration: new RichTextDecoration().toObject(), start: 0, end: 0}]});
@@ -145,8 +145,9 @@ export default class RichTextSection {
   
   public clone() {
     return new RichTextSection({
-      character_list: this.character_list,
+      id:             this.id,
       element:        this.element,
+      character_list: this.character_list,
     });
   }
   
@@ -191,12 +192,14 @@ export default class RichTextSection {
 }
 
 export interface RichTextSectionInitializer {
-  readonly element?: HTMLTag | HTMLTag[];
-  readonly character_list?: string | RichTextCharacter[] | RichTextCharacterContent[];
+  id?: string;
+  element?: HTMLTag | HTMLTag[];
+  character_list?: string | RichTextCharacter[] | RichTextCharacterContent[];
 }
 
 export type RichTextSectionContent = {
-  readonly  element: HTMLTag[]
+  readonly id: string;
+  readonly element: HTMLTag[]
   readonly character_list: RichTextCharacterContent[]
 }
 

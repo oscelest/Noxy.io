@@ -22,7 +22,7 @@ export default class RichText {
   }
   
   constructor(initializer: RichTextInitializer = {}) {
-    this.id = v4();
+    this.id = initializer.id ?? v4();
     this.element = initializer.element ?? "div";
     this.section_list = [];
     
@@ -47,7 +47,7 @@ export default class RichText {
   }
   
   public toObject(selection?: RichTextSelection): RichTextObject {
-    const content = {section_list: [], element: this.element} as RichTextObject;
+    const content = {id: this.id, section_list: [], element: this.element} as RichTextObject;
     
     for (let i = 0; i < this.section_list.length; i++) {
       const section = this.section_list.at(i);
@@ -138,34 +138,22 @@ export default class RichText {
   public remove<S extends RichTextSelection>(selection: S): S {
     if (selection.section > selection.section_offset) return selection;
     
-    console.log(selection);
-  
     // Assign start as we will use it to check if start and end section is the same
-    const start = this.section_list.at(selection.section);
+    const section_start = this.section_list.at(selection.section);
     if (selection.section === selection.section_offset) {
       // If section doesn't exist or start character is greater than end character, exit.
-      if (!start || selection.character > selection.character_offset) return selection;
+      if (!section_start || selection.character > selection.character_offset) return selection;
       // Else remove characters from section
-      return {...selection, ...start.remove(selection)};
+      return {...selection, ...section_start.remove(selection)};
     }
     
-    // TODO: deletes too much
-    const end = this.section_list.at(selection.section_offset);
-    for (let i = 0; i < this.section_list.length; i++) {
-      if (i >= selection.section || i <= selection.section_offset) {
-        this.section_list.splice(i--, 1);
-      }
-    }
+    const section_end = this.section_list.at(selection.section_offset);
+    const section_value = section_start ?? section_end ?? new RichTextSection();
+    const char_start = section_start?.character_list.slice(0, selection.character) ?? [];
+    const char_end = section_end?.character_list.slice(selection.character_offset) ?? [];
     
-    if (start && end) {
-      this.section_list.splice(selection.section, 0, new RichTextSection({character_list: [...start.character_list.slice(0, selection.character), ...end.character_list.slice(selection.character_offset)]}));
-    }
-    else if (start) {
-      this.section_list.splice(selection.section, 0, new RichTextSection({character_list: start.character_list.slice(0, selection.character)}));
-    }
-    else if (end) {
-      this.section_list.splice(selection.section, 0, new RichTextSection({character_list: end.character_list.slice(selection.character_offset)}));
-    }
+    section_value.character_list.splice(0, section_value.character_list.length, ...char_start, ...char_end);
+    this.section_list.splice(0, this.length, ...this.section_list.slice(0, selection.section), section_value, ...this.section_list.slice(selection.section_offset + 1));
     
     return {...selection, section_offset: selection.section, character_offset: selection.character};
   }
@@ -211,8 +199,9 @@ export default class RichText {
   
   public clone() {
     return new RichText({
-      section_list: this.section_list.map(section => section.clone()),
+      id:           this.id,
       element:      this.element,
+      section_list: this.section_list.map(section => section.clone()),
     });
   }
   
@@ -260,11 +249,13 @@ export default class RichText {
 }
 
 export interface RichTextInitializer {
+  id?: string;
   element?: HTMLTag;
   section_list?: string | string[] | RichTextSection[] | RichTextSectionContent[];
 }
 
 export interface RichTextObject {
+  readonly id: string;
   readonly element: HTMLTag;
   readonly section_list: RichTextSectionContent[];
 }

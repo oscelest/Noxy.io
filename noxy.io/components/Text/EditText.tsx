@@ -72,8 +72,9 @@ export default class EditText extends Component<EditTextProps, State> {
     
     const section = this.state.ref.current.childNodes.item(section_id);
     const value = [section, character_id] as [Node, number];
+    const length = section?.childNodes?.length ?? 0;
     
-    for (let i = 0; i < section.childNodes.length; i++) {
+    for (let i = 0; i < length; i++) {
       const line = section.childNodes.item(i);
       const length = Helper.getNodeTextLength(line);
       if (length >= value[1]) {
@@ -171,12 +172,14 @@ export default class EditText extends Component<EditTextProps, State> {
   
   public componentDidUpdate(prevProps: Readonly<EditTextProps>, prevState: Readonly<State>, snapshot?: any): void {
     if (this.state.selection) {
-      const [start_node, start_offset] = this.getNodeBySectionAndCharacter(this.state.selection.section, this.state.selection.character);
-      const [end_node, end_offset] = this.getNodeBySectionAndCharacter(this.state.selection.section_offset, this.state.selection.character_offset);
-      getSelection()?.setBaseAndExtent(start_node, start_offset, end_node, end_offset);
       this.setState({selection: undefined});
-      // TODO: FIX
-      // this.props.onSelect?.(this.state.selection, this);
+      
+    }
+    else if (prevState.selection) {
+      const {section, section_offset, character, character_offset} = prevState.selection;
+      const [start_node, start_offset] = this.getNodeBySectionAndCharacter(section, character);
+      const [end_node, end_offset] = this.getNodeBySectionAndCharacter(section_offset, character_offset);
+      getSelection()?.setBaseAndExtent(start_node, start_offset, end_node, end_offset);
     }
   }
   

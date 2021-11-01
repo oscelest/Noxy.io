@@ -12,7 +12,7 @@ export default class RichTextCharacter {
   public static space: string = " ";
   
   constructor(initializer: RichTextCharacterInitializer) {
-    this.id = v4();
+    this.id = initializer.id ?? v4();
     this.value = initializer instanceof RichTextCharacter ? initializer.value : initializer.value?.charAt(0) ?? " ";
     this.decoration = initializer instanceof RichTextCharacter ? initializer.decoration : new RichTextDecoration(initializer.decoration);
   }
@@ -67,6 +67,7 @@ export default class RichTextCharacter {
 }
 
 export interface RichTextCharacterInitializer {
+  id?: string;
   value?: string;
   decoration?: Initializer<RichTextDecoration>;
 }
