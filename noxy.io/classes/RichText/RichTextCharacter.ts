@@ -17,6 +17,17 @@ export default class RichTextCharacter {
     this.decoration = initializer instanceof RichTextCharacter ? initializer.decoration : new RichTextDecoration(initializer.decoration);
   }
   
+  public static parseContent(content: RichTextCharacterContent) {
+    const value = [] as RichTextCharacter[];
+    
+    for (let i = 0; i < content.fragment_list.length; i++) {
+      const item = content.fragment_list.at(i);
+      if (item) value.push(...this.parseText(item.text, item.decoration));
+    }
+    
+    return value;
+  }
+  
   public static parseText(text?: string, decoration?: DecorationInitializer): RichTextCharacter[] {
     const value = [] as RichTextCharacter[];
     
@@ -25,17 +36,6 @@ export default class RichTextCharacter {
         const item = text.at(i);
         if (item) value.push(new RichTextCharacter({value: item, decoration}));
       }
-    }
-    
-    return value;
-  }
-  
-  public static parseContent(content: RichTextCharacterContent) {
-    const value = [];
-    
-    for (let i = 0; i < content.fragment_list.length; i++) {
-      const item = content.fragment_list.at(i);
-      if (item) value.push(...this.parseText(item.text, item.decoration));
     }
     
     return value;

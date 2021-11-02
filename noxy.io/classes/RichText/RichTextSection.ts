@@ -31,11 +31,11 @@ export default class RichTextSection {
       for (let i = 0; i < initializer.character_list.length; i++) {
         const item = initializer.character_list.at(i);
         if (!item) continue;
-        if (!(item instanceof RichTextCharacter)) {
-          this.character_list.push(...RichTextCharacter.parseContent(item));
+        if (item instanceof RichTextCharacter) {
+          this.character_list.push(item);
         }
         else {
-          this.character_list.push(item);
+          this.character_list.push(...RichTextCharacter.parseContent(item));
         }
       }
     }
@@ -45,13 +45,15 @@ export default class RichTextSection {
     const content = {id: this.id, character_list: [], element: this.element} as RichTextSectionContent;
     if (!this.length) return content;
     
-    content.character_list.push({start: 0, end: 0, index: 0, fragment_list: [{text: "", decoration: new RichTextDecoration().toObject(), start: 0, end: 0}]});
+    content.character_list.push({start: 0, end: 0, index: 0, fragment_list: []});
     for (let i = 0; i < this.length; i++) {
       const line = content.character_list.at(-1);
+      if (!line) throw new Error("Line should always exist.");
+      
       const character = this.getCharacter(i);
       const decoration = {...character.decoration.toObject(), selected: !!selection && selection.character <= i && selection.character_offset > i};
       
-      if (line && character.value !== RichTextCharacter.linebreak) {
+      if (character.value !== RichTextCharacter.linebreak) {
         const fragment = line.fragment_list.at(-1);
         
         if (fragment && Util.getProperties(fragment.decoration).every(key => fragment.decoration[key] === decoration[key])) {
@@ -64,11 +66,12 @@ export default class RichTextSection {
         }
       }
       else {
-        const text = character.value !== RichTextCharacter.linebreak ? character.value : "";
-        const start = i + 1, end = start;
-        content.character_list.push({start, end, index: content.character_list.length, fragment_list: [{start, end, text, decoration}]});
+        if (!line.fragment_list.length) line.fragment_list.push({text: "", decoration, start: i, end: i});
+        content.character_list.push({start: i + 1, end: i + 1, index: content.character_list.length, fragment_list: [{start: i + 1, end: i + 1, text: "", decoration}]});
       }
     }
+    
+    console.log(content);
     
     return content;
   }

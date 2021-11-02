@@ -1,24 +1,20 @@
 import PageBlockType from "../../../../common/enums/PageBlockType";
-import RichText from "../../../classes/RichText/RichText";
-import PageBlockEntity from "../PageBlockEntity";
+import RichText, {RichTextObject} from "../../../classes/RichText/RichText";
+import RichTextSection, {RichTextSectionContent} from "../../../classes/RichText/RichTextSection";
+import PageBlockEntity, {PageBlockInitializer} from "../PageBlockEntity";
 
 export default class ListPageBlockEntity extends PageBlockEntity {
   
   public content: ListBlockContent;
   
-  public static readonly type_list: ListBlockType[] = ["ordered", "unordered", "blockquote"];
   public static readonly indent_min: number = 0;
   public static readonly indent_max: number = 5;
   
-  public static readonly default_type: ListBlockType = "unordered";
-  
-  constructor(initializer?: Omit<Initializer<ListPageBlockEntity>, "type">) {
+  constructor(initializer?: ListBlockInitializer) {
     super(initializer);
     this.type = PageBlockType.LIST;
-    this.content = initializer?.content ?? {
-      
-      value: new RichText(),
-      data:  {type: ListPageBlockEntity.default_type},
+    this.content = {
+      value: ListPageBlockEntity.parseInitializerValue(initializer?.content.value),
     };
   }
   
@@ -28,27 +24,39 @@ export default class ListPageBlockEntity extends PageBlockEntity {
     return this;
   }
   
-  // public static parseContent(content?: ContentInitializer<ListBlockContent>): ListBlockContent {
-  //   const {value, data} = content ?? {};
-  //
-  //   return {
-  //     value: value ? this.parseContentText(value) : ListPageBlockEntity.createDefault(),
-  //     data:  {
-  //       type: typeof data?.type === "string" && this.type_list.includes(data.type) ? data.type : ListPageBlockEntity.default_type,
-  //     },
-  //   };
-  // }
+  private static parseInitializerValue(value?: ListBlockInitializer["content"]["value"]) {
+    return new RichText({
+      element:      this.parseElement(value?.element),
+      section_list: this.parseSectionList(value?.section_list),
+    });
+  }
   
-  // public static createDefault() {
-  //   return new RichText({value: new RichTextSection({element: "li"}), element: "ul"});
-  // }
+  private static parseElement(tag?: HTMLTag) {
+    switch (tag) {
+      case "blockquote":
+      case "ol":
+        return tag;
+      default:
+        return "ul";
+    }
+  }
+  
+  private static parseSectionList(section_list?: RichTextSection[] | RichTextSectionContent[], blockquote: boolean = false) {
+    const element = blockquote ? "blockquote" : "li";
+    if (!section_list) {
+      return [new RichTextSection({element})];
+    }
+    
+    return section_list.map(value => new RichTextSection({...value, element}));
+  }
 }
-
-export type ListBlockType = "blockquote" | "ordered" | "unordered"
 
 export interface ListBlockContent {
   value: RichText;
-  data: {
-    type: ListBlockType
+}
+
+export interface ListBlockInitializer extends PageBlockInitializer {
+  content: {
+    value: RichText | RichTextObject
   };
 }

@@ -2,7 +2,6 @@ import EditText, {EditTextCommandList} from "components/Text/EditText";
 import React from "react";
 import RichText from "../../classes/RichText/RichText";
 import HeaderPageBlockEntity from "../../entities/Page/Block/HeaderPageBlockEntity";
-import Helper from "../../Helper";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
@@ -34,7 +33,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
           {this.renderOptionList()}
         </Conditional>
         <EditText ref={this.state.ref} readonly={this.props.readonly} whitelist={HeaderBlock.whitelist} blacklist={HeaderBlock.blacklist}
-                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onKeyDown={this.eventKeyDown}>
+                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange}>
           {this.props.block.content.value}
         </EditText>
       </div>
@@ -54,28 +53,15 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     );
   };
   
-  private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    const command = Helper.getKeyboardEventCommand(event);
-    event.bubbles = false;
-    
-    switch (command) {
-      // case KeyboardCommand.NEW_PARAGRAPH:
-      // case KeyboardCommand.NEW_PARAGRAPH_ALT:
-      // return this.insert(new RichTextSection());
-    }
-    
-    event.bubbles = true;
-  };
-  
   private readonly eventChange = (text: RichText, component: EditText) => {
     this.props.onChange(this.props.block.replaceText(component.text, text));
   };
   
   private readonly eventHeaderLevelClick = (level: number) => {
-    this.props.block.content.value.element;
+    const {id, section_list} = this.props.block.content.value;
+    this.props.block.content.value = new RichText({id, section_list, element: `h${level}` as HTMLTag});
     this.props.onChange(this.props.block);
   };
-  
 }
 
 export interface HeaderBlockProps extends PageExplorerBlockProps<HeaderPageBlockEntity> {

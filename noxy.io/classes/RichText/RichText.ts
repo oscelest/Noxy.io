@@ -236,6 +236,10 @@ export default class RichText {
     return selection;
   }
   
+  public static parseObject(content?: RichText | RichTextObject) {
+    return new RichText(content);
+  }
+  
   public static parseHTML(node: string | HTMLElement) {
     if (node instanceof HTMLElement) {
       return new RichText({section_list: RichTextSection.parseHTML(node)});

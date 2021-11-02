@@ -1,6 +1,6 @@
 import PageBlockType from "../../../../common/enums/PageBlockType";
 import RichText, {RichTextObject} from "../../../classes/RichText/RichText";
-import RichTextSection from "../../../classes/RichText/RichTextSection";
+import RichTextSection, {RichTextSectionContent} from "../../../classes/RichText/RichTextSection";
 import PageBlockEntity, {PageBlockInitializer} from "../PageBlockEntity";
 
 export default class HeaderPageBlockEntity extends PageBlockEntity {
@@ -15,28 +15,38 @@ export default class HeaderPageBlockEntity extends PageBlockEntity {
     };
   }
   
-  public replaceText(old_text: RichText, new_text: RichText): this {
+  public replaceText(old_text: RichText, new_text: RichText) {
     if (this.content.value.id !== old_text.id) throw new Error("Could not find text in HeaderBlock.");
     this.content.value = new_text;
     return this;
   }
   
-  public static parseHeaderTag(tag: HTMLTag) {
-    return ["h1", "h2", "h3", "h4", "h5", "h6"].includes(tag) ? tag : "h1";
+  private static parseInitializerValue(value?: HeaderBlockInitializer["content"]["value"]) {
+    return new RichText({
+      element:      this.parseElement(value?.element),
+      section_list: this.parseSectionList(value?.section_list),
+    });
   }
   
-  private static parseInitializerValue(value?: HeaderBlockInitializer["content"]["value"]): RichText {
-    if (!value) return new RichText({section_list: [new RichTextSection({element: "h1"})]});
-    
-    for (let i = 0; i < value.section_list.length; i++) {
-      const item = value.section_list[i].element;
-      if (item) value.section_list[i].element.splice(0, item.length, this.parseHeaderTag(item[0]));
+  private static parseElement(tag?: HTMLTag) {
+    switch (tag) {
+      case "h2":
+      case "h3":
+      case "h4":
+      case "h5":
+      case "h6":
+        return tag;
+      default:
+        return "h1";
+    }
+  }
+  
+  private static parseSectionList(section_list?: RichTextSection[] | RichTextSectionContent[]) {
+    if (!section_list) {
+      return [new RichTextSection({element: "div"})];
     }
     
-    return new RichText({
-      section_list: value.section_list.map(value => new RichTextSection(value)),
-      element:      value.element,
-    });
+    return section_list.map(value => new RichTextSection({...value, element: "p"}));
   }
 }
 
