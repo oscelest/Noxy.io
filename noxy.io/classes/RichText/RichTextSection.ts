@@ -20,6 +20,7 @@ export default class RichTextSection {
   
   constructor(initializer: RichTextSectionInitializer = {}) {
     this.id = initializer.id ?? v4();
+    console.log(initializer.element, Array.isArray(initializer.element) ? initializer.element : [initializer.element ?? "p"]);
     this.element = Array.isArray(initializer.element) ? initializer.element : [initializer.element ?? "p"];
     this.character_list = [];
     
@@ -70,8 +71,6 @@ export default class RichTextSection {
         content.character_list.push({start: i + 1, end: i + 1, index: content.character_list.length, fragment_list: [{start: i + 1, end: i + 1, text: "", decoration}]});
       }
     }
-    
-    console.log(content);
     
     return content;
   }

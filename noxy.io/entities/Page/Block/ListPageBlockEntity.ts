@@ -1,14 +1,12 @@
 import PageBlockType from "../../../../common/enums/PageBlockType";
 import RichText, {RichTextObject} from "../../../classes/RichText/RichText";
 import RichTextSection, {RichTextSectionContent} from "../../../classes/RichText/RichTextSection";
+import ListBlock from "../../../components/Block/ListBlock";
 import PageBlockEntity, {PageBlockInitializer} from "../PageBlockEntity";
 
 export default class ListPageBlockEntity extends PageBlockEntity {
   
   public content: ListBlockContent;
-  
-  public static readonly indent_min: number = 0;
-  public static readonly indent_max: number = 5;
   
   constructor(initializer?: ListBlockInitializer) {
     super(initializer);
@@ -27,27 +25,37 @@ export default class ListPageBlockEntity extends PageBlockEntity {
   private static parseInitializerValue(value?: ListBlockInitializer["content"]["value"]) {
     return new RichText({
       element:      this.parseElement(value?.element),
-      section_list: this.parseSectionList(value?.section_list),
+      section_list: this.parseSectionList(value?.section_list, value?.element),
     });
   }
   
   private static parseElement(tag?: HTMLTag) {
+    if (!tag) return ListBlock.default_tag;
+    
     switch (tag) {
       case "blockquote":
       case "ol":
+      case "ul":
         return tag;
       default:
-        return "ul";
+        throw new Error("ListPageBlockEntity element tag must be either 'blockquote', 'ol', or 'ul'");
     }
   }
   
-  private static parseSectionList(section_list?: RichTextSection[] | RichTextSectionContent[], blockquote: boolean = false) {
-    const element = blockquote ? "blockquote" : "li";
+  private static parseSectionList(section_list?: RichTextSection[] | RichTextSectionContent[], parent: HTMLTag = ListBlock.default_tag) {
     if (!section_list) {
-      return [new RichTextSection({element})];
+      if (parent === "blockquote") {
+        return [new RichTextSection({element: "blockquote"})];
+      }
+      
+      return [new RichTextSection({element: "li"})];
     }
-    
-    return section_list.map(value => new RichTextSection({...value, element}));
+
+    if (parent === "blockquote") {
+      return section_list.map(value => new RichTextSection({...value, element: value.element.fill("blockquote")}));
+    }
+  
+    return section_list.map(value => new RichTextSection({...value, element: [...value.element.slice(0, -1).fill(parent), ...value.element.slice(-1)]}));
   }
 }
 

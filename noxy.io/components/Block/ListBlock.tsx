@@ -13,16 +13,16 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   private static readonly blacklist: EditTextCommandList = [];
   private static readonly whitelist: EditTextCommandList = [];
   
+  public static readonly indent_min: number = 1;
+  public static readonly indent_max: number = 5;
+  public static readonly default_tag: HTMLTag = "ul";
+  
   constructor(props: ListBlockProps) {
     super(props);
     this.state = {
       ref: React.createRef(),
     };
   }
-  
-  // private static getLevel(level: number) {
-  //   return Util.clamp(level, ListPageBlockEntity.indent_max, ListPageBlockEntity.indent_min);
-  // }
   
   // public componentDidUpdate(prevProps: Readonly<ListBlockProps>, prevState: Readonly<State>, snapshot?: any) {
   //   if (this.state.ref.current && this.state.selection) {
@@ -46,15 +46,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     );
   }
   
-  // private readonly renderLine = (line: RichTextLine) => {
-  //   const metadata = this.props.block.content.value.metadata;
-  //   const {group, indent} = metadata.at(line.index) ?? {};
-  //   const value = group ? metadata.at(group)?.indent ?? indent : indent;
-  //   return [...Array(value).fill("ul"), group ? "div" : "li"] as EditTextElement;
-  // };
-  
   private readonly eventChange = (text: RichText, component: EditText) => {
-    
     this.props.onChange(this.props.block.replaceText(component.text, text));
   };
   
@@ -73,10 +65,10 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     switch (command) {
       case KeyboardCommand.INDENT:
       case KeyboardCommand.NEXT_FOCUS:
-      // return this.shiftLevelBy(component, 1);
+        return this.shiftLevel(component, true);
       case KeyboardCommand.OUTDENT:
       case KeyboardCommand.PREV_FOCUS:
-      // return this.shiftLevelBy(component, -1);
+        return this.shiftLevel(component, false);
       case KeyboardCommand.NEW_LINE:
       case KeyboardCommand.NEW_LINE_ALT:
       // return this.insertLineBreak(component, false);
@@ -88,32 +80,24 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     event.bubbles = true;
   };
   
-  // private readonly shiftLevelBy = (component: EditText, value: number) => {
-  //   const {start, end, forward} = component.getSelection();
-  //   const start_index = component.text.getLine(start);
-  //   const end_index = component.text.getLine(end);
-  //   for (let i = 0; i < this.props.block.content.value.metadata.length; i++) {
-  //     const item = this.props.block.content.value.metadata[i];
-  //     if (!item || i < start_index || i > end_index || !item.group || start_index < item.group || end_index > item.group) continue;
-  //     this.props.block.content.value.metadata[i].indent = ListBlock.getLevel(item.indent + value);
-  //   }
-  //   this.setState({selection: {start, end, forward}});
-  // };
-  //
-  // private readonly insertLineBreak = (component: EditText, grouped: boolean) => {
-  //   const {start, end} = component.getSelection();
-  //   const line = component.text.getLine(start);
-  //   const metadata = this.props.block.content.value.metadata;
-  //   const line_metadata = {indent: metadata[line].indent, group: grouped ? (metadata[line].group ?? line) : undefined} as Unwrap<ListBlockData>;
-  //
-  //   this.props.block.content.value = new RichText({
-  //     value:    [...component.text.slice(0, start), Character.linebreak, ...component.text.slice(end)],
-  //     metadata: [...metadata.slice(0, line + 1), line_metadata, ...metadata.slice(line + 1)],
-  //   });
-  //
-  //   this.setState({selection: {start: start + 1, end: start + 1, forward: true}});
-  //   this.props.onChange(this.props.block);
-  // };
+  private readonly shiftLevel = (component: EditText, up: boolean) => {
+    const {section, section_offset} = component.getSelection();
+    
+    if (up) {
+      for (let i = section; i <= section_offset; i++) {
+        if (this.props.block.content.value.section_list[i].element.length >= ListBlock.indent_max) continue;
+        this.props.block.content.value.section_list[i].element.unshift(component.text.element);
+      }
+    }
+    else {
+      for (let i = section; i <= section_offset; i++) {
+        if (this.props.block.content.value.section_list[i].element.length <= ListBlock.indent_min) continue;
+        this.props.block.content.value.section_list[i].element.shift();
+      }
+    }
+    
+    this.props.onChange(this.props.block);
+  };
 }
 
 export interface ListBlockProps extends PageExplorerBlockProps<ListPageBlockEntity> {
