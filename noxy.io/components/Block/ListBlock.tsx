@@ -1,5 +1,7 @@
 import React from "react";
 import RichText from "../../classes/RichText/RichText";
+import RichTextCharacter from "../../classes/RichText/RichTextCharacter";
+import RichTextSection from "../../classes/RichText/RichTextSection";
 import ListPageBlockEntity from "../../entities/Page/Block/ListPageBlockEntity";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
@@ -31,6 +33,36 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   //     this.setState({selection: undefined});
   //   }
   // }
+  
+  
+  private shiftLevel(component: EditText, up: boolean) {
+    const {section, section_offset} = component.getSelection();
+    
+    if (up) {
+      for (let i = section; i <= section_offset; i++) {
+        if (this.props.block.content.value.section_list[i].element.length >= ListBlock.indent_max) continue;
+        this.props.block.content.value.section_list[i].element.unshift(component.text.element);
+      }
+    }
+    else {
+      for (let i = section; i <= section_offset; i++) {
+        if (this.props.block.content.value.section_list[i].element.length <= ListBlock.indent_min) continue;
+        this.props.block.content.value.section_list[i].element.shift();
+      }
+    }
+    
+    this.props.onChange(this.props.block);
+  };
+  
+  private insertLineBreak(component: EditText) {
+    component.insertText(RichTextCharacter.linebreak);
+    this.props.onChange(this.props.block);
+  }
+  
+  private insertParagraph(component: EditText) {
+    component.write(new RichTextSection({element: "li"}));
+    this.props.onChange(this.props.block);
+  }
   
   public render() {
     const classes = [Style.Component];
@@ -71,33 +103,16 @@ export default class ListBlock extends Component<ListBlockProps, State> {
         return this.shiftLevel(component, false);
       case KeyboardCommand.NEW_LINE:
       case KeyboardCommand.NEW_LINE_ALT:
-      // return this.insertLineBreak(component, false);
+        return this.insertParagraph(component);
       case KeyboardCommand.NEW_PARAGRAPH:
       case KeyboardCommand.NEW_PARAGRAPH_ALT:
-      // return this.insertLineBreak(component, true);
+        return this.insertLineBreak(component);
     }
     
     event.bubbles = true;
   };
   
-  private readonly shiftLevel = (component: EditText, up: boolean) => {
-    const {section, section_offset} = component.getSelection();
-    
-    if (up) {
-      for (let i = section; i <= section_offset; i++) {
-        if (this.props.block.content.value.section_list[i].element.length >= ListBlock.indent_max) continue;
-        this.props.block.content.value.section_list[i].element.unshift(component.text.element);
-      }
-    }
-    else {
-      for (let i = section; i <= section_offset; i++) {
-        if (this.props.block.content.value.section_list[i].element.length <= ListBlock.indent_min) continue;
-        this.props.block.content.value.section_list[i].element.shift();
-      }
-    }
-    
-    this.props.onChange(this.props.block);
-  };
+  
 }
 
 export interface ListBlockProps extends PageExplorerBlockProps<ListPageBlockEntity> {
