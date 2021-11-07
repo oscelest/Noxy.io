@@ -3,7 +3,6 @@ import Util from "../../../common/services/Util";
 import RichTextCharacter, {RichTextCharacterContent} from "./RichTextCharacter";
 import RichTextDecoration from "./RichTextDecoration";
 
-
 export default class RichTextSection {
   
   public readonly id: string;
@@ -20,7 +19,6 @@ export default class RichTextSection {
   
   constructor(initializer: RichTextSectionInitializer = {}) {
     this.id = initializer.id ?? v4();
-    console.log(initializer.element, Array.isArray(initializer.element) ? initializer.element : [initializer.element ?? "p"]);
     this.element = Array.isArray(initializer.element) ? initializer.element : [initializer.element ?? "p"];
     this.character_list = [];
     

@@ -26,31 +26,30 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     };
   }
   
-  // public componentDidUpdate(prevProps: Readonly<ListBlockProps>, prevState: Readonly<State>, snapshot?: any) {
-  //   if (this.state.ref.current && this.state.selection) {
-  //     const {start, end, forward} = this.state.selection;
-  //     this.state.ref.current.select(start, end, forward);
-  //     this.setState({selection: undefined});
-  //   }
-  // }
-  
+  public componentDidUpdate(prevProps: Readonly<ListBlockProps>, prevState: Readonly<State>, snapshot?: any) {
+    if (this.state.ref.current && this.state.selection) {
+      this.state.ref.current.select(this.state.selection);
+      this.setState({selection: undefined});
+    }
+  }
   
   private shiftLevel(component: EditText, up: boolean) {
-    const {section, section_offset} = component.getSelection();
+    const selection = component.getSelection();
     
     if (up) {
-      for (let i = section; i <= section_offset; i++) {
+      for (let i = selection.section; i <= selection.section_offset; i++) {
         if (this.props.block.content.value.section_list[i].element.length >= ListBlock.indent_max) continue;
         this.props.block.content.value.section_list[i].element.unshift(component.text.element);
       }
     }
     else {
-      for (let i = section; i <= section_offset; i++) {
+      for (let i = selection.section; i <= selection.section_offset; i++) {
         if (this.props.block.content.value.section_list[i].element.length <= ListBlock.indent_min) continue;
         this.props.block.content.value.section_list[i].element.shift();
       }
     }
     
+    this.setState({selection});
     this.props.onChange(this.props.block);
   };
   
@@ -60,7 +59,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   }
   
   private insertParagraph(component: EditText) {
-    component.write(new RichTextSection({element: "li"}));
+    component.write(new RichTextSection({element: component.text.getSection(component.getSelection().section).element}));
     this.props.onChange(this.props.block);
   }
   
@@ -111,8 +110,6 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     
     event.bubbles = true;
   };
-  
-  
 }
 
 export interface ListBlockProps extends PageExplorerBlockProps<ListPageBlockEntity> {

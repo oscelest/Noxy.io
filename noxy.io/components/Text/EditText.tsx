@@ -1,3 +1,4 @@
+import FatalException from "exceptions/FatalException";
 import React from "react";
 import ClipboardDataType from "../../../common/enums/ClipboardDataType";
 import RichText, {RichTextSelection} from "../../classes/RichText/RichText";
@@ -26,8 +27,8 @@ export default class EditText extends Component<EditTextProps, State> {
     const {focusNode, anchorNode, focusOffset = 0, anchorOffset = 0} = getSelection() ?? {};
     
     if (this.state.ref.current && focusNode && anchorNode) {
-      const [focusSection, focusPosition] = this.getSectionAndCharacterByNode(focusNode, focusOffset);
-      const [anchorSection, anchorPosition] = this.getSectionAndCharacterByNode(anchorNode, anchorOffset);
+      const {section: focusSection, character: focusPosition} = this.getSectionAndCharacterByNode(focusNode, focusOffset);
+      const {section: anchorSection, character: anchorPosition} = this.getSectionAndCharacterByNode(anchorNode, anchorOffset);
       
       return anchorSection <= focusSection && anchorPosition <= focusPosition
              ? {section: anchorSection, character: anchorPosition, section_offset: focusSection, character_offset: focusPosition, forward: true}
@@ -37,57 +38,98 @@ export default class EditText extends Component<EditTextProps, State> {
     return {section: 0, section_offset: 0, character_offset: 0, character: 0, forward: true};
   };
   
-  private getSectionAndCharacterByNode(node: Node, offset: number = 0): [number, number] {
+  private getSectionAndCharacterByNode(node: Node, offset: number = 0) {
     if (!this.state.ref.current) throw Error("Component is not being rendered.");
+    const value = {section: 0, character: offset};
     
-    const value = [0, offset] as [number, number];
     while (true) {
-      if (!node.parentNode || node === this.state.ref.current) break;
+      const parent = node.parentNode;
+      if (!parent || node === this.state.ref.current) break;
       
-      for (let i = 0; node.parentNode.childNodes.length; i++) {
-        const child = node.parentNode.childNodes.item(i);
+      for (let i = 0; parent.childNodes.length; i++) {
+        const child = parent.childNodes.item(i);
+        
+        if (i > 0) {
+          if (parent === this.state.ref.current) {
+            value.section++;
+          }
+          else {
+            value.character++;
+          }
+        }
         if (node === child) {
-          node = node.parentNode;
+          node = parent;
           break;
         }
-        
-        if (node instanceof HTMLElement) {
-          if (node.classList.contains(Style.Section)) {
-            value[0]++;
-            continue;
-          }
-          if (node.classList.contains(Style.Line)) {
-            value[1]++;
-          }
+        if (parent !== this.state.ref.current) {
+          value.character += Helper.getNodeTextLength(child);
         }
-        value[1] += Helper.getNodeTextLength(child);
       }
     }
     
     return value;
   }
   
-  private getNodeBySectionAndCharacter(section_id: number, character_id: number): [Node, number] {
+  private getNodeBySectionAndCharacter(section_id: number, character_id: number) {
     if (!this.state.ref.current) throw Error("Component is not being rendered.");
     
-    const section = this.state.ref.current.childNodes.item(section_id);
-    const value = [section, character_id] as [Node, number];
-    const length = section?.childNodes?.length ?? 0;
-    
-    for (let i = 0; i < length; i++) {
-      const line = section.childNodes.item(i);
-      const length = Helper.getNodeTextLength(line);
-      if (length >= value[1]) {
-        for (let j = 0; j < line.childNodes.length; j++) {
-          const fragment = line.childNodes.item(j);
-          const length = Helper.getNodeTextLength(fragment);
-          if (length >= value[1]) {
-            return Helper.getChildNodeByTextLength(fragment, value[1]);
+    const section = this.getSectionElement(section_id);
+    const value = {node: section, offset: character_id};
+    for (let i = 0; i < section.childNodes.length; i++) {
+      const line = section.children[i];
+      const text_list = this.getNodeText(line);
+      
+      if (text_list.length) {
+        for (let j = 0; j < text_list.length; j++) {
+          const text = text_list[j];
+          
+          if (text.length >= value.offset) {
+            return {node: text, offset: value.offset};
           }
-          value[1] -= length;
+          else {
+            value.offset -= text.length;
+          }
         }
       }
-      value[1] -= length + 1;
+      else if (!value.offset) {
+        return {node: line, offset: 0};
+      }
+      
+      value.offset--;
+    }
+    
+    return value;
+  }
+  
+  private getSectionElement(index: number) {
+    if (!this.state.ref.current) throw Error("Component is not being rendered.");
+    
+    const section = this.text.getSection(index);
+    const [tag, ...tag_list] = section.element;
+    
+    let value = this.state.ref.current.querySelector(`${tag}:nth-child(${index + 1})`);
+    if (!value) throw new FatalException("RichTextEditor could not find text section node.", "If you have not been manipulating the window, please reload the page to continue.");
+    
+    for (let j = 0; j < tag_list.length; j++) {
+      value = value.querySelector(tag_list[j]);
+      if (!value) throw new FatalException("RichTextEditor could not find text section sub node.", "If you have not been manipulating the window, please reload the page to continue.");
+    }
+    
+    return value;
+  }
+  
+  private getNodeText(node: Node) {
+    const value = [] as Text[];
+    
+    for (let i = 0; i < node?.childNodes.length; i++) {
+      const child = node.childNodes.item(i);
+      if (!child) continue;
+      if (child instanceof Text) {
+        value.push(child);
+      }
+      else {
+        value.push(...this.getNodeText(child));
+      }
     }
     
     return value;
@@ -173,12 +215,11 @@ export default class EditText extends Component<EditTextProps, State> {
   public componentDidUpdate(prevProps: Readonly<EditTextProps>, prevState: Readonly<State>, snapshot?: any): void {
     if (this.state.selection) {
       this.setState({selection: undefined});
-      
     }
     else if (prevState.selection) {
       const {section, section_offset, character, character_offset} = prevState.selection;
-      const [start_node, start_offset] = this.getNodeBySectionAndCharacter(section, character);
-      const [end_node, end_offset] = this.getNodeBySectionAndCharacter(section_offset, character_offset);
+      const {node: start_node, offset: start_offset} = this.getNodeBySectionAndCharacter(section, character);
+      const {node: end_node, offset: end_offset} = this.getNodeBySectionAndCharacter(section_offset, character_offset);
       getSelection()?.setBaseAndExtent(start_node, start_offset, end_node, end_offset);
     }
   }
@@ -205,7 +246,6 @@ export default class EditText extends Component<EditTextProps, State> {
       onPaste:                        this.eventPaste,
       onCut:                          this.eventCut,
       onKeyDown:                      this.eventKeyDown,
-      onBeforeInput:                  (event) => console.log(event),
       onKeyPress:                     this.eventKeyPress,
       children:                       content.section_list.length
                                       ? content.section_list.map(this.renderReactSection)
@@ -213,40 +253,41 @@ export default class EditText extends Component<EditTextProps, State> {
     });
   }
   
-  private renderReactSection = (section: RichTextSectionContent, index: number = 0) => {
-    return Helper.renderReactElementList(section.element, {
-      key:       index,
+  private renderReactSection = (section: RichTextSectionContent, key: number = 0) => {
+    const props: React.HTMLProps<HTMLElement> = {
+      key:       key,
       className: Style.Section,
       children:  section.character_list.map(this.renderReactLine),
-    });
+    };
+    
+    return Helper.renderReactElementList(section.element, props, key);
   };
   
-  private renderReactLine = (line: RichTextCharacterContent, index: number = 0) => {
-    return Helper.renderReactElementList("span", {
-      key:       index,
-      className: Style.Line,
-      children:  line.fragment_list.map(this.renderReactFragment),
-    });
+  private renderReactLine = (line: RichTextCharacterContent, key: number = 0) => {
+    return (
+      <span key={key} className={Style.Line}>
+        {line.fragment_list.map(this.renderReactFragment)}
+      </span>
+    );
   };
   
-  private renderReactFragment = ({decoration, ...fragment}: RichTextFragmentContent, i: number = 0): React.ReactNode => {
-    if (decoration.bold) return <b key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, bold: false}})}</b>;
-    if (decoration.code) return <code key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, code: false}})}</code>;
-    if (decoration.mark) return <mark key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, mark: false}})}</mark>;
-    if (decoration.italic) return <i key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, italic: false}})}</i>;
-    if (decoration.underline) return <u key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, underline: false}})}</u>;
-    if (decoration.strikethrough) return <s key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, strikethrough: false}})}</s>;
-    if (decoration.link) return <a className={Style.Link} href={decoration.link} key={i}>{this.renderReactFragment({...fragment, decoration: {...decoration, link: ""}})}</a>;
+  private renderReactFragment = ({decoration, ...fragment}: RichTextFragmentContent, key: number = 0): React.ReactNode => {
+    if (decoration.bold) return <b key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, bold: false}})}</b>;
+    if (decoration.code) return <code key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, code: false}})}</code>;
+    if (decoration.mark) return <mark key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, mark: false}})}</mark>;
+    if (decoration.italic) return <i key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, italic: false}})}</i>;
+    if (decoration.underline) return <u key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, underline: false}})}</u>;
+    if (decoration.strikethrough) return <s key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, strikethrough: false}})}</s>;
+    if (decoration.link) return <a className={Style.Link} href={decoration.link} key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, link: ""}})}</a>;
     
     const classes = [Style.Text] as string[];
     if (decoration.selected && this.props.active !== false) classes.push(Style.Selected);
     
-    return Helper.renderReactElementList("span", {
-      key:       i,
-      className: classes.join(" "),
-      style:     new RichTextDecoration(decoration).toCSSProperties(),
-      children:  this.renderReactText(fragment.text),
-    });
+    return (
+      <span key={key} className={classes.join(" ")} style={new RichTextDecoration(decoration).toCSSProperties()}>
+        {this.renderReactText(fragment.text)}
+      </span>
+    );
   };
   
   private renderReactText = (text: string) => {

@@ -1,23 +1,19 @@
 import PageBlockType from "../../../../common/enums/PageBlockType";
-import RichText from "../../../classes/RichText/RichText";
-import PageBlockEntity from "../PageBlockEntity";
+import RichText, {RichTextObject} from "../../../classes/RichText/RichText";
+import RichTextSection, {RichTextSectionContent} from "../../../classes/RichText/RichTextSection";
+import PageBlockEntity, {PageBlockInitializer} from "../PageBlockEntity";
 
 export default class TablePageBlockEntity extends PageBlockEntity {
   
   public content: TableBlockContent;
   
-  constructor(initializer?: Omit<Initializer<TablePageBlockEntity>, "type">) {
+  constructor(initializer?: TableBlockInitializer) {
     super(initializer);
-    this.type = PageBlockType.TABLE;
-    this.content = initializer?.content ?? {
-      value: [
-        [new RichText(), new RichText()],
-        [new RichText(), new RichText()],
-      ],
-    };
+    this.type = PageBlockType.HEADER;
+    this.content = TablePageBlockEntity.parseInitializerContent(initializer?.content);
   }
   
-  public replaceText(old_text: TableBlockText, new_text: TableBlockText): this {
+  public replaceText(old_text: RichText, new_text: RichText): this {
     for (let y = 0; y < this.content.value.length; y++) {
       for (let x = 0; x < this.content.value[y].length; x++) {
         if (this.content.value[y][x].id !== old_text.id) continue;
@@ -28,27 +24,52 @@ export default class TablePageBlockEntity extends PageBlockEntity {
     throw new Error("Could not find text in TableBlock.");
   }
   
-  // public static parseContent(content?: ContentInitializer<TableBlockContent>): TableBlockContent {
-  //   const {value} = content ?? {};
-  //   const table = [] as TableBlockText[][];
-  //
-  //   const y_max = value?.length ?? 2;
-  //   for (let y = 0; y < y_max; y++) {
-  //     table[y] = [];
-  //
-  //     const x_max = value?.[y]?.length ?? 2;
-  //     for (let x = 0; x < x_max; x++) {
-  //       table[y][x] = this.parseContentText(value?.[y]?.[x]);
-  //     }
-  //   }
-  //
-  //   return {value: table};
-  // }
+  private static parseInitializerContent(content?: TableBlockInitializer["content"]) {
+    const table = {value: [], x: content?.x ?? 1, y: content?.y ?? 1} as TableBlockContent;
+    if (!content) return table;
+    
+    for (let y = 0; y < content.y; y++) {
+      table.value[y] = [];
+      const row = content.value.at(y);
+      
+      if (row) {
+        for (let x = 0; x < row.length; x++) {
+          const column = row.at(x);
+          if (column) {
+            table.value[y][x] = new RichText({
+              section_list: this.parseSectionList(column.section_list),
+            });
+          }
+          else {
+            table.value[y][x] = new RichText();
+          }
+        }
+      }
+      else {
+        for (let x = 0; x < content.x; x++) {
+          table.value[y][x] = new RichText();
+        }
+      }
+    }
+    
+    return table;
+  }
   
+  private static parseSectionList(section_list?: RichTextSection[] | RichTextSectionContent[]) {
+    return section_list ? section_list.map(value => new RichTextSection({...value, element: "p"})) : [new RichTextSection({element: "p"})];
+  }
 }
 
-export type TableBlockText = RichText
-
 export interface TableBlockContent {
-  value: TableBlockText[][];
+  value: RichText[][];
+  x: number;
+  y: number;
+}
+
+export interface TableBlockInitializer extends PageBlockInitializer {
+  content: {
+    value: RichText[][] | RichTextObject[][]
+    x: number
+    y: number
+  };
 }

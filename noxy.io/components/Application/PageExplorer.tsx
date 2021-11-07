@@ -269,9 +269,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     const index = this.props.entity.page_block_list.findIndex(value => value.getPrimaryID() === block.getPrimaryID());
     const offset = index < 0 ? this.props.entity.page_block_list.length : index;
     const page_block_list = [...this.props.entity.page_block_list.slice(0, offset), block, ...this.props.entity.page_block_list.slice(offset + 1)];
-    console.log(block);
-    console.log(page_block_list);
-    console.log(new PageEntity({...this.props.entity, page_block_list}));
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list}));
   };
 }

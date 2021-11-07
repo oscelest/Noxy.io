@@ -42,11 +42,7 @@ export default class HeaderPageBlockEntity extends PageBlockEntity {
   }
   
   private static parseSectionList(section_list?: RichTextSection[] | RichTextSectionContent[]) {
-    if (!section_list) {
-      return [new RichTextSection({element: "div"})];
-    }
-    
-    return section_list.map(value => new RichTextSection({...value, element: "p"}));
+    return section_list ? section_list.map(value => new RichTextSection({...value, element: "div"})) : [new RichTextSection({element: "div"})];
   }
 }
 

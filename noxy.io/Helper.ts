@@ -60,14 +60,14 @@ namespace Helper {
     return typeof list === "function" ? list.apply(null, params) : list;
   }
   
-  export function renderReactElementList(list?: keyof HTMLElementTagNameMap | (keyof HTMLElementTagNameMap)[], props?: React.HTMLProps<HTMLElement>) {
+  export function renderReactElementList(list?: HTMLTag | HTMLTag[], props?: React.HTMLProps<HTMLElement>, key: number = 0) {
     if (!Array.isArray(list)) return React.createElement(list ?? "div", props);
     
     let component = React.createElement(list.at(-1) ?? "div", props);
     for (let i = list.length - 2; i >= 0; i--) {
       const item = list.at(i);
       if (!item) continue;
-      component = React.createElement(item, {key: i, children: component});
+      component = React.createElement(item, {key: i === 0 ? key : 0, children: component});
     }
     return component;
   }
