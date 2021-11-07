@@ -9,7 +9,7 @@ export default class TablePageBlockEntity extends PageBlockEntity {
   
   constructor(initializer?: TableBlockInitializer) {
     super(initializer);
-    this.type = PageBlockType.HEADER;
+    this.type = PageBlockType.TABLE;
     this.content = TablePageBlockEntity.parseInitializerContent(initializer?.content);
   }
   
@@ -21,6 +21,7 @@ export default class TablePageBlockEntity extends PageBlockEntity {
         return this;
       }
     }
+    
     throw new Error("Could not find text in TableBlock.");
   }
   
@@ -33,7 +34,7 @@ export default class TablePageBlockEntity extends PageBlockEntity {
       const row = content.value.at(y);
       
       if (row) {
-        for (let x = 0; x < row.length; x++) {
+        for (let x = 0; x < content.x; x++) {
           const column = row.at(x);
           if (column) {
             table.value[y][x] = new RichText({

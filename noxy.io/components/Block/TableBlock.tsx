@@ -19,6 +19,21 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     this.state = {};
   }
   
+  private getTable() {
+    const table = [] as RichText[][];
+    
+    for (let y = 0; y < this.props.block.content.y; y++) {
+      table[y] = [];
+      for (let x = 0; x < this.props.block.content.x; x++) {
+        const value = this.props.block.content.value.at(y)?.at(x);
+        if (!value) throw new Error(`Missing TableBlock RichText at Column ${y}, Row ${x}`);
+        table[y][x] = value ?? new RichText();
+      }
+    }
+    
+    return table;
+  }
+  
   public render() {
     const readonly = this.props.readonly ?? true;
     const classes = [Style.Component];
@@ -30,7 +45,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
           <div className={Style.Table}>
             <table>
               <tbody>
-                {this.props.block.content.value.map(this.renderRow)}
+                {this.getTable().map(this.renderRow)}
               </tbody>
             </table>
           </div>
@@ -67,27 +82,17 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   };
   
   private readonly eventAddRowClick = () => {
-    const next_row = [];
-    const prev_row = this.props.block.content.value[this.props.block.content.value.length - 1];
-    
-    for (let x = 0; x < prev_row.length; x++) {
-      next_row.push(new RichText({...prev_row[x], section_list: ""}));
-    }
-    
-    this.props.block.content.value.push(next_row);
+    this.props.block.content.y++;
     this.props.onChange(this.props.block);
   };
   
   private readonly eventAddColumnClick = () => {
-    for (let y = 0; y < this.props.block.content.value.length; y++) {
-      const prev_column = this.props.block.content.value[y][this.props.block.content.value[y].length - 1];
-      this.props.block.content.value[y].push(new RichText({...prev_column, section_list: ""}));
-    }
+    this.props.block.content.x++;
     this.props.onChange(this.props.block);
   };
   
   private readonly eventChange = (text: RichText, component: EditText) => {
-    this.props.onChange(this.props.block.replaceText(component.text, text));
+    // this.props.onChange(this.props.block.replaceText(component.text, text));
   };
   
 }

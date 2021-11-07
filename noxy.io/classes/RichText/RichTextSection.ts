@@ -117,7 +117,7 @@ export default class RichTextSection {
   }
   
   public decorate<S extends RichTextSectionSelection>(decoration: Initializer<RichTextDecoration>, selection: S): S {
-    for (let i = selection.character; i <= selection.character_offset; i++) {
+    for (let i = selection.character; i < selection.character_offset; i++) {
       const character = this.character_list.at(i);
       if (!character) continue;
       this.character_list[i] = new RichTextCharacter({value: character.value, decoration: {...character.decoration, ...decoration}});

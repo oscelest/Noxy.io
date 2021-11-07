@@ -88,16 +88,17 @@ export default class RichText {
     section = this.parseSectionPosition(section);
     section_offset = this.parseSectionPosition(section_offset);
     
-    for (let i = section; i < section_offset; i++) {
+    for (let i = section; i <= section_offset; i++) {
       const current_section = this.getSection(i);
       const start_character = i === section ? current_section.parseCharacter(character) : 0;
-      const end_character = i === section_offset ? current_section.parseCharacter(character_offset) : this.getSection(section_offset).length;
+      const end_character = i === section_offset ? current_section.parseCharacter(character_offset) : current_section.length;
       for (let j = start_character; j < end_character; j++) {
         const current_character = current_section.getCharacter(j);
-        if (!current_character.decoration[property]) return false;
+        if (current_character.decoration[property]) return true;
       }
     }
-    return true;
+    
+    return false;
   }
   
   public parseSectionPosition(section: number) {
@@ -181,16 +182,16 @@ export default class RichText {
   }
   
   public decorate<S extends RichTextSelection>(decoration: Initializer<RichTextDecoration>, selection: S): S {
-    for (let i = selection.section; i < selection.section_offset; i++) {
-      const section = this.section_list.at(i);
+    for (let i = selection.section; i <= selection.section_offset; i++) {
+      const section = this.getSection(i);
       if (!section) continue;
       if (i === selection.section || i === selection.section_offset) {
-        const start_character = i === selection.section ? selection.section : 0;
-        const end_character = i === selection.section_offset ? selection.section_offset : section.length;
-        section.decorate(decoration, {character: start_character, character_offset: end_character});
+        const start_character = i === selection.section ? section.parseCharacter(selection.character) : 0;
+        const end_character = i === selection.section_offset ? section.parseCharacter(selection.character_offset) : section.length - 1;
+        return section.decorate(decoration, {...selection, character: start_character, character_offset: end_character});
       }
       else {
-        section.decorate(decoration, {character: 0, character_offset: section.length});
+        return section.decorate(decoration, {...selection, character: 0, character_offset: section.length});
       }
     }
     

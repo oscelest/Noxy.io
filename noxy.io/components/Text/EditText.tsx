@@ -53,7 +53,7 @@ export default class EditText extends Component<EditTextProps, State> {
           if (parent === this.state.ref.current) {
             value.section++;
           }
-          else {
+          else if (node instanceof HTMLSpanElement && node.classList.contains(Style.Line)) {
             value.character++;
           }
         }
@@ -284,7 +284,7 @@ export default class EditText extends Component<EditTextProps, State> {
     if (decoration.selected && this.props.active !== false) classes.push(Style.Selected);
     
     return (
-      <span key={key} className={classes.join(" ")} style={new RichTextDecoration(decoration).toCSSProperties()}>
+      <span key={key} className={classes.join(" ")} data-fragment={key} style={new RichTextDecoration(decoration).toCSSProperties()}>
         {this.renderReactText(fragment.text)}
       </span>
     );
@@ -346,7 +346,9 @@ export default class EditText extends Component<EditTextProps, State> {
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     this.props.onKeyDown?.(event, this);
     
-    if (!event.defaultPrevented) this.handleKeyDown(event);
+    if (!event.defaultPrevented) {
+      this.handleKeyDown(event);
+    }
     if (!event.bubbles) {
       event.stopPropagation();
       event.preventDefault();
@@ -382,7 +384,6 @@ export default class EditText extends Component<EditTextProps, State> {
       // TODO: FIX
       // return this.deleteWordBackward();
       case KeyboardCommand.BOLD_TEXT:
-        console.log(this.text.hasDecoration("bold", this.getSelection()));
         return this.decorate({bold: !this.text.hasDecoration("bold", this.getSelection())});
       case KeyboardCommand.ITALIC_TEXT:
         return this.decorate({italic: !this.text.hasDecoration("italic", this.getSelection())});
@@ -422,7 +423,6 @@ export default class EditText extends Component<EditTextProps, State> {
   
   private readonly eventCopy = async (event: React.ClipboardEvent) => {
     event.preventDefault();
-    console.log(this.renderHTML(this.getSelection()));
     event.clipboardData.setData("text/plain", this.renderHTML(this.getSelection()).innerText);
     event.clipboardData.setData("text/html", this.renderHTML(this.getSelection()).innerHTML);
   };
