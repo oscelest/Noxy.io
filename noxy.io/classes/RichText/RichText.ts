@@ -93,8 +93,18 @@ export default class RichText {
       const current_section = this.getSection(i);
       const start_character = i === section ? current_section.parseCharacter(character) : 0;
       const end_character = i === section_offset ? current_section.parseCharacter(character_offset) : current_section.length;
-      for (let j = start_character; j < end_character; j++) {
-        decoration_list.push(current_section.getCharacter(j).decoration);
+      if (start_character === end_character) {
+        if (start_character === 0) {
+          return new RichTextDecoration();
+        }
+        else {
+          return current_section.getCharacter(start_character - 1).decoration
+        }
+      }
+      else {
+        for (let j = start_character; j < end_character; j++) {
+          decoration_list.push(current_section.getCharacter(j).decoration);
+        }
       }
     }
     

@@ -42,13 +42,13 @@ export default class TablePageBlockEntity extends PageBlockEntity {
             });
           }
           else {
-            table.value[y][x] = new RichText();
+            table.value[y][x] = new RichText({section_list: [new RichTextSection()]});
           }
         }
       }
       else {
         for (let x = 0; x < content.x; x++) {
-          table.value[y][x] = new RichText();
+          table.value[y][x] = new RichText({section_list: [new RichTextSection()]});
         }
       }
     }

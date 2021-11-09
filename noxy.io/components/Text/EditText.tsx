@@ -217,10 +217,10 @@ export default class EditText extends Component<EditTextProps, State> {
       this.setState({selection: undefined});
     }
     else if (prevState.selection) {
-      const {section, section_offset, character, character_offset} = prevState.selection;
+      const {section, section_offset, character, character_offset, forward} = prevState.selection;
       const {node: start_node, offset: start_offset} = this.getNodeBySectionAndCharacter(section, character);
       const {node: end_node, offset: end_offset} = this.getNodeBySectionAndCharacter(section_offset, character_offset);
-      getSelection()?.setBaseAndExtent(start_node, start_offset, end_node, end_offset);
+      forward ? getSelection()?.setBaseAndExtent(start_node, start_offset, end_node, end_offset) : getSelection()?.setBaseAndExtent(end_node, end_offset, start_node, start_offset);
       this.props.onSelect?.(prevState.selection, this);
     }
   }
@@ -341,7 +341,7 @@ export default class EditText extends Component<EditTextProps, State> {
   
   private readonly eventKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
     event.preventDefault();
-    this.write(new RichTextCharacter({value: event.key}));
+    this.write(new RichTextCharacter({value: event.key, decoration: this.text.getDecoration(this.getSelection())}));
   };
   
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -365,7 +365,13 @@ export default class EditText extends Component<EditTextProps, State> {
       case KeyboardCommand.NEXT_FOCUS:
         return this.insertText(RichTextCharacter.tab);
       case KeyboardCommand.SELECT_ALL:
-        return this.select({section: 0, character: 0, section_offset: this.text.section_list.length - 1, character_offset: this.text.getSection(this.text.section_list.length - 1).length, forward: true});
+        return this.select({
+          section:          0,
+          character:        0,
+          section_offset:   this.text.section_list.length - 1,
+          character_offset: this.text.getSection(this.text.section_list.length - 1).length,
+          forward:          true,
+        });
       case KeyboardCommand.NEW_LINE:
       case KeyboardCommand.NEW_LINE_ALT:
         return this.insertText(RichTextCharacter.linebreak);

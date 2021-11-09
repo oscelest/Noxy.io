@@ -27,7 +27,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
       for (let x = 0; x < this.props.block.content.x; x++) {
         const value = this.props.block.content.value.at(y)?.at(x);
         if (!value) throw new Error(`Missing TableBlock RichText at Column ${y}, Row ${x}`);
-        table[y][x] = value ?? new RichText();
+        table[y][x] = value;
       }
     }
     
