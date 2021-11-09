@@ -3,7 +3,7 @@ import React from "react";
 import ClipboardDataType from "../../../common/enums/ClipboardDataType";
 import RichText, {RichTextSelection} from "../../classes/RichText/RichText";
 import RichTextCharacter, {RichTextCharacterContent, RichTextFragmentContent} from "../../classes/RichText/RichTextCharacter";
-import RichTextDecoration, {DecorationObject} from "../../classes/RichText/RichTextDecoration";
+import RichTextDecoration, {RichTextDecorationObject} from "../../classes/RichText/RichTextDecoration";
 import RichTextSection, {RichTextSectionContent} from "../../classes/RichText/RichTextSection";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
@@ -221,6 +221,7 @@ export default class EditText extends Component<EditTextProps, State> {
       const {node: start_node, offset: start_offset} = this.getNodeBySectionAndCharacter(section, character);
       const {node: end_node, offset: end_offset} = this.getNodeBySectionAndCharacter(section_offset, character_offset);
       getSelection()?.setBaseAndExtent(start_node, start_offset, end_node, end_offset);
+      this.props.onSelect?.(prevState.selection, this);
     }
   }
   
@@ -332,7 +333,7 @@ export default class EditText extends Component<EditTextProps, State> {
     return this.renderHTMLText(segment.text, decoration);
   };
   
-  private readonly renderHTMLText = (text: string, decoration?: DecorationObject) => {
+  private readonly renderHTMLText = (text: string, decoration?: RichTextDecorationObject) => {
     const node = new RichTextDecoration(decoration).toNode("span");
     node.append(document.createTextNode(Helper.renderHTMLText(text)));
     return node;
@@ -409,7 +410,7 @@ export default class EditText extends Component<EditTextProps, State> {
   };
   
   private readonly eventSelect = () => {
-    if (!this.state.selection) return;
+    if (this.state.selection) return;
     this.setState({selection: this.getSelection()});
   };
   

@@ -1,7 +1,7 @@
 import React from "react";
 import {v4} from "uuid";
 import PageBlockType from "../../../common/enums/PageBlockType";
-import RichTextDecoration from "../../classes/RichText/RichTextDecoration";
+import RichTextDecoration, {RichTextDecorationObject} from "../../classes/RichText/RichTextDecoration";
 import HeaderPageBlockEntity from "../../entities/Page/Block/HeaderPageBlockEntity";
 import ListPageBlockEntity from "../../entities/Page/Block/ListPageBlockEntity";
 import TablePageBlockEntity from "../../entities/Page/Block/TablePageBlockEntity";
@@ -72,23 +72,12 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
         <div className={Style.Toolbar}>
           <Conditional condition={!this.isReadonly()}>
             <div className={Style.Left}>
-              <Button value={{bold: !this.state.decoration.bold}} icon={IconType.BOLD} disabled={this.state.focus?.isDecorationDisabled("bold")}
-                      onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-              
-              <Button value={{italic: !this.state.decoration.italic}} icon={IconType.ITALIC} disabled={this.state.focus?.isDecorationDisabled("italic")}
-                      onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-              
-              <Button value={{strikethrough: !this.state.decoration.strikethrough}} icon={IconType.STRIKE_THROUGH} disabled={this.state.focus?.isDecorationDisabled("strikethrough")}
-                      onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-              
-              <Button value={{underline: !this.state.decoration.underline}} icon={IconType.UNDERLINE} disabled={this.state.focus?.isDecorationDisabled("underline")}
-                      onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-              
-              <Button value={{code: !this.state.decoration.code}} icon={IconType.CODE_ALT} disabled={this.state.focus?.isDecorationDisabled("code")}
-                      onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
-              
-              <Button value={{mark: !this.state.decoration.mark}} icon={IconType.MARKER} disabled={this.state.focus?.isDecorationDisabled("mark")}
-                      onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+              {this.renderDecorationButton("bold", IconType.BOLD)}
+              {this.renderDecorationButton("italic", IconType.ITALIC)}
+              {this.renderDecorationButton("strikethrough", IconType.STRIKE_THROUGH)}
+              {this.renderDecorationButton("underline", IconType.UNDERLINE)}
+              {this.renderDecorationButton("code", IconType.CODE_ALT)}
+              {this.renderDecorationButton("mark", IconType.MARKER)}
               
               <Button icon={IconType.CERTIFICATE} disabled={this.state.focus?.isDecorationDisabled("link")}
                       onClick={this.eventDecorateLinkClick}/>
@@ -138,6 +127,17 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
       </div>
     );
   }
+  
+  private readonly renderDecorationButton = (key: keyof RichTextDecorationObject, icon: IconType) => {
+    const value = {[key]: !this.state.decoration[key]};
+    const disabled = this.state.focus?.isDecorationDisabled(key);
+    const classes = [Style.Button];
+    if (this.state.decoration[key]) classes.push(Style.Active);
+    
+    return (
+      <Button className={classes.join(" ")} value={value} icon={icon} disabled={disabled} onClick={this.eventDecorateClick} onMouseDown={this.eventDecorateMouseDown}/>
+    );
+  };
   
   private readonly renderBlock = (block: PageBlockEntity, key: number = 0) => {
     return (
@@ -260,9 +260,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
   
   private readonly eventPageBlockSelect = (selection: EditTextSelection, component: EditText) => {
-    // if (start === end) start = Math.max(0, start - 1);
-    // TODO: Fix this.
-    // this.setState({decoration: component.text.getDecoration(start, end)});
+    this.setState({decoration: component.text.getDecoration(selection)});
   };
   
   private readonly eventPageBlockChange = (block: PageBlockEntity) => {

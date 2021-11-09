@@ -84,6 +84,23 @@ export default class RichText {
     return value;
   }
   
+  public getDecoration({section, section_offset, character, character_offset}: RichTextSelection): RichTextDecoration {
+    section = this.parseSectionPosition(section);
+    section_offset = this.parseSectionPosition(section_offset);
+    const decoration_list = [] as RichTextDecoration[];
+    
+    for (let i = section; i <= section_offset; i++) {
+      const current_section = this.getSection(i);
+      const start_character = i === section ? current_section.parseCharacter(character) : 0;
+      const end_character = i === section_offset ? current_section.parseCharacter(character_offset) : current_section.length;
+      for (let j = start_character; j < end_character; j++) {
+        decoration_list.push(current_section.getCharacter(j).decoration);
+      }
+    }
+    
+    return RichTextDecoration.getIntersection(...decoration_list);
+  }
+  
   public hasDecoration(property: keyof Initializer<RichTextDecoration>, {section, section_offset, character, character_offset}: RichTextSelection) {
     section = this.parseSectionPosition(section);
     section_offset = this.parseSectionPosition(section_offset);

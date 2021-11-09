@@ -23,7 +23,7 @@ export default class RichTextDecoration {
   public readonly link: string;
   public readonly selected: boolean;
   
-  constructor(initializer: DecorationInitializer = {}) {
+  constructor(initializer: RichTextDecorationInitializer = {}) {
     this.bold = initializer.bold ?? false;
     this.code = initializer.code ?? false;
     this.mark = initializer.mark ?? false;
@@ -42,7 +42,7 @@ export default class RichTextDecoration {
     this.selected = initializer.selected ?? false;
   }
   
-  public toObject(): DecorationObject {
+  public toObject(): RichTextDecorationObject {
     return {
       bold:          this.bold,
       code:          this.code,
@@ -89,9 +89,9 @@ export default class RichTextDecoration {
     return Object.keys(this).every(key => this[key as keyof RichTextDecoration] === decoration[key as keyof RichTextDecoration]);
   }
   
-  public getIntersection<O extends DecorationObject>(...target_list: O[]) {
-    const initializer = this.toObject() as DecorationObject;
-    
+  public static getIntersection<O extends RichTextDecorationObject>(...target_list: O[]) {
+    const initializer = {} as O;
+
     for (let i = 0; i < target_list.length; i++) {
       const target = target_list[i];
       initializer.bold = RichTextDecoration.getBooleanIntersection(initializer.bold, target.bold);
@@ -100,24 +100,25 @@ export default class RichTextDecoration {
       initializer.italic = RichTextDecoration.getBooleanIntersection(initializer.italic, target.italic);
       initializer.underline = RichTextDecoration.getBooleanIntersection(initializer.underline, target.underline);
       initializer.strikethrough = RichTextDecoration.getBooleanIntersection(initializer.strikethrough, target.strikethrough);
-      
+
       initializer.font_size = RichTextDecoration.getStringIntersection(initializer.font_size, target.font_size);
       initializer.font_family = RichTextDecoration.getStringIntersection(initializer.font_family, target.font_family);
       initializer.font_length = RichTextDecoration.getStringIntersection(initializer.font_length, target.font_length);
-      
+
       initializer.color = RichTextDecoration.getStringIntersection(initializer.color, target.color);
       initializer.background_color = RichTextDecoration.getStringIntersection(initializer.background_color, target.background_color);
-      
+
       initializer.link = RichTextDecoration.getStringIntersection(initializer.link, target.link);
+      initializer.selected = RichTextDecoration.getBooleanIntersection(initializer.selected, target.selected);
     }
     
     return new RichTextDecoration(initializer);
   }
-  
+
   private static getBooleanIntersection(current?: boolean, target?: boolean) {
     return current === false ? current : !!target;
   }
-  
+
   private static getStringIntersection(current?: string, target?: string) {
     if (current === undefined && target !== undefined) return target;
     if (current !== undefined && target === undefined) return current;
@@ -149,5 +150,5 @@ export default class RichTextDecoration {
   
 }
 
-export type DecorationObject = Writeable<Properties<RichTextDecoration>>;
-export type DecorationInitializer = Initializer<RichTextDecoration>;
+export type RichTextDecorationObject = Writeable<Properties<RichTextDecoration>>;
+export type RichTextDecorationInitializer = Initializer<RichTextDecoration>;

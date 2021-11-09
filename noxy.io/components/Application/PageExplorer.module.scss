@@ -15,6 +15,12 @@
       grid-column-gap: 5px;
     }
 
+    .Button {
+      &.Active {
+        color: #cf930b;
+      }
+    }
+
     .Font {
       flex-flow:       row;
       grid-column-gap: 5px;

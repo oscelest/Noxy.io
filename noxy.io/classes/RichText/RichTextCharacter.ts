@@ -1,5 +1,5 @@
 import {v4} from "uuid";
-import RichTextDecoration, {DecorationInitializer, DecorationObject} from "./RichTextDecoration";
+import RichTextDecoration, {RichTextDecorationInitializer, RichTextDecorationObject} from "./RichTextDecoration";
 
 export default class RichTextCharacter {
   
@@ -28,7 +28,7 @@ export default class RichTextCharacter {
     return value;
   }
   
-  public static parseText(text?: string, decoration?: DecorationInitializer): RichTextCharacter[] {
+  public static parseText(text?: string, decoration?: RichTextDecorationInitializer): RichTextCharacter[] {
     const value = [] as RichTextCharacter[];
     
     if (typeof text === "string") {
@@ -81,7 +81,7 @@ export interface RichTextCharacterContent {
 
 export interface RichTextFragmentContent {
   text: string;
-  decoration: DecorationObject;
+  decoration: RichTextDecorationObject;
   start: number;
   end: number;
 }
