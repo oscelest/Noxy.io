@@ -95,6 +95,19 @@ export default class RichTextSection {
     return character < 0 ? Math.max(0, this.length + character) : character;
   }
   
+  public ensureCharacter<S extends Pick<RichTextSectionSelection, "character">>(selection: S): S {
+    selection = {...selection, character: selection.character < 0 ? Math.max(0, this.length + selection.character) : selection.character};
+    
+    if (selection.character >= this.length) {
+      for (let i = 0; i < selection.character; i++) {
+        if (this.character_list.at(i)) continue;
+        this.character_list[i] = new RichTextCharacter({value: RichTextCharacter.space});
+      }
+    }
+    
+    return selection;
+  }
+  
   public insert<S extends Pick<RichTextSectionSelection, "character">>(insert: RichTextCharacter | RichTextCharacter[], selection: S): S {
     if (selection.character) selection = this.ensureCharacter(selection);
     
@@ -126,21 +139,23 @@ export default class RichTextSection {
     return selection;
   }
   
-  public ensureCharacter<S extends Pick<RichTextSectionSelection, "character">>(selection: S): S {
-    selection = {...selection, character: selection.character < 0 ? Math.max(0, this.length + selection.character) : selection.character};
-    
-    if (selection.character >= this.length) {
-      if (selection.character > 0 && !this.character_list.at(0)) {
-        this.character_list[0] = new RichTextCharacter({value: RichTextCharacter.space});
-      }
-      
-      for (let i = 1; i < selection.character; i++) {
-        if (this.character_list.at(i)) continue;
-        this.character_list[i] = new RichTextCharacter({value: RichTextCharacter.space, decoration: this.getCharacter(i - 1).decoration});
+  public findCharacter(pattern: RegExp, start: number, forward: boolean = true) {
+    if (forward) {
+      for (let index = start; index < this.length; index++) {
+        const character = this.getCharacter(index);
+        if (character.value.match(pattern)) {
+          return {character, index};
+        }
       }
     }
-    
-    return selection;
+    else {
+      for (let index = start - 1; index >= 0; index--) {
+        const character = this.getCharacter(index);
+        if (character.value.match(pattern)) {
+          return {character, index};
+        }
+      }
+    }
   }
   
   public clone() {

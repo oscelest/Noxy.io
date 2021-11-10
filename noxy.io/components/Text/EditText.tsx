@@ -173,6 +173,7 @@ export default class EditText extends Component<EditTextProps, State> {
   // }
   
   public decorate(decoration: Initializer<RichTextDecoration>, selection: EditTextSelection = this.getSelection()) {
+    // TODO: Fix black and whitelisting of props.
     this.setState({selection: this.text.decorate(decoration, selection)});
     this.props.onChange(this.text.clone(), this);
   };
@@ -182,13 +183,20 @@ export default class EditText extends Component<EditTextProps, State> {
     this.props.onChange(this.text.clone(), this);
   }
   
-  public deleteForward(selection: EditTextSelection = this.getSelection()) {
+  public deleteForward(selection: EditTextSelection = this.getSelection(), word: boolean = false) {
     if (!this.text.length) return;
     if (selection.section === selection.section_offset && selection.character === selection.character_offset) {
-      if (selection.character === this.text.getSection(selection.section).length) {
+      const section = this.text.getSection(selection.section);
+      if (selection.character === section.length) {
         if (selection.section === this.text.section_list.length) return;
         selection.section_offset++;
         selection.character_offset = 0;
+      }
+      else if (word) {
+        const character = section.getCharacter(selection.character);
+        const pattern = character.value.match(/\W/) ? /\w/ : /\W/;
+        selection.character_offset = section.findCharacter(/\S/, selection.character_offset)?.index ?? section.length;
+        selection.character_offset = section.findCharacter(pattern, selection.character_offset)?.index ?? section.length;
       }
       else {
         selection.character_offset++;
@@ -197,13 +205,20 @@ export default class EditText extends Component<EditTextProps, State> {
     this.delete(selection);
   };
   
-  public deleteBackward(selection: EditTextSelection = this.getSelection()) {
+  public deleteBackward(selection: EditTextSelection = this.getSelection(), word: boolean = false) {
     if (!this.text.length) return;
     if (selection.section === selection.section_offset && selection.character === selection.character_offset) {
+      const section = this.text.getSection(selection.section);
       if (selection.character === 0) {
         if (selection.section === 0) return;
         selection.section--;
-        selection.character = this.text.getSection(selection.section).length;
+        selection.character = section.length;
+      }
+      else if (word) {
+        const character = section.getCharacter(selection.character);
+        const pattern = character.value.match(/\W/) ? /\w/ : /\W/;
+        selection.character = section.findCharacter(/\S/, selection.character, false)?.index ?? 0;
+        selection.character = section.findCharacter(pattern, selection.character, false)?.index ?? 0;
       }
       else {
         selection.character--;
@@ -379,17 +394,13 @@ export default class EditText extends Component<EditTextProps, State> {
       case KeyboardCommand.NEW_PARAGRAPH_ALT:
         return this.write(new RichTextSection());
       case KeyboardCommand.DELETE_FORWARD:
-        return this.deleteForward(this.getSelection() ?? {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: true});
+        return this.deleteForward();
       case KeyboardCommand.DELETE_BACKWARD:
-        return this.deleteBackward(this.getSelection() ?? {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: true});
+        return this.deleteBackward();
       case KeyboardCommand.DELETE_WORD_FORWARD:
-        return;
-      // TODO: FIX
-      // return this.deleteWordForward();
+        return this.deleteForward(this.getSelection(), true);
       case KeyboardCommand.DELETE_WORD_BACKWARD:
-        return;
-      // TODO: FIX
-      // return this.deleteWordBackward();
+        return this.deleteBackward(this.getSelection(), true);
       case KeyboardCommand.BOLD_TEXT:
         return this.decorate({bold: !this.text.hasDecoration("bold", this.getSelection())});
       case KeyboardCommand.ITALIC_TEXT:
