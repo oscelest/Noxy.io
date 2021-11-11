@@ -480,6 +480,7 @@ export interface EditTextProps {
   readonly?: boolean;
   whitelist?: (keyof Initializer<RichTextDecoration>)[];
   blacklist?: (keyof Initializer<RichTextDecoration>)[];
+  decoration?: RichTextDecoration;
   
   onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
   onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
