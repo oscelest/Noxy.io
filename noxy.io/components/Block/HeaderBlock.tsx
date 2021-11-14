@@ -32,7 +32,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
         <Conditional condition={!readonly}>
           {this.renderOptionList()}
         </Conditional>
-        <EditText ref={this.state.ref} readonly={this.props.readonly} whitelist={HeaderBlock.whitelist} blacklist={HeaderBlock.blacklist}
+        <EditText ref={this.state.ref} readonly={this.props.readonly} decoration={this.props.decoration} whitelist={HeaderBlock.whitelist} blacklist={HeaderBlock.blacklist}
                   onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange}>
           {this.props.block.content.value}
         </EditText>

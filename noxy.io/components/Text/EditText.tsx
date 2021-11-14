@@ -1,6 +1,7 @@
 import FatalException from "exceptions/FatalException";
 import React from "react";
 import ClipboardDataType from "../../../common/enums/ClipboardDataType";
+import Util from "../../../common/services/Util";
 import RichText, {RichTextSelection} from "../../classes/RichText/RichText";
 import RichTextCharacter, {RichTextCharacterContent, RichTextFragmentContent} from "../../classes/RichText/RichTextCharacter";
 import RichTextDecoration, {RichTextDecorationObject} from "../../classes/RichText/RichTextDecoration";
@@ -173,7 +174,26 @@ export default class EditText extends Component<EditTextProps, State> {
   // }
   
   public decorate(decoration: Initializer<RichTextDecoration>, selection: EditTextSelection = this.getSelection()) {
-    // TODO: Fix black and whitelisting of props.
+    const keys = Util.getProperties(decoration);
+    
+    if (this.props.whitelist?.length) {
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys.at(i);
+        if (!key || this.props.whitelist.includes(key)) continue;
+        keys.splice(i--, 1);
+        delete decoration[key];
+      }
+    }
+    
+    if (this.props.blacklist?.length) {
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys.at(i);
+        if (!key || !this.props.blacklist.includes(key)) continue;
+        keys.splice(i--, 1);
+        delete decoration[key];
+      }
+    }
+    
     this.setState({selection: this.text.decorate(decoration, selection)});
     this.props.onChange(this.text.clone(), this);
   };
@@ -356,7 +376,7 @@ export default class EditText extends Component<EditTextProps, State> {
   
   private readonly eventKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
     event.preventDefault();
-    this.write(new RichTextCharacter({value: event.key, decoration: this.text.getDecoration(this.getSelection())}));
+    this.write(new RichTextCharacter({value: event.key, decoration: this.props.decoration}));
   };
   
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -480,7 +500,7 @@ export interface EditTextProps {
   readonly?: boolean;
   whitelist?: (keyof Initializer<RichTextDecoration>)[];
   blacklist?: (keyof Initializer<RichTextDecoration>)[];
-  decoration?: RichTextDecoration;
+  decoration: RichTextDecoration;
   
   onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
   onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;

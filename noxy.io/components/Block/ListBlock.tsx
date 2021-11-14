@@ -69,7 +69,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     
     return (
       <div className={classes.join(" ")}>
-        <EditText ref={this.state.ref} readonly={this.props.readonly} blacklist={ListBlock.blacklist} whitelist={ListBlock.whitelist}
+        <EditText ref={this.state.ref} readonly={this.props.readonly} decoration={this.props.decoration} whitelist={ListBlock.whitelist} blacklist={ListBlock.blacklist}
                   onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onKeyDown={this.eventKeyDown}>
           {this.props.block.content.value}
         </EditText>

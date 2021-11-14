@@ -30,7 +30,11 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.state = {
       edit:       true,
       text_color: false,
-      decoration: new RichTextDecoration(),
+      decoration: new RichTextDecoration({
+        font_family: Helper.FontFamilyList[7],
+        font_length: Helper.FontLengthList[0],
+        font_size:   Helper.FontSizeList[5],
+      }),
     };
   }
   
@@ -79,8 +83,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
               {this.renderDecorationButton("code", IconType.CODE_ALT)}
               {this.renderDecorationButton("mark", IconType.MARKER)}
               
-              <Button icon={IconType.CERTIFICATE} disabled={this.state.focus?.isDecorationDisabled("link")}
-                      onClick={this.eventDecorateLinkClick}/>
+              <Button icon={IconType.CERTIFICATE} disabled={this.state.focus?.isDecorationDisabled("link")} onClick={this.eventDecorateLinkClick}/>
             </div>
             
             <div className={Style.Font}>
@@ -158,11 +161,12 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   private readonly renderPageBlock = (block: PageBlockEntity) => {
     return PageExplorer.createPageBlockComponent(block.type, {
       block,
-      readonly:  !this.state.edit,
-      className: Style.PageBlock,
-      onFocus:   this.eventPageBlockFocus,
-      onSelect:  this.eventPageBlockSelect,
-      onChange:  this.eventPageBlockChange,
+      decoration: this.state.decoration,
+      readonly:   !this.state.edit,
+      className:  Style.PageBlock,
+      onFocus:    this.eventPageBlockFocus,
+      onSelect:   this.eventPageBlockSelect,
+      onChange:   this.eventPageBlockChange,
     });
   };
   
@@ -260,7 +264,8 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
   
   private readonly eventPageBlockSelect = (selection: EditTextSelection, component: EditText) => {
-    this.setState({decoration: component.text.getDecoration(selection)});
+    
+    // this.setState({decoration: component.text.getDecoration(selection)});
   };
   
   private readonly eventPageBlockChange = (block: PageBlockEntity) => {
@@ -273,6 +278,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
 
 export interface PageExplorerBlockProps<Block extends PageBlockEntity = PageBlockEntity> extends React.PropsWithChildren<{}> {
   block: Block;
+  decoration: RichTextDecoration;
   readonly?: boolean;
   className?: string;
   

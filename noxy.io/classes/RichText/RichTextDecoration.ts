@@ -3,10 +3,6 @@ import Helper from "../../Helper";
 
 export default class RichTextDecoration {
   
-  public static default_font_family = Helper.FontFamilyList[7];
-  public static default_font_size = Helper.FontSizeList[5];
-  public static default_font_length = Helper.FontLengthList[0];
-  
   public readonly bold: boolean;
   public readonly code: boolean;
   public readonly mark: boolean;
@@ -31,9 +27,9 @@ export default class RichTextDecoration {
     this.underline = initializer.underline ?? false;
     this.strikethrough = initializer.strikethrough ?? false;
     
-    this.font_family = initializer.font_family ?? RichTextDecoration.default_font_family;
-    this.font_size = initializer.font_size ?? RichTextDecoration.default_font_size;
-    this.font_length = initializer.font_length ?? RichTextDecoration.default_font_length;
+    this.font_family = initializer.font_family ?? "";
+    this.font_size = initializer.font_size ?? "";
+    this.font_length = initializer.font_length ?? "";
     
     this.color = initializer.color ?? "";
     this.background_color = initializer.background_color ?? "";
@@ -51,10 +47,9 @@ export default class RichTextDecoration {
       underline:     this.underline,
       strikethrough: this.strikethrough,
       
-      font_family: this.font_family,
-      font_size:   this.font_size,
-      font_length: this.font_length,
-      
+      font_family:      this.font_family,
+      font_size:        this.font_size,
+      font_length:      this.font_length,
       color:            this.color,
       background_color: this.background_color,
       
@@ -68,8 +63,8 @@ export default class RichTextDecoration {
     
     if (this.color) styling.color = this.color;
     if (this.background_color) styling.backgroundColor = this.background_color;
-    if (this.font_family !== RichTextDecoration.default_font_family) styling.fontFamily = this.font_family;
-    if (this.font_size + this.font_length !== RichTextDecoration.default_font_size + RichTextDecoration.default_font_length) styling.fontSize = this.font_size + this.font_length;
+    if (this.font_family) styling.fontFamily = this.font_family;
+    if (this.font_size + this.font_length) styling.fontSize = this.font_size + this.font_length;
     
     return styling;
   }
@@ -79,8 +74,8 @@ export default class RichTextDecoration {
     
     if (this.color) node.style.color = this.color;
     if (this.background_color) node.style.backgroundColor = this.background_color;
-    if (this.font_family !== RichTextDecoration.default_font_family) node.style.fontFamily = this.font_family;
-    if (this.font_size + this.font_length !== RichTextDecoration.default_font_size + RichTextDecoration.default_font_length) node.style.fontSize = this.font_size + this.font_length;
+    if (this.font_family) node.style.fontFamily = this.font_family;
+    if (this.font_size + this.font_length) node.style.fontSize = this.font_size + this.font_length;
     
     return node;
   }
@@ -91,7 +86,7 @@ export default class RichTextDecoration {
   
   public static getIntersection<O extends RichTextDecorationObject>(...target_list: O[]) {
     const initializer = {} as O;
-
+    
     for (let i = 0; i < target_list.length; i++) {
       const target = target_list[i];
       initializer.bold = RichTextDecoration.getBooleanIntersection(initializer.bold, target.bold);
@@ -100,25 +95,24 @@ export default class RichTextDecoration {
       initializer.italic = RichTextDecoration.getBooleanIntersection(initializer.italic, target.italic);
       initializer.underline = RichTextDecoration.getBooleanIntersection(initializer.underline, target.underline);
       initializer.strikethrough = RichTextDecoration.getBooleanIntersection(initializer.strikethrough, target.strikethrough);
-
+      
       initializer.font_size = RichTextDecoration.getStringIntersection(initializer.font_size, target.font_size);
       initializer.font_family = RichTextDecoration.getStringIntersection(initializer.font_family, target.font_family);
       initializer.font_length = RichTextDecoration.getStringIntersection(initializer.font_length, target.font_length);
-
       initializer.color = RichTextDecoration.getStringIntersection(initializer.color, target.color);
       initializer.background_color = RichTextDecoration.getStringIntersection(initializer.background_color, target.background_color);
-
+      
       initializer.link = RichTextDecoration.getStringIntersection(initializer.link, target.link);
       initializer.selected = RichTextDecoration.getBooleanIntersection(initializer.selected, target.selected);
     }
     
     return new RichTextDecoration(initializer);
   }
-
+  
   private static getBooleanIntersection(current?: boolean, target?: boolean) {
     return current === false ? current : !!target;
   }
-
+  
   private static getStringIntersection(current?: string, target?: string) {
     if (current === undefined && target !== undefined) return target;
     if (current !== undefined && target === undefined) return current;
@@ -139,10 +133,9 @@ export default class RichTextDecoration {
       code:          node.tagName === "CODE" || decoration.code,
       mark:          node.tagName === "MARK" || decoration.mark,
       
-      font_family: fontFamily || decoration.font_family || RichTextDecoration.default_font_family,
-      font_size:   font_size || decoration.font_size || RichTextDecoration.default_font_size,
-      font_length: font_size_length || decoration.font_length || RichTextDecoration.default_font_length,
-      
+      font_family:      fontFamily || decoration.font_family || "",
+      font_size:        font_size || decoration.font_size || "",
+      font_length:      font_size_length || decoration.font_length || "",
       color:            color || decoration.color || "",
       background_color: backgroundColor || decoration.background_color || "",
     });

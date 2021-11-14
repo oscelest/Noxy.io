@@ -73,7 +73,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   private readonly renderColumn = (text: RichText, key: number = 0) => {
     return (
       <td key={key}>
-        <EditText readonly={this.props.readonly} blacklist={TableBlock.blacklist} whitelist={TableBlock.whitelist}
+        <EditText readonly={this.props.readonly} decoration={this.props.decoration} whitelist={TableBlock.whitelist} blacklist={TableBlock.blacklist}
                   onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange}>
           {text}
         </EditText>
