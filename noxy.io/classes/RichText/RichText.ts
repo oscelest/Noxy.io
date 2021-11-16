@@ -108,7 +108,7 @@ export default class RichText {
       }
     }
     
-    return RichTextDecoration.getIntersection(...decoration_list);
+    return RichTextDecoration.getUnion(...decoration_list);
   }
   
   public hasDecoration(property: keyof Initializer<RichTextDecoration>, {section, section_offset, character, character_offset}: RichTextSelection) {

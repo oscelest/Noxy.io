@@ -84,7 +84,7 @@ export default class RichTextDecoration {
     return Object.keys(this).every(key => this[key as keyof RichTextDecoration] === decoration[key as keyof RichTextDecoration]);
   }
   
-  public static getIntersection<O extends RichTextDecorationObject>(...target_list: O[]) {
+  public static getUnion<O extends RichTextDecorationObject>(...target_list: O[]) {
     const initializer = {} as O;
     
     for (let i = 0; i < target_list.length; i++) {

@@ -30,17 +30,21 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.state = {
       edit:       true,
       text_color: false,
-      decoration: new RichTextDecoration({
-        font_family: Helper.FontFamilyList[7],
-        font_length: Helper.FontLengthList[0],
-        font_size:   Helper.FontSizeList[5],
-      }),
+      decoration: PageExplorer.createDecoration(),
     };
   }
   
   private isReadonly() {
     return this.props.readonly ?? true;
   };
+  
+  private static createDecoration() {
+    return new RichTextDecoration({
+      font_family: Helper.FontFamilyList[7],
+      font_length: Helper.FontLengthList[0],
+      font_size:   Helper.FontSizeList[5],
+    })
+  }
   
   private static createPageBlockComponent<T extends PageBlockType>(type: T, props: PageExplorerBlockProps) {
     switch (type) {
@@ -264,8 +268,33 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
   
   private readonly eventPageBlockSelect = (selection: EditTextSelection, component: EditText) => {
+    const section = component.text.parseSectionPosition(selection.section);
+    const section_offset = component.text.parseSectionPosition(selection.section_offset);
+    const decoration_list = [] as RichTextDecoration[];
+  
+    for (let i = section; i <= section_offset; i++) {
+      const current_section = component.text.getSection(i);
+      const start_character = i === section ? current_section.parseCharacter(selection.character) : 0;
+      const end_character = i === section_offset ? current_section.parseCharacter(selection.character_offset) : current_section.length;
+      if (start_character === end_character) {
+        if (start_character === 0) {
+          return new RichTextDecoration();
+        }
+        else {
+          return current_section.getCharacter(start_character - 1).decoration
+        }
+      }
+      else {
+        for (let j = start_character; j < end_character; j++) {
+          decoration_list.push(current_section.getCharacter(j).decoration);
+        }
+      }
+    }
+  
+    // return RichTextDecoration.getUnion(...decoration_list);
     
-    // this.setState({decoration: component.text.getDecoration(selection)});
+    const decoration = component.text.getDecoration(selection);
+    this.setState({decoration});
   };
   
   private readonly eventPageBlockChange = (block: PageBlockEntity) => {
