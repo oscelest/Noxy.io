@@ -91,6 +91,21 @@ export default class RichTextSection {
     return value;
   }
   
+  public getDecoration(selection: RichTextSectionSelection, forward: boolean = true): RichTextDecoration | undefined {
+    const character = this.parseCharacter(selection.character);
+    const character_offset = this.parseCharacter(selection.character_offset);
+    if (character === character_offset) {
+      return this.character_list.at(character)?.decoration;
+    }
+  
+    const decoration_list = [];
+    for (let i = character + 1; i <= character_offset; i++) {
+      decoration_list.push(this.getCharacter(i).decoration);
+    }
+  
+    return this.getCharacter(character).decoration.union(...decoration_list);
+  }
+  
   public parseCharacter(character: number): number {
     return character < 0 ? Math.max(0, this.length + character) : character;
   }

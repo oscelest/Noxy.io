@@ -84,8 +84,12 @@ export default class RichTextDecoration {
     return Object.keys(this).every(key => this[key as keyof RichTextDecoration] === decoration[key as keyof RichTextDecoration]);
   }
   
-  public static getUnion<O extends RichTextDecorationObject>(...target_list: O[]) {
-    const initializer = {} as O;
+  public union(...target_list: Partial<RichTextDecorationObject>[]) {
+    return RichTextDecoration.getUnion(this.toObject(), ...target_list);
+  }
+  
+  public static getUnion(...target_list: Partial<RichTextDecorationObject>[]) {
+    const initializer = {} as Partial<RichTextDecorationObject>;
     
     for (let i = 0; i < target_list.length; i++) {
       const target = target_list[i];
@@ -95,15 +99,7 @@ export default class RichTextDecoration {
       initializer.italic = RichTextDecoration.getBooleanIntersection(initializer.italic, target.italic);
       initializer.underline = RichTextDecoration.getBooleanIntersection(initializer.underline, target.underline);
       initializer.strikethrough = RichTextDecoration.getBooleanIntersection(initializer.strikethrough, target.strikethrough);
-      
-      initializer.font_size = RichTextDecoration.getStringIntersection(initializer.font_size, target.font_size);
-      initializer.font_family = RichTextDecoration.getStringIntersection(initializer.font_family, target.font_family);
-      initializer.font_length = RichTextDecoration.getStringIntersection(initializer.font_length, target.font_length);
-      initializer.color = RichTextDecoration.getStringIntersection(initializer.color, target.color);
-      initializer.background_color = RichTextDecoration.getStringIntersection(initializer.background_color, target.background_color);
-      
       initializer.link = RichTextDecoration.getStringIntersection(initializer.link, target.link);
-      initializer.selected = RichTextDecoration.getBooleanIntersection(initializer.selected, target.selected);
     }
     
     return new RichTextDecoration(initializer);

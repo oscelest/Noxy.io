@@ -84,31 +84,24 @@ export default class RichText {
     return value;
   }
   
-  public getDecoration({section, section_offset, character, character_offset}: RichTextSelection): RichTextDecoration {
-    section = this.parseSectionPosition(section);
-    section_offset = this.parseSectionPosition(section_offset);
-    const decoration_list = [] as RichTextDecoration[];
+  public getDecoration(selection: RichTextSelection, forward: boolean = true): RichTextDecoration | undefined {
+    const section = this.parseSectionPosition(selection.section);
+    const section_offset = this.parseSectionPosition(selection.section_offset);
     
-    for (let i = section; i <= section_offset; i++) {
-      const current_section = this.getSection(i);
-      const start_character = i === section ? current_section.parseCharacter(character) : 0;
-      const end_character = i === section_offset ? current_section.parseCharacter(character_offset) : current_section.length;
-      if (start_character === end_character) {
-        if (start_character === 0) {
-          return new RichTextDecoration();
-        }
-        else {
-          return current_section.getCharacter(start_character - 1).decoration
-        }
-      }
-      else {
-        for (let j = start_character; j < end_character; j++) {
-          decoration_list.push(current_section.getCharacter(j).decoration);
-        }
-      }
+    if (section === section_offset) {
+      return this.getDecoration(selection);
     }
     
-    return RichTextDecoration.getUnion(...decoration_list);
+    const decoration_list = [];
+    for (let i = section + 1; i <= section_offset; i++) {
+      const current_section = this.getSection(i);
+      const end_character = i === section_offset ? current_section.parseCharacter(selection.character_offset) : current_section.length;
+      const decoration = this.getSection(i).getDecoration({character: 0, character_offset: end_character});
+      if (decoration) decoration_list.push(decoration);
+    }
+    
+    const current_section = this.getSection(section);
+    return current_section.getDecoration({character: selection.character, character_offset: current_section.length})?.union(...decoration_list);
   }
   
   public hasDecoration(property: keyof Initializer<RichTextDecoration>, {section, section_offset, character, character_offset}: RichTextSelection) {
