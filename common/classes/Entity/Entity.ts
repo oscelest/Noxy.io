@@ -1,5 +1,4 @@
-import {Collection, Constructor, EntityManager, FindOptions, MikroORM, RequestContext} from "@mikro-orm/core";
-import {Query} from "@mikro-orm/core/typings";
+import {Collection, Constructor, EntityManager, FilterQuery, FindOptions, MikroORM, RequestContext} from "@mikro-orm/core";
 import _ from "lodash";
 import HTTPMethod from "../../enums/HTTPMethod";
 import Order from "../../enums/Order";
@@ -10,38 +9,37 @@ import Server from "../../services/Server";
 import Validator from "../../services/Validator";
 import Alias from "../Alias";
 import BaseEntity from "./BaseEntity";
-import WhereCondition from "./WhereCondition";
 
 export default function Entity<E>() {
-
+  
   class Entity extends BaseEntity {
-
+    
     // ----------
     // Decorators
     // ----------
-
+    
     public static [HTTPMethod.GET](path: string, options?: Server.EndpointOptions) {
       return this.bindRoute(HTTPMethod.GET, path, options);
     }
-
+    
     public static [HTTPMethod.POST](path: string, options?: Server.EndpointOptions) {
       return this.bindRoute(HTTPMethod.POST, path, options);
     }
-
+    
     public static [HTTPMethod.PUT](path: string, options?: Server.EndpointOptions) {
       return this.bindRoute(HTTPMethod.PUT, path, options);
     }
-
+    
     public static [HTTPMethod.DELETE](path: string, options?: Server.EndpointOptions) {
       return this.bindRoute(HTTPMethod.DELETE, path, options);
     }
-
+    
     private static bindRoute(http_method: HTTPMethod, path: string, options: Server.EndpointOptions = {}) {
       return function (constructor: DecoratorConstructor, method: string, descriptor: PropertyDescriptor) {
         Server.bindRoute(new Alias(constructor, method), http_method, [_.kebabCase(constructor.name), path], options, descriptor.value.bind(constructor));
       };
     }
-
+    
     public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.BOOLEAN, options?: Server.EndpointParameterOptions): Decorator
     public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.EMAIL, options?: Server.EndpointParameterOptions): Decorator
     public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.FILE, options?: Server.EndpointParameterOptions): Decorator
@@ -66,7 +64,7 @@ export default function Entity<E>() {
         }
       };
     }
-
+    
     public static bindPagination<K extends Key<E>>(limit: number, columns: K[]) {
       return function (constructor: DecoratorConstructor, method: string) {
         const alias = new Alias(constructor, method);
@@ -75,26 +73,22 @@ export default function Entity<E>() {
         Server.bindRouteParameter(alias, "order", ValidatorType.ORDER, columns as string[], {array: true});
       };
     }
-
+    
     //region    ----- Query methods -----
-
+    
     public static create(values: Initializer<E>): E {
       return Database.manager.create(this, values) as unknown as E;
     }
-
-    public static where(where?: Query<E>) {
-      return new WhereCondition(this, where);
-    }
-
-    public static async count(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: CountOptions<E> = {}) {
+    
+    public static async count(where: FilterQuery<E>, options: CountOptions<E> = {}) {
       return await this.getEntityManager().count(this, where, options) as number;
     }
-
-    public static async find(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: FindManyOptions<E> = {}) {
+    
+    public static async find(where: FilterQuery<E>, options: FindManyOptions<E> = {}) {
       return await this.getEntityManager().find(this, where, {...options, limit: options.limit, offset: options.skip, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E[];
     }
-
-    public static async findOne(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: FindOneOptions<E> = {}) {
+    
+    public static async findOne(where: FilterQuery<E>, options: FindOneOptions<E> = {}) {
       try {
         return await this.getEntityManager().findOneOrFail(this, where, {...options, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E;
       }
@@ -105,11 +99,11 @@ export default function Entity<E>() {
         throw error;
       }
     }
-
+    
     public static async populate(entities: E | E[], populate: Populate<E>) {
       return await this.getEntityManager().populate(entities, populate) as E[];
     }
-
+    
     public static async persist(object: Initializer<E>, values?: Initializer<E>) {
       try {
         if (!(object instanceof this)) object = this.create(object);
@@ -120,7 +114,7 @@ export default function Entity<E>() {
             object[property] = values[property];
           }
         }
-
+        
         await this.getEntityManager().persistAndFlush(object);
         return object as E;
       }
@@ -131,13 +125,13 @@ export default function Entity<E>() {
         throw error;
       }
     }
-
-    public static async remove(where: WhereCondition<typeof BaseEntity> | NonNullable<Query<E>>, options: FindOneOptions<E> = {}) {
+    
+    public static async remove(where: FilterQuery<E>, options: FindOneOptions<E> = {}) {
       const entity = await this.findOne(where, options);
       await this.getEntityManager().removeAndFlush(entity);
       return entity;
     }
-
+    
     private static resolvePopulate(object?: Populate<E>, prefix?: string): string[] {
       if (!object) return [];
       if (typeof object === "boolean") return object && prefix ? [prefix] : [];
@@ -145,28 +139,28 @@ export default function Entity<E>() {
       if (Array.isArray(object)) return _.map(object as string[], value => prefix ? `${prefix}.${value}` : value);
       return _.reduce(object, (result, value: any, key: string) => _.concat(result, this.resolvePopulate(value, prefix ? `${prefix}.${key}` : key)), [] as string[]);
     }
-
+    
     private static getEntityManager() {
       if (!RequestContext.getEntityManager) throw new ServerException(500, "Request context not found.");
       return RequestContext.getEntityManager()!;
     }
-
+    
     //endregion ----- Query methods -----
-
+    
   }
-
+  
   return Entity;
 }
 
 export interface Entity {
   instance: MikroORM;
   manager: EntityManager;
-
+  
   defaultID: string;
-
+  
   generateDataHash: () => string;
   generateShareHash: () => string;
-
+  
   regexDataHash: RegExp;
   regexShareHash: RegExp;
 }
@@ -180,7 +174,7 @@ export type FindOneOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "
 export type FindManyOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy" | "offset"> & {populate?: Populate<E>, skip?: number, order?: Ordering}
 
 export interface Pagination {
-  skip?: number
-  limit?: number
-  order?: Ordering
+  skip?: number;
+  limit?: number;
+  order?: Ordering;
 }

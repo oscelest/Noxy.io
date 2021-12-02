@@ -3,7 +3,7 @@ import RichText from "../../classes/RichText/RichText";
 import TextPageBlockEntity from "../../entities/Page/Block/TextPageBlockEntity";
 import Component from "../Application/Component";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
-import EditText, {EditTextCommandList} from "../Text/EditText";
+import EditText, {EditTextCommandList, EditTextSelection} from "../Text/EditText";
 import Style from "./TextBlock.module.scss";
 
 export default class TextBlock extends Component<TextBlockProps, State> {
@@ -25,16 +25,16 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     
     return (
       <div className={classes.join(" ")}>
-        <EditText className={Style.Text} readonly={this.props.readonly} decoration={this.props.decoration} whitelist={TextBlock.whitelist} blacklist={TextBlock.blacklist}
-                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange}>
+        <EditText className={Style.Text} readonly={this.props.readonly} selection={this.props.selection} decoration={this.props.decoration} whitelist={TextBlock.whitelist} blacklist={TextBlock.blacklist}
+                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onChange={this.eventChange}>
           {this.props.block.content.value}
         </EditText>
       </div>
     );
   }
   
-  private readonly eventChange = (text: RichText, component: EditText) => {
-    this.props.onChange(this.props.block.replaceText(component.text, text));
+  private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
+    this.props.onChange(this.props.block.replaceText(component.text, text), selection);
   };
 }
 

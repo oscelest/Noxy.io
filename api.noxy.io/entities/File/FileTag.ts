@@ -1,4 +1,4 @@
-import {Entity as DBEntity, PrimaryKey, Property, Index, Unique, ManyToOne} from "@mikro-orm/core";
+import {Entity as DBEntity, PrimaryKey, Property, Index, Unique, ManyToOne, FilterQuery} from "@mikro-orm/core";
 import {v4} from "uuid";
 import User from "../User";
 import Entity, {Pagination, Populate} from "../../../common/classes/Entity/Entity";
@@ -43,25 +43,33 @@ export default class FileTag extends Entity<FileTag>() {
 
   //region    ----- Endpoint methods -----
 
-  @FileTag.get("/count")
+  @FileTag.get("/count", {user: true})
   @FileTag.bindParameter<Request.getCount>("name", ValidatorType.STRING, {max_length: 64})
   @FileTag.bindParameter<Request.getCount>("exclude", ValidatorType.UUID, {array: true})
   @FileTag.bindPagination(100, ["id", "name", "time_created"])
   public static async getCount({locals: {respond, user, params: {name, exclude}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
-    return respond(await this.count(this.where({user}).andExclusion({id: exclude}).andWildcard({name})));
+    const where: FilterQuery<FileTag> = {user, name: {$like: name}, id: {$nin: exclude}};
+    if (!name) delete where.name;
+    if (!exclude) delete where.id;
+    
+    return respond(await this.count(where));
   }
 
-  @FileTag.get("/")
+  @FileTag.get("/", {user: true})
   @FileTag.bindParameter<Request.getMany>("name", ValidatorType.STRING, {max_length: 64})
   @FileTag.bindParameter<Request.getMany>("exclude", ValidatorType.UUID, {array: true})
   @FileTag.bindPagination(100, ["id", "name", "time_created"])
   public static async getMany({locals: {respond, user, params: {name, exclude, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
-    return respond(await this.find(this.where({user}).andExclusion({id: exclude}).andWildcard({name}), {...pagination, populate: this.columnPopulate}));
+    const where: FilterQuery<FileTag> = {user, name: {$like: name}, id: {$nin: exclude}};
+    if (!name) delete where.name;
+    if (!exclude) delete where.id;
+    
+    return respond(await this.find(where, {...pagination, populate: this.columnPopulate}));
   }
 
   @FileTag.get("/:id")
   public static async getOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
-    return respond(await this.findOne(this.where({id, user}), {populate: this.columnPopulate}));
+    return respond(await this.findOne({id, user}, {populate: this.columnPopulate}));
   }
 
   @FileTag.get("/by-name/:name")

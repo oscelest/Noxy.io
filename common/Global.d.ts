@@ -37,6 +37,8 @@ declare global {
   
   export type Properties<E> = { [K in keyof Pick<E, { [K in keyof E]: E[K] extends Function ? never : K }[keyof E]>]: E[K] }
   
+  export type NonProperties<E> = { [K in keyof Pick<E, { [K in keyof E]: E[K] extends Function ? K : never }[keyof E]>]: E[K] }
+  
   export type Initializer<E> = Writeable<Partial<Properties<E>>>
   
   export type Writeable<T> = { -readonly [K in keyof T]: T[K] }

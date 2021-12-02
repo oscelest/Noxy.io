@@ -1,4 +1,4 @@
-import {Collection, Entity as DBEntity, Enum, Index, ManyToMany, ManyToOne, PrimaryKey, Property, Unique} from "@mikro-orm/core";
+import {Collection, Entity as DBEntity, Enum, FilterQuery, Index, ManyToMany, ManyToOne, PrimaryKey, Property, Unique} from "@mikro-orm/core";
 import ADMZip from "adm-zip";
 import * as FS from "fs";
 import JWT from "jsonwebtoken";
@@ -91,64 +91,55 @@ export default class File extends Entity<File>() {
   
   //region    ----- Endpoint methods -----
   
-  @File.get("/count")
+  @File.get("/count", {user: true})
   @File.bindParameter<Request.getMany>("name", ValidatorType.STRING, {max_length: 128})
   @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.ENUM, FileTypeName, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
   public static async getCount({locals: {respond, user, params: {name, file_type_list, file_tag_list, file_tag_set_operation}}}: Server.Request<{}, Response.getCount, Request.getCount>) {
-    const options: CountOptions<File> = {};
+    const where: FilterQuery<File> = {user, name: {$like: `%${name}%`}, file_extension: {type: file_type_list}, file_tag_list: {id: file_tag_list}};
+    if (!name) delete where.name;
+    if (!file_tag_list) delete where.file_tag_list;
+    if (!file_type_list) delete where.file_extension;
     
+    const options: CountOptions<File> = {};
     if (file_tag_set_operation === SetOperation.INTERSECTION) {
       options.groupBy = `(${Database.manager.getMetadata().get(this.name).properties["file_tag_list" as keyof File].joinColumns.join("), (")})`;
       options.having = `COUNT(*) = ${file_tag_list.length}`;
     }
     
-    return respond(await this.count(
-      this.where({user, file_extension: {type: file_type_list}, file_tag_list: {id: file_tag_list}}).andWildcard({name}),
-      options,
-    ));
+    return respond(await this.count(where, options));
   }
   
-  @File.get("/")
+  @File.get("/", {user: true})
   @File.bindParameter<Request.getMany>("name", ValidatorType.STRING, {max_length: 128})
   @File.bindParameter<Request.getMany>("file_type_list", ValidatorType.ENUM, FileTypeName, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_list", ValidatorType.UUID, {array: true})
   @File.bindParameter<Request.getMany>("file_tag_set_operation", ValidatorType.ENUM, SetOperation)
   @File.bindPagination(100, ["id", "name", "size", "time_created"])
   public static async getMany({locals: {respond, user, params: {name, file_type_list, file_tag_list, file_tag_set_operation, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
-    const options: FindManyOptions<File> = {...pagination};
+    const where: FilterQuery<File> = {user, name: {$like: `%${name}%`}, file_extension: {type: file_type_list}, file_tag_list: {id: file_tag_list}};
+    if (!name) delete where.name;
+    if (!file_tag_list) delete where.file_tag_list;
+    if (!file_type_list) delete where.file_extension;
     
+    const options: FindManyOptions<File> = {...pagination};
     if (file_tag_set_operation === SetOperation.INTERSECTION) {
       options.groupBy = `(${Database.manager.getMetadata().get(this.name).properties["file_tag_list" as keyof File].joinColumns.join("), (")})`;
       options.having = `COUNT(*) = ${file_tag_list.length}`;
     }
     
-    return respond(
-      await this.populate(
-        await this.find(
-          this.where({user, file_extension: {type: file_type_list}, file_tag_list: {id: file_tag_list}}).andWildcard({name}),
-          options,
-        ),
-        this.columnPopulate,
-      ),
-    );
+    return respond(await this.populate(await this.find(where, options), this.columnPopulate));
   }
   
   @File.get("/:id", {user: false})
   @File.bindParameter<Request.getOne>("share_hash", ValidatorType.STRING, {min_length: 32, max_length: 32})
   public static async getOne({params: {id}, locals: {respond, user, params: {share_hash}}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
-    const file = await this.findOne(
-      this.where({id})
-      .andOr(
-        {privacy: Privacy.PUBLIC},
-        {privacy: Privacy.LINK, share_hash},
-        {privacy: Privacy.PRIVATE, user},
-      ),
-      {populate: this.columnPopulate},
-    );
-    
+    const where: FilterQuery<File> = {id, $or: [{privacy: Privacy.PUBLIC}, {privacy: Privacy.LINK, share_hash}, {privacy: Privacy.PRIVATE, user}]};
+
+    const file = await this.findOne(where, {populate: this.columnPopulate});
     if (file.user.id !== user?.id && !file.flag_public_tag_list) file.file_tag_list = new Collection<FileTag>(FileTag, [], true);
+    
     return respond(file);
   }
   
@@ -192,7 +183,7 @@ export default class File extends Entity<File>() {
   @File.bindParameter<Request.postDownloadRequest>("share_hash", ValidatorType.STRING, {validator: File.regexShareHash}, {array: true, optional: true})
   private static async requestDownload({locals: {respond, user, params}}: Server.Request<{}, Response.postRequestDownload, Request.postDownloadRequest>) {
     const {id, share_hash} = params!;
-    const file_list = await this.find(this.where({id}));
+    const file_list = await this.find({id});
     
     if (!_.every(file_list, file => file.hasAccess(user!, share_hash))) return respond(new ServerException(403, {id}));
     

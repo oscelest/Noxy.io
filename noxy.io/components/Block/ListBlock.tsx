@@ -26,13 +26,6 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     };
   }
   
-  public componentDidUpdate(prevProps: Readonly<ListBlockProps>, prevState: Readonly<State>, snapshot?: any) {
-    if (this.state.ref.current && this.state.selection) {
-      this.state.ref.current.select(this.state.selection);
-      this.setState({selection: undefined});
-    }
-  }
-  
   private shiftLevel(component: EditText, up: boolean) {
     const selection = component.getSelection();
     
@@ -49,18 +42,17 @@ export default class ListBlock extends Component<ListBlockProps, State> {
       }
     }
     
-    this.setState({selection});
-    this.props.onChange(this.props.block);
+    this.props.onChange(this.props.block, this.props.selection);
   };
   
   private insertLineBreak(component: EditText) {
     component.insertText(RichTextCharacter.linebreak);
-    this.props.onChange(this.props.block);
+    this.props.onChange(this.props.block, this.props.selection);
   }
   
   private insertParagraph(component: EditText) {
     component.write(new RichTextSection({element: component.text.getSection(component.getSelection().section).element}));
-    this.props.onChange(this.props.block);
+    this.props.onChange(this.props.block, this.props.selection);
   }
   
   public render() {
@@ -69,16 +61,16 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     
     return (
       <div className={classes.join(" ")}>
-        <EditText ref={this.state.ref} readonly={this.props.readonly} decoration={this.props.decoration} whitelist={ListBlock.whitelist} blacklist={ListBlock.blacklist}
-                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange} onKeyDown={this.eventKeyDown}>
+        <EditText ref={this.state.ref} readonly={this.props.readonly} selection={this.props.selection} decoration={this.props.decoration} whitelist={ListBlock.whitelist} blacklist={ListBlock.blacklist}
+                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onChange={this.eventChange} onKeyDown={this.eventKeyDown}>
           {this.props.block.content.value}
         </EditText>
       </div>
     );
   }
   
-  private readonly eventChange = (text: RichText, component: EditText) => {
-    this.props.onChange(this.props.block.replaceText(component.text, text));
+  private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
+    this.props.onChange(this.props.block.replaceText(component.text, text), selection);
   };
   
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, component: EditText) => {
@@ -118,5 +110,4 @@ export interface ListBlockProps extends PageExplorerBlockProps<ListPageBlockEnti
 
 interface State {
   ref: React.RefObject<EditText>;
-  selection?: EditTextSelection;
 }

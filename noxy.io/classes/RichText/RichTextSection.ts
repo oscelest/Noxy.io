@@ -1,7 +1,7 @@
 import {v4} from "uuid";
 import Util from "../../../common/services/Util";
 import RichTextCharacter, {RichTextCharacterContent} from "./RichTextCharacter";
-import RichTextDecoration from "./RichTextDecoration";
+import RichTextDecoration, {RichTextDecorationObject} from "./RichTextDecoration";
 
 export default class RichTextSection {
   
@@ -50,12 +50,19 @@ export default class RichTextSection {
       if (!line) throw new Error("Line should always exist.");
       
       const character = this.getCharacter(i);
-      const decoration = {...character.decoration.toObject(), selected: !!selection && selection.character <= i && selection.character_offset > i};
+      const decoration = character.decoration.toObject() as RichTextDecorationObject;
       
       if (character.value !== RichTextCharacter.linebreak) {
         const fragment = line.fragment_list.at(-1);
-        
-        if (fragment && Util.getProperties(fragment.decoration).every(key => fragment.decoration[key] === decoration[key])) {
+        decoration.selected = !!selection && selection.character <= i && selection.character_offset > i;
+
+        if (fragment && fragment.text === "") {
+          line.end = i;
+          fragment.end = i;
+          fragment.text = character.value;
+          fragment.decoration = decoration;
+        }
+        else if (fragment && Util.getProperties(fragment.decoration).every(key => fragment.decoration[key] === decoration[key])) {
           line.end = i;
           fragment.end = i;
           fragment.text += character.value;
@@ -66,10 +73,11 @@ export default class RichTextSection {
       }
       else {
         if (!line.fragment_list.length) line.fragment_list.push({text: "", decoration, start: i, end: i});
-        content.character_list.push({start: i + 1, end: i + 1, index: content.character_list.length, fragment_list: [{start: i + 1, end: i + 1, text: "", decoration}]});
+        content.character_list.push({start: i, end: i, index: content.character_list.length, fragment_list: [{start: i, end: i, text: "", decoration}]});
       }
     }
-    
+    console.log(content);
+
     return content;
   }
   
@@ -91,18 +99,21 @@ export default class RichTextSection {
     return value;
   }
   
-  public getDecoration(selection: RichTextSectionSelection, forward: boolean = true): RichTextDecoration | undefined {
+  public getDecoration(selection: RichTextSectionSelection): RichTextDecoration | undefined {
     const character = this.parseCharacter(selection.character);
     const character_offset = this.parseCharacter(selection.character_offset);
     if (character === character_offset) {
-      return this.character_list.at(character)?.decoration;
+      if (character === 0) {
+        return undefined;
+      }
+      return this.character_list.at(character - 1)?.decoration;
     }
   
     const decoration_list = [];
-    for (let i = character + 1; i <= character_offset; i++) {
+    for (let i = character; i < character_offset; i++) {
       decoration_list.push(this.getCharacter(i).decoration);
     }
-  
+
     return this.getCharacter(character).decoration.union(...decoration_list);
   }
   

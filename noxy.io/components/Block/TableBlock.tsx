@@ -6,7 +6,7 @@ import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import Button from "../Form/Button";
-import EditText, {EditTextCommandList} from "../Text/EditText";
+import EditText, {EditTextCommandList, EditTextSelection} from "../Text/EditText";
 import Style from "./TableBlock.module.scss";
 
 export default class TableBlock extends Component<TableBlockProps, State> {
@@ -73,8 +73,8 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   private readonly renderColumn = (text: RichText, key: number = 0) => {
     return (
       <td key={key}>
-        <EditText readonly={this.props.readonly} decoration={this.props.decoration} whitelist={TableBlock.whitelist} blacklist={TableBlock.blacklist}
-                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.props.onSelect} onChange={this.eventChange}>
+        <EditText readonly={this.props.readonly} selection={this.props.selection} decoration={this.props.decoration} whitelist={TableBlock.whitelist} blacklist={TableBlock.blacklist}
+                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onChange={this.eventChange}>
           {text}
         </EditText>
       </td>
@@ -83,16 +83,16 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   
   private readonly eventAddRowClick = () => {
     this.props.block.content.y++;
-    this.props.onChange(this.props.block);
+    this.props.onChange(this.props.block, this.props.selection);
   };
   
   private readonly eventAddColumnClick = () => {
     this.props.block.content.x++;
-    this.props.onChange(this.props.block);
+    this.props.onChange(this.props.block, this.props.selection);
   };
   
-  private readonly eventChange = (text: RichText, component: EditText) => {
-    // this.props.onChange(this.props.block.replaceText(component.text, text));
+  private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
+    this.props.onChange(this.props.block.replaceText(component.text, text), selection);
   };
   
 }

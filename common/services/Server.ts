@@ -233,7 +233,7 @@ module Server {
     }
   }
 
-  export interface Request<P = core.ParamsDictionary, Res = any, ReqB = any, ReqQ = core.Query, L extends Record<string, any> = Record<string, any>> extends Express.Request<P, Res, ReqB, ReqQ, L> {}
+  export interface Request<P = core.ParamsDictionary, Res = any, ReqB = any, ReqQ = core.Query, L = Record<string, any>> extends Express.Request<P, Res, ReqB, ReqQ, L> {}
 
   export interface Response<ResBody = any, Locals extends Record<string, any> = Record<string, any>> extends Express.Response<ResBody, Locals> {}
 
