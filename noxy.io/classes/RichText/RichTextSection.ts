@@ -76,7 +76,6 @@ export default class RichTextSection {
         content.character_list.push({start: i, end: i, index: content.character_list.length, fragment_list: [{start: i, end: i, text: "", decoration}]});
       }
     }
-    console.log(content);
 
     return content;
   }

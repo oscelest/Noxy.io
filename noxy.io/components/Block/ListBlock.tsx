@@ -11,24 +11,25 @@ import EditText, {EditTextCommandList, EditTextSelection} from "../Text/EditText
 import Style from "./ListBlock.module.scss";
 
 export default class ListBlock extends Component<ListBlockProps, State> {
-  
+
   private static readonly blacklist: EditTextCommandList = [];
   private static readonly whitelist: EditTextCommandList = [];
-  
+
   public static readonly indent_min: number = 1;
   public static readonly indent_max: number = 5;
   public static readonly default_tag: HTMLTag = "ul";
-  
+
   constructor(props: ListBlockProps) {
     super(props);
     this.state = {
-      ref: React.createRef(),
+      ref:       React.createRef(),
+      selection: {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: true},
     };
   }
-  
+
   private shiftLevel(component: EditText, up: boolean) {
     const selection = component.getSelection();
-    
+
     if (up) {
       for (let i = selection.section; i <= selection.section_offset; i++) {
         if (this.props.block.content.value.section_list[i].element.length >= ListBlock.indent_max) continue;
@@ -41,38 +42,40 @@ export default class ListBlock extends Component<ListBlockProps, State> {
         this.props.block.content.value.section_list[i].element.shift();
       }
     }
-    
-    this.props.onChange(this.props.block, this.props.selection);
+
+    this.props.onChange(this.props.block);
   };
-  
+
   private insertLineBreak(component: EditText) {
     component.insertText(RichTextCharacter.linebreak);
-    this.props.onChange(this.props.block, this.props.selection);
+    this.props.onChange(this.props.block);
   }
-  
+
   private insertParagraph(component: EditText) {
     component.write(new RichTextSection({element: component.text.getSection(component.getSelection().section).element}));
-    this.props.onChange(this.props.block, this.props.selection);
+    this.props.onChange(this.props.block);
   }
-  
+
   public render() {
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
-    
+
     return (
       <div className={classes.join(" ")}>
-        <EditText ref={this.state.ref} readonly={this.props.readonly} selection={this.props.selection} decoration={this.props.decoration} whitelist={ListBlock.whitelist} blacklist={ListBlock.blacklist}
+        <EditText ref={this.state.ref} readonly={this.props.readonly} selection={this.state.selection} decoration={this.props.decoration} whitelist={ListBlock.whitelist}
+                  blacklist={ListBlock.blacklist}
                   onBlur={this.props.onBlur} onFocus={this.props.onFocus} onChange={this.eventChange} onKeyDown={this.eventKeyDown}>
           {this.props.block.content.value}
         </EditText>
       </div>
     );
   }
-  
+
   private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
-    this.props.onChange(this.props.block.replaceText(component.text, text), selection);
+    this.setState({selection});
+    this.props.onChange(this.props.block.replaceText(component.text, text));
   };
-  
+
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, component: EditText) => {
     this.handleKeyDown(event, component);
     if (!event.bubbles) {
@@ -80,11 +83,11 @@ export default class ListBlock extends Component<ListBlockProps, State> {
       event.stopPropagation();
     }
   };
-  
+
   private readonly handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, component: EditText) => {
     const command = Helper.getKeyboardEventCommand(event);
     event.bubbles = false;
-    
+
     switch (command) {
       case KeyboardCommand.INDENT:
       case KeyboardCommand.NEXT_FOCUS:
@@ -99,7 +102,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
       case KeyboardCommand.NEW_PARAGRAPH_ALT:
         return this.insertLineBreak(component);
     }
-    
+
     event.bubbles = true;
   };
 }
@@ -110,4 +113,5 @@ export interface ListBlockProps extends PageExplorerBlockProps<ListPageBlockEnti
 
 interface State {
   ref: React.RefObject<EditText>;
+  selection: EditTextSelection;
 }

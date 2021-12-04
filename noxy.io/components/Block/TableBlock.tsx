@@ -16,7 +16,9 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   
   constructor(props: TableBlockProps) {
     super(props);
-    this.state = {};
+    this.state = {
+      selection: {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: true},
+    };
   }
   
   private getTable() {
@@ -73,7 +75,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   private readonly renderColumn = (text: RichText, key: number = 0) => {
     return (
       <td key={key}>
-        <EditText readonly={this.props.readonly} selection={this.props.selection} decoration={this.props.decoration} whitelist={TableBlock.whitelist} blacklist={TableBlock.blacklist}
+        <EditText readonly={this.props.readonly} selection={this.state.selection} decoration={this.props.decoration} whitelist={TableBlock.whitelist} blacklist={TableBlock.blacklist}
                   onBlur={this.props.onBlur} onFocus={this.props.onFocus} onChange={this.eventChange}>
           {text}
         </EditText>
@@ -83,16 +85,17 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   
   private readonly eventAddRowClick = () => {
     this.props.block.content.y++;
-    this.props.onChange(this.props.block, this.props.selection);
+    this.props.onChange(this.props.block);
   };
   
   private readonly eventAddColumnClick = () => {
     this.props.block.content.x++;
-    this.props.onChange(this.props.block, this.props.selection);
+    this.props.onChange(this.props.block);
   };
   
   private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
-    this.props.onChange(this.props.block.replaceText(component.text, text), selection);
+    this.setState({selection});
+    this.props.onChange(this.props.block.replaceText(component.text, text));
   };
   
 }
@@ -102,7 +105,7 @@ export interface TableBlockProps extends PageExplorerBlockProps<TablePageBlockEn
 }
 
 interface State {
-
+  selection: EditTextSelection;
 }
 
 

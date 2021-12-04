@@ -17,7 +17,7 @@ import TextBlock from "../Block/TextBlock";
 import AutoComplete from "../Form/AutoComplete";
 import Button from "../Form/Button";
 import Input from "../Form/Input";
-import EditText, {EditTextSelection} from "../Text/EditText";
+import EditText from "../Text/EditText";
 import Component from "./Component";
 import Conditional from "./Conditional";
 import Dialog from "./Dialog";
@@ -30,7 +30,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.state = {
       edit:       true,
       text_color: false,
-      selection:  {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: true},
       decoration: PageExplorer.createDecoration(),
     };
   }
@@ -167,7 +166,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     return PageExplorer.createPageBlockComponent(block.type, {
       block,
       decoration: this.state.decoration,
-      selection:  this.state.selection,
       readonly:   !this.state.edit,
       className:  Style.PageBlock,
       onFocus:    this.eventPageBlockFocus,
@@ -273,26 +271,23 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     // this.setState({decoration: component.text.getDecoration(selection) ?? PageExplorer.createDecoration()});
   // };
 
-  private readonly eventPageBlockChange = (block: PageBlockEntity, selection: EditTextSelection) => {
+  private readonly eventPageBlockChange = (block: PageBlockEntity) => {
     const index = this.props.entity.page_block_list.findIndex(value => value.getPrimaryID() === block.getPrimaryID());
     const offset = index < 0 ? this.props.entity.page_block_list.length : index;
     const page_block_list = [...this.props.entity.page_block_list.slice(0, offset), block, ...this.props.entity.page_block_list.slice(offset + 1)];
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list}));
-    this.setState({selection});
-    console.log("Page block changed", selection);
   };
 }
 
 export interface PageExplorerBlockProps<Block extends PageBlockEntity = PageBlockEntity> extends React.PropsWithChildren<{}> {
   block: Block;
-  selection: EditTextSelection;
   decoration: RichTextDecoration;
   readonly?: boolean;
   className?: string;
 
   onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
   onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
-  onChange(block: Block, selection: EditTextSelection): void;
+  onChange(block: Block): void;
   onSubmit?(block: Block, component: EditText): void;
 }
 
@@ -308,7 +303,6 @@ interface State {
   edit: boolean;
   focus?: EditText;
   dialog?: string;
-  selection: EditTextSelection;
   decoration: RichTextDecoration;
 
   text_color: boolean;

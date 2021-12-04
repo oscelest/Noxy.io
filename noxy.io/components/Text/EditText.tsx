@@ -247,12 +247,15 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 
   public componentDidUpdate(prevProps: Readonly<EditTextProps>, prevState: Readonly<State>, snapshot?: any): void {
-    const {section, section_offset, character, character_offset, forward} = this.props.selection;
-    const {node: start_node, offset: start_offset} = this.getNodeBySectionAndCharacter(section, character);
-    const {node: end_node, offset: end_offset} = this.getNodeBySectionAndCharacter(section_offset, character_offset);
-    const args: [Node, number, Node, number] = forward ? [start_node, start_offset, end_node, end_offset] : [end_node, end_offset, start_node, start_offset];
+    console.log("hello?")
+    if (this.state.ref.current === document.activeElement) {
+      const {section, section_offset, character, character_offset, forward} = this.props.selection;
+      const {node: start_node, offset: start_offset} = this.getNodeBySectionAndCharacter(section, character);
+      const {node: end_node, offset: end_offset} = this.getNodeBySectionAndCharacter(section_offset, character_offset);
+      const args: [Node, number, Node, number] = forward ? [start_node, start_offset, end_node, end_offset] : [end_node, end_offset, start_node, start_offset];
 
-    getSelection()?.setBaseAndExtent(...args);
+      getSelection()?.setBaseAndExtent(...args);
+    }
   }
 
   public render() {
