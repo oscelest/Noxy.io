@@ -247,7 +247,6 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 
   public componentDidUpdate(prevProps: Readonly<EditTextProps>, prevState: Readonly<State>, snapshot?: any): void {
-    console.log("hello?")
     if (this.state.ref.current === document.activeElement) {
       const {section, section_offset, character, character_offset, forward} = this.props.selection;
       const {node: start_node, offset: start_offset} = this.getNodeBySectionAndCharacter(section, character);
@@ -383,6 +382,7 @@ export default class EditText extends Component<EditTextProps, State> {
     if (!event.defaultPrevented) {
       this.handleKeyDown(event);
     }
+
     if (!event.bubbles) {
       event.stopPropagation();
       event.preventDefault();
