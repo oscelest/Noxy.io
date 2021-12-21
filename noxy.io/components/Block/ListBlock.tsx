@@ -6,7 +6,7 @@ import ListPageBlockEntity from "../../entities/Page/Block/ListPageBlockEntity";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
 import Component from "../Application/Component";
-import {PageExplorerBlockProps} from "../Application/PageExplorer";
+import {PageExplorerBlockProps, PageExplorerBlockState} from "../Application/PageExplorer";
 import EditText, {EditTextCommandList, EditTextSelection} from "../Text/EditText";
 import Style from "./ListBlock.module.scss";
 
@@ -74,6 +74,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
     this.setState({selection});
     this.props.onChange(this.props.block.replaceText(component.text, text));
+    this.props.onSelect(selection, component);
   };
 
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, component: EditText) => {
@@ -111,7 +112,6 @@ export interface ListBlockProps extends PageExplorerBlockProps<ListPageBlockEnti
 
 }
 
-interface State {
+interface State extends PageExplorerBlockState {
   ref: React.RefObject<EditText>;
-  selection: EditTextSelection;
 }

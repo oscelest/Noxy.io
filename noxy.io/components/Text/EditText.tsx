@@ -35,12 +35,7 @@ export default class EditText extends Component<EditTextProps, State> {
         return {section: focusSection, character: focusPosition, section_offset: anchorSection, character_offset: anchorPosition, forward: false};
       }
 
-      // console.log({section: anchorSection, character: anchorPosition, section_offset: focusSection, character_offset: focusPosition, forward: true})
       return {section: anchorSection, character: anchorPosition, section_offset: focusSection, character_offset: focusPosition, forward: true};
-      //
-      // return anchorSection > focusSection && anchorPosition > focusPosition
-      //   ? {section: focusSection, character: focusPosition, section_offset: anchorSection, character_offset: anchorPosition, forward: false}
-      //   : {section: anchorSection, character: anchorPosition, section_offset: focusSection, character_offset: focusPosition, forward: true};
     }
 
     return {section: 0, section_offset: 0, character_offset: 0, character: 0, forward: true};
@@ -144,7 +139,7 @@ export default class EditText extends Component<EditTextProps, State> {
   }
 
   public isDecorationDisabled(decoration: keyof Initializer<RichTextDecoration>) {
-    return !!(this.props.whitelist?.length && !this.props.whitelist.includes(decoration) || this.props.blacklist?.includes(decoration));
+    return (this.props.whitelist?.length && !this.props.whitelist.includes(decoration) || this.props.blacklist?.includes(decoration));
   };
 
   public focus() {

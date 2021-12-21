@@ -2,48 +2,56 @@ import {v4} from "uuid";
 import RichTextDecoration, {RichTextDecorationInitializer, RichTextDecorationObject} from "./RichTextDecoration";
 
 export default class RichTextCharacter {
-  
+
   public readonly id: string;
   public readonly value: string;
   public readonly decoration: RichTextDecoration;
-  
+
   public static tab: string = "\t";
   public static linebreak: string = "\n";
   public static space: string = " ";
-  
+
   constructor(initializer: RichTextCharacterInitializer) {
     this.id = initializer.id ?? v4();
     this.value = initializer instanceof RichTextCharacter ? initializer.value : initializer.value?.charAt(0) ?? " ";
     this.decoration = initializer instanceof RichTextCharacter ? initializer.decoration : new RichTextDecoration(initializer.decoration);
   }
-  
+
+  public clone() {
+    return new RichTextCharacter({
+      id:         this.id,
+      value:      this.value,
+      decoration: this.decoration.clone(),
+    });
+  }
+
   public static parseContent(content: RichTextCharacterContent) {
     const value = [] as RichTextCharacter[];
-    
+
     for (let i = 0; i < content.fragment_list.length; i++) {
       const item = content.fragment_list.at(i);
       if (item) value.push(...this.parseText(item.text, item.decoration));
     }
-    
+
     return value;
   }
-  
+
   public static parseText(text?: string, decoration?: RichTextDecorationInitializer): RichTextCharacter[] {
     const value = [] as RichTextCharacter[];
-    
+
     if (typeof text === "string") {
       for (let i = 0; i < text.length; i++) {
         const item = text.at(i);
         if (item) value.push(new RichTextCharacter({value: item, decoration}));
       }
     }
-    
+
     return value;
   }
-  
+
   public static parseHTML(node: Node, decoration?: RichTextDecoration) {
     const text = [] as RichTextCharacter[];
-    
+
     if (node instanceof HTMLBRElement) {
       text.push(new RichTextCharacter({value: RichTextCharacter.linebreak, decoration}));
     }
@@ -60,10 +68,10 @@ export default class RichTextCharacter {
         if (item) text.push(...this.parseHTML(item, decoration));
       }
     }
-    
+
     return text;
   }
-  
+
 }
 
 export interface RichTextCharacterInitializer {

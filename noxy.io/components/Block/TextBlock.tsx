@@ -2,7 +2,7 @@ import React from "react";
 import RichText from "../../classes/RichText/RichText";
 import TextPageBlockEntity from "../../entities/Page/Block/TextPageBlockEntity";
 import Component from "../Application/Component";
-import {PageExplorerBlockProps} from "../Application/PageExplorer";
+import {PageExplorerBlockProps, PageExplorerBlockState} from "../Application/PageExplorer";
 import EditText, {EditTextCommandList, EditTextSelection} from "../Text/EditText";
 import Style from "./TextBlock.module.scss";
 
@@ -39,6 +39,7 @@ export default class TextBlock extends Component<TextBlockProps, State> {
   private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
     this.setState({selection});
     this.props.onChange(this.props.block.replaceText(component.text, text));
+    this.props.onSelect(selection, component);
   };
 }
 
@@ -46,6 +47,5 @@ export interface TextBlockProps extends PageExplorerBlockProps<TextPageBlockEnti
 
 }
 
-interface State {
-  selection: EditTextSelection;
+interface State extends PageExplorerBlockState {
 }

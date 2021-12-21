@@ -17,7 +17,7 @@ import TextBlock from "../Block/TextBlock";
 import AutoComplete from "../Form/AutoComplete";
 import Button from "../Form/Button";
 import Input from "../Form/Input";
-import EditText from "../Text/EditText";
+import EditText, {EditTextSelection} from "../Text/EditText";
 import Component from "./Component";
 import Conditional from "./Conditional";
 import Dialog from "./Dialog";
@@ -169,7 +169,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
       readonly:   !this.state.edit,
       className:  Style.PageBlock,
       onFocus:    this.eventPageBlockFocus,
-      // onSelect:   this.eventPageBlockSelect,
+      onSelect:   this.eventPageBlockSelect,
       onChange:   this.eventPageBlockChange,
     });
   };
@@ -267,15 +267,16 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.setState({focus});
   };
 
-  // private readonly eventPageBlockSelect = (selection: EditTextSelection, component: EditText) => {
-    // this.setState({decoration: component.text.getDecoration(selection) ?? PageExplorer.createDecoration()});
-  // };
-
   private readonly eventPageBlockChange = (block: PageBlockEntity) => {
     const index = this.props.entity.page_block_list.findIndex(value => value.getPrimaryID() === block.getPrimaryID());
     const offset = index < 0 ? this.props.entity.page_block_list.length : index;
     const page_block_list = [...this.props.entity.page_block_list.slice(0, offset), block, ...this.props.entity.page_block_list.slice(offset + 1)];
+
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list}));
+  };
+
+  private readonly eventPageBlockSelect = (selection: EditTextSelection, component: EditText) => {
+    this.setState({decoration: component.text.getDecoration(selection) ?? PageExplorer.createDecoration()});
   };
 }
 
@@ -288,7 +289,12 @@ export interface PageExplorerBlockProps<Block extends PageBlockEntity = PageBloc
   onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
   onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
   onChange(block: Block): void;
+  onSelect(selection: EditTextSelection, component: EditText): void;
   onSubmit?(block: Block, component: EditText): void;
+}
+
+export interface PageExplorerBlockState {
+  selection: EditTextSelection;
 }
 
 export interface PageExplorerProps {

@@ -84,6 +84,32 @@ export default class RichText {
     return value;
   }
 
+  public parseSectionPosition(section: number) {
+    return section < 0 ? Math.max(0, this.length + section) : section;
+  }
+
+  public hasDecoration(property: keyof Properties<RichTextDecoration>, {section, section_offset, character, character_offset}: RichTextSelection, flag_all: boolean = true) {
+    section = this.parseSectionPosition(section);
+    section_offset = this.parseSectionPosition(section_offset);
+
+    for (let i = character; i < character_offset; i++) {
+      const current_section = this.getSection(i);
+      const start_character = i === section ? character : 0;
+      const end_character = i === section_offset ? character_offset : current_section.length;
+      const decoration = current_section.hasDecoration(property, {character: start_character, character_offset: end_character}, flag_all);
+
+      if (!decoration && flag_all) {
+        return false;
+      }
+
+      if (decoration && !flag_all) {
+        return true;
+      }
+    }
+
+    return flag_all;
+  }
+
   public getDecoration(selection: RichTextSelection): RichTextDecoration | undefined {
     const section = this.parseSectionPosition(selection.section);
     const section_offset = this.parseSectionPosition(selection.section_offset);
@@ -95,36 +121,16 @@ export default class RichText {
     const decoration_list = [];
     for (let i = section; i <= section_offset; i++) {
       const current_section = this.getSection(i);
-      const start_character = i === section ? current_section.parseCharacter(selection.character) : 0;
-      const end_character = i === section_offset ? current_section.parseCharacter(selection.character_offset) : current_section.length;
+      const start_character = i === section ? current_section.parseCharacterPosition(selection.character) : 0;
+      const end_character = i === section_offset ? current_section.parseCharacterPosition(selection.character_offset) : current_section.length;
 
       const decoration = current_section.getDecoration({character: start_character, character_offset: end_character});
-      if (decoration) decoration_list.push(decoration);
-    }
-
-    const current_section = this.getSection(section);
-    return current_section.getDecoration({character: selection.character, character_offset: current_section.length})?.union(...decoration_list);
-  }
-
-  public hasDecoration(property: keyof Initializer<RichTextDecoration>, {section, section_offset, character, character_offset}: RichTextSelection) {
-    section = this.parseSectionPosition(section);
-    section_offset = this.parseSectionPosition(section_offset);
-
-    for (let i = section; i <= section_offset; i++) {
-      const current_section = this.getSection(i);
-      const start_character = i === section ? current_section.parseCharacter(character) : 0;
-      const end_character = i === section_offset ? current_section.parseCharacter(character_offset) : current_section.length;
-      for (let j = start_character; j < end_character; j++) {
-        const current_character = current_section.getCharacter(j);
-        if (current_character.decoration[property]) return true;
+      if (decoration) {
+        decoration_list.push(decoration);
       }
     }
 
-    return false;
-  }
-
-  public parseSectionPosition(section: number) {
-    return section < 0 ? Math.max(0, this.length + section) : section;
+    return decoration_list.length ? RichTextDecoration.getUnion(...decoration_list) : undefined;
   }
 
   public insertCharacter<S extends Pick<RichTextSelection, "section" | "character">>(value: RichTextCharacter, selection: S): S {
@@ -208,8 +214,8 @@ export default class RichText {
       const section = this.getSection(i);
       if (!section) continue;
       if (i === selection.section || i === selection.section_offset) {
-        const start_character = i === selection.section ? section.parseCharacter(selection.character) : 0;
-        const end_character = i === selection.section_offset ? section.parseCharacter(selection.character_offset) : section.length - 1;
+        const start_character = i === selection.section ? section.parseCharacterPosition(selection.character) : 0;
+        const end_character = i === selection.section_offset ? section.parseCharacterPosition(selection.character_offset) : section.length - 1;
         return section.decorate(decoration, {...selection, character: start_character, character_offset: end_character});
       }
       else {
@@ -237,8 +243,8 @@ export default class RichText {
     for (let i = selection.section; i < selection.section_offset; i++) {
       const section = this.section_list.at(i);
       if (!section) continue;
-      const start = i === selection.section ? section.parseCharacter(selection.character) : 0;
-      const end = i === selection.section ? section.parseCharacter(selection.character_offset) : section.length;
+      const start = i === selection.section ? section.parseCharacterPosition(selection.character) : 0;
+      const end = i === selection.section ? section.parseCharacterPosition(selection.character_offset) : section.length;
       text.section_list.push(new RichTextSection({character_list: section.character_list.slice(start, end)}));
     }
 

@@ -4,26 +4,26 @@ import TablePageBlockEntity from "../../entities/Page/Block/TablePageBlockEntity
 import IconType from "../../enums/IconType";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
-import {PageExplorerBlockProps} from "../Application/PageExplorer";
+import {PageExplorerBlockProps, PageExplorerBlockState} from "../Application/PageExplorer";
 import Button from "../Form/Button";
 import EditText, {EditTextCommandList, EditTextSelection} from "../Text/EditText";
 import Style from "./TableBlock.module.scss";
 
 export default class TableBlock extends Component<TableBlockProps, State> {
-  
+
   private static readonly blacklist: EditTextCommandList = [];
   private static readonly whitelist: EditTextCommandList = [];
-  
+
   constructor(props: TableBlockProps) {
     super(props);
     this.state = {
       selection: {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: true},
     };
   }
-  
+
   private getTable() {
     const table = [] as RichText[][];
-    
+
     for (let y = 0; y < this.props.block.content.y; y++) {
       table[y] = [];
       for (let x = 0; x < this.props.block.content.x; x++) {
@@ -32,15 +32,15 @@ export default class TableBlock extends Component<TableBlockProps, State> {
         table[y][x] = value;
       }
     }
-    
+
     return table;
   }
-  
+
   public render() {
     const readonly = this.props.readonly ?? true;
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
-    
+
     return (
       <div className={classes.join(" ")}>
         <div className={Style.Row}>
@@ -63,7 +63,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
       </div>
     );
   }
-  
+
   private readonly renderRow = (row: RichText[], key: number = 0) => {
     return (
       <tr key={key}>
@@ -71,7 +71,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
       </tr>
     );
   };
-  
+
   private readonly renderColumn = (text: RichText, key: number = 0) => {
     return (
       <td key={key}>
@@ -82,30 +82,32 @@ export default class TableBlock extends Component<TableBlockProps, State> {
       </td>
     );
   };
-  
+
   private readonly eventAddRowClick = () => {
     this.props.block.content.y++;
     this.props.onChange(this.props.block);
   };
-  
+
   private readonly eventAddColumnClick = () => {
     this.props.block.content.x++;
     this.props.onChange(this.props.block);
   };
-  
+
   private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
     this.setState({selection});
     this.props.onChange(this.props.block.replaceText(component.text, text));
+    this.props.onSelect(selection, component);
+
   };
-  
+
 }
 
 export interface TableBlockProps extends PageExplorerBlockProps<TablePageBlockEntity> {
 
 }
 
-interface State {
-  selection: EditTextSelection;
+interface State extends PageExplorerBlockState {
+
 }
 
 

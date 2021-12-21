@@ -4,7 +4,7 @@ import RichText from "../../classes/RichText/RichText";
 import HeaderPageBlockEntity from "../../entities/Page/Block/HeaderPageBlockEntity";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
-import {PageExplorerBlockProps} from "../Application/PageExplorer";
+import {PageExplorerBlockProps, PageExplorerBlockState} from "../Application/PageExplorer";
 import Button from "../Form/Button";
 import Style from "./HeaderBlock.module.scss";
 
@@ -58,6 +58,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
   private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
     this.setState({selection});
     this.props.onChange(this.props.block.replaceText(component.text, text));
+    this.props.onSelect(selection, component);
   };
 
   private readonly eventHeaderLevelClick = (level: number) => {
@@ -71,7 +72,6 @@ export interface HeaderBlockProps extends PageExplorerBlockProps<HeaderPageBlock
 
 }
 
-interface State {
+interface State extends PageExplorerBlockState {
   ref: React.RefObject<EditText>;
-  selection: EditTextSelection;
 }
