@@ -7,6 +7,7 @@ import Conditional from "../Application/Conditional";
 import {PageExplorerBlockProps, PageExplorerBlockState} from "../Application/PageExplorer";
 import Button from "../Form/Button";
 import EditText, {EditTextCommandList, EditTextSelection} from "../Text/EditText";
+import Util from "../../../common/services/Util";
 import Style from "./TableBlock.module.scss";
 
 export default class TableBlock extends Component<TableBlockProps, State> {
@@ -17,7 +18,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   constructor(props: TableBlockProps) {
     super(props);
     this.state = {
-      selection: {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: true},
+      selection: [],
     };
   }
 
@@ -64,18 +65,21 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     );
   }
 
-  private readonly renderRow = (row: RichText[], key: number = 0) => {
+  private readonly renderRow = (row: RichText[], y: number = 0) => {
     return (
-      <tr key={key}>
-        {row.map(this.renderColumn)}
+      <tr key={y}>
+        {row.map((value, x) => this.renderColumn(value, y, x))}
       </tr>
     );
   };
 
-  private readonly renderColumn = (text: RichText, key: number = 0) => {
+  private readonly renderColumn = (text: RichText, y: number = 0, x: number = 0) => {
+    const {readonly, decoration} = this.props;
+    const selection = this.state.selection.at(y)?.at(x) ?? {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: false};
+
     return (
-      <td key={key}>
-        <EditText readonly={this.props.readonly} selection={this.state.selection} decoration={this.props.decoration} whitelist={TableBlock.whitelist} blacklist={TableBlock.blacklist}
+      <td key={x}>
+        <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={TableBlock.whitelist} blacklist={TableBlock.blacklist}
                   onBlur={this.props.onBlur} onFocus={this.props.onFocus} onChange={this.eventChange}>
           {text}
         </EditText>
@@ -94,20 +98,20 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   };
 
   private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
-    this.setState({selection});
+    const {x, y} = this.props.block.getTextPosition(component.text);
+    this.props.block.content.value[y][x] = text;
     this.props.onChange(this.props.block.replaceText(component.text, text));
     this.props.onSelect(selection, component);
-
+    this.setState({selection: Util.arrayReplace(this.state.selection, y, Util.arrayReplace(this.state.selection[y] ?? [], x, selection))});
   };
-
 }
 
 export interface TableBlockProps extends PageExplorerBlockProps<TablePageBlockEntity> {
 
 }
 
-interface State extends PageExplorerBlockState {
-
+interface State extends Omit<PageExplorerBlockState, "selection"> {
+  selection: EditTextSelection[][];
 }
 
 

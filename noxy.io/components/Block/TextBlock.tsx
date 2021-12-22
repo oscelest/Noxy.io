@@ -19,18 +19,19 @@ export default class TextBlock extends Component<TextBlockProps, State> {
   }
 
   public render() {
-    const readonly = this.props.readonly ?? true;
-    if (readonly && !this.props.block.content.value.length) return null;
+    const {readonly = true, decoration, block, className} = this.props;
+    const {selection} = this.state;
+    if (readonly && !block.content.value.length) return null;
 
     const classes = [Style.Component];
-    if (this.props.className) classes.push(this.props.className);
+    if (className) classes.push(className);
+
 
     return (
       <div className={classes.join(" ")}>
-        <EditText className={Style.Text} readonly={this.props.readonly} selection={this.state.selection} decoration={this.props.decoration} whitelist={TextBlock.whitelist}
-                  blacklist={TextBlock.blacklist}
+        <EditText className={Style.Text} readonly={readonly} selection={selection} decoration={decoration} whitelist={TextBlock.whitelist} blacklist={TextBlock.blacklist}
                   onBlur={this.props.onBlur} onFocus={this.props.onFocus} onChange={this.eventChange}>
-          {this.props.block.content.value}
+          {block.content.value}
         </EditText>
       </div>
     );

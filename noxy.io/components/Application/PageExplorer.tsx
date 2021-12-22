@@ -112,7 +112,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
               <Button icon={IconType.FONT}/>
             </div>
 
-
             <div className={Style.Right}>
               <Button className={Style.ButtonEdit} icon={this.state.edit ? IconType.FILE_DOCUMENT : IconType.EDIT} onClick={this.eventEditModeClick}/>
             </div>
