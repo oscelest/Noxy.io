@@ -234,21 +234,20 @@ export default class RichText {
     });
   }
 
-  public slice({...selection}: RichTextSelection) {
-    const text = new RichText();
+  public slice({section, section_offset, character, character_offset}: RichTextSelection) {
+    const section_list = [] as RichTextSection[];
+    section = this.parseSectionPosition(section);
+    section_offset = this.parseSectionPosition(section_offset);
 
-    selection.section = this.parseSectionPosition(selection.section);
-    selection.section_offset = this.parseSectionPosition(selection.section_offset);
-
-    for (let i = selection.section; i < selection.section_offset; i++) {
-      const section = this.section_list.at(i);
-      if (!section) continue;
-      const start = i === selection.section ? section.parseCharacterPosition(selection.character) : 0;
-      const end = i === selection.section ? section.parseCharacterPosition(selection.character_offset) : section.length;
-      text.section_list.push(new RichTextSection({character_list: section.character_list.slice(start, end)}));
+    for (let i = section; i <= section_offset; i++) {
+      const current_section = this.section_list.at(i);
+      if (!current_section) continue;
+      const start = i === section ? character : 0;
+      const end = i === section_offset ? character_offset : current_section.length;
+      section_list.push(current_section.slice({character: start, character_offset: end}));
     }
 
-    return text;
+    return new RichText({element: this.element, section_list});
   }
 
   public ensureSection<S extends Pick<RichTextSelection, "section">>(selection: S): S {

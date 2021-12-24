@@ -10,13 +10,15 @@ import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
 import Component from "../Application/Component";
 import Style from "./EditText.module.scss";
+import History from "../../classes/History";
 
 export default class EditText extends Component<EditTextProps, State> {
 
   constructor(props: EditTextProps) {
     super(props);
     this.state = {
-      ref: React.createRef(),
+      ref:     React.createRef(),
+      history: new History(),
     };
   }
 
@@ -146,9 +148,17 @@ export default class EditText extends Component<EditTextProps, State> {
     this.state.ref.current?.focus();
   }
 
+  public selectAll() {
+    const selection = {section: 0, character: 0, section_offset: this.text.section_list.length - 1, character_offset: this.text.getSection(this.text.section_list.length - 1).length, forward: true};
+    this.props.onSelect?.(selection, this);
+    return selection;
+  }
+
   public write(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: EditTextSelection = this.getSelection()) {
     selection = this.text.replace(insert, selection);
-    this.props.onChange(selection, this.text.clone(), this);
+    const value = this.text.clone();
+    this.setState({history: this.state.history.push({selection, value})});
+    this.props.onChange(selection, value, this);
   };
 
   public insertText(text: string, selection: EditTextSelection = this.getSelection(), decoration: RichTextDecoration = this.props.decoration) {
@@ -164,10 +174,11 @@ export default class EditText extends Component<EditTextProps, State> {
     }
   };
 
-  // TODO: FIX
-  // public insertHTML(html: string | HTMLElement, selection: EditTextSelection = this.getSelection()) {
-  //   this.insert(RichText.parseHTML(html).value, selection);
-  // }
+  public insertHTML(html: string | HTMLElement, selection: EditTextSelection = this.getSelection()) {
+    console.log(html);
+    console.log(RichText.parseHTML(html));
+    // this.write(RichText.parseHTML(html).section_list, selection);
+  }
 
   public decorate(decoration: Initializer<RichTextDecoration>, selection: EditTextSelection = this.getSelection()) {
     const keys = Util.getProperties(decoration);
@@ -190,7 +201,10 @@ export default class EditText extends Component<EditTextProps, State> {
       }
     }
 
-    this.props.onChange(this.text.decorate(decoration, selection), this.text.clone(), this);
+    const decorated = this.text.decorate(decoration, selection);
+    const value = this.text.clone();
+    this.props.onChange(decorated, value, this);
+    this.setState({history: this.state.history.push({selection, value})});
   };
 
   public delete(selection: EditTextSelection = this.getSelection()) {
@@ -240,6 +254,22 @@ export default class EditText extends Component<EditTextProps, State> {
     }
     this.delete(selection);
   };
+
+  public historyForward() {
+    const history = this.state.history.forward();
+    this.props.onChange(history.value.selection, history.value.value, this);
+    return this.setState({history});
+  }
+
+  public historyBackward() {
+    const history = this.state.history.backward();
+    this.props.onChange(history.value.selection, history.value.value, this);
+    return this.setState({history});
+  }
+
+  public componentDidMount(): void {
+    return this.setState({history: this.state.history.push({selection: this.props.selection, value: this.text.clone()})});
+  }
 
   public componentDidUpdate(prevProps: Readonly<EditTextProps>, prevState: Readonly<State>, snapshot?: any): void {
     if (this.state.ref.current === document.activeElement) {
@@ -393,11 +423,7 @@ export default class EditText extends Component<EditTextProps, State> {
       case KeyboardCommand.NEXT_FOCUS:
         return this.insertText(RichTextCharacter.tab);
       case KeyboardCommand.SELECT_ALL:
-        return this.props.onChange(
-          {section: 0, character: 0, section_offset: this.text.section_list.length - 1, character_offset: this.text.getSection(this.text.section_list.length - 1).length, forward: true},
-          this.text,
-          this,
-        );
+        return this.selectAll();
       case KeyboardCommand.NEW_LINE:
       case KeyboardCommand.NEW_LINE_ALT:
         return this.insertText(RichTextCharacter.linebreak);
@@ -412,6 +438,12 @@ export default class EditText extends Component<EditTextProps, State> {
         return this.deleteForward(this.getSelection(), true);
       case KeyboardCommand.DELETE_WORD_BACKWARD:
         return this.deleteBackward(this.getSelection(), true);
+      case KeyboardCommand.REDO:
+      case KeyboardCommand.REDO_ALT:
+        return this.historyForward();
+      case KeyboardCommand.UNDO:
+      case KeyboardCommand.UNDO_ALT:
+        return this.historyBackward();
       case KeyboardCommand.BOLD_TEXT:
         return this.decorate({bold: !this.text.hasDecoration("bold", this.getSelection())});
       case KeyboardCommand.ITALIC_TEXT:
@@ -467,16 +499,13 @@ export default class EditText extends Component<EditTextProps, State> {
     this.write([]);
   };
 
-  // TODO: FIX
   private readonly eventPaste = async (event: React.ClipboardEvent) => {
     event.preventDefault();
+
     if (event.clipboardData.types.includes(ClipboardDataType.FILES)) return;
-    // if (event.clipboardData.types.includes(ClipboardDataType.TEXT_HTML)) {
-    //   const html = event.clipboardData.getData(ClipboardDataType.TEXT_HTML).match(/<!--StartFragment-->(?<html>.*)<!--EndFragment-->/);
-    //   if (html?.groups?.html) {
-    //     return this.insertHTML(html.groups.html);
-    //   }
-    // }
+    if (event.clipboardData.types.includes(ClipboardDataType.TEXT_HTML)) {
+      return this.insertHTML(event.clipboardData.getData(ClipboardDataType.TEXT_HTML));
+    }
 
     return this.insertText(event.clipboardData.getData(ClipboardDataType.TEXT_PLAIN));
   };
@@ -500,12 +529,13 @@ export interface EditTextProps {
 
   onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
   onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
-  onSelect?(selection: EditTextSelection, component: EditText): void;
   onKeyDown?(event: React.KeyboardEvent<HTMLDivElement>, component: EditText): boolean | void;
 
+  onSelect(selection: EditTextSelection, component: EditText): void;
   onChange(selection: EditTextSelection, text: RichText, component: EditText): void;
 }
 
 interface State {
   ref: React.RefObject<HTMLDivElement>;
+  history: History<{selection: EditTextSelection, value: RichText}>;
 }

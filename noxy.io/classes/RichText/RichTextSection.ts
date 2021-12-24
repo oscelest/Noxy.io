@@ -213,6 +213,13 @@ export default class RichTextSection {
     });
   }
 
+  public slice({character, character_offset}: RichTextSectionSelection) {
+    return new RichTextSection({
+      element:        this.element,
+      character_list: this.character_list.slice(this.parseCharacterPosition(character), this.parseCharacterPosition(character_offset)),
+    });
+  }
+
   public static parseText(text?: string | string[], element?: HTMLTag | HTMLTag[]): RichTextSection[] {
     const value = [] as RichTextSection[];
 
