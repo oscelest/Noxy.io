@@ -64,17 +64,20 @@ export default class ListBlock extends Component<ListBlockProps, State> {
       <div className={classes.join(" ")}>
         <EditText ref={this.state.ref} readonly={this.props.readonly} selection={this.state.selection} decoration={this.props.decoration} whitelist={ListBlock.whitelist}
                   blacklist={ListBlock.blacklist}
-                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onChange={this.eventChange} onKeyDown={this.eventKeyDown}>
+                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.eventSelect} onChange={this.eventChange} onKeyDown={this.eventKeyDown}>
           {this.props.block.content.value}
         </EditText>
       </div>
     );
   }
 
-  private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
+  private readonly eventSelect = (selection: EditTextSelection, component: EditText) => {
     this.setState({selection});
-    this.props.onChange(this.props.block.replaceText(component.text, text));
     this.props.onSelect(selection, component);
+  }
+
+  private readonly eventChange = (text: RichText, component: EditText) => {
+    this.props.onChange(this.props.block.replaceText(component.text, text));
   };
 
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, component: EditText) => {

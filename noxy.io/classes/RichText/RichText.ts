@@ -2,6 +2,7 @@ import {v4} from "uuid";
 import RichTextCharacter from "./RichTextCharacter";
 import RichTextDecoration from "./RichTextDecoration";
 import RichTextSection, {RichTextSectionContent, RichTextSectionSelection} from "./RichTextSection";
+import Helper from "../../Helper";
 
 export default class RichText {
 
@@ -269,14 +270,11 @@ export default class RichText {
   }
 
   public static parseHTML(node: string | HTMLElement) {
-    if (node instanceof HTMLElement) {
-      return new RichText({section_list: RichTextSection.parseHTML(node)});
-    }
-
-    const element = document.createElement("template");
-    element.innerHTML = node;
-
-    return new RichText({section_list: RichTextSection.parseHTML(element.content)});
+    return new RichText({
+      section_list: RichTextSection.parseHTML(
+        typeof node === "string" ? Helper.createElementWithContent("template", {}, node) : Helper.createElementWithChildren("template", {}, node),
+      ),
+    });
   }
 }
 

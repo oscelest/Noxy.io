@@ -80,7 +80,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     return (
       <td key={x}>
         <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={TableBlock.whitelist} blacklist={TableBlock.blacklist}
-                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onChange={this.eventChange}>
+                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.eventSelect} onChange={this.eventChange}>
           {text}
         </EditText>
       </td>
@@ -97,12 +97,16 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     this.props.onChange(this.props.block);
   };
 
-  private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
+  private readonly eventSelect = (selection: EditTextSelection, component: EditText) => {
+    const {x, y} = this.props.block.getTextPosition(component.text);
+    this.props.onSelect(selection, component);
+    this.setState({selection: Util.arrayReplace(this.state.selection, y, Util.arrayReplace(this.state.selection[y] ?? [], x, selection))});
+  }
+
+  private readonly eventChange = (text: RichText, component: EditText) => {
     const {x, y} = this.props.block.getTextPosition(component.text);
     this.props.block.content.value[y][x] = text;
     this.props.onChange(this.props.block.replaceText(component.text, text));
-    this.props.onSelect(selection, component);
-    this.setState({selection: Util.arrayReplace(this.state.selection, y, Util.arrayReplace(this.state.selection[y] ?? [], x, selection))});
   };
 }
 

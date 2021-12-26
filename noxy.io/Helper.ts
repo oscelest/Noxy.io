@@ -84,7 +84,18 @@ namespace Helper {
     }
     return component;
   }
-  
+
+  export function createElementWithContent<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: {[key: string]: string} = {}, html: string): HTMLElementTagNameMap[K] {
+    const element = document.createElement(tag);
+    element.innerHTML = html;
+
+    for (let key in attributes) {
+      element.setAttribute(key, attributes[key]);
+    }
+
+    return element;
+  }
+
   export function createElementWithChildren<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: {[key: string]: string} = {}, ...children: Node[]): HTMLElementTagNameMap[K] {
     const element = document.createElement(tag);
     

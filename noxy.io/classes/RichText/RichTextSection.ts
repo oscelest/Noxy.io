@@ -237,25 +237,24 @@ export default class RichTextSection {
     return value;
   }
 
-  public static parseHTML(node: Node): RichTextSection[] {
+  public static parseHTML(node: HTMLElement): RichTextSection[] {
     if (node instanceof HTMLBRElement) {
       return [new RichTextSection(), new RichTextSection()];
     }
 
-    if (node instanceof Text) {
-      return this.parseText(node.data);
+    if (node instanceof HTMLHeadElement || node instanceof HTMLScriptElement || node instanceof HTMLStyleElement) {
+      return [new RichTextSection()];
     }
 
-    if (node instanceof HTMLElement) {
-      const value = [] as RichTextSection[];
-      for (let i = 0; i < node.children.length; i++) {
-        const item = node.childNodes.item(i);
-        if (item) value.push(new RichTextSection({character_list: RichTextCharacter.parseHTML(item)}));
-      }
-      return value;
+    const value = [] as RichTextSection[];
+    const children = node instanceof HTMLTemplateElement ? node.content.childNodes : node.childNodes;
+
+    for (let i = 0; i < children.length; i++) {
+      const item = children.item(i);
+      if (item) value.push(new RichTextSection({character_list: RichTextCharacter.parseHTML(item)}));
     }
 
-    return [];
+    return value;
   }
 
 }

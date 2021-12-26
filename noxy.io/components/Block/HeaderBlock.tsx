@@ -35,7 +35,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
         </Conditional>
         <EditText ref={this.state.ref} selection={this.state.selection} readonly={this.props.readonly} decoration={this.props.decoration} whitelist={HeaderBlock.whitelist}
                   blacklist={HeaderBlock.blacklist}
-                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onChange={this.eventChange}>
+                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.eventSelect} onChange={this.eventChange}>
           {this.props.block.content.value}
         </EditText>
       </div>
@@ -55,10 +55,13 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     );
   };
 
-  private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
+  private readonly eventSelect = (selection: EditTextSelection, component: EditText) => {
     this.setState({selection});
-    this.props.onChange(this.props.block.replaceText(component.text, text));
     this.props.onSelect(selection, component);
+  }
+
+  private readonly eventChange = (text: RichText, component: EditText) => {
+    this.props.onChange(this.props.block.replaceText(component.text, text));
   };
 
   private readonly eventHeaderLevelClick = (level: number) => {

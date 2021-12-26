@@ -30,17 +30,20 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     return (
       <div className={classes.join(" ")}>
         <EditText className={Style.Text} readonly={readonly} selection={selection} decoration={decoration} whitelist={TextBlock.whitelist} blacklist={TextBlock.blacklist}
-                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onChange={this.eventChange}>
+                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.eventSelect} onChange={this.eventChange}>
           {block.content.value}
         </EditText>
       </div>
     );
   }
 
-  private readonly eventChange = (selection: EditTextSelection, text: RichText, component: EditText) => {
+  private readonly eventSelect = (selection: EditTextSelection, component: EditText) => {
     this.setState({selection});
-    this.props.onChange(this.props.block.replaceText(component.text, text));
     this.props.onSelect(selection, component);
+  }
+
+  private readonly eventChange = (text: RichText, component: EditText) => {
+    this.props.onChange(this.props.block.replaceText(component.text, text));
   };
 }
 
