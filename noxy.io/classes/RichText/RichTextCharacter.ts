@@ -50,21 +50,25 @@ export default class RichTextCharacter {
   }
 
   public static parseHTML(node: Node, decoration?: RichTextDecoration) {
-    console.log(node);
     const text = [] as RichTextCharacter[];
 
-    if (node instanceof HTMLElement) {
-      decoration = RichTextDecoration.parseHTML(node, decoration);
-      for (let i = 0; i < node.children.length; i++) {
-        text.push(...this.parseHTML(node.childNodes.item(i), decoration));
-      }
-    }
-    else if (node instanceof HTMLBRElement) {
-      text.push(new RichTextCharacter({value: RichTextCharacter.linebreak, decoration}));
-    }
-    else if (node instanceof Text) {
+    if (node instanceof Text) {
       for (let i = 0; i < node.data.length; i++) {
         text.push(new RichTextCharacter({value: node.data.at(i), decoration}));
+      }
+    }
+    else if (node instanceof HTMLElement) {
+      node = node instanceof HTMLTemplateElement ? node.content : node;
+
+      for (let i = 0; i < node.childNodes.length; i++) {
+        const item = node.childNodes.item(i);
+        if (!item || item instanceof HTMLBRElement || !(item instanceof Text) && item.childNodes.length === 0) continue;
+
+        const item_decoration = RichTextDecoration.parseHTML(item, decoration);
+        if (item.textContent !== node.textContent) {
+          text.push(new RichTextCharacter({value: RichTextCharacter.linebreak, decoration: item_decoration}));
+        }
+        text.push(...this.parseHTML(item, item_decoration));
       }
     }
 

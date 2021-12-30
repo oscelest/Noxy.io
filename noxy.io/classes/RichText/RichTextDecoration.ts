@@ -121,27 +121,69 @@ export default class RichTextDecoration {
     return current;
   }
 
-  public static parseHTML(node: HTMLElement, decoration: Initializer<RichTextDecoration> = {}) {
-    const {fontSize, fontFamily, color, backgroundColor} = node.style;
-    const [font_size, font_size_length] = fontSize.split(/(?<=[0-9]+)(?=[a-z]+)/);
+  public static parseHTML(node?: Node | null, decoration?: RichTextDecorationInitializer): RichTextDecoration {
+    if (!node || !(node instanceof HTMLElement)) return node ? this.parseHTML(node.parentElement) : new RichTextDecoration(decoration);
+
+    const style = getComputedStyle(node);
 
     return new RichTextDecoration({
-      link:          node instanceof HTMLAnchorElement ? node.href : decoration.link,
-      bold:          node.tagName === "B" || node.tagName === "STRONG" || decoration.bold,
-      italic:        node.tagName === "I" || decoration.italic,
-      underline:     node.tagName === "U" || decoration.underline,
-      strikethrough: node.tagName === "S" || decoration.strikethrough,
-      code:          node.tagName === "CODE" || decoration.code,
-      mark:          node.tagName === "MARK" || decoration.mark,
+      bold:          this.parseNodeBold(node, style.fontWeight.toLowerCase()) || decoration?.bold,
+      italic:        this.parseNodeItalic(node, style.fontStyle.toLowerCase()) || decoration?.italic,
+      underline:     this.parseNodeUnderline(node, style.textDecoration.toLowerCase()) || decoration?.underline,
+      strikethrough: this.parseNodeStrikethrough(node, style.textDecoration.toLowerCase()) || decoration?.strikethrough,
 
-      font_family:      fontFamily || decoration.font_family || "",
-      font_size:        font_size || decoration.font_size || "",
-      font_length:      font_size_length || decoration.font_length || "",
-      color:            color || decoration.color || "",
-      background_color: backgroundColor || decoration.background_color || "",
+      font_family: this.parseNodeFontFamily(style.fontFamily) || decoration?.font_family,
+      font_size:   this.parseNodeFontSize(style.fontSize) || decoration?.font_size,
+      font_length: this.parseNodeFontLength(style.fontSize) || decoration?.font_length,
+
+      color:            style.color || decoration?.color,
+      background_color: style.backgroundColor || decoration?.background_color,
+
+      link: this.parseNodeLink(node) || decoration?.link,
+      code: this.parseNodeCode(node) || decoration?.code,
+      mark: this.parseNodeMark(node) || decoration?.mark,
     });
   }
 
+  private static parseNodeBold(element: HTMLElement, style: CSSStyleDeclaration["fontWeight"]) {
+    return element.tagName === "B" || element.tagName === "STRONG" || style.includes("bold") || style.includes("700");
+  }
+
+  private static parseNodeItalic(element: HTMLElement, style: CSSStyleDeclaration["fontStyle"]) {
+    return element.tagName === "I" || style.includes("italic");
+  }
+
+  private static parseNodeUnderline(element: HTMLElement, style: CSSStyleDeclaration["textDecoration"]) {
+    return element.tagName === "U" || style.includes("underline");
+  }
+
+  private static parseNodeStrikethrough(element: HTMLElement, style: CSSStyleDeclaration["textDecoration"]) {
+    return element.tagName === "S" || style.includes("line-through");
+  }
+
+  private static parseNodeFontFamily(style: CSSStyleDeclaration["fontFamily"]) {
+    return style.replace(/\s*,.*/, "");
+  }
+
+  private static parseNodeFontSize(style: string) {
+    return style.match(/^(?<size>\d+)/)?.groups?.size || "";
+  }
+
+  private static parseNodeFontLength(style: string) {
+    return style.match(/(?<length>\D+)$/)?.groups?.length || "";
+  }
+
+  private static parseNodeLink(node: HTMLElement, current: string = "") {
+    return node instanceof HTMLAnchorElement ? node.href : current;
+  }
+
+  private static parseNodeCode({tagName}: HTMLElement, current: boolean = false) {
+    return tagName === "CODE" || current;
+  }
+
+  private static parseNodeMark({tagName}: HTMLElement, current: boolean = false) {
+    return tagName === "MARK" || current;
+  }
 }
 
 export type RichTextDecorationObject = Writeable<Properties<RichTextDecoration>>;

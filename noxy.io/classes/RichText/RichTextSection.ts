@@ -3,6 +3,7 @@ import Util from "../../../common/services/Util";
 import RichTextCharacter, {RichTextCharacterContent} from "./RichTextCharacter";
 import RichTextDecoration, {RichTextDecorationObject} from "./RichTextDecoration";
 
+
 export default class RichTextSection {
 
   public readonly id: string;
@@ -237,21 +238,26 @@ export default class RichTextSection {
     return value;
   }
 
-  public static parseHTML(node: HTMLElement): RichTextSection[] {
-    if (node instanceof HTMLBRElement) {
-      return [new RichTextSection(), new RichTextSection()];
-    }
-
-    if (node instanceof HTMLHeadElement || node instanceof HTMLScriptElement || node instanceof HTMLStyleElement) {
-      return [new RichTextSection()];
-    }
-
+  public static parseHTML(node: Node, decoration?: RichTextDecoration): RichTextSection[] {
     const value = [] as RichTextSection[];
-    const children = node instanceof HTMLTemplateElement ? node.content.childNodes : node.childNodes;
 
-    for (let i = 0; i < children.length; i++) {
-      const item = children.item(i);
-      if (item) value.push(new RichTextSection({character_list: RichTextCharacter.parseHTML(item)}));
+    if (node instanceof Text) {
+      value.push(new RichTextSection({character_list: RichTextCharacter.parseText(node.data, decoration)}));
+    }
+    else if (node instanceof HTMLElement) {
+      node = node instanceof HTMLTemplateElement ? node.content : node;
+
+      for (let i = 0; i < node.childNodes.length; i++) {
+        const item = node.childNodes.item(i);
+        if (!item || item instanceof HTMLBRElement || !(item instanceof Text) && item.childNodes.length === 0) continue;
+
+        if (item.textContent === node.textContent) {
+          value.push(...RichTextSection.parseHTML(item, RichTextDecoration.parseHTML(item, decoration)));
+        }
+        else {
+          value.push(new RichTextSection({character_list: RichTextCharacter.parseHTML(item, decoration)}));
+        }
+      }
     }
 
     return value;

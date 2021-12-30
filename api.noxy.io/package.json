@@ -36,9 +36,9 @@
     ]
   },
   "dependencies":    {
-    "@mikro-orm/cli":   "^4.5.9",
-    "@mikro-orm/core":  "^4.5.9",
-    "@mikro-orm/mysql": "^4.5.9",
+    "@mikro-orm/cli":   "^4.5.10",
+    "@mikro-orm/core":  "^4.5.10",
+    "@mikro-orm/mysql": "^4.5.10",
     "adm-zip":          "^0.5.9",
     "dotenv":           "^10.0.0",
     "fs-extra":         "^10.0.0",
@@ -54,12 +54,12 @@
   "devDependencies": {
     "@types/adm-zip":                   "^0.4.34",
     "@types/express":                   "^4.17.13",
-    "@types/express-serve-static-core": "^4.17.26",
+    "@types/express-serve-static-core": "^4.17.27",
     "@types/fs-extra":                  "^9.0.13",
     "@types/jsonwebtoken":              "^8.5.6",
     "@types/lodash":                    "^4.14.178",
     "@types/mime-types":                "^2.1.1",
-    "@types/node":                      "^17.0.4",
+    "@types/node":                      "^17.0.5",
     "@types/uuid":                      "^8.3.3",
     "nodemon":                          "^2.0.15",
     "reflect-metadata":                 "^0.1.13"

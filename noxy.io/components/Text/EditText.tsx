@@ -179,9 +179,9 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 
   public insertHTML(html: string | HTMLElement, selection: EditTextSelection = this.getSelection()) {
-    console.log(html);
-    console.log(RichText.parseHTML(html));
-    // this.write(RichText.parseHTML(html).section_list, selection);
+    const node = typeof html === "string" ? Helper.createElementWithContent("template", {}, html) : Helper.createElementWithChildren("template", {}, html);
+    const parsed = RichText.parseHTML(node);
+    this.write(parsed.section_list.length > 1 ? parsed.section_list : parsed.section_list[0].character_list, selection);
   }
 
   public decorate(decoration: Initializer<RichTextDecoration>, selection: EditTextSelection = this.getSelection()) {
@@ -209,10 +209,7 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 
   public delete(selection: EditTextSelection = this.getSelection()) {
-    const value = this.text.clone();
-    this.props.onSelect(this.text.remove(selection), this);
-    this.props.onChange(value, this);
-    this.setState({history: this.state.history.push({selection, value})});
+    this.next(this.text.remove(selection));
   }
 
   public deleteForward(selection: EditTextSelection = this.getSelection(), word: boolean = false) {
@@ -220,7 +217,6 @@ export default class EditText extends Component<EditTextProps, State> {
     if (selection.section === selection.section_offset && selection.character === selection.character_offset) {
       const section = this.text.getSection(selection.section);
       if (selection.character === section.length) {
-
         selection.section_offset++;
         selection.character_offset = 0;
       }
