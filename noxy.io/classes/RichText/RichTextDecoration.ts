@@ -121,23 +121,23 @@ export default class RichTextDecoration {
     return current;
   }
 
-  public static parseHTML(node?: Node | null, decoration?: RichTextDecorationInitializer): RichTextDecoration {
-    if (!node || !(node instanceof HTMLElement)) return node ? this.parseHTML(node.parentElement) : new RichTextDecoration(decoration);
+  public static parseHTML(node: HTMLElement, decoration?: RichTextDecorationInitializer): RichTextDecoration {
+    if (!node || !(node instanceof HTMLElement)) return new RichTextDecoration(decoration);
 
-    const style = getComputedStyle(node);
+    const {fontWeight, fontStyle, textDecoration, fontFamily, fontSize, color, backgroundColor} = getComputedStyle(node);
 
     return new RichTextDecoration({
-      bold:          this.parseNodeBold(node, style.fontWeight.toLowerCase()) || decoration?.bold,
-      italic:        this.parseNodeItalic(node, style.fontStyle.toLowerCase()) || decoration?.italic,
-      underline:     this.parseNodeUnderline(node, style.textDecoration.toLowerCase()) || decoration?.underline,
-      strikethrough: this.parseNodeStrikethrough(node, style.textDecoration.toLowerCase()) || decoration?.strikethrough,
+      bold:          this.parseNodeBold(node, fontWeight.toLowerCase()) || decoration?.bold,
+      italic:        this.parseNodeItalic(node, fontStyle.toLowerCase()) || decoration?.italic,
+      underline:     this.parseNodeUnderline(node, textDecoration.toLowerCase()) || decoration?.underline,
+      strikethrough: this.parseNodeStrikethrough(node, textDecoration.toLowerCase()) || decoration?.strikethrough,
 
-      font_family: this.parseNodeFontFamily(style.fontFamily) || decoration?.font_family,
-      font_size:   this.parseNodeFontSize(style.fontSize) || decoration?.font_size,
-      font_length: this.parseNodeFontLength(style.fontSize) || decoration?.font_length,
+      font_family: this.parseNodeFontFamily(fontFamily) || decoration?.font_family,
+      font_size:   this.parseNodeFontSize(fontSize) || decoration?.font_size,
+      font_length: this.parseNodeFontLength(fontSize) || decoration?.font_length,
 
-      color:            style.color || decoration?.color,
-      background_color: style.backgroundColor || decoration?.background_color,
+      color:            color || decoration?.color,
+      background_color: backgroundColor || decoration?.background_color,
 
       link: this.parseNodeLink(node) || decoration?.link,
       code: this.parseNodeCode(node) || decoration?.code,

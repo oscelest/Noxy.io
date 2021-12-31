@@ -15,7 +15,7 @@
     word-break: break-word;
 
     &:not(li) {
-      display:    block;
+      display: block;
     }
   }
 
@@ -27,7 +27,7 @@
     text-decoration: none;
   }
 
-  &:not(.Readonly) .Section:empty:after {
+  &:not(.Readonly) .Section.Empty:after {
     content: "...";
     cursor:  text;
     color:   rgb(255 255 255 / 50%);

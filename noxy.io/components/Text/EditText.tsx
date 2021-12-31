@@ -179,8 +179,11 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 
   public insertHTML(html: string | HTMLElement, selection: EditTextSelection = this.getSelection()) {
-    const node = typeof html === "string" ? Helper.createElementWithContent("template", {}, html) : Helper.createElementWithChildren("template", {}, html);
+    const node = typeof html === "string" ? Helper.createElementWithContent("div", {}, html) : html;
+    document.body.append(node);
+    node.hidden = true;
     const parsed = RichText.parseHTML(node);
+    node.remove();
     this.write(parsed.section_list.length > 1 ? parsed.section_list : parsed.section_list[0].character_list, selection);
   }
 
@@ -307,9 +310,12 @@ export default class EditText extends Component<EditTextProps, State> {
   }
 
   private renderReactSection = (section: RichTextSectionContent, key: number = 0) => {
+    const classes = [Style.Section];
+    if (!section.character_list?.length) classes.push(Style.Empty);
+
     const props: React.HTMLProps<HTMLElement> = {
       key:       key,
-      className: Style.Section,
+      className: classes.join(" "),
       children:  section.character_list.map(this.renderReactLine),
     };
 

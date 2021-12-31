@@ -238,21 +238,20 @@ export default class RichTextSection {
     return value;
   }
 
-  public static parseHTML(node: Node, decoration?: RichTextDecoration): RichTextSection[] {
+  public static parseHTML(element: HTMLElement, decoration?: RichTextDecoration): RichTextSection[] {
     const value = [] as RichTextSection[];
+    const node = element instanceof HTMLTemplateElement ? element.content : element;
 
-    if (node instanceof Text) {
-      value.push(new RichTextSection({character_list: RichTextCharacter.parseText(node.data, decoration)}));
-    }
-    else if (node instanceof HTMLElement) {
-      node = node instanceof HTMLTemplateElement ? node.content : node;
+    for (let i = 0; i < node.childNodes.length; i++) {
+      const item = node.childNodes.item(i);
+      if (!item || item instanceof HTMLBRElement || !(item instanceof Text) && item.childNodes.length === 0) continue;
 
-      for (let i = 0; i < node.childNodes.length; i++) {
-        const item = node.childNodes.item(i);
-        if (!item || item instanceof HTMLBRElement || !(item instanceof Text) && item.childNodes.length === 0) continue;
-
-        if (item.textContent === node.textContent) {
-          value.push(...RichTextSection.parseHTML(item, RichTextDecoration.parseHTML(item, decoration)));
+      if (item instanceof Text) {
+        value.push(new RichTextSection({character_list: RichTextCharacter.parseText(item.data, RichTextDecoration.parseHTML(element, decoration))}));
+      }
+      else if (item instanceof HTMLElement) {
+        if (node.textContent === item.textContent) {
+          value.push(...RichTextSection.parseHTML(item, decoration));
         }
         else {
           value.push(new RichTextSection({character_list: RichTextCharacter.parseHTML(item, decoration)}));

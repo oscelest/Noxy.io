@@ -49,30 +49,31 @@ export default class RichTextCharacter {
     return value;
   }
 
-  public static parseHTML(node: Node, decoration?: RichTextDecoration) {
-    const text = [] as RichTextCharacter[];
+  public static parseHTML(element: HTMLElement, decoration?: RichTextDecoration) {
+    const text = [] as RichTextCharacter[][];
+    const node = element instanceof HTMLTemplateElement ? element.content : element;
 
-    if (node instanceof Text) {
-      for (let i = 0; i < node.data.length; i++) {
-        text.push(new RichTextCharacter({value: node.data.at(i), decoration}));
+    for (let i = 0; i < node.childNodes.length; i++) {
+      const item = node.childNodes.item(i);
+      if (!item || item instanceof HTMLBRElement || !(item instanceof Text) && item.childNodes.length === 0) continue;
+
+      if (item instanceof Text) {
+        text.push(RichTextCharacter.parseText(item.data, RichTextDecoration.parseHTML(element, decoration)));
       }
-    }
-    else if (node instanceof HTMLElement) {
-      node = node instanceof HTMLTemplateElement ? node.content : node;
-
-      for (let i = 0; i < node.childNodes.length; i++) {
-        const item = node.childNodes.item(i);
-        if (!item || item instanceof HTMLBRElement || !(item instanceof Text) && item.childNodes.length === 0) continue;
-
-        const item_decoration = RichTextDecoration.parseHTML(item, decoration);
-        if (item.textContent !== node.textContent) {
-          text.push(new RichTextCharacter({value: RichTextCharacter.linebreak, decoration: item_decoration}));
-        }
-        text.push(...this.parseHTML(item, item_decoration));
+      else if (item instanceof HTMLElement) {
+        text.push(RichTextCharacter.parseHTML(item, decoration));
       }
     }
 
-    return text;
+    const value = [] as RichTextCharacter[];
+    for (let i = 0; i < text.length; i++) {
+      value.push(...text[i]);
+      if (i > 0 && i < text.length - 1) {
+        value.push(new RichTextCharacter({value: RichTextCharacter.linebreak, decoration: RichTextDecoration.parseHTML(element, decoration)}));
+      }
+    }
+
+    return value;
   }
 
 }
