@@ -340,7 +340,7 @@ export default class EditText extends Component<EditTextProps, State> {
     if (decoration.link) return <a className={Style.Link} href={decoration.link} key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, link: ""}})}</a>;
 
     const classes = [Style.Text] as string[];
-    if (decoration.selected && this.props.active !== false) classes.push(Style.Selected);
+    if (decoration.selected && Helper.getActiveElement() === this.state.ref.current) classes.push(Style.Selected);
 
     return (
       <span key={key} className={classes.join(" ")} data-fragment={key} style={new RichTextDecoration(decoration).toCSSProperties()}>
@@ -471,6 +471,8 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 
   private readonly eventSelect = () => {
+    if (this.state.ref.current !== document.activeElement) return;
+
     const selection = this.getSelection();
     const {section, section_offset, character, character_offset, forward} = this.props.selection;
     const {section: prev_section, section_offset: prev_section_offset, character: prev_character, character_offset: prev_character_offset, forward: prev_forward} = selection;
@@ -522,7 +524,6 @@ export interface EditTextSelection extends RichTextSelection {
 export type EditTextCommandList = (keyof Initializer<RichTextDecoration>)[];
 
 export interface EditTextProps {
-  active?: boolean;
   children: RichText;
   selection: EditTextSelection;
   className?: string;

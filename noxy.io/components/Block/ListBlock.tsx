@@ -1,14 +1,15 @@
 import React from "react";
-import RichText from "../../classes/RichText/RichText";
+import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
 import RichTextCharacter from "../../classes/RichText/RichTextCharacter";
 import RichTextSection from "../../classes/RichText/RichTextSection";
-import ListPageBlockEntity from "../../entities/Page/Block/ListPageBlockEntity";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
 import Component from "../Application/Component";
-import {PageExplorerBlockProps, PageExplorerBlockState} from "../Application/PageExplorer";
+import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import EditText, {EditTextCommandList, EditTextSelection} from "../Text/EditText";
 import Style from "./ListBlock.module.scss";
+import PageBlockEntity from "../../entities/Page/PageBlockEntity";
+import Util from "../../../common/services/Util";
 
 export default class ListBlock extends Component<ListBlockProps, State> {
 
@@ -22,62 +23,129 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   constructor(props: ListBlockProps) {
     super(props);
     this.state = {
-      ref:       React.createRef(),
       selection: {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: true},
     };
+  }
+
+  public replaceContent(old_text: RichText, new_text: RichText) {
+    if (this.props.block.content?.id !== old_text.id) throw new Error("Could not find text in HeaderBlock.");
+
+    return new PageBlockEntity({
+      ...this.props.block,
+      content: new_text,
+    });
   }
 
   private shiftLevel(component: EditText, up: boolean) {
     const selection = component.getSelection();
 
-    if (up) {
-      for (let i = selection.section; i <= selection.section_offset; i++) {
-        if (this.props.block.content.value.section_list[i].element.length >= ListBlock.indent_max) continue;
-        this.props.block.content.value.section_list[i].element.unshift(component.text.element);
+    for (let i = selection.section; i <= selection.section_offset; i++) {
+      const element = this.props.block.content?.section_list[i].element;
+      if (!element) continue;
+
+      const length = element.length ?? 0;
+      if (up && length < ListBlock.indent_max) {
+        element.unshift(component.text.element);
       }
-    }
-    else {
-      for (let i = selection.section; i <= selection.section_offset; i++) {
-        if (this.props.block.content.value.section_list[i].element.length <= ListBlock.indent_min) continue;
-        this.props.block.content.value.section_list[i].element.shift();
+      else if (!up && length > ListBlock.indent_min) {
+        element.shift();
       }
     }
 
-    this.props.onChange(this.props.block);
+    this.props.onPageBlockChange(this.props.block);
   };
 
   private insertLineBreak(component: EditText) {
     component.insertText(RichTextCharacter.linebreak);
-    this.props.onChange(this.props.block);
+    this.props.onPageBlockChange(this.props.block);
   }
 
   private insertParagraph(component: EditText) {
     component.write(new RichTextSection({element: component.text.getSection(component.getSelection().section).element}));
-    this.props.onChange(this.props.block);
+    this.props.onPageBlockChange(this.props.block);
+  }
+
+  private static parseInitializerValue(entity?: PageBlockEntity<ListBlockInitializer>) {
+    const parent = this.parseElement(entity?.content?.element);
+    return new RichText({
+      element:      parent,
+      section_list: this.parseSectionList(entity?.content?.section_list, parent),
+    });
+  }
+
+  private static parseElement(tag?: HTMLTag) {
+    switch (tag) {
+      case "blockquote":
+      case "ol":
+      case "ul":
+        return tag;
+      default:
+        return ListBlock.default_tag;
+    }
+  }
+
+  private static parseSectionList(list?: RichTextInitializer["section_list"], parent: HTMLTag = ListBlock.default_tag) {
+    const element = parent === "blockquote" ? "blockquote" : "li";
+    const section_list = [] as RichTextSection[];
+
+    if (!list) {
+      section_list.push(new RichTextSection({element}));
+    }
+    else if (typeof list === "string") {
+      section_list.push(new RichTextSection({character_list: list, element}));
+    }
+    else if (Array.isArray(list)) {
+      for (let i = 0; i < list.length; i++) {
+        const item = list.at(i);
+        if (!item) continue;
+        if (typeof item === "string") {
+          section_list.push(new RichTextSection({character_list: item, element}));
+        }
+        else {
+          section_list.push(new RichTextSection({...item, element: Util.arrayReplace([...item.element].fill(parent, 0, -1), item.element.length - 1, element)}));
+        }
+      }
+    }
+
+    return section_list;
+  }
+
+  public componentDidMount() {
+    this.props.onPageBlockChange(new PageBlockEntity<ListBlockContent>({
+      ...this.props.block,
+      content: ListBlock.parseInitializerValue(this.props.block),
+    }));
   }
 
   public render() {
+    const {readonly = true, decoration, block, className} = this.props;
+    const {selection} = this.state;
+    if (!block.content || !block.content?.length && readonly) return null;
+
     const classes = [Style.Component];
-    if (this.props.className) classes.push(this.props.className);
+    if (className) classes.push(className);
 
     return (
       <div className={classes.join(" ")}>
-        <EditText ref={this.state.ref} readonly={this.props.readonly} selection={this.state.selection} decoration={this.props.decoration} whitelist={ListBlock.whitelist}
-                  blacklist={ListBlock.blacklist}
-                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.eventSelect} onChange={this.eventChange} onKeyDown={this.eventKeyDown}>
-          {this.props.block.content.value}
+        <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={ListBlock.whitelist} blacklist={ListBlock.blacklist}
+                  onFocus={this.eventFocus} onSelect={this.eventSelect} onChange={this.eventChange} onKeyDown={this.eventKeyDown}>
+          {block.content}
         </EditText>
       </div>
     );
   }
 
+  private readonly eventFocus = (event: React.FocusEvent<HTMLDivElement>, component: EditText) => {
+    this.props.onEditTextChange(component);
+  };
+
   private readonly eventSelect = (selection: EditTextSelection, component: EditText) => {
     this.setState({selection});
-    this.props.onSelect(selection, component);
-  }
+    this.props.onDecorationChange(component.text.getDecoration(selection));
+  };
 
   private readonly eventChange = (text: RichText, component: EditText) => {
-    this.props.onChange(this.props.block.replaceText(component.text, text));
+    this.props.onPageBlockChange(this.replaceContent(component.text, text));
   };
 
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, component: EditText) => {
@@ -111,10 +179,15 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   };
 }
 
-export interface ListBlockProps extends PageExplorerBlockProps<ListPageBlockEntity> {
+export type ListBlockContent = RichText
+export type ListBlockInitializer = RichText | RichTextInitializer
+
+export interface ListBlockProps extends PageExplorerBlockProps<ListBlockContent> {
 
 }
 
-interface State extends PageExplorerBlockState {
-  ref: React.RefObject<EditText>;
+interface State {
+  selection: EditTextSelection;
 }
+
+

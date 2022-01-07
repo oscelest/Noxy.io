@@ -3,6 +3,7 @@ enum PageBlockType {
   LIST    = "list",
   HEADER  = "header",
   TABLE   = "table",
+  IMAGE   = "image",
 }
 
 export default PageBlockType;

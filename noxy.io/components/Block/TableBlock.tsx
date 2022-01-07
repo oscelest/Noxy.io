@@ -1,14 +1,14 @@
 import React from "react";
-import RichText from "../../classes/RichText/RichText";
-import TablePageBlockEntity from "../../entities/Page/Block/TablePageBlockEntity";
+import RichText, {RichTextObject} from "../../classes/RichText/RichText";
 import IconType from "../../enums/IconType";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
-import {PageExplorerBlockProps, PageExplorerBlockState} from "../Application/PageExplorer";
+import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import Button from "../Form/Button";
 import EditText, {EditTextCommandList, EditTextSelection} from "../Text/EditText";
 import Util from "../../../common/services/Util";
 import Style from "./TableBlock.module.scss";
+import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 
 export default class TableBlock extends Component<TableBlockProps, State> {
 
@@ -22,19 +22,78 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     };
   }
 
+  public getContent() {
+    if (!this.props.block.content) throw new Error(`Could not get TableBlock (id: ${this.props.block.id}) content`);
+    return this.props.block.content;
+  }
+
+  public getTextPosition(text: RichText) {
+    const content = this.getContent();
+
+    for (let y = 0; y < content.value.length; y++) {
+      const row = content.value.at(y);
+      if (!row) continue;
+
+      for (let x = 0; x < row.length; x++) {
+        const column = row.at(x);
+        if (column?.id !== text.id) continue;
+
+        return {x, y};
+      }
+    }
+
+    throw new Error("Could not find text in TableBlock.");
+  }
+
   private getTable() {
     const table = [] as RichText[][];
+    if (!this.props.block.content) return table;
 
-    for (let y = 0; y < this.props.block.content.y; y++) {
+    const content = this.getContent();
+    for (let y = 0; y < content.y; y++) {
       table[y] = [];
-      for (let x = 0; x < this.props.block.content.x; x++) {
-        const value = this.props.block.content.value.at(y)?.at(x);
+      for (let x = 0; x < content.x; x++) {
+        const value = content.value.at(y)?.at(x);
+
         if (!value) throw new Error(`Missing TableBlock RichText at Column ${y}, Row ${x}`);
         table[y][x] = value;
       }
     }
 
     return table;
+  }
+
+  public replaceContent(old_text: RichText, new_text: RichText) {
+    const {x, y} = this.getTextPosition(old_text);
+    const content = this.getContent();
+
+    const value_x = Util.arrayReplace(content.value[y], x, new_text);
+    const value_y = Util.arrayReplace(content.value, y, value_x);
+
+    return new PageBlockEntity<TableBlockContent>({...this.props.block, content: {...content, value: value_y}});
+  }
+
+  private static parseInitializerValue(entity?: PageBlockEntity<TableBlockInitializer>) {
+    const table = {value: [], x: entity?.content?.x ?? 1, y: entity?.content?.y ?? 1} as TableBlockContent;
+
+    for (let y = 0; y < table.y; y++) {
+      table.value[y] = [];
+      const row = table.value.at(y);
+
+      for (let x = 0; x < table.x; x++) {
+        const column = row?.at(x);
+        table.value[y][x] = column ? new RichText({section_list: column.section_list}) : new RichText();
+      }
+    }
+
+    return table;
+  }
+
+  public componentDidMount() {
+    this.props.onPageBlockChange(new PageBlockEntity<TableBlockContent>({
+      ...this.props.block,
+      content: TableBlock.parseInitializerValue(this.props.block),
+    }));
   }
 
   public render() {
@@ -80,7 +139,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     return (
       <td key={x}>
         <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={TableBlock.whitelist} blacklist={TableBlock.blacklist}
-                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.eventSelect} onChange={this.eventChange}>
+                  onFocus={this.eventFocus} onSelect={this.eventSelect} onChange={this.eventChange}>
           {text}
         </EditText>
       </td>
@@ -88,33 +147,66 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   };
 
   private readonly eventAddRowClick = () => {
-    this.props.block.content.y++;
-    this.props.onChange(this.props.block);
+    const content = this.getContent();
+
+    const y = content.y + 1;
+    const value = [...content.value, []] as RichText[][];
+    for (let i = 0; i < content.x; i++) {
+      value[content.y].push(new RichText());
+    }
+
+    this.props.onPageBlockChange(new PageBlockEntity<TableBlockContent>({...this.props.block, content: {...content, y, value}}));
   };
 
   private readonly eventAddColumnClick = () => {
-    this.props.block.content.x++;
-    this.props.onChange(this.props.block);
+    const content = this.getContent();
+
+    const x = content.x + 1;
+    const value = [...content.value] as RichText[][];
+    for (let i = 0; i < content.y; i++) {
+      value[i].push(new RichText());
+    }
+
+    this.props.onPageBlockChange(new PageBlockEntity<TableBlockContent>({...this.props.block, content: {...content, x, value}}));
+  };
+
+  private readonly eventFocus = (event: React.FocusEvent<HTMLDivElement>, component: EditText) => {
+    this.props.onEditTextChange(component);
   };
 
   private readonly eventSelect = (selection: EditTextSelection, component: EditText) => {
-    const {x, y} = this.props.block.getTextPosition(component.text);
-    this.props.onSelect(selection, component);
-    this.setState({selection: Util.arrayReplace(this.state.selection, y, Util.arrayReplace(this.state.selection[y] ?? [], x, selection))});
-  }
+    const {x, y} = this.getTextPosition(component.text);
+    this.props.onDecorationChange(component.text.getDecoration(selection));
+
+    const value_x = Util.arrayReplace(this.state.selection.at(y) ?? [], x, selection);
+    const value_y = Util.arrayReplace(this.state.selection, y, value_x);
+    this.setState({selection: value_y});
+  };
 
   private readonly eventChange = (text: RichText, component: EditText) => {
-    const {x, y} = this.props.block.getTextPosition(component.text);
-    this.props.block.content.value[y][x] = text;
-    this.props.onChange(this.props.block.replaceText(component.text, text));
+    this.props.onPageBlockChange(this.replaceContent(component.text, text));
   };
 }
 
-export interface TableBlockProps extends PageExplorerBlockProps<TablePageBlockEntity> {
+
+export interface TableBlockContent extends TableBlockBase {
+  value: RichText[][];
+}
+
+export interface TableBlockInitializer extends TableBlockBase {
+  value: RichText[][] | RichTextObject[][];
+}
+
+interface TableBlockBase {
+  x: number;
+  y: number;
+}
+
+export interface TableBlockProps extends PageExplorerBlockProps<TableBlockContent> {
 
 }
 
-interface State extends Omit<PageExplorerBlockState, "selection"> {
+interface State {
   selection: EditTextSelection[][];
 }
 

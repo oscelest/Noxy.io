@@ -1,42 +1,87 @@
 import EditText, {EditTextCommandList, EditTextSelection} from "components/Text/EditText";
 import React from "react";
-import RichText from "../../classes/RichText/RichText";
-import HeaderPageBlockEntity from "../../entities/Page/Block/HeaderPageBlockEntity";
+import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
-import {PageExplorerBlockProps, PageExplorerBlockState} from "../Application/PageExplorer";
+import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import Button from "../Form/Button";
 import Style from "./HeaderBlock.module.scss";
+import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 
 export default class HeaderBlock extends Component<HeaderBlockProps, State> {
 
   private static readonly blacklist: EditTextCommandList = ["bold"];
   private static readonly whitelist: EditTextCommandList = [];
 
+  public static readonly default_tag: HTMLTag = "h1";
+
   constructor(props: HeaderBlockProps) {
     super(props);
     this.state = {
-      ref:       React.createRef(),
       selection: {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: true},
     };
   }
 
+  public replaceContent(old_text: RichText, new_text: RichText) {
+    if (this.props.block.content?.id !== old_text.id) throw new Error("Could not find text in HeaderBlock.");
+
+    return new PageBlockEntity({
+      ...this.props.block,
+      content: new_text,
+    });
+  }
+
+  public replaceContentElement(level: number) {
+    if (level < 0 || level > 6) throw new Error("Header block element must be either h1, h2, h3, h4, h5, or h6.");
+
+    const content = new RichText({...this.props.block.content, element: `h${level}` as HTMLTag});
+    return new PageBlockEntity<HeaderBlockContent>({...this.props.block, content});
+  }
+
+  private static parseInitializerValue(value?: PageBlockEntity<HeaderBlockInitializer>) {
+    return new RichText({
+      element:      this.parseElement(value?.content?.element),
+      section_list: value?.content?.section_list,
+    });
+  }
+
+  private static parseElement(tag?: HTMLTag) {
+    switch (tag) {
+      case "h1":
+      case "h2":
+      case "h3":
+      case "h4":
+      case "h5":
+      case "h6":
+        return tag;
+      default:
+        return HeaderBlock.default_tag;
+    }
+  }
+
+  public componentDidMount() {
+    this.props.onPageBlockChange(new PageBlockEntity<HeaderBlockContent>({
+      ...this.props.block,
+      content: HeaderBlock.parseInitializerValue(this.props.block),
+    }));
+  }
+
   public render() {
-    const readonly = this.props.readonly ?? true;
-    if (readonly && !this.props.block.content.value.length) return null;
+    const {readonly = true, decoration, block, className} = this.props;
+    const {selection} = this.state;
+    if (!block.content || !block.content?.length && readonly) return null;
 
     const classes = [Style.Component];
-    if (this.props.className) classes.push(this.props.className);
+    if (className) classes.push(className);
 
     return (
       <div className={classes.join(" ")}>
         <Conditional condition={!readonly}>
           {this.renderOptionList()}
         </Conditional>
-        <EditText ref={this.state.ref} selection={this.state.selection} readonly={this.props.readonly} decoration={this.props.decoration} whitelist={HeaderBlock.whitelist}
-                  blacklist={HeaderBlock.blacklist}
-                  onBlur={this.props.onBlur} onFocus={this.props.onFocus} onSelect={this.eventSelect} onChange={this.eventChange}>
-          {this.props.block.content.value}
+        <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={HeaderBlock.whitelist}
+                  blacklist={HeaderBlock.blacklist} onFocus={this.eventFocus} onSelect={this.eventSelect} onChange={this.eventChange}>
+          {block.content}
         </EditText>
       </div>
     );
@@ -55,26 +100,31 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     );
   };
 
+  private readonly eventFocus = (event: React.FocusEvent<HTMLDivElement>, component: EditText) => {
+    this.props.onEditTextChange(component);
+  };
+
   private readonly eventSelect = (selection: EditTextSelection, component: EditText) => {
     this.setState({selection});
-    this.props.onSelect(selection, component);
-  }
+    this.props.onDecorationChange(component.text.getDecoration(selection));
+  };
 
   private readonly eventChange = (text: RichText, component: EditText) => {
-    this.props.onChange(this.props.block.replaceText(component.text, text));
+    this.props.onPageBlockChange(this.replaceContent(component.text, text));
   };
 
   private readonly eventHeaderLevelClick = (level: number) => {
-    const {id, section_list} = this.props.block.content.value;
-    this.props.block.content.value = new RichText({id, section_list, element: `h${level}` as HTMLTag});
-    this.props.onChange(this.props.block);
+    this.props.onPageBlockChange(this.replaceContentElement(level));
   };
 }
 
-export interface HeaderBlockProps extends PageExplorerBlockProps<HeaderPageBlockEntity> {
+export type HeaderBlockContent = RichText
+export type HeaderBlockInitializer = RichText | RichTextInitializer
+
+export interface HeaderBlockProps extends PageExplorerBlockProps<HeaderBlockContent> {
 
 }
 
-interface State extends PageExplorerBlockState {
-  ref: React.RefObject<EditText>;
+interface State {
+  selection: EditTextSelection;
 }

@@ -26,7 +26,10 @@ export default class RichText {
     this.element = initializer.element ?? "div";
     this.section_list = [];
 
-    if (typeof initializer.section_list === "string") {
+    if (!initializer.section_list) {
+      this.section_list.push(new RichTextSection());
+    }
+    else if (typeof initializer.section_list === "string") {
       this.section_list.push(...RichTextSection.parseText(initializer.section_list));
     }
     else if (Array.isArray(initializer.section_list)) {
@@ -268,7 +271,7 @@ export default class RichText {
     return new RichText(content);
   }
 
-  public static parseHTML(node: Node) {
+  public static parseHTML(node: HTMLElement) {
     return new RichText({section_list: RichTextSection.parseHTML(node)});
   }
 }
