@@ -56,6 +56,14 @@
             &:last-child {
               border-right: $border-width solid $border-color;
             }
+
+            *:first-child {
+              padding-top: 0;
+            }
+
+            *:last-child {
+              padding-bottom: 0;
+            }
           }
         }
       }

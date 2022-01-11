@@ -18,7 +18,7 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     };
   }
 
-  public replaceValue(old_text: RichText, new_text: RichText) {
+  public replaceContent(old_text: RichText, new_text: RichText) {
     if (this.props.block.content?.id !== old_text.id) throw new Error("Could not find text in TextBlock.");
 
     return new PageBlockEntity({
@@ -69,7 +69,7 @@ export default class TextBlock extends Component<TextBlockProps, State> {
   };
 
   private readonly eventChange = (text: RichText, component: EditText) => {
-    this.props.onPageBlockChange(this.replaceValue(component.text, text));
+    this.props.onPageBlockChange(this.replaceContent(component.text, text));
   };
 }
 

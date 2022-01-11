@@ -27,6 +27,9 @@ enum IconType {
   UI_SETTINGS    = "\uec83",
   UI_TAG         = "\uec85",
 
+  ALIGN_CENTER   = "\ueddf",
+  ALIGN_LEFT     = "\uede0",
+  ALIGN_RIGHT    = "\uede1",
   BOLD           = "\uede3",
   CODE_ALT       = "\uede6",
   COLOR_BUCKET   = "\uede7",

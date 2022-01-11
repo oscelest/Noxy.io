@@ -20,8 +20,6 @@ import Dialog from "./Dialog";
 import Style from "./PageExplorer.module.scss";
 import ImageBlock from "../Block/ImageBlock";
 import Util from "../../../common/services/Util";
-import RichText from "../../classes/RichText/RichText";
-import RichTextSection from "../../classes/RichText/RichTextSection";
 
 export default class PageExplorer extends Component<PageExplorerProps, State> {
 
@@ -220,21 +218,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
 
   private readonly eventBlockAddClick = (type: PageBlockType) => {
-    const page_block_list = [...this.props.entity.page_block_list];
-    if (type === PageBlockType.LIST) {
-      page_block_list.push(new PageBlockEntity({id: v4(), type, content: new RichText({
-          element: "ul",
-          section_list: [
-            new RichTextSection({
-              character_list: "abc",
-              element: ["ul", "ul", "li"]
-            })
-          ]
-        })}));
-    }
-    else {
-      page_block_list.push(new PageBlockEntity({id: v4(), type}))
-    }
+    const page_block_list = [...this.props.entity.page_block_list, new PageBlockEntity({id: v4(), type})];
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list}));
   };
 

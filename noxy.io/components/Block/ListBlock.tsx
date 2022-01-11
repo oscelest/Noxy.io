@@ -41,6 +41,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
 
     for (let i = selection.section; i <= selection.section_offset; i++) {
       const element = this.props.block.content?.section_list[i].element;
+      console.log(element);
       if (!element) continue;
 
       const length = element.length ?? 0;
@@ -57,12 +58,10 @@ export default class ListBlock extends Component<ListBlockProps, State> {
 
   private insertLineBreak(component: EditText) {
     component.insertText(RichTextCharacter.linebreak);
-    this.props.onPageBlockChange(this.props.block);
   }
 
   private insertParagraph(component: EditText) {
-    component.write(new RichTextSection({element: component.text.getSection(component.getSelection().section).element}));
-    this.props.onPageBlockChange(this.props.block);
+    component.write(new RichTextSection({element: [...component.text.getSection(component.getSelection().section).element]}));
   }
 
   private static parseInitializerValue(entity?: PageBlockEntity<ListBlockInitializer>) {

@@ -1,9 +1,62 @@
 @import "../../variables";
 
 .Component {
-  flex: 0 0 auto;
+  flex:      0 0 auto;
   flex-flow: column;
-  overflow: auto;
+  overflow:  auto;
 
+  .Image {
 
+  }
+
+  .Preview {
+    min-height: 100px;
+  }
+
+  .Overlay {
+    position:        absolute;
+    top:             0;
+    left:            0;
+    right:           0;
+    bottom:          0;
+    flex-flow:       column;
+    justify-content: center;
+    align-items:     center;
+  }
+
+  .OptionList {
+    grid-column-gap: 10px;
+
+    .Switch {
+
+      .AlignmentButton {
+        flex:          0 1 auto;
+        border-radius: 0;
+
+        &:first-child {
+          border-top-left-radius:    $border-radius;
+          border-bottom-left-radius: $border-radius;
+        }
+
+        &:last-child {
+          border-top-right-radius:    $border-radius;
+          border-bottom-right-radius: $border-radius;
+        }
+
+        &.Active:hover {
+          color: white;
+        }
+
+        &.Inactive {
+          color:            $disabled-color;
+          background-color: $border-color;
+
+          &:hover {
+            color: $focus-color;
+          }
+        }
+      }
+    }
+  }
 }
+

@@ -30,8 +30,8 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   public getTextPosition(text: RichText) {
     const content = this.getContent();
 
-    for (let y = 0; y < content.value.length; y++) {
-      const row = content.value.at(y);
+    for (let y = 0; y < content.table.length; y++) {
+      const row = content.table.at(y);
       if (!row) continue;
 
       for (let x = 0; x < row.length; x++) {
@@ -53,7 +53,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     for (let y = 0; y < content.y; y++) {
       table[y] = [];
       for (let x = 0; x < content.x; x++) {
-        const value = content.value.at(y)?.at(x);
+        const value = content.table.at(y)?.at(x);
 
         if (!value) throw new Error(`Missing TableBlock RichText at Column ${y}, Row ${x}`);
         table[y][x] = value;
@@ -63,26 +63,26 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     return table;
   }
 
-  public replaceContent(old_text: RichText, new_text: RichText) {
+  public replaceTable(old_text: RichText, new_text: RichText) {
     const {x, y} = this.getTextPosition(old_text);
     const content = this.getContent();
 
-    const value_x = Util.arrayReplace(content.value[y], x, new_text);
-    const value_y = Util.arrayReplace(content.value, y, value_x);
+    const value_x = Util.arrayReplace(content.table[y], x, new_text);
+    const value_y = Util.arrayReplace(content.table, y, value_x);
 
-    return new PageBlockEntity<TableBlockContent>({...this.props.block, content: {...content, value: value_y}});
+    return new PageBlockEntity<TableBlockContent>({...this.props.block, content: {...content, table: value_y}});
   }
 
   private static parseInitializerValue(entity?: PageBlockEntity<TableBlockInitializer>) {
-    const table = {value: [], x: entity?.content?.x ?? 1, y: entity?.content?.y ?? 1} as TableBlockContent;
+    const table = {table: [], x: entity?.content?.x ?? 1, y: entity?.content?.y ?? 1} as TableBlockContent;
 
     for (let y = 0; y < table.y; y++) {
-      table.value[y] = [];
-      const row = table.value.at(y);
+      table.table[y] = [];
+      const row = table.table.at(y);
 
       for (let x = 0; x < table.x; x++) {
         const column = row?.at(x);
-        table.value[y][x] = column ? new RichText({section_list: column.section_list}) : new RichText();
+        table.table[y][x] = column ? new RichText({section_list: column.section_list}) : new RichText();
       }
     }
 
@@ -150,24 +150,24 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     const content = this.getContent();
 
     const y = content.y + 1;
-    const value = [...content.value, []] as RichText[][];
+    const value = [...content.table, []] as RichText[][];
     for (let i = 0; i < content.x; i++) {
       value[content.y].push(new RichText());
     }
 
-    this.props.onPageBlockChange(new PageBlockEntity<TableBlockContent>({...this.props.block, content: {...content, y, value}}));
+    this.props.onPageBlockChange(new PageBlockEntity<TableBlockContent>({...this.props.block, content: {...content, y, table: value}}));
   };
 
   private readonly eventAddColumnClick = () => {
     const content = this.getContent();
 
     const x = content.x + 1;
-    const value = [...content.value] as RichText[][];
+    const value = [...content.table] as RichText[][];
     for (let i = 0; i < content.y; i++) {
       value[i].push(new RichText());
     }
 
-    this.props.onPageBlockChange(new PageBlockEntity<TableBlockContent>({...this.props.block, content: {...content, x, value}}));
+    this.props.onPageBlockChange(new PageBlockEntity<TableBlockContent>({...this.props.block, content: {...content, x, table: value}}));
   };
 
   private readonly eventFocus = (event: React.FocusEvent<HTMLDivElement>, component: EditText) => {
@@ -184,17 +184,17 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   };
 
   private readonly eventChange = (text: RichText, component: EditText) => {
-    this.props.onPageBlockChange(this.replaceContent(component.text, text));
+    this.props.onPageBlockChange(this.replaceTable(component.text, text));
   };
 }
 
 
 export interface TableBlockContent extends TableBlockBase {
-  value: RichText[][];
+  table: RichText[][];
 }
 
 export interface TableBlockInitializer extends TableBlockBase {
-  value: RichText[][] | RichTextObject[][];
+  table: RichText[][] | RichTextObject[][];
 }
 
 interface TableBlockBase {
