@@ -5,15 +5,16 @@ import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import Button from "../Form/Button";
-import EditText, {EditTextCommandList, EditTextSelection} from "../Text/EditText";
+import EditText, {EditTextSelection} from "../Text/EditText";
 import Util from "../../../common/services/Util";
 import Style from "./TableBlock.module.scss";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
+import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 
 export default class TableBlock extends Component<TableBlockProps, State> {
 
-  private static readonly blacklist: EditTextCommandList = [];
-  private static readonly whitelist: EditTextCommandList = [];
+  private static readonly blacklist: RichTextDecorationKeys[] = [];
+  private static readonly whitelist: RichTextDecorationKeys[] = [];
 
   constructor(props: TableBlockProps) {
     super(props);
@@ -133,13 +134,13 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   };
 
   private readonly renderColumn = (text: RichText, y: number = 0, x: number = 0) => {
-    const {readonly, decoration} = this.props;
+    const {readonly, decoration, onDecorationChange} = this.props;
     const selection = this.state.selection.at(y)?.at(x) ?? {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: false};
 
     return (
       <td key={x}>
         <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={TableBlock.whitelist} blacklist={TableBlock.blacklist}
-                  onFocus={this.eventFocus} onSelect={this.eventSelect} onChange={this.eventChange}>
+                  onFocus={this.eventFocus} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventChange}>
           {text}
         </EditText>
       </td>

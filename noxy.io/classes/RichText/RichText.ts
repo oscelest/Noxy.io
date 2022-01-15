@@ -1,6 +1,6 @@
 import {v4} from "uuid";
 import RichTextCharacter from "./RichTextCharacter";
-import RichTextDecoration from "./RichTextDecoration";
+import RichTextDecoration, {RichTextDecorationKeys} from "./RichTextDecoration";
 import RichTextSection, {RichTextSectionContent, RichTextSectionSelection} from "./RichTextSection";
 
 export default class RichText {
@@ -91,7 +91,7 @@ export default class RichText {
     return section < 0 ? Math.max(0, this.length + section) : section;
   }
 
-  public hasDecoration(property: keyof Properties<RichTextDecoration>, {section, section_offset, character, character_offset}: RichTextSelection, flag_all: boolean = true) {
+  public hasDecoration(property: RichTextDecorationKeys, {section, section_offset, character, character_offset}: RichTextSelection, flag_all: boolean = true) {
     section = this.parseSectionPosition(section);
     section_offset = this.parseSectionPosition(section_offset);
 

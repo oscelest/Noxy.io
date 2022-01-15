@@ -3,39 +3,37 @@ import Helper from "../../Helper";
 
 export default class RichTextDecoration {
 
-  public readonly bold: boolean;
-  public readonly code: boolean;
-  public readonly mark: boolean;
-  public readonly italic: boolean;
-  public readonly underline: boolean;
-  public readonly strikethrough: boolean;
+  public readonly bold?: boolean;
+  public readonly code?: boolean;
+  public readonly mark?: boolean;
+  public readonly italic?: boolean;
+  public readonly underline?: boolean;
+  public readonly strikethrough?: boolean;
 
-  public readonly font_size: string;
-  public readonly font_length: string;
-  public readonly font_family: string;
-  public readonly color: string;
-  public readonly background_color: string;
+  public readonly font_size?: string;
+  public readonly font_family?: string;
+  public readonly color?: string;
+  public readonly background_color?: string;
 
-  public readonly link: string;
-  public readonly selected: boolean;
+  public readonly link?: string;
+  public readonly selected?: boolean;
 
   constructor(initializer: RichTextDecorationInitializer = {}) {
-    this.bold = initializer.bold ?? false;
-    this.code = initializer.code ?? false;
-    this.mark = initializer.mark ?? false;
-    this.italic = initializer.italic ?? false;
-    this.underline = initializer.underline ?? false;
-    this.strikethrough = initializer.strikethrough ?? false;
+    this.bold = initializer.bold;
+    this.code = initializer.code;
+    this.mark = initializer.mark;
+    this.italic = initializer.italic;
+    this.underline = initializer.underline;
+    this.strikethrough = initializer.strikethrough;
 
-    this.font_family = initializer.font_family ?? "";
-    this.font_size = initializer.font_size ?? "";
-    this.font_length = initializer.font_length ?? "";
+    this.font_family = initializer.font_family;
+    this.font_size = initializer.font_size;
 
-    this.color = initializer.color ?? "";
-    this.background_color = initializer.background_color ?? "";
+    this.color = initializer.color;
+    this.background_color = initializer.background_color;
 
-    this.link = initializer.link ?? "";
-    this.selected = initializer.selected ?? false;
+    this.link = initializer.link;
+    this.selected = initializer.selected;
   }
 
   public toObject(): RichTextDecorationObject {
@@ -49,7 +47,6 @@ export default class RichTextDecoration {
 
       font_family:      this.font_family,
       font_size:        this.font_size,
-      font_length:      this.font_length,
       color:            this.color,
       background_color: this.background_color,
 
@@ -64,7 +61,7 @@ export default class RichTextDecoration {
     if (this.color) styling.color = this.color;
     if (this.background_color) styling.backgroundColor = this.background_color;
     if (this.font_family) styling.fontFamily = this.font_family;
-    if (this.font_size + this.font_length) styling.fontSize = this.font_size + this.font_length;
+    if (this.font_size) styling.fontSize = `${this.font_size}px`;
 
     return styling;
   }
@@ -75,7 +72,7 @@ export default class RichTextDecoration {
     if (this.color) node.style.color = this.color;
     if (this.background_color) node.style.backgroundColor = this.background_color;
     if (this.font_family) node.style.fontFamily = this.font_family;
-    if (this.font_size + this.font_length) node.style.fontSize = this.font_size + this.font_length;
+    if (this.font_size) node.style.fontSize = this.font_size;
 
     return node;
   }
@@ -85,7 +82,8 @@ export default class RichTextDecoration {
   }
 
   public equals(decoration: RichTextDecoration) {
-    return Object.keys(this).every(key => this[key as keyof RichTextDecoration] === decoration[key as keyof RichTextDecoration]);
+    const keys = Object.keys(this) as (keyof RichTextDecoration)[];
+    return keys.every(key => this[key] === decoration[key]);
   }
 
   public union(...target_list: Partial<RichTextDecorationObject>[]) {
@@ -134,7 +132,6 @@ export default class RichTextDecoration {
 
       font_family: this.parseNodeFontFamily(fontFamily) || decoration?.font_family,
       font_size:   this.parseNodeFontSize(fontSize) || decoration?.font_size,
-      font_length: this.parseNodeFontLength(fontSize) || decoration?.font_length,
 
       color:            color || decoration?.color,
       background_color: backgroundColor || decoration?.background_color,
@@ -169,10 +166,6 @@ export default class RichTextDecoration {
     return style.match(/^(?<size>\d+)/)?.groups?.size || "";
   }
 
-  private static parseNodeFontLength(style: string) {
-    return style.match(/(?<length>\D+)$/)?.groups?.length || "";
-  }
-
   private static parseNodeLink(node: HTMLElement, current: string = "") {
     return node instanceof HTMLAnchorElement ? node.href : current;
   }
@@ -186,5 +179,8 @@ export default class RichTextDecoration {
   }
 }
 
+export type RichTextDecorationKeys = NonNullable<keyof Properties<RichTextDecoration>>
+export type RichTextDecorationBooleanKeys = Extract<keyof RichTextDecoration, "bold" | "italic" | "underline" | "strikethrough" | "code" | "mark">
+export type RichTextDecorationStringKeys = Extract<keyof RichTextDecoration, "font_family" | "font_size" | "link" | "code" | "mark" | "color" | "background_color">
 export type RichTextDecorationObject = Writeable<Properties<RichTextDecoration>>;
 export type RichTextDecorationInitializer = Initializer<RichTextDecoration>;

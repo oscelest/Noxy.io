@@ -6,15 +6,16 @@ import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
 import Component from "../Application/Component";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
-import EditText, {EditTextCommandList, EditTextSelection} from "../Text/EditText";
+import EditText, {EditTextSelection} from "../Text/EditText";
 import Style from "./ListBlock.module.scss";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import Util from "../../../common/services/Util";
+import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 
 export default class ListBlock extends Component<ListBlockProps, State> {
 
-  private static readonly blacklist: EditTextCommandList = [];
-  private static readonly whitelist: EditTextCommandList = [];
+  private static readonly blacklist: RichTextDecorationKeys[] = [];
+  private static readonly whitelist: RichTextDecorationKeys[] = [];
 
   public static readonly indent_min: number = 1;
   public static readonly indent_max: number = 5;
@@ -117,7 +118,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   }
 
   public render() {
-    const {readonly = true, decoration, block, className} = this.props;
+    const {readonly = true, decoration, block, className, onDecorationChange} = this.props;
     const {selection} = this.state;
     if (!block.content || !block.content?.length && readonly) return null;
 
@@ -125,12 +126,10 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     if (className) classes.push(className);
 
     return (
-      <div className={classes.join(" ")}>
-        <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={ListBlock.whitelist} blacklist={ListBlock.blacklist}
-                  onFocus={this.eventFocus} onSelect={this.eventSelect} onChange={this.eventChange} onKeyDown={this.eventKeyDown}>
-          {block.content}
-        </EditText>
-      </div>
+      <EditText className={classes.join(" ")} readonly={readonly} selection={selection} decoration={decoration} whitelist={ListBlock.whitelist} blacklist={ListBlock.blacklist}
+                onFocus={this.eventFocus} onKeyDown={this.eventKeyDown} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventChange}>
+        {block.content}
+      </EditText>
     );
   }
 

@@ -4,21 +4,20 @@ import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import Style from "./ImageBlock.module.scss";
 import Dialog from "../Application/Dialog";
 import FileExplorer from "../Application/FileExplorer";
-import Preview from "../UI/Preview";
-import FileTypeName from "../../../common/enums/FileTypeName";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
-import EditText, {EditTextSelection, EditTextCommandList} from "../Text/EditText";
+import EditText, {EditTextSelection} from "../Text/EditText";
 import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
 import Conditional from "../Application/Conditional";
 import Button from "../Form/Button";
 import Input from "../Form/Input";
 import Alignment from "../../../common/enums/Alignment";
 import IconType from "../../enums/IconType";
+import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 
 export default class ImageBlock extends Component<ImageBlockProps, State> {
 
-  private static readonly blacklist: EditTextCommandList = [];
-  private static readonly whitelist: EditTextCommandList = [];
+  private static readonly blacklist: RichTextDecorationKeys[] = [];
+  private static readonly whitelist: RichTextDecorationKeys[] = [];
 
   constructor(props: ImageBlockProps) {
     super(props);
@@ -30,6 +29,14 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
   private getContent() {
     if (!this.props.block.content) throw new Error("Could not get block content.");
     return this.props.block.content;
+  }
+
+  private getContentClass() {
+    const classes = [Style.Content];
+    if (this.props.block.content?.alignment === Alignment.LEFT) classes.push(Style.Left);
+    if (this.props.block.content?.alignment === Alignment.CENTER) classes.push(Style.Center);
+    if (this.props.block.content?.alignment === Alignment.RIGHT) classes.push(Style.Right);
+    return classes.join(" ");
   }
 
   private static parseInitializerCaption(entity?: PageBlockEntity<ImageBlockInitializer>) {
@@ -51,7 +58,7 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
   }
 
   public render() {
-    const {readonly = true, decoration, block, className} = this.props;
+    const {readonly = true, decoration, block, className, onDecorationChange} = this.props;
     const {selection} = this.state;
     if (!block.content || !block.content.caption && readonly) return null;
 
@@ -62,7 +69,7 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
       <div className={classes.join(" ")}>
         <Conditional condition={!readonly}>
           <div className={Style.OptionList}>
-            <Button value={1} onClick={this.eventOpenDialog}>Browse</Button>
+            <Button onClick={this.eventOpenDialog}>Browse</Button>
             <Input label={"Link to image"} value={block.content.url} onChange={this.eventURLChange}/>
             <div className={Style.Switch}>
               {this.renderAlignmentSwitchButton(Alignment.LEFT, IconType.ALIGN_LEFT)}
@@ -71,11 +78,13 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
             </div>
           </div>
         </Conditional>
-        <Preview className={Style.Preview} path={block.content.url} type={FileTypeName.IMAGE}/>
-        <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={ImageBlock.whitelist}
-                  blacklist={ImageBlock.blacklist} onFocus={this.eventFocus} onSelect={this.eventSelect} onChange={this.eventCaptionChange}>
-          {block.content.caption}
-        </EditText>
+        <div className={this.getContentClass()}>
+          <img className={Style.Preview} src={block.content.url} alt={""}/>
+          <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={ImageBlock.whitelist} blacklist={ImageBlock.blacklist}
+                    onFocus={this.eventFocus} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventCaptionChange}>
+            {block.content.caption}
+          </EditText>
+        </div>
       </div>
     );
   }
@@ -90,8 +99,7 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
   }
 
   private readonly eventOpenDialog = () => {
-    const dialog = Dialog.show(<FileExplorer/>);
-    this.setState({dialog});
+    this.setState({dialog: Dialog.show(<FileExplorer/>)});
   };
 
   private readonly eventFocus = (event: React.FocusEvent<HTMLDivElement>, component: EditText) => {

@@ -62,7 +62,8 @@
   .BlockList {
     flex:      1 1 auto;
     flex-flow: column;
-    overflow:  auto;
+    overflow-x: hidden;
+    overflow-y: auto;
 
     .Block {
       flex:            0 0 auto;

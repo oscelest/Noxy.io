@@ -43,8 +43,8 @@ namespace Util {
     return Math.min(Math.max(value, min), max);
   }
 
-  export function getProperties<O extends object>(object: O): (keyof O)[] {
-    return Object.getOwnPropertyNames(object) as (keyof O)[];
+  export function getProperties<O extends object>(object: O): NonNullable<(keyof O)>[] {
+    return Object.getOwnPropertyNames(object) as NonNullable<(keyof O)>[];
   }
 
   export function n2b(number: number) {

@@ -6,7 +6,7 @@
     "update": "npm outdated && npm update --save"
   },
   "dependencies":    {
-    "@aws-sdk/client-ses":       "^3.46.0",
+    "@aws-sdk/client-ses":       "^3.47.0",
     "@mikro-orm/core":           "^4.5.10",
     "@mikro-orm/mysql":          "^4.5.10",
     "express":                   "^4.17.2",
@@ -14,7 +14,7 @@
     "lodash":                    "^4.17.21",
     "method-override":           "^3.0.0",
     "multer":                    "^1.4.4",
-    "nanoid":                    "^3.1.31",
+    "nanoid":                    "^3.1.32",
     "serve-favicon":             "^2.5.0",
     "uuid":                      "^8.3.2",
     "winston":                   "^3.4.0",
@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@types/express":                   "^4.17.13",
-    "@types/express-serve-static-core": "^4.17.27",
+    "@types/express-serve-static-core": "^4.17.28",
     "@types/lodash":                    "^4.14.178",
     "@types/method-override":           "^0.0.32",
     "@types/multer":                    "^1.4.7",

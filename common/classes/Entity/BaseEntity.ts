@@ -16,6 +16,10 @@ export default class BaseEntity {
 
   constructor(entity?: Properties<BaseEntity>) {}
 
+  public equals(entity?: BaseEntity): boolean {
+    return this.getPrimaryID() === entity?.getPrimaryID();
+  }
+
   public exists(): boolean {
     return this.getPrimaryID() !== BaseEntity.defaultID;
   }

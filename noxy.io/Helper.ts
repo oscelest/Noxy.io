@@ -9,25 +9,10 @@ namespace Helper {
   export const FontFamilyList = ["Arial", "Helvetica", "Verdana", "Georgia", "Times New Roman", "Tahoma", "Trebuchet MS", "Nunito", "Garamond", "Courier New", "Brush Script MT"];
   export const FontSizeList = ["8", "9", "10", "11", "12", "14", "18", "24", "30", "36", "48", "60", "72", "84", "96"];
   export const FontLengthList = ["px", "pt", "em", "rem", "vw", "vmax", "%", "cm", "mm", "in", "pc", "ex", "ch"];
-  
-  export function getChildNodeByTextLength(node: Node, text_length: number): [Node, number] {
-    for (let i = 0; i < node.childNodes.length; i++) {
-      const item = node.childNodes.item(i);
-      const length = Helper.getNodeTextLength(item);
-      
-      if (length < text_length) {
-        text_length -= length;
-      }
-      else if (item instanceof Text) {
-        return [item, text_length];
-      }
-      else {
-        return getChildNodeByTextLength(item, text_length);
-      }
-    }
-    
-    return [node, text_length];
-  }
+
+  export const FontFamilyDefault = FontFamilyList[7];
+  export const FontSizeDefault = FontSizeList[5];
+  export const FontLengthDefault = FontLengthList[0];
   
   export function getNodeTextLength(node: Node) {
     if (node instanceof Text) return node.length;

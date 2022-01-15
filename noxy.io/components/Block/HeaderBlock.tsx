@@ -1,4 +1,4 @@
-import EditText, {EditTextCommandList, EditTextSelection} from "components/Text/EditText";
+import EditText, {EditTextSelection} from "components/Text/EditText";
 import React from "react";
 import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
 import Component from "../Application/Component";
@@ -7,11 +7,12 @@ import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import Button from "../Form/Button";
 import Style from "./HeaderBlock.module.scss";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
+import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 
 export default class HeaderBlock extends Component<HeaderBlockProps, State> {
 
-  private static readonly blacklist: EditTextCommandList = ["bold"];
-  private static readonly whitelist: EditTextCommandList = [];
+  private static readonly blacklist: RichTextDecorationKeys[] = ["bold"];
+  private static readonly whitelist: RichTextDecorationKeys[] = [];
 
   public static readonly default_tag: HTMLTag = "h1";
 
@@ -67,7 +68,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
   }
 
   public render() {
-    const {readonly = true, decoration, block, className} = this.props;
+    const {readonly = true, decoration, block, className, onDecorationChange} = this.props;
     const {selection} = this.state;
     if (!block.content || !block.content?.length && readonly) return null;
 
@@ -79,8 +80,8 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
         <Conditional condition={!readonly}>
           {this.renderOptionList()}
         </Conditional>
-        <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={HeaderBlock.whitelist}
-                  blacklist={HeaderBlock.blacklist} onFocus={this.eventFocus} onSelect={this.eventSelect} onChange={this.eventChange}>
+        <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={HeaderBlock.whitelist} blacklist={HeaderBlock.blacklist}
+                  onFocus={this.eventFocus} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventChange}>
           {block.content}
         </EditText>
       </div>

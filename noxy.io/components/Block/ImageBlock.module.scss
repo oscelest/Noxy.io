@@ -3,15 +3,8 @@
 .Component {
   flex:      0 0 auto;
   flex-flow: column;
+  grid-row-gap: 10px;
   overflow:  auto;
-
-  .Image {
-
-  }
-
-  .Preview {
-    min-height: 100px;
-  }
 
   .Overlay {
     position:        absolute;
@@ -56,6 +49,25 @@
           }
         }
       }
+    }
+  }
+
+  .Content {
+    flex-flow: column;
+
+    &.Left {
+      align-items: flex-start;
+    }
+    &.Center {
+      align-items: center;
+    }
+    &.Right {
+      align-items: flex-end;
+    }
+
+    .Preview {
+      min-width: 100px;
+      min-height: 100px;
     }
   }
 }

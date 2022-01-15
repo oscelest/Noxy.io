@@ -1,7 +1,7 @@
 import {v4} from "uuid";
 import Util from "../../../common/services/Util";
 import RichTextCharacter, {RichTextCharacterContent} from "./RichTextCharacter";
-import RichTextDecoration, {RichTextDecorationObject} from "./RichTextDecoration";
+import RichTextDecoration, {RichTextDecorationObject, RichTextDecorationKeys} from "./RichTextDecoration";
 
 
 export default class RichTextSection {
@@ -118,7 +118,7 @@ export default class RichTextSection {
     return selection;
   }
 
-  public hasDecoration(property: keyof Properties<RichTextDecoration>, {character, character_offset}: RichTextSectionSelection, flag_all: boolean = true): boolean {
+  public hasDecoration(property: RichTextDecorationKeys, {character, character_offset}: RichTextSectionSelection, flag_all: boolean = true): boolean {
     character = this.parseCharacterPosition(character);
     character_offset = this.parseCharacterPosition(character_offset);
 
