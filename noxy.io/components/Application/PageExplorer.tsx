@@ -47,16 +47,14 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     };
   }
 
-  public decorate(value?: Initializer<RichTextDecoration>) {
-    this.setState({preview: undefined});
+  public decorate(value: Initializer<RichTextDecoration>) {
     this.state.text?.focus();
-    this.state.text?.decorate({...this.state.decoration, ...value});
+    this.setState({preview: undefined, decoration: new RichTextDecoration(value)});
   };
 
   public preview(value: Initializer<RichTextDecoration>) {
-    const preview = new RichTextDecoration({...this.state.preview ?? this.state.decoration, ...value});
-    this.setState({preview});
-    this.state.text?.decorate(preview);
+    console.log(new RichTextDecoration(value));
+    this.setState({preview: new RichTextDecoration(value)})
   }
 
   private getDragStyle(): React.CSSProperties {
@@ -171,6 +169,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
 
   private readonly renderPageBlock = (block: PageBlockEntity) => {
+    console.log(this.state.preview ?? this.state.decoration)
     return React.createElement(PageExplorer.block_map[block.type], {
       block,
       decoration:         this.state.preview ?? this.state.decoration,
@@ -181,7 +180,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
       onEditTextChange:   this.eventEditTextChange,
     });
   };
-
 
   private readonly eventDragMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     const next_state = {} as State;
@@ -247,17 +245,17 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     window.removeEventListener("mouseup", this.eventDragMouseUp);
   };
 
-  private readonly eventFontFamilyChange = (index: number, font_family: string) => this.decorate({font_family});
-  private readonly eventFontSizeChange = (index: number, font_size: string) => this.decorate({font_size});
+  private readonly eventFontFamilyChange = (index: number, font_family: string) => this.decorate({...this.state.decoration, font_family});
+  private readonly eventFontSizeChange = (index: number, font_size: string) => this.decorate({...this.state.decoration, font_size});
 
-  private readonly eventFontFamilyInput = (font_family: string) => this.preview({font_family});
-  private readonly eventFontSizeInput = (font_size: string) => this.preview({font_size});
+  private readonly eventFontFamilyInput = (font_family: string) => this.preview({...this.state.preview ?? this.state.decoration, font_family});
+  private readonly eventFontSizeInput = (font_size: string) => this.preview({...this.state.preview ?? this.state.decoration, font_size});
 
-  private readonly eventPreviewReset = () => this.decorate();
+  private readonly eventPreviewReset = () => this.decorate(this.state.decoration);
 
   private readonly eventEditModeClick = () => this.setState({edit: !this.state.edit});
 
-  private readonly eventDecorateButtonClick = (decoration: Initializer<RichTextDecoration>) => this.decorate(decoration);
+  private readonly eventDecorateButtonClick = (decoration: Initializer<RichTextDecoration>) => this.decorate({...this.state.decoration, ...decoration});
   private readonly eventDecorateButtonMouseDown = (property: Initializer<RichTextDecoration>, event: React.MouseEvent) => event.preventDefault();
 
   private readonly eventPageBlockRemove = (index: number) => {
@@ -278,12 +276,14 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list: Util.arrayReplace(this.props.entity.page_block_list, offset, block)}));
   };
 
-  private readonly eventDecorationChange = (decoration?: RichTextDecoration) => {
+  private readonly eventDecorationChange = (decoration: RichTextDecoration) => {
+    console.log("changed", decoration)
     if (this.state.preview) {
-      this.setState({preview: new RichTextDecoration({...this.state.preview, ...decoration})});
+      this.setState({preview: decoration});
+      // this.__preview = decoration;
     }
     else {
-      this.setState({decoration: new RichTextDecoration({...this.state.decoration, ...decoration})});
+      this.setState({decoration});
     }
   };
 

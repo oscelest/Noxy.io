@@ -283,6 +283,10 @@ export default class EditText extends Component<EditTextProps, State> {
       if (this.state.ref.current === document.activeElement) {
         this.focus();
       }
+      if (!this.props.decoration.equals(prevProps.decoration)) {
+        console.log("updating with", this.props.decoration)
+        this.decorate(this.props.decoration);
+      }
     }
     catch (error) {
       console.error(error);
@@ -459,17 +463,17 @@ export default class EditText extends Component<EditTextProps, State> {
       case KeyboardCommand.UNDO_ALT:
         return this.loadHistory(true);
       case KeyboardCommand.BOLD_TEXT:
-        return this.decorate({bold: !this.text.hasDecoration("bold", this.getSelection())});
+        return this.decorate({...this.props.decoration, bold: !this.text.hasDecoration("bold", this.getSelection())});
       case KeyboardCommand.ITALIC_TEXT:
-        return this.decorate({italic: !this.text.hasDecoration("italic", this.getSelection())});
+        return this.decorate({...this.props.decoration, italic: !this.text.hasDecoration("italic", this.getSelection())});
       case KeyboardCommand.UNDERLINE_TEXT:
-        return this.decorate({underline: !this.text.hasDecoration("underline", this.getSelection())});
+        return this.decorate({...this.props.decoration, underline: !this.text.hasDecoration("underline", this.getSelection())});
       case KeyboardCommand.MARK_TEXT:
-        return this.decorate({mark: !this.text.hasDecoration("mark", this.getSelection())});
+        return this.decorate({...this.props.decoration, mark: !this.text.hasDecoration("mark", this.getSelection())});
       case KeyboardCommand.CODE_TEXT:
-        return this.decorate({code: !this.text.hasDecoration("code", this.getSelection())});
+        return this.decorate({...this.props.decoration, code: !this.text.hasDecoration("code", this.getSelection())});
       case KeyboardCommand.STRIKETHROUGH_TEXT:
-        return this.decorate({strikethrough: !this.text.hasDecoration("strikethrough", this.getSelection())});
+        return this.decorate({...this.props.decoration, strikethrough: !this.text.hasDecoration("strikethrough", this.getSelection())});
     }
 
     event.bubbles = true;
@@ -489,7 +493,8 @@ export default class EditText extends Component<EditTextProps, State> {
     const {section, section_offset, character, character_offset, forward} = this.props.selection;
     const {section: prev_section, section_offset: prev_section_offset, character: prev_character, character_offset: prev_character_offset, forward: prev_forward} = selection;
     if (prev_section !== section || prev_section_offset !== section_offset || prev_character !== character || prev_character_offset !== character_offset || prev_forward !== forward) {
-      this.props.onSelect(this.getSelection(), this);
+      this.props.onSelect(selection, this);
+      this.props.onDecorationChange(this.text.getDecoration(selection) ?? this.props.decoration, this);
     }
   };
 
@@ -535,12 +540,14 @@ export interface EditTextSelection extends RichTextSelection {
 
 export interface EditTextProps {
   children: RichText;
-  selection: EditTextSelection;
   className?: string;
+
+  selection: EditTextSelection;
+  decoration: RichTextDecoration;
+
   readonly?: boolean;
   whitelist?: RichTextDecorationKeys[];
   blacklist?: RichTextDecorationKeys[];
-  decoration: RichTextDecoration;
 
   onBlur?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
   onFocus?(event: React.FocusEvent<HTMLDivElement>, component: EditText): void;
