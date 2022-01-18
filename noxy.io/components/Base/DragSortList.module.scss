@@ -1,0 +1,49 @@
+@import "../../variables";
+
+.Component {
+  flex: 1 1 auto;
+
+  &.Vertical {
+    flex-flow:    column;
+    overflow-x:   hidden;
+    overflow-y:   auto;
+    grid-row-gap: 10px;
+  }
+
+  &.Horizontal {
+    flex-flow:       row;
+    overflow-x:      auto;
+    overflow-y:      hidden;
+    grid-column-gap: 10px;
+  }
+
+  .Item {
+    flex:            0 0 auto;
+    grid-column-gap: 10px;
+    min-height:      32px;
+
+    &:empty {
+      display: none;
+    }
+
+    .Handle {
+      flex:         0 0 auto;
+      align-items:  center;
+      width:        16px;
+      border-right: $border-width solid $border-color;
+
+      &:before {
+        content:      " ";
+        width:        2px;
+        height:       25px;
+        border-left:  4px dotted $border-color;
+        border-right: 4px dotted $border-color;
+        cursor:       grab;
+      }
+    }
+
+    .Element {
+
+    }
+  }
+}

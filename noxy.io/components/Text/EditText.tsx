@@ -284,7 +284,6 @@ export default class EditText extends Component<EditTextProps, State> {
         this.focus();
       }
       if (!this.props.decoration.equals(prevProps.decoration)) {
-        console.log("updating with", this.props.decoration)
         this.decorate(this.props.decoration);
       }
     }

@@ -95,7 +95,7 @@ export default class RichText {
     section = this.parseSectionPosition(section);
     section_offset = this.parseSectionPosition(section_offset);
 
-    for (let i = section; i < section_offset; i++) {
+    for (let i = section; i <= section_offset; i++) {
       const current_section = this.getSection(i);
       const start_character = i === section ? character : 0;
       const end_character = i === section_offset ? character_offset : current_section.length;

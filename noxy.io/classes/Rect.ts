@@ -1,4 +1,3 @@
-import _ from "lodash";
 import Point from "./Point";
 
 export default class Rect {
@@ -31,23 +30,23 @@ export default class Rect {
   public static union(...rects: (Rect | DOMRect)[]) {
     if (rects.length === 0) return new Rect();
     if (rects.length === 1) return new Rect(rects[0].x, rects[0].y, rects[0].width, rects[0].height);
-    const x = Math.min(..._.map(rects, rect => rect.x));
-    const y = Math.min(..._.map(rects, rect => rect.y));
-    const width = Math.max(..._.map(rects, rect => rect.width + rect.x - x));
-    const height = Math.max(..._.map(rects, rect => rect.height + rect.y - y));
+    const x = Math.min(...rects.map(rect => rect.x));
+    const y = Math.min(...rects.map(rect => rect.y));
+    const width = Math.max(...rects.map(rect => rect.width + rect.x - x));
+    const height = Math.max(...rects.map(rect => rect.height + rect.y - y));
     return new Rect(x, y, width, height);
   }
 
   public isEqual(...target: (Rect | undefined)[]) {
-    return _.every(target, rect => rect instanceof Rect && rect.isFinite() && rect.x === this.x && rect.y === this.y && rect.width === this.width && rect.height === this.height);
+    return target.every(rect => rect instanceof Rect && rect.isFinite() && rect.x === this.x && rect.y === this.y && rect.width === this.width && rect.height === this.height);
   }
 
   public isEqualPosition(...target: (Rect | undefined)[]) {
-    return _.every(target, rect => rect instanceof Rect && rect.isFinitePosition() && rect.x === this.x && rect.y === this.y);
+    return target.every(rect => rect instanceof Rect && rect.isFinitePosition() && rect.x === this.x && rect.y === this.y);
   }
 
   public isEqualDimension(...target: (Rect | undefined)[]) {
-    return _.every(target, rect => rect instanceof Rect && rect.isFiniteDimension() && rect.width === this.width && rect.height === this.height);
+    return target.every(rect => rect instanceof Rect && rect.isFiniteDimension() && rect.width === this.width && rect.height === this.height);
   }
 
   public isFinite() {
@@ -70,24 +69,28 @@ export default class Rect {
     return new Rect(this.x + x, this.y + y, this.width, this.height);
   }
 
-  public getPointOffset(point: Point) {
-    const offset = new Point(0, 0);
-
-    if (point.x < this.x) {
-      offset.x = point.x - this.x;
+  public getPointOffset({x, y}: Point) {
+    if (x < this.x) {
+      x = x - this.x;
     }
-    else if (point.x > this.x + this.width) {
-      offset.x = point.x - this.x - this.width;
+    else if (x > this.x + this.width) {
+      x = x - this.x - this.width;
     }
-
-    if (point.y < this.y) {
-      offset.y = point.y - this.y;
-    }
-    else if (point.y > this.y + this.height) {
-      offset.y = point.y - this.y - this.height;
+    else {
+      x = 0;
     }
 
-    return offset;
+    if (y < this.y) {
+      y = y - this.y;
+    }
+    else if (y > this.y + this.height) {
+      y = y - this.y - this.height;
+    }
+    else {
+      y = 0;
+    }
+
+    return new Point(x, y);
   }
 
   public getCenter() {
@@ -112,7 +115,7 @@ export default class Rect {
   }
 
   public containsRect(rect: Rect) {
-    return _.every(rect.getCorners(), this.containsPoint.bind(this));
+    return Object.values(rect.getCorners()).every(point => this.containsPoint(point));
   }
 
   public overlapsRect(rect: Rect) {
@@ -120,7 +123,7 @@ export default class Rect {
   }
 
   public toViewBox() {
-    return `${this.x} ${this.y} ${this.width} ${this.height}`
+    return `${this.x} ${this.y} ${this.width} ${this.height}`;
   }
 
   public toCSS() {

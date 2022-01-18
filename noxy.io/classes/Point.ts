@@ -1,11 +1,11 @@
-import _ from "lodash";
 import React from "react";
+import Util from "../../common/services/Util";
 import Rect from "./Rect";
 
 export default class Point {
 
-  public x: number;
-  public y: number;
+  public readonly x: number;
+  public readonly y: number;
 
   constructor(x?: number, y?: number) {
     this.x = x ?? -Infinity;
@@ -34,7 +34,7 @@ export default class Point {
   }
 
   public isEqual(...target: (Point | undefined)[]) {
-    return this.isFinite() && _.every(target, point => point instanceof Point && point.isFinite() && point.x === this.x && point.y === this.y);
+    return this.isFinite() && target.every(point => point instanceof Point && point.isFinite() && point.x === this.x && point.y === this.y);
   }
 
   public isFinite() {
@@ -51,8 +51,8 @@ export default class Point {
 
   public readonly confine = (rect: Rect, anchored: boolean = false) => {
     return new Point(
-      anchored ? _.clamp(this.x, 0, rect.width) : _.clamp(this.x, rect.x, rect.x + rect.width),
-      anchored ? _.clamp(this.y, 0, rect.height) : _.clamp(this.y, rect.y, rect.y + rect.height),
+      anchored ? Util.clamp(this.x, rect.width) : Util.clamp(this.x, rect.x + rect.width, rect.x),
+      anchored ? Util.clamp(this.y, rect.height) : Util.clamp(this.y, rect.y + rect.height, rect.y),
     );
   };
 

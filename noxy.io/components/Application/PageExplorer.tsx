@@ -20,9 +20,7 @@ import Dialog from "./Dialog";
 import Style from "./PageExplorer.module.scss";
 import ImageBlock from "../Block/ImageBlock";
 import Util from "../../../common/services/Util";
-import Point from "../../classes/Point";
-import FatalException from "exceptions/FatalException";
-import Rect from "../../classes/Rect";
+import DragSortList from "../Base/DragSortList";
 
 export default class PageExplorer extends Component<PageExplorerProps, State> {
 
@@ -38,8 +36,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     super(props);
     this.state = {
       edit:       true,
-      ref_drag:   React.createRef(),
-      ref_list:   React.createRef(),
       decoration: new RichTextDecoration({
         font_family: Helper.FontFamilyDefault,
         font_size:   Helper.FontSizeDefault,
@@ -53,15 +49,8 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
 
   public preview(value: Initializer<RichTextDecoration>) {
-    console.log(new RichTextDecoration(value));
-    this.setState({preview: new RichTextDecoration(value)})
+    this.setState({preview: new RichTextDecoration(value)});
   }
-
-  private getDragStyle(): React.CSSProperties {
-    const {drag_origin, drag_target} = this.state;
-    if (!drag_origin || !drag_target) throw new FatalException("Cannot dragged element's style with no origin and target point.");
-    return {left: `${drag_target.x - drag_origin.x}px`, top: `${drag_target.y - drag_origin.y}px`, zIndex: 100};
-  };
 
   public componentDidMount(): void {
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list: this.props.entity.page_block_list.sort((a, b) => a.weight - b.weight)}));
@@ -69,7 +58,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
 
   public render() {
     const {readonly = true, className, entity} = this.props;
-    const {edit, text, decoration, ref_list} = this.state;
+    const {edit, text, decoration} = this.state;
     const {preview: {font_family = decoration.font_family ?? Helper.FontFamilyDefault, font_size = decoration.font_size ?? Helper.FontSizeDefault} = {}} = this.state;
 
     const classes = [Style.Component];
@@ -116,9 +105,15 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
           </Conditional>
         </div>
 
-        <div ref={ref_list} className={Style.BlockList}>
-          {entity.page_block_list.map(this.renderBlock)}
-        </div>
+        <Conditional condition={edit}>
+          <DragSortList list={this.props.entity.page_block_list} onChange={this.eventPageBlockListChange} onRender={this.renderPageBlock} onKey={this.eventPageBlockListKey}/>
+        </Conditional>
+        <Conditional condition={!edit}>
+          <div className={Style.BlockList}>
+            {entity.page_block_list.map(this.renderBlock)}
+          </div>
+        </Conditional>
+
 
         <Conditional condition={edit}>
           <div className={Style.BlockBar}>
@@ -149,15 +144,8 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
 
   private readonly renderBlock = (block: PageBlockEntity, index: number = 0) => {
-    const drag = this.state.drag_id === block.getPrimaryID();
-    const ref = drag ? this.state.ref_drag : undefined;
-    const style = drag ? this.getDragStyle() : undefined;
-
     return (
-      <div key={block.id} ref={ref} className={Style.Block} data-index={index} style={style}>
-        <Conditional condition={this.state.edit}>
-          <div className={Style.BlockHandle} data-id={block.id} onMouseDown={this.eventDragMouseDown}/>
-        </Conditional>
+      <div key={block.id} className={Style.Block}>
         {this.renderPageBlock(block)}
         <Conditional condition={this.state.edit}>
           <div className={Style.BlockActionList}>
@@ -169,7 +157,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
 
   private readonly renderPageBlock = (block: PageBlockEntity) => {
-    console.log(this.state.preview ?? this.state.decoration)
     return React.createElement(PageExplorer.block_map[block.type], {
       block,
       decoration:         this.state.preview ?? this.state.decoration,
@@ -179,70 +166,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
       onDecorationChange: this.eventDecorationChange,
       onEditTextChange:   this.eventEditTextChange,
     });
-  };
-
-  private readonly eventDragMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
-    const next_state = {} as State;
-    const element = event.currentTarget;
-
-    next_state.drag_origin = new Point(event.pageX, event.pageY);
-    next_state.drag_target = next_state.drag_origin;
-    next_state.drag_id = element.getAttribute("data-id") ?? "";
-    if (!next_state.drag_id) throw new FatalException("Attempting to drag PageBlock element while handle has no ID.");
-
-    const {left, top} = element.getBoundingClientRect();
-    next_state.drag_offset = new Point(next_state.drag_origin.x - left, next_state.drag_origin.y - top);
-
-    this.setState(next_state);
-
-    window.addEventListener("mousemove", this.eventDragMouseMove);
-    window.addEventListener("mouseup", this.eventDragMouseUp);
-
-    event.preventDefault();
-  };
-
-  private readonly eventDragMouseMove = (event: MouseEvent) => {
-    const {drag_origin, drag_offset, ref_drag: {current: source_element}} = this.state;
-    if (!drag_origin || !drag_offset || !source_element) return;
-
-    const children = this.state.ref_list.current?.children;
-    if (!children) throw new FatalException("Could not get list of PageBlock elements.");
-
-    const drag_target = new Point(event.pageX, event.pageY);
-    for (let i = 0; i < children.length; i++) {
-      const target_element = children.item(i);
-      if (!target_element) continue;
-
-      const target_rect = Rect.fromDOMRect(target_element.getBoundingClientRect());
-      const target_index_attr = target_element.getAttribute("data-index");
-      if (target_element === source_element || !target_rect.containsPoint(drag_target) || !target_index_attr) continue;
-
-      const target_index = +target_index_attr;
-      if (isNaN(+target_index) || +target_index < 0 || +target_index >= this.props.entity.page_block_list.length) throw new FatalException("Target PageBlock element index is invalid.");
-
-      const source_index_attr = source_element.getAttribute("data-index");
-      if (!source_index_attr) throw new FatalException("Could not get source PageBlock element index during Drag Event.");
-
-      const source_index = +source_index_attr;
-      if (isNaN(+source_index) || +source_index < 0 || +source_index >= this.props.entity.page_block_list.length) throw new FatalException("Source PageBlock element index is invalid.");
-
-      const page_block_list = [...this.props.entity.page_block_list];
-      page_block_list.splice(source_index, 1);
-      page_block_list.splice(target_index, 0, this.props.entity.page_block_list[source_index]);
-      page_block_list.forEach((block, index) => block.weight = index);
-      this.props.onChange(new PageEntity({...this.props.entity, page_block_list}));
-
-      const drag_origin = new Point(target_rect.x + drag_offset.x, target_rect.y + drag_offset.y);
-      return this.setState({drag_target, drag_origin});
-    }
-
-    this.setState({drag_target});
-  };
-
-  private readonly eventDragMouseUp = () => {
-    this.setState({drag_target: undefined, drag_origin: undefined, drag_offset: undefined, drag_id: undefined});
-    window.removeEventListener("mousemove", this.eventDragMouseMove);
-    window.removeEventListener("mouseup", this.eventDragMouseUp);
   };
 
   private readonly eventFontFamilyChange = (index: number, font_family: string) => this.decorate({...this.state.decoration, font_family});
@@ -257,6 +180,12 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
 
   private readonly eventDecorateButtonClick = (decoration: Initializer<RichTextDecoration>) => this.decorate({...this.state.decoration, ...decoration});
   private readonly eventDecorateButtonMouseDown = (property: Initializer<RichTextDecoration>, event: React.MouseEvent) => event.preventDefault();
+
+  private readonly eventPageBlockListKey = (page_block: PageBlockEntity) => page_block.getPrimaryID();
+  private readonly eventPageBlockListChange = (page_block_list: PageBlockEntity[]) => {
+    page_block_list.forEach((block, index) => block.weight = index);
+    this.props.onChange(new PageEntity({...this.props.entity, page_block_list}));
+  };
 
   private readonly eventPageBlockRemove = (index: number) => {
     const page_block_list = [...this.props.entity.page_block_list];
@@ -277,10 +206,8 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   };
 
   private readonly eventDecorationChange = (decoration: RichTextDecoration) => {
-    console.log("changed", decoration)
     if (this.state.preview) {
       this.setState({preview: decoration});
-      // this.__preview = decoration;
     }
     else {
       this.setState({decoration});
@@ -340,14 +267,6 @@ export interface PageExplorerProps {
 interface State {
   edit: boolean;
   dialog?: string;
-
-  ref_list: React.RefObject<HTMLDivElement>;
-  ref_drag: React.RefObject<HTMLDivElement>;
-
-  drag_id?: string;
-  drag_target?: Point;
-  drag_origin?: Point;
-  drag_offset?: Point;
 
   text?: EditText;
   preview?: RichTextDecoration;
