@@ -1,15 +1,13 @@
 import React from "react";
 import RichText, {RichTextObject} from "../../classes/RichText/RichText";
-import IconType from "../../enums/IconType";
 import Component from "../Application/Component";
-import Conditional from "../Application/Conditional";
 import {PageExplorerBlockProps} from "../Application/PageExplorer";
-import Button from "../Form/Button";
 import EditText, {EditTextSelection} from "../Text/EditText";
 import Util from "../../../common/services/Util";
 import Style from "./TableBlock.module.scss";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
+import FatalException from "../../exceptions/FatalException";
 
 export default class TableBlock extends Component<TableBlockProps, State> {
 
@@ -19,25 +17,18 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   constructor(props: TableBlockProps) {
     super(props);
     this.state = {
-      selection: [],
+      table: [],
     };
   }
 
-  public getContent() {
-    if (!this.props.block.content) throw new Error(`Could not get TableBlock (id: ${this.props.block.id}) content`);
-    return this.props.block.content;
-  }
-
   public getTextPosition(text: RichText) {
-    const content = this.getContent();
-
-    for (let y = 0; y < content.table.length; y++) {
-      const row = content.table.at(y);
+    for (let y = 0; y < this.state.table.length; y++) {
+      const row = this.state.table.at(y);
       if (!row) continue;
 
       for (let x = 0; x < row.length; x++) {
         const column = row.at(x);
-        if (column?.id !== text.id) continue;
+        if (column?.text.id !== text.id) continue;
 
         return {x, y};
       }
@@ -46,129 +37,91 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     throw new Error("Could not find text in TableBlock.");
   }
 
-  private getTable() {
-    const table = [] as RichText[][];
-    if (!this.props.block.content) return table;
-
-    const content = this.getContent();
-    for (let y = 0; y < content.y; y++) {
-      table[y] = [];
-      for (let x = 0; x < content.x; x++) {
-        const value = content.table.at(y)?.at(x);
-
-        if (!value) throw new Error(`Missing TableBlock RichText at Column ${y}, Row ${x}`);
-        table[y][x] = value;
-      }
-    }
-
-    return table;
-  }
-
-  public replaceTable(old_text: RichText, new_text: RichText) {
-    const {x, y} = this.getTextPosition(old_text);
-    const content = this.getContent();
-
-    const value_x = Util.arrayReplace(content.table[y], x, new_text);
-    const value_y = Util.arrayReplace(content.table, y, value_x);
-
-    return new PageBlockEntity<TableBlockContent>({...this.props.block, content: {...content, table: value_y}});
-  }
-
   private static parseInitializerValue(entity?: PageBlockEntity<TableBlockInitializer>) {
-    const table = {table: [], x: entity?.content?.x ?? 1, y: entity?.content?.y ?? 1} as TableBlockContent;
+    const value = {table: {}, x: entity?.content?.x ?? 0, y: entity?.content?.y ?? 0} as TableBlockContent;
 
-    for (let y = 0; y < table.y; y++) {
-      table.table[y] = [];
-      const row = table.table.at(y);
-
-      for (let x = 0; x < table.x; x++) {
-        const column = row?.at(x);
-        table.table[y][x] = column ? new RichText({section_list: column.section_list}) : new RichText();
+    for (let y = 0; y < value.y; y++) {
+      for (let x = 0; x < value.x; x++) {
+        if (!entity?.content?.table[y]?.[x]) continue;
+        value.table[y] = {...value.table[y], [x]: new RichText({element: "div", section_list: entity?.content?.table[y][x].section_list})};
       }
     }
 
-    return table;
+    return value;
   }
 
   public componentDidMount() {
-    this.props.onPageBlockChange(new PageBlockEntity<TableBlockContent>({
-      ...this.props.block,
-      content: TableBlock.parseInitializerValue(this.props.block),
-    }));
+    const content = TableBlock.parseInitializerValue(this.props.block);
+    const table = [] as TableBlockCell[][];
+
+    for (let y = 0; y < content.y + 1; y++) {
+      table[y] = [];
+      for (let x = 0; x < content.x + 1; x++) {
+        table[y][x] = {
+          text:      content.table[y]?.[x] ?? new RichText(),
+          selection: {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: false},
+        };
+      }
+    }
+
+    this.setState({table});
+    this.props.onPageBlockChange(new PageBlockEntity<TableBlockContent>({...this.props.block, content}));
   }
 
   public render() {
-    const readonly = this.props.readonly ?? true;
+    const {readonly = true, block} = this.props;
+    if (!block.content || !block.content?.x && !block.content?.y && readonly) return null;
+
     const classes = [Style.Component];
     if (this.props.className) classes.push(this.props.className);
 
-    return (
-      <div className={classes.join(" ")}>
-        <div className={Style.Row}>
-          <div className={Style.Table}>
-            <table>
-              <tbody>
-                {this.getTable().map(this.renderRow)}
-              </tbody>
-            </table>
-          </div>
-          <Conditional condition={!readonly}>
-            <Button icon={IconType.PLUS} onClick={this.eventAddColumnClick}>Column</Button>
-          </Conditional>
-        </div>
-        <div className={Style.Row}>
-          <Conditional condition={!readonly}>
-            <Button icon={IconType.PLUS} onClick={this.eventAddRowClick}>Row</Button>
-          </Conditional>
-        </div>
+    return <div className={classes.join(" ")}>
+      <div className={Style.Table}>
+        <table>
+          <tbody>
+            {this.state.table.map(this.renderRow)}
+          </tbody>
+        </table>
       </div>
-    );
+    </div>;
   }
 
-  private readonly renderRow = (row: RichText[], y: number = 0) => {
-    return (
-      <tr key={y}>
-        {row.map((value, x) => this.renderColumn(value, y, x))}
-      </tr>
-    );
+  private readonly renderRow = (row: TableBlockCell[], y: number) => {
+    const {readonly = true, block} = this.props;
+    const cy = block.content?.y ?? 0;
+    if (readonly && y >= cy) return null;
+
+    return <tr key={y}>
+      {row.map((value, x) => this.renderColumn(value, y, x))}
+    </tr>;
   };
 
-  private readonly renderColumn = (text: RichText, y: number = 0, x: number = 0) => {
-    const {readonly, decoration, onDecorationChange} = this.props;
-    const selection = this.state.selection.at(y)?.at(x) ?? {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: false};
+  private readonly renderColumn = (text: TableBlockCell, y: number, x: number) => {
+    const {readonly = true, decoration, block, onDecorationChange} = this.props;
+    const cell = this.state.table[y][x];
+    const cx = block.content?.x ?? 0;
+    const cy = block.content?.y ?? 0;
+    if (readonly && x >= cx) return null;
 
-    return (
-      <td key={x}>
-        <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={TableBlock.whitelist} blacklist={TableBlock.blacklist}
-                  onFocus={this.eventFocus} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventChange}>
-          {text}
-        </EditText>
-      </td>
-    );
-  };
+    const classes = [];
+    const width = readonly ? cx - 1 : cx;
+    const height = readonly ? cy - 1 : cy;
 
-  private readonly eventAddRowClick = () => {
-    const content = this.getContent();
+    classes.push(x < cx ? Style.BorderTop : Style.BorderTopMuted);
+    classes.push(y < cy ? Style.BorderLeft : Style.BorderLeftMuted);
+    if (x === width) classes.push(readonly ? Style.BorderRight : Style.BorderRightMuted);
+    if (y === height) classes.push(readonly ? Style.BorderBottom : Style.BorderBottomMuted);
+    if (x === 0 && y === 0) classes.push(Style.BorderTopLeft);
+    if (x === width && y === 0) classes.push(Style.BorderTopRight);
+    if (x === 0 && y === height) classes.push(Style.BorderBottomLeft);
+    if (x === width && y === height) classes.push(Style.BorderBottomRight);
 
-    const y = content.y + 1;
-    const value = [...content.table, []] as RichText[][];
-    for (let i = 0; i < content.x; i++) {
-      value[content.y].push(new RichText());
-    }
-
-    this.props.onPageBlockChange(new PageBlockEntity<TableBlockContent>({...this.props.block, content: {...content, y, table: value}}));
-  };
-
-  private readonly eventAddColumnClick = () => {
-    const content = this.getContent();
-
-    const x = content.x + 1;
-    const value = [...content.table] as RichText[][];
-    for (let i = 0; i < content.y; i++) {
-      value[i].push(new RichText());
-    }
-
-    this.props.onPageBlockChange(new PageBlockEntity<TableBlockContent>({...this.props.block, content: {...content, x, table: value}}));
+    return <td className={classes.join(" ")} key={x}>
+      <EditText readonly={readonly} selection={cell.selection} decoration={decoration} whitelist={TableBlock.whitelist} blacklist={TableBlock.blacklist}
+                onFocus={this.eventFocus} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventChange}>
+        {cell.text}
+      </EditText>
+    </td>;
   };
 
   private readonly eventFocus = (event: React.FocusEvent<HTMLDivElement>, component: EditText) => {
@@ -177,25 +130,71 @@ export default class TableBlock extends Component<TableBlockProps, State> {
 
   private readonly eventSelect = (selection: EditTextSelection, component: EditText) => {
     const {x, y} = this.getTextPosition(component.text);
-    this.props.onDecorationChange(component.text.getDecoration(selection));
-
-    const value_x = Util.arrayReplace(this.state.selection.at(y) ?? [], x, selection);
-    const value_y = Util.arrayReplace(this.state.selection, y, value_x);
-    this.setState({selection: value_y});
+    const row = this.state.table.at(y) ?? [];
+    const column = Util.arrayReplace(row, x, {...row[x], selection});
+    const table = Util.arrayReplace(this.state.table, y, column);
+    this.setState({table});
   };
 
-  private readonly eventChange = (text: RichText, component: EditText) => {
-    this.props.onPageBlockChange(this.replaceTable(component.text, text));
+  private readonly eventChange = (text: RichText, selection: EditTextSelection, component: EditText) => {
+    if (!this.props.block.content) throw new FatalException("Could not get block content.");
+    const {x, y} = this.getTextPosition(component.text);
+    const cx = this.props.block.content.x - 1;
+    const cy = this.props.block.content.y - 1;
+    const dx = Math.max(x, cx);
+    const dy = Math.max(y, cy);
+
+    const content = {...this.props.block.content, table: {...this.props.block.content.table, [y]: {...this.props.block.content.table[y], [x]: text}}};
+    const next_state = {table: Util.arrayReplace(this.state.table, y, Util.arrayReplace(this.state.table[y], x, {text, selection}))} as State;
+
+    if (text.size) {
+      if (dy >= content.y || dx >= content.x) {
+        for (let row = 0; row <= dy + 1; row++) {
+          next_state.table[row] = next_state.table[row] ?? [];
+          for (let col = 0; col <= dx + 1; col++) {
+            next_state.table[row][col] = next_state.table[row][col] ?? {text: new RichText(), selection: {section: 0, section_offset: 0, character: 0, character_offset: 0, forward: false}};
+          }
+        }
+        content.x = dx + 1;
+        content.y = dy + 1;
+      }
+    }
+    else if (dx === cx || dy === cy) {
+      const columns = [] as boolean[];
+      const rows = [] as boolean[];
+
+      for (let row = 0; row < content.y; row++) {
+        for (let col = 0; col < content.x; col++) {
+          columns[col] = columns[col] || !!next_state.table[row][col].text.size;
+          rows[row] = rows[row] || !!next_state.table[row][col].text.size;
+        }
+      }
+
+      const row = rows.reduceRight((result, value, key) => !value && result === key + 1 ? key : result, rows.length);
+      const col = columns.reduceRight((result, value, key) => !value && result === key + 1 ? key : result, columns.length);
+
+      next_state.table = next_state.table.slice(0, row + 1);
+      for (let i = 0; i < next_state.table.length; i++) {
+        next_state.table[i] = next_state.table[i].slice(0, col + 1);
+      }
+
+      content.x = col;
+      content.y = row;
+      delete content.table[y][x];
+    }
+
+    this.props.onPageBlockChange(new PageBlockEntity<TableBlockContent>({...this.props.block, content}));
+    this.setState(next_state);
   };
 }
 
 
 export interface TableBlockContent extends TableBlockBase {
-  table: RichText[][];
+  table: {[y: number]: {[x: number]: RichText}};
 }
 
 export interface TableBlockInitializer extends TableBlockBase {
-  table: RichText[][] | RichTextObject[][];
+  table: {[y: number]: {[x: number]: RichText}} | {[y: number]: {[x: number]: RichTextObject}};
 }
 
 interface TableBlockBase {
@@ -208,66 +207,10 @@ export interface TableBlockProps extends PageExplorerBlockProps<TableBlockConten
 }
 
 interface State {
-  selection: EditTextSelection[][];
+  table: TableBlockCell[][];
 }
 
-
-// private readonly handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, component: EditText) => {
-//   const command = Helper.getKeyboardEventCommand(event);
-//   event.bubbles = false;
-//
-//   switch (command) {
-//     case KeyboardCommand.ARROW_UP:
-//       if (this.shiftVerticallyCursorBy(component, -1)) return;
-//       break;
-//     case KeyboardCommand.ARROW_DOWN:
-//       if (this.shiftVerticallyCursorBy(component, 1)) return;
-//       break;
-//     case KeyboardCommand.ARROW_LEFT:
-//       if (this.shiftHorizontallyCursorBy(component, -1)) return;
-//       break;
-//     case KeyboardCommand.ARROW_RIGHT:
-//       if (this.shiftHorizontallyCursorBy(component, 1)) return;
-//       break;
-//     case KeyboardCommand.INDENT:
-//       return this.shiftLevelBy(component, 1);
-//     case KeyboardCommand.OUTDENT:
-//       return this.shiftLevelBy(component, -1);
-//     case KeyboardCommand.NEW_LINE:
-//     case KeyboardCommand.NEW_LINE_ALT:
-//       return this.insertNewContent(component);
-//   }
-//
-//   event.bubbles = true;
-// };
-
-// private readonly shiftVerticallyCursorBy = (component: EditText, value: number) => {
-//   const {forward, start, end} = component.getSelection();
-//   const index = this.getIndex(component.text) + value;
-//   if (index < 0 || index > this.props.block.content.value.length - 1) return false;
-//
-//   const point = Util.clamp(forward ? end : start, this.props.block.content.value[index].length, 0);
-//   this.setState({focus: this.props.block.content.value[index], selection: {start: point, end: point, forward: true}});
-//   return true;
-// };
-//
-// private readonly shiftHorizontallyCursorBy = (component: EditText, value: number) => {
-//   const index = this.getIndex(component.text);
-//   const selection = component.getSelection();
-//   const point = (selection.forward ? selection.end : selection.start) + value;
-//   const next_state = {} as State;
-//   if (point < 0 && index > 0) {
-//     next_state.focus = this.props.block.content.value[index - 1];
-//     next_state.selection = {start: next_state.focus.length, end: next_state.focus.length, forward: false};
-//   }
-//   else if (point > this.props.block.content.value[index].length && index < this.props.block.content.value.length - 1) {
-//     next_state.focus = this.props.block.content.value[index + 1];
-//     next_state.selection = {start: 0, end: 0, forward: true};
-//   }
-//   else {
-//     return false;
-//   }
-//
-//   this.setState(next_state);
-//   return true;
-// };
+interface TableBlockCell {
+  selection: EditTextSelection;
+  text: RichText;
+}

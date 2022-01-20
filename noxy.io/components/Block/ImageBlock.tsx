@@ -119,8 +119,9 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
     this.props.onPageBlockChange(new PageBlockEntity<ImageBlockContent>({...this.props.block, content: {...this.getContent(), alignment}}));
   };
 
-  private readonly eventCaptionChange = (caption: RichText) => {
+  private readonly eventCaptionChange = (caption: RichText, selection: EditTextSelection) => {
     this.props.onPageBlockChange(new PageBlockEntity<ImageBlockContent>({...this.props.block, content: {...this.getContent(), caption}}));
+    this.setState({selection});
   };
 }
 

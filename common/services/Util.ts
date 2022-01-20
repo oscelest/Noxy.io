@@ -6,9 +6,8 @@ const characters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
 namespace Util {
 
   export function arrayReplace<V>(array: V[], position: number, ...value: V[]): V[] {
-    position++;
     return [
-      ...array.slice(0, Math.max(0, position - value.length)),
+      ...array.slice(0, Math.max(0, ++position - value.length)),
       ...value,
       ...array.slice(position),
     ];

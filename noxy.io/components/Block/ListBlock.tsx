@@ -137,13 +137,13 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     this.props.onEditTextChange(component);
   };
 
-  private readonly eventSelect = (selection: EditTextSelection, component: EditText) => {
+  private readonly eventSelect = (selection: EditTextSelection) => {
     this.setState({selection});
-    this.props.onDecorationChange(component.text.getDecoration(selection));
   };
 
-  private readonly eventChange = (text: RichText, component: EditText) => {
-    this.props.onPageBlockChange(this.replaceContent(component.text, text));
+  private readonly eventChange = (content: RichText, selection: EditTextSelection) => {
+    this.props.onPageBlockChange(new PageBlockEntity({...this.props.block, content}));
+    this.setState({selection});
   };
 
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, component: EditText) => {

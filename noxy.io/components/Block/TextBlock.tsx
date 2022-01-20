@@ -66,8 +66,9 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     this.setState({selection});
   };
 
-  private readonly eventTextChange = (text: RichText, component: EditText) => {
-    this.props.onPageBlockChange(this.replaceContent(component.text, text));
+  private readonly eventTextChange = (content: RichText, selection: EditTextSelection) => {
+    this.props.onPageBlockChange(new PageBlockEntity({...this.props.block, content}));
+    this.setState({selection});
   };
 }
 

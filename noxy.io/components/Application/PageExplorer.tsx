@@ -24,12 +24,14 @@ import DragSortList from "../Base/DragSortList";
 
 export default class PageExplorer extends Component<PageExplorerProps, State> {
 
+  private static font_size_list: string[] = ["", ...Helper.FontSizeList];
+  private static font_family_list: string[] = ["", ...Helper.FontFamilyList];
   private static block_map: { [K in PageBlockType]: React.ComponentClass<PageExplorerBlockProps> } = {
-    [PageBlockType.HEADER]: HeaderBlock,
-    [PageBlockType.IMAGE]:  ImageBlock,
-    [PageBlockType.TABLE]:  TableBlock,
-    [PageBlockType.TEXT]:   TextBlock,
     [PageBlockType.LIST]:   ListBlock,
+    [PageBlockType.TEXT]:   TextBlock,
+    [PageBlockType.TABLE]:  TableBlock,
+    [PageBlockType.IMAGE]:  ImageBlock,
+    [PageBlockType.HEADER]: HeaderBlock,
   };
 
   constructor(props: PageExplorerProps) {
@@ -37,20 +39,16 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.state = {
       edit:       true,
       decoration: new RichTextDecoration({
-        font_family: Helper.FontFamilyDefault,
-        font_size:   Helper.FontSizeDefault,
+        font_size:   "",
+        font_family: "",
       }),
     };
   }
 
   public decorate(value: Initializer<RichTextDecoration>) {
     this.state.text?.focus();
-    this.setState({preview: undefined, decoration: new RichTextDecoration(value)});
+    this.state.text?.decorate(value);
   };
-
-  public preview(value: Initializer<RichTextDecoration>) {
-    this.setState({preview: new RichTextDecoration(value)});
-  }
 
   public componentDidMount(): void {
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list: this.props.entity.page_block_list.sort((a, b) => a.weight - b.weight)}));
@@ -59,15 +57,15 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   public render() {
     const {readonly = true, className, entity} = this.props;
     const {edit, text, decoration} = this.state;
-    const {preview: {font_family = decoration.font_family ?? Helper.FontFamilyDefault, font_size = decoration.font_size ?? Helper.FontSizeDefault} = {}} = this.state;
+    const {preview: {font_family = decoration.font_family ?? "", font_size = decoration.font_size ?? ""} = {}} = this.state;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
     if (edit) classes.push(Style.Edit);
     if (readonly) classes.push(Style.Readonly);
 
-    const font_family_index = Helper.FontFamilyList.findIndex(value => value === font_family);
-    const font_size_index = Helper.FontSizeList.findIndex(value => value === font_size);
+    const font_size_index = PageExplorer.font_size_list.findIndex(value => value === font_size);
+    const font_family_index = PageExplorer.font_family_list.findIndex(value => value === font_family);
 
     return (
       <div className={classes.join(" ")}>
@@ -87,12 +85,12 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
             <div className={Style.Font}>
               <AutoComplete className={Style.FontFamily} label={"Font"} value={font_family} index={font_family_index}
                             onChange={this.eventFontFamilyChange} onInputChange={this.eventFontFamilyInput} onReset={this.eventPreviewReset}>
-                {Helper.FontFamilyList}
+                {PageExplorer.font_family_list}
               </AutoComplete>
 
               <AutoComplete className={Style.FontSize} label={"Size"} value={font_size} index={font_size_index}
                             onChange={this.eventFontSizeChange} onInputChange={this.eventFontSizeInput} onReset={this.eventPreviewReset}>
-                {Helper.FontSizeList}
+                {PageExplorer.font_size_list}
               </AutoComplete>
 
               <Button icon={IconType.COLOR_BUCKET}/>
@@ -171,8 +169,8 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   private readonly eventFontFamilyChange = (index: number, font_family: string) => this.decorate({...this.state.decoration, font_family});
   private readonly eventFontSizeChange = (index: number, font_size: string) => this.decorate({...this.state.decoration, font_size});
 
-  private readonly eventFontFamilyInput = (font_family: string) => this.preview({...this.state.preview ?? this.state.decoration, font_family});
-  private readonly eventFontSizeInput = (font_size: string) => this.preview({...this.state.preview ?? this.state.decoration, font_size});
+  private readonly eventFontFamilyInput = (font_family: string) => {};
+  private readonly eventFontSizeInput = (font_size: string) => {};
 
   private readonly eventPreviewReset = () => this.decorate(this.state.decoration);
 

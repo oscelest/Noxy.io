@@ -23,18 +23,10 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     };
   }
 
-  public replaceContent(old_text: RichText, new_text: RichText) {
-    if (this.props.block.content?.id !== old_text.id) throw new Error("Could not find text in HeaderBlock.");
-
-    return new PageBlockEntity({
-      ...this.props.block,
-      content: new_text,
-    });
-  }
-
   public replaceContentElement(level: number) {
     if (level < 0 || level > 6) throw new Error("Header block element must be either h1, h2, h3, h4, h5, or h6.");
 
+    this.props.block.content?.decorate({font_size: "24"}, {section: 0, section_offset: -1, character: 0, character_offset: -1});
     const content = new RichText({...this.props.block.content, element: `h${level}` as HTMLTag});
     return new PageBlockEntity<HeaderBlockContent>({...this.props.block, content});
   }
@@ -70,7 +62,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
   public render() {
     const {readonly = true, decoration, block, className, onDecorationChange} = this.props;
     const {selection} = this.state;
-    if (!block.content || !block.content?.length && readonly) return null;
+    if (!block.content || !block.content?.size && readonly) return null;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
@@ -105,13 +97,13 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     this.props.onEditTextChange(component);
   };
 
-  private readonly eventSelect = (selection: EditTextSelection, component: EditText) => {
+  private readonly eventSelect = (selection: EditTextSelection) => {
     this.setState({selection});
-    this.props.onDecorationChange(component.text.getDecoration(selection));
   };
 
-  private readonly eventChange = (text: RichText, component: EditText) => {
-    this.props.onPageBlockChange(this.replaceContent(component.text, text));
+  private readonly eventChange = (content: RichText, selection: EditTextSelection) => {
+    this.props.onPageBlockChange(new PageBlockEntity({...this.props.block, content}));
+    this.setState({selection});
   };
 
   private readonly eventHeaderLevelClick = (level: number) => {

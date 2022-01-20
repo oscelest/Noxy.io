@@ -156,13 +156,13 @@ export default class EditText extends Component<EditTextProps, State> {
 
   public selectAll() {
     const selection = {section: 0, character: 0, section_offset: this.text.section_list.length - 1, character_offset: this.text.getSection(this.text.section_list.length - 1).length, forward: true};
-    this.props.onSelect?.(selection, this);
+    this.props.onSelect(selection, this);
     return selection;
   }
 
   private handleTextChange(selection: EditTextSelection) {
     const value = this.text.clone();
-    this.props.onTextChange(value, this);
+    this.props.onTextChange(value, selection, this);
     this.setState({history: this.state.history.push({selection, value})});
   }
 
@@ -191,7 +191,6 @@ export default class EditText extends Component<EditTextProps, State> {
   public write(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: EditTextSelection = this.getSelection()) {
     selection = this.text.replace(insert, selection)
     this.handleTextChange(selection);
-    this.props.onSelect(selection, this);
   };
 
   public decorate(decoration: Initializer<RichTextDecoration>, selection: EditTextSelection = this.getSelection()) {
@@ -215,17 +214,16 @@ export default class EditText extends Component<EditTextProps, State> {
       }
     }
 
-    this.handleTextChange(this.text.decorate(decoration, selection))
     this.props.onDecorationChange(new RichTextDecoration(decoration), this);
+    this.handleTextChange(this.text.decorate(decoration, selection))
   };
 
   public delete(selection: EditTextSelection = this.getSelection()) {
     this.handleTextChange(this.text.remove(selection))
-    this.props.onSelect(selection, this);
   }
 
   public deleteForward(selection: EditTextSelection = this.getSelection(), word: boolean = false) {
-    if (!this.text.length) return;
+    if (!this.text.size) return;
     if (selection.section === selection.section_offset && selection.character === selection.character_offset) {
       const section = this.text.getSection(selection.section);
       if (selection.character === section.length) {
@@ -246,7 +244,7 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 
   public deleteBackward(selection: EditTextSelection = this.getSelection(), word: boolean = false) {
-    if (!this.text.length) return;
+    if (!this.text.size) return;
     if (selection.section === selection.section_offset && selection.character === selection.character_offset) {
       const section = this.text.getSection(selection.section);
       if (selection.character === 0) {
@@ -269,8 +267,7 @@ export default class EditText extends Component<EditTextProps, State> {
 
   public loadHistory(previous: boolean = false) {
     const history = !previous ? this.state.history.forward() : this.state.history.backward();
-    this.props.onSelect(history.value.selection, this);
-    this.props.onTextChange(history.value.value, this);
+    this.props.onTextChange(history.value.value, history.value.selection, this);
     return this.setState({history});
   }
 
@@ -282,9 +279,6 @@ export default class EditText extends Component<EditTextProps, State> {
     try {
       if (this.state.ref.current === document.activeElement) {
         this.focus();
-      }
-      if (!this.props.decoration.equals(prevProps.decoration)) {
-        this.decorate(this.props.decoration);
       }
     }
     catch (error) {
@@ -437,8 +431,8 @@ export default class EditText extends Component<EditTextProps, State> {
     event.bubbles = false;
 
     switch (command) {
-      case KeyboardCommand.NEXT_FOCUS:
-        return this.insertText(RichTextCharacter.tab);
+      // case KeyboardCommand.NEXT_FOCUS:
+      //   return this.insertText(RichTextCharacter.tab);
       case KeyboardCommand.SELECT_ALL:
         return this.selectAll();
       case KeyboardCommand.NEW_LINE:
@@ -553,7 +547,7 @@ export interface EditTextProps {
   onKeyDown?(event: React.KeyboardEvent<HTMLDivElement>, component: EditText): boolean | void;
 
   onSelect(selection: EditTextSelection, component: EditText): void;
-  onTextChange(text: RichText, component: EditText): void;
+  onTextChange(text: RichText, selection: EditTextSelection, component: EditText): void;
   onDecorationChange(decoration: RichTextDecoration, component: EditText): void;
 }
 
