@@ -26,8 +26,8 @@ export default class RichTextDecoration {
     this.underline = initializer.underline;
     this.strikethrough = initializer.strikethrough;
 
-    this.font_family = initializer.font_family;
     this.font_size = initializer.font_size;
+    this.font_family = initializer.font_family;
 
     this.color = initializer.color;
     this.background_color = initializer.background_color;
@@ -45,8 +45,9 @@ export default class RichTextDecoration {
       underline:     this.underline,
       strikethrough: this.strikethrough,
 
-      font_family:      this.font_family,
       font_size:        this.font_size,
+      font_family:      this.font_family,
+
       color:            this.color,
       background_color: this.background_color,
 
