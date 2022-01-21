@@ -47,11 +47,26 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
 
   public decorate(value: Initializer<RichTextDecoration>) {
     this.state.text?.focus();
-    this.state.text?.decorate(value);
+    this.setState({decoration: new RichTextDecoration(value), preview: undefined})
   };
+
+  public preview(value: Initializer<RichTextDecoration>) {
+    this.setState({preview: new RichTextDecoration(value)});
+  }
 
   public componentDidMount(): void {
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list: this.props.entity.page_block_list.sort((a, b) => a.weight - b.weight)}));
+  }
+
+  public componentDidUpdate(prevProps: Readonly<PageExplorerProps>, prevState: Readonly<State>, snapshot?: any): void {
+    if (this.state.preview && !this.state.preview.equals(prevState.preview)) {
+      console.log("previewing", this.state.preview)
+      this.state.text?.decorate(this.state.preview);
+    }
+    else if (!this.state.decoration.equals(prevState.decoration)) {
+      console.log("decorating", this.state.decoration)
+      this.state.text?.decorate(this.state.decoration);
+    }
   }
 
   public render() {
@@ -169,8 +184,8 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   private readonly eventFontFamilyChange = (index: number, font_family: string) => this.decorate({...this.state.decoration, font_family});
   private readonly eventFontSizeChange = (index: number, font_size: string) => this.decorate({...this.state.decoration, font_size});
 
-  private readonly eventFontFamilyInput = (font_family: string) => {};
-  private readonly eventFontSizeInput = (font_size: string) => {};
+  private readonly eventFontFamilyInput = (font_family: string) => this.preview({...this.state.preview ?? this.state.decoration, font_family});
+  private readonly eventFontSizeInput = (font_size: string) => this.preview({...this.state.preview ?? this.state.decoration, font_size});
 
   private readonly eventPreviewReset = () => this.decorate(this.state.decoration);
 

@@ -82,7 +82,8 @@ export default class RichTextDecoration {
     return new RichTextDecoration(this);
   }
 
-  public equals(decoration: RichTextDecoration) {
+  public equals(decoration?: RichTextDecoration) {
+    if (!decoration) return false;
     const keys = Object.keys(this) as (keyof RichTextDecoration)[];
     return keys.every(key => this[key] === decoration[key]);
   }

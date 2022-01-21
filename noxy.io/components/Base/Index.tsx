@@ -37,7 +37,7 @@ export default class Index extends Component<IndexProps, State> {
         return i;
       }
     }
-    
+
     return -1;
   };
   
