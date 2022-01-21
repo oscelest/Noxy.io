@@ -47,7 +47,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
 
   public decorate(value: Initializer<RichTextDecoration>) {
     this.state.text?.focus();
-    this.setState({decoration: new RichTextDecoration(value), preview: undefined})
+    this.setState({decoration: new RichTextDecoration(value), preview: undefined});
   };
 
   public preview(value: Initializer<RichTextDecoration>) {
@@ -59,12 +59,10 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   }
 
   public componentDidUpdate(prevProps: Readonly<PageExplorerProps>, prevState: Readonly<State>, snapshot?: any): void {
-    if (this.state.preview && !this.state.preview.equals(prevState.preview)) {
-      console.log("previewing", this.state.preview)
+    if (this.state.preview?.equals(prevState.preview)) {
       this.state.text?.decorate(this.state.preview);
     }
     else if (!this.state.decoration.equals(prevState.decoration)) {
-      console.log("decorating", this.state.decoration)
       this.state.text?.decorate(this.state.decoration);
     }
   }
