@@ -1,7 +1,7 @@
 import _ from "lodash";
 import React from "react";
-import Point from "../../classes/Point";
-import Rect from "../../classes/Rect";
+import Point from "../../../common/classes/Point";
+import Rect from "../../../common/classes/Rect";
 import IconType from "../../enums/IconType";
 import FatalException from "../../exceptions/FatalException";
 import Helper from "../../Helper";
@@ -34,10 +34,10 @@ export default class ContextMenu extends Component<ContextMenuProps, State> {
       const container = this.props.container ?? this.state.ref.current.parentElement;
       const view_point = new Point(_.clamp(next_state.point.x - container.scrollLeft, 0, container.clientWidth), _.clamp(next_state.point.y - container.scrollTop, 0, container.clientHeight));
       if (view_point.x + rect.width > container.clientWidth) {
-        next_state.point.x = Math.max(next_state.point.x - rect.width, 0);
+        next_state.point = new Point(Math.max(next_state.point.x - rect.width, 0), next_state.point.y);
       }
       if (view_point.y + rect.height > container.clientHeight) {
-        next_state.point.y = Math.max(next_state.point.y - rect.height, 0);
+        next_state.point = new Point(next_state.point.x, Math.max(next_state.point.y - rect.height, 0));
       }
     }
 
@@ -50,7 +50,6 @@ export default class ContextMenu extends Component<ContextMenuProps, State> {
     const parent_element = element?.parentElement;
 
     if (element && parent_element) {
-
       const parent_rect = Rect.fromDOMRect(parent_element.getBoundingClientRect());
       const current_rect = Rect.fromDOMRect(element.getBoundingClientRect());
       const origin_point = new Point(this.props.origin?.x ?? 0, this.props.origin?.y ?? 0);
@@ -60,16 +59,16 @@ export default class ContextMenu extends Component<ContextMenuProps, State> {
       }
 
       if (!origin_point.isEqual(new Point(prevProps.origin?.x ?? 0, prevProps.origin?.y ?? 0))) {
-        next_state.point = origin_point;
-
         const container = this.props.container ?? parent_element;
-        const view_point = new Point(_.clamp(origin_point.x - container.scrollLeft, 0, container.clientWidth), _.clamp(origin_point.y - container.scrollTop, 0, container.clientHeight));
+        const view_point = new Point(_.clamp(next_state.point.x - container.scrollLeft, 0, container.clientWidth), _.clamp(next_state.point.y - container.scrollTop, 0, container.clientHeight));
         if (view_point.x + current_rect.width > container.clientWidth) {
-          origin_point.x = Math.max(origin_point.x - current_rect.width, 0);
+          next_state.point = new Point(Math.max(next_state.point.x - current_rect.width, 0), next_state.point.y);
         }
         if (view_point.y + current_rect.height > container.clientHeight) {
-          origin_point.y = Math.max(origin_point.y - current_rect.height, 0);
+          next_state.point = new Point(next_state.point.x, Math.max(next_state.point.y - current_rect.height, 0));
         }
+
+        next_state.point = origin_point;
       }
 
       if (!this.state.parent.isEqual(parent_rect)) {
@@ -77,15 +76,16 @@ export default class ContextMenu extends Component<ContextMenuProps, State> {
 
         const container = this.props.container ?? parent_element;
         const {x, y} = container.getBoundingClientRect();
-        origin_point.x = parent_rect.x + parent_rect.width + current_rect.width > x + container.clientWidth ? -current_rect.width : parent_rect.width;
-        origin_point.y = parent_rect.y + parent_rect.height + current_rect.height > y + container.clientHeight ? -current_rect.height + parent_rect.height + element.clientTop : -element.clientTop;
-
-        next_state.point = origin_point;
+        next_state.point = new Point(
+          parent_rect.x + parent_rect.width + current_rect.width > x + container.clientWidth ? -current_rect.width : parent_rect.width,
+          parent_rect.y + parent_rect.height + current_rect.height > y + container.clientHeight ? -current_rect.height + parent_rect.height + element.clientTop : -element.clientTop,
+        );
       }
     }
 
     if (_.size(next_state)) this.setState(next_state);
   }
+
 
   public render() {
     const classes = [Style.Component];
@@ -149,9 +149,9 @@ export default class ContextMenu extends Component<ContextMenuProps, State> {
   };
 
   private readonly eventClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    this.props.onCommit?.()
+    this.props.onCommit?.();
     Helper.getReactChildObject(event.currentTarget, this.props.children as ContextMenuCollection)?.action?.();
-  }
+  };
 
   private readonly parseChildren = (collection: ContextMenuCollection, key: string): any => {
     return _.reduce(collection, (result, item, sub_key) => {
@@ -163,30 +163,30 @@ export default class ContextMenu extends Component<ContextMenuProps, State> {
 }
 
 export interface ContextMenuCollection {
-  [key: string]: ContextMenuItem
+  [key: string]: ContextMenuItem;
 }
 
 export interface ContextMenuItem {
-  text: string
-  icon?: IconType
-  action?: (...args: any[]) => any
-  items?: ContextMenuCollection
+  text: string;
+  icon?: IconType;
+  action?: (...args: any[]) => any;
+  items?: ContextMenuCollection;
 }
 
 export interface ContextMenuProps {
-  className?: string
-  origin?: Point
-  show?: boolean
-  children: {[key: string]: ContextMenuItem}
-  container?: HTMLElement | null
+  className?: string;
+  origin?: Point;
+  show?: boolean;
+  children: {[key: string]: ContextMenuItem};
+  container?: HTMLElement | null;
 
-  onCommit?(): void
+  onCommit?(): void;
 }
 
 interface State {
-  ref: React.RefObject<HTMLDivElement>
-  key?: string
-  rect: Rect
-  point: Point
-  parent: Rect
+  ref: React.RefObject<HTMLDivElement>;
+  key?: string;
+  rect: Rect;
+  point: Point;
+  parent: Rect;
 }

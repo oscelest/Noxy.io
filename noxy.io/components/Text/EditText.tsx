@@ -10,7 +10,7 @@ import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
 import Component from "../Application/Component";
 import Style from "./EditText.module.scss";
-import History from "../../classes/History";
+import History from "../../../common/classes/History";
 
 export default class EditText extends Component<EditTextProps, State> {
 
@@ -161,9 +161,9 @@ export default class EditText extends Component<EditTextProps, State> {
   }
 
   private handleTextChange(selection: EditTextSelection) {
-    const value = this.text.clone();
-    this.props.onTextChange(value, selection, this);
-    this.setState({history: this.state.history.push({selection, value})});
+    this.props.onTextChange(this.text.clone(), selection, this);
+    const history = this.state.history.push({selection, value: this.text});
+    this.setState({history: history});
   }
 
   public insertText(text: string, selection: EditTextSelection = this.getSelection(), decoration: RichTextDecoration = this.props.decoration) {
@@ -189,37 +189,18 @@ export default class EditText extends Component<EditTextProps, State> {
   }
 
   public write(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: EditTextSelection = this.getSelection()) {
-    selection = this.text.replace(insert, selection)
+    selection = this.text.replace(insert, selection);
     this.handleTextChange(selection);
   };
 
   public decorate(decoration: Initializer<RichTextDecoration>, selection: EditTextSelection = this.getSelection()) {
-    const keys = Util.getProperties(decoration);
-
-    if (this.props.whitelist?.length) {
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys.at(i);
-        if (!key || this.props.whitelist.includes(key)) continue;
-        keys.splice(i--, 1);
-        delete decoration[key];
-      }
-    }
-
-    if (this.props.blacklist?.length) {
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys.at(i);
-        if (!key || !this.props.blacklist.includes(key)) continue;
-        keys.splice(i--, 1);
-        delete decoration[key];
-      }
-    }
-
-    this.props.onDecorationChange(new RichTextDecoration(decoration), this);
-    this.handleTextChange(this.text.decorate(decoration, selection))
+    const sanitized = this.sanitizeDecoration(decoration);
+    this.props.onDecorationChange(sanitized, this);
+    this.handleTextChange(this.text.decorate(sanitized, selection));
   };
 
   public delete(selection: EditTextSelection = this.getSelection()) {
-    this.handleTextChange(this.text.remove(selection))
+    this.handleTextChange(this.text.remove(selection));
   }
 
   public deleteForward(selection: EditTextSelection = this.getSelection(), word: boolean = false) {
@@ -265,10 +246,41 @@ export default class EditText extends Component<EditTextProps, State> {
     this.delete(selection);
   };
 
-  public loadHistory(previous: boolean = false) {
-    const history = !previous ? this.state.history.forward() : this.state.history.backward();
+  public preview(decoration?: Initializer<RichTextDecoration>, selection?: EditTextSelection) {
+    if (!decoration) return this.loadHistory();
+    const sanitized = this.sanitizeDecoration(decoration);
+    const selected = this.text.decorate(sanitized, selection ?? this.getSelection());
+    this.props.onTextChange(this.text.clone(), selected, this);
+  }
+
+  public loadHistory(pointer: number = this.state.history.pointer) {
+    const history = this.state.history.loadPoint(pointer);
     this.props.onTextChange(history.value.value, history.value.selection, this);
     return this.setState({history});
+  }
+
+  private sanitizeDecoration({...decoration}: Initializer<RichTextDecoration>) {
+    const keys = Util.getProperties(decoration);
+
+    if (this.props.whitelist?.length) {
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys.at(i);
+        if (!key || this.props.whitelist.includes(key)) continue;
+        keys.splice(i--, 1);
+        delete decoration[key];
+      }
+    }
+
+    if (this.props.blacklist?.length) {
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys.at(i);
+        if (!key || !this.props.blacklist.includes(key)) continue;
+        keys.splice(i--, 1);
+        delete decoration[key];
+      }
+    }
+
+    return new RichTextDecoration(decoration);
   }
 
   public componentDidMount(): void {
@@ -431,8 +443,8 @@ export default class EditText extends Component<EditTextProps, State> {
     event.bubbles = false;
 
     switch (command) {
-      // case KeyboardCommand.NEXT_FOCUS:
-      //   return this.insertText(RichTextCharacter.tab);
+      case KeyboardCommand.NEXT_FOCUS:
+        return this.insertText(RichTextCharacter.tab);
       case KeyboardCommand.SELECT_ALL:
         return this.selectAll();
       case KeyboardCommand.NEW_LINE:
@@ -451,10 +463,10 @@ export default class EditText extends Component<EditTextProps, State> {
         return this.deleteBackward(this.getSelection(), true);
       case KeyboardCommand.REDO:
       case KeyboardCommand.REDO_ALT:
-        return this.loadHistory();
+        return this.loadHistory(this.state.history.pointer + 1);
       case KeyboardCommand.UNDO:
       case KeyboardCommand.UNDO_ALT:
-        return this.loadHistory(true);
+        return this.loadHistory(this.state.history.pointer - 1);
       case KeyboardCommand.BOLD_TEXT:
         return this.decorate({...this.props.decoration, bold: !this.text.hasDecoration("bold", this.getSelection())});
       case KeyboardCommand.ITALIC_TEXT:

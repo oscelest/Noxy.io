@@ -47,30 +47,17 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
 
   public decorate(value: Initializer<RichTextDecoration>) {
     this.state.text?.focus();
-    this.setState({decoration: new RichTextDecoration(value), preview: undefined});
+    this.state.text?.decorate(value);
   };
-
-  public preview(value: Initializer<RichTextDecoration>) {
-    this.setState({preview: new RichTextDecoration(value)});
-  }
 
   public componentDidMount(): void {
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list: this.props.entity.page_block_list.sort((a, b) => a.weight - b.weight)}));
   }
 
-  public componentDidUpdate(prevProps: Readonly<PageExplorerProps>, prevState: Readonly<State>, snapshot?: any): void {
-    if (this.state.preview?.equals(prevState.preview)) {
-      this.state.text?.decorate(this.state.preview);
-    }
-    else if (!this.state.decoration.equals(prevState.decoration)) {
-      this.state.text?.decorate(this.state.decoration);
-    }
-  }
-
   public render() {
     const {readonly = true, className, entity} = this.props;
-    const {edit, text, decoration} = this.state;
-    const {preview: {font_family = decoration.font_family ?? "", font_size = decoration.font_size ?? ""} = {}} = this.state;
+    const {edit, text} = this.state;
+    const {decoration: {font_family = "", font_size = ""}} = this.state;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
@@ -79,6 +66,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
 
     const font_size_index = PageExplorer.font_size_list.findIndex(value => value === font_size);
     const font_family_index = PageExplorer.font_family_list.findIndex(value => value === font_family);
+    console.log(font_family, font_family_index)
 
     return (
       <div className={classes.join(" ")}>
@@ -140,9 +128,9 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   }
 
   private readonly renderDecorationButton = (key: RichTextDecorationBooleanKeys, icon: IconType) => {
-    const {preview, decoration, text} = this.state;
+    const {decoration, text} = this.state;
 
-    const object = {[key]: preview?.[key] !== undefined ? !preview[key] : !decoration[key]};
+    const object = {[key]: !decoration[key]};
     const disabled = text?.isDecorationDisabled(key);
 
     const classes = [Style.Button];
@@ -170,7 +158,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   private readonly renderPageBlock = (block: PageBlockEntity) => {
     return React.createElement(PageExplorer.block_map[block.type], {
       block,
-      decoration:         this.state.preview ?? this.state.decoration,
+      decoration:         this.state.decoration,
       readonly:           !this.state.edit,
       className:          Style.PageBlock,
       onPageBlockChange:  this.eventPageBlockChange,
@@ -182,10 +170,9 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   private readonly eventFontFamilyChange = (index: number, font_family: string) => this.decorate({...this.state.decoration, font_family});
   private readonly eventFontSizeChange = (index: number, font_size: string) => this.decorate({...this.state.decoration, font_size});
 
-  private readonly eventFontFamilyInput = (font_family: string) => this.preview({...this.state.preview ?? this.state.decoration, font_family});
-  private readonly eventFontSizeInput = (font_size: string) => this.preview({...this.state.preview ?? this.state.decoration, font_size});
-
-  private readonly eventPreviewReset = () => this.decorate(this.state.decoration);
+  private readonly eventFontFamilyInput = (font_family: string) => this.state.text?.preview({...this.state.decoration, font_family});
+  private readonly eventFontSizeInput = (font_size: string) =>this.state.text?.preview({...this.state.decoration, font_size});
+  private readonly eventPreviewReset = () => this.state.text?.focus() || this.state.text?.preview();
 
   private readonly eventEditModeClick = () => this.setState({edit: !this.state.edit});
 
@@ -216,18 +203,8 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list: Util.arrayReplace(this.props.entity.page_block_list, offset, block)}));
   };
 
-  private readonly eventDecorationChange = (decoration: RichTextDecoration) => {
-    if (this.state.preview) {
-      this.setState({preview: decoration});
-    }
-    else {
-      this.setState({decoration});
-    }
-  };
-
-  private readonly eventEditTextChange = (text?: EditText) => {
-    this.setState({text});
-  };
+  private readonly eventDecorationChange = (decoration: RichTextDecoration) => this.setState({decoration});
+  private readonly eventEditTextChange = (text?: EditText) => this.setState({text});
 
   private readonly eventDecorateLinkClick = () => {
     if (!this.state.text) return;
@@ -280,6 +257,5 @@ interface State {
   dialog?: string;
 
   text?: EditText;
-  preview?: RichTextDecoration;
   decoration: RichTextDecoration;
 }

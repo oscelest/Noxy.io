@@ -1,5 +1,4 @@
-import React from "react";
-import Util from "../../common/services/Util";
+import Util from "../services/Util";
 import Rect from "./Rect";
 
 export default class Point {
@@ -12,7 +11,7 @@ export default class Point {
     this.y = y ?? -Infinity;
   }
 
-  public static fromMouseEvent(event: MouseEvent | React.MouseEvent) {
+  public static fromMouseEvent(event: MouseEvent) {
     return new Point(event.pageX, event.pageY);
   }
 

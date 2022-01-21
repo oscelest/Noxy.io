@@ -141,7 +141,7 @@ export default class AutoComplete extends Component<AutoCompleteProps, State> {
   };
   
   private readonly eventInputBlur = () => {
-    this.commit();
+    // this.commit();
   };
   
   private readonly eventInputClick = () => {
@@ -165,9 +165,6 @@ export default class AutoComplete extends Component<AutoCompleteProps, State> {
       case EventCode.NUMPAD_ENTER:
         if (!this.state.collapsed && this.state.index !== undefined && this.state.index > -1) this.commit();
         return this.setState({collapsed: !this.state.collapsed});
-      case EventCode.TAB:
-        event.bubbles = true;
-        return this.commit();
       case EventCode.ESCAPE:
         this.setState({collapsed: true, value: undefined, index: undefined});
         return this.props.onReset?.();

@@ -1,7 +1,7 @@
 import Component from "../Application/Component";
 import React from "react";
-import Point from "../../classes/Point";
-import Rect from "../../classes/Rect";
+import Point from "../../../common/classes/Point";
+import Rect from "../../../common/classes/Rect";
 import Style from "./DragSortList.module.scss";
 import FatalException from "../../exceptions/FatalException";
 
