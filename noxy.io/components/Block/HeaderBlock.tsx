@@ -26,7 +26,6 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
   public replaceContentElement(level: number) {
     if (level < 0 || level > 6) throw new Error("Header block element must be either h1, h2, h3, h4, h5, or h6.");
 
-    this.props.block.content?.decorate({font_size: "24"}, {section: 0, section_offset: -1, character: 0, character_offset: -1});
     const content = new RichText({...this.props.block.content, element: `h${level}` as HTMLTag});
     return new PageBlockEntity<HeaderBlockContent>({...this.props.block, content});
   }

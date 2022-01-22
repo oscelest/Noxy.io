@@ -1,109 +1,108 @@
 import _ from "lodash";
 import React from "react";
 import BaseEntity from "../../../common/classes/Entity/BaseEntity";
-import Util from "../../../common/services/Util";
 import Component from "../Application/Component";
 import AutoComplete from "./AutoComplete";
 import Style from "./EntityInput.module.scss";
 
-export default class EntityInput<E extends BaseEntity, K extends EntityStringPropertyKeys<E>> extends Component<EntityInputProps<E, K>, State<E, K>> {
-  
-  constructor(props: EntityInputProps<E, K>) {
+export default class EntityInput<E extends BaseEntity> extends Component<EntityInputProps<E>, State<E>> {
+
+  constructor(props: EntityInputProps<E>) {
     super(props);
-    
+
     this.state = {
-      loading: false,
       list:    [],
+      index:   -1,
+      value:   "",
+      loading: false,
     };
   }
-  
-  public readonly search = (value?: string) => {
-    this.setState({value, index: undefined, loading: true});
-    return this.searchInternal(value);
-  };
-  
+
+  private getEntityValue(entity?: E) {
+    return `${entity?.[this.props.property] ?? ""}`;
+  }
+
+  private getEntityIndex(value?: string, list = this.state.list) {
+    if (value === undefined) return -1;
+    return list.findIndex(entity => this.getEntityValue(entity).toLowerCase() === value.toLowerCase());
+  }
+
   private readonly searchInternal = _.debounce(
-    async (value?: string) => {
-      const list = await this.props.method(value ?? "");
-      if (this.props.value && !list.some(entity => entity.getPrimaryID() === this.props.value?.getPrimaryID())) list.unshift(this.props.value);
-      
-      const index = value ? list.findIndex(entity => this.getValue(entity) === value) : undefined;
-      this.setState({list, index, value: this.state.value ?? this.getValue(this.props.value), loading: false});
+    async (value: string) => {
+      const list = await this.props.method(value);
+      this.setState({list, value, index: this.getEntityIndex(value, list), loading: false});
     },
     500,
   );
-  
-  private readonly getValue = (entity?: E) => {
-    return entity ? `${entity[this.props.property]}` : "";
-  };
 
   public componentDidMount() {
     if (this.props.value) {
-      this.search();
+      this.setState({value: this.getEntityValue(this.props.value), index: 0, list: [this.props.value], loading: true});
     }
   }
-  
-  public componentDidUpdate(prevProps: Readonly<EntityInputProps<E, K>>, prevState: Readonly<State<E, K>>) {
-    const next_state = {} as State<E, K>;
-    
+
+  public componentDidUpdate(prevProps: Readonly<EntityInputProps<E>>, prevState: Readonly<State<E>>, snapshot?: any): void {
     if (this.props.value && this.props.value?.getPrimaryID() !== prevProps.value?.getPrimaryID()) {
-      this.search();
+      this.setState({value: this.getEntityValue(this.props.value), index: 0, list: [this.props.value], loading: true});
     }
-
-    if (Util.size(next_state)) this.setState(next_state);
+    else if (this.state.loading) {
+      this.searchInternal(this.state.value);
+    }
   }
-  
-  public render() {
-    const {loading} = this.state;
-    const {label, error} = this.props;
 
-    const index = this.state.index ?? -1;
-    const value = this.state.value ?? this.getValue(this.props.value);
-    const list = this.state.list.map(entity => this.getValue(entity));
+  public render() {
+    const {loading, value, index, list} = this.state;
+    const {label, error, className} = this.props;
+
+    const placeholder = !list.length && "No results...";
+
     const classes = [Style.Component];
-    const placeholder = !this.state.list.length && "No results...";
-    if (this.props.className) classes.push(this.props.className);
-    
+    if (className) classes.push(className);
+
     return (
-      <AutoComplete className={classes.join(" ")} label={label} value={value} index={index} error={error} loading={loading} placeholder={placeholder}
-                    onChange={this.eventChange} onInputChange={this.eventInputChange} onReset={this.eventReset}>
-        {list}
+      <AutoComplete className={classes.join(" ")} label={label} value={value} index={index} error={error} loading={loading} placeholder={placeholder} strict={true}
+                    onChange={this.eventInputChange} onInputChange={this.eventInputPreview} onIndexChange={this.eventIndexPreview} onReset={this.eventReset}>
+        {list.map(entity => this.getEntityValue(entity))}
       </AutoComplete>
     );
   }
-  
-  private readonly eventChange = (index: number) => {
-    this.search();
+
+  private readonly eventInputChange = (value: string, index: number) => {
     this.props.onChange(this.state.list[index]);
+    this.setState({value: this.getEntityValue(this.state.list[index]), index});
   };
-  
-  private readonly eventInputChange = (value: string) => {
-    this.search(value)
+
+  private readonly eventInputPreview = (value: string) => {
+    this.setState({value, index: this.getEntityIndex(value), loading: true});
+  };
+
+  private readonly eventIndexPreview = (index: number) => {
+    this.setState({index});
   };
 
   private readonly eventReset = () => {
-    this.search();
+    this.setState({value: this.getEntityValue(this.props.value), loading: true});
   };
-  
+
 }
 
-type EntityStringPropertyKeys<E extends BaseEntity> = { [key in keyof E]: E[key] extends string ? (E[key] extends Function ? never : key) : never }[keyof E]
+type EntityStringPropertyKeys<E extends BaseEntity> = keyof { [K in keyof Pick<E, { [K in keyof E]: E[K] extends string ? K : never }[keyof E]>]: E[K] }
 
-export interface EntityInputProps<E extends BaseEntity, K extends EntityStringPropertyKeys<E>> {
+export interface EntityInputProps<E extends BaseEntity> {
   label: string;
   method: (search: string) => E[] | Promise<E[]>;
-  property: K;
-  
+  property: EntityStringPropertyKeys<E>;
+
   value?: E;
   error?: Error;
   className?: string;
-  
+
   onChange(entity?: E): void;
 }
 
-interface State<E extends BaseEntity, K extends EntityStringPropertyKeys<E>> {
-  index?: number;
-  value?: string;
-  loading: boolean;
+interface State<E> {
   list: E[];
+  index: number;
+  value: string;
+  loading: boolean;
 }

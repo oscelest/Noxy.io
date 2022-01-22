@@ -10,6 +10,11 @@
   transition:    .2s ease-in-out border;
   cursor:        text;
 
+  &.Disabled {
+    cursor:     default;
+    background: $disabled-background-color;
+  }
+
   .Label {
     font-weight: bold;
     font-size:   11px;
@@ -29,5 +34,9 @@
     flex:    1 1 auto;
     border:  none;
     outline: none;
+
+    &:disabled {
+      background-color: $disabled-background-color;
+    }
   }
 }

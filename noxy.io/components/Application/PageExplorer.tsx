@@ -66,7 +66,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
 
     const font_size_index = PageExplorer.font_size_list.findIndex(value => value === font_size);
     const font_family_index = PageExplorer.font_family_list.findIndex(value => value === font_family);
-    console.log(font_family, font_family_index)
 
     return (
       <div className={classes.join(" ")}>
@@ -84,13 +83,13 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
             </div>
 
             <div className={Style.Font}>
-              <AutoComplete className={Style.FontFamily} label={"Font"} value={font_family} index={font_family_index}
-                            onChange={this.eventFontFamilyChange} onInputChange={this.eventFontFamilyInput} onReset={this.eventPreviewReset}>
+              <AutoComplete className={Style.FontFamily} label={"Font"} value={font_family} index={font_family_index} strict={true}
+                            onChange={this.eventFontFamilyChange} onInputChange={this.eventFontFamilyPreview} onIndexChange={this.eventFontFamilyPreview} onReset={this.eventReset}>
                 {PageExplorer.font_family_list}
               </AutoComplete>
 
               <AutoComplete className={Style.FontSize} label={"Size"} value={font_size} index={font_size_index}
-                            onChange={this.eventFontSizeChange} onInputChange={this.eventFontSizeInput} onReset={this.eventPreviewReset}>
+                            onChange={this.eventFontSizeChange} onInputChange={this.eventFontSizePreview} onIndexChange={this.eventFontSizePreview} onReset={this.eventReset}>
                 {PageExplorer.font_size_list}
               </AutoComplete>
 
@@ -112,7 +111,6 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
             {entity.page_block_list.map(this.renderBlock)}
           </div>
         </Conditional>
-
 
         <Conditional condition={edit}>
           <div className={Style.BlockBar}>
@@ -158,21 +156,37 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   private readonly renderPageBlock = (block: PageBlockEntity) => {
     return React.createElement(PageExplorer.block_map[block.type], {
       block,
-      decoration:         this.state.decoration,
-      readonly:           !this.state.edit,
       className:          Style.PageBlock,
+      readonly:           !this.state.edit,
+      decoration:         this.state.decoration,
       onPageBlockChange:  this.eventPageBlockChange,
       onDecorationChange: this.eventDecorationChange,
       onEditTextChange:   this.eventEditTextChange,
     });
   };
 
-  private readonly eventFontFamilyChange = (index: number, font_family: string) => this.decorate({...this.state.decoration, font_family});
-  private readonly eventFontSizeChange = (index: number, font_size: string) => this.decorate({...this.state.decoration, font_size});
+  private readonly eventFontFamilyPreview = (value: string | number) => {
+    this.state.text?.preview({...this.state.decoration, font_family: typeof value === "string" ? value : PageExplorer.font_family_list[value]});
+  };
 
-  private readonly eventFontFamilyInput = (font_family: string) => this.state.text?.preview({...this.state.decoration, font_family});
-  private readonly eventFontSizeInput = (font_size: string) =>this.state.text?.preview({...this.state.decoration, font_size});
-  private readonly eventPreviewReset = () => this.state.text?.focus() || this.state.text?.preview();
+  private readonly eventFontFamilyChange = (font_family: string) => {
+    this.decorate({...this.state.decoration, font_family});
+    this.state.text?.focus();
+  };
+
+  private readonly eventFontSizePreview = (value: string | number) => {
+    this.state.text?.preview({...this.state.decoration, font_size: typeof value === "string" ? value : PageExplorer.font_size_list[value]});
+  };
+
+  private readonly eventFontSizeChange = (font_size: string) => {
+    this.decorate({...this.state.decoration, font_size});
+    this.state.text?.focus();
+  };
+
+  private readonly eventReset = () => {
+    this.state.text?.preview();
+    this.state.text?.focus();
+  };
 
   private readonly eventEditModeClick = () => this.setState({edit: !this.state.edit});
 
@@ -203,7 +217,9 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list: Util.arrayReplace(this.props.entity.page_block_list, offset, block)}));
   };
 
-  private readonly eventDecorationChange = (decoration: RichTextDecoration) => this.setState({decoration});
+  private readonly eventDecorationChange = (decoration: RichTextDecoration) => {
+    this.setState({decoration});
+  };
   private readonly eventEditTextChange = (text?: EditText) => this.setState({text});
 
   private readonly eventDecorateLinkClick = () => {

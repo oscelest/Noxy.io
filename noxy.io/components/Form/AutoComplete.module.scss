@@ -8,6 +8,15 @@
   border:        $border-width solid $border-color;
   transition:    .2s ease-in-out border;
 
+  &.Disabled {
+    background-color: $disabled-background-color;
+    cursor:           default;
+  }
+
+  &:not(.Disabled) .Arrow {
+    cursor: pointer;
+  }
+
   .Input {
     flex:          1 1 auto;
     border:        none;
@@ -20,14 +29,11 @@
   }
 
   .Arrow {
-    flex:            1 1 auto;
+    flex:            0 0 auto;
     align-items:     center;
     justify-content: center;
-    width:           30%;
-    min-width:       20px;
-    max-width:       30px;
+    width:           30px;
     color:           black;
-    cursor:          pointer;
   }
 
   .Dropdown {

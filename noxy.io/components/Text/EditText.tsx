@@ -250,11 +250,13 @@ export default class EditText extends Component<EditTextProps, State> {
     if (!decoration) return this.loadHistory();
     const sanitized = this.sanitizeDecoration(decoration);
     const selected = this.text.decorate(sanitized, selection ?? this.getSelection());
+    this.props.onDecorationChange(sanitized, this);
     this.props.onTextChange(this.text.clone(), selected, this);
   }
 
   public loadHistory(pointer: number = this.state.history.pointer) {
     const history = this.state.history.loadPoint(pointer);
+    this.props.onDecorationChange(history.value.value.getDecoration(history.value.selection) ?? this.props.decoration, this);
     this.props.onTextChange(history.value.value, history.value.selection, this);
     return this.setState({history});
   }

@@ -10,214 +10,145 @@ import Icon from "./Icon";
 import Input from "./Input";
 
 export default class AutoComplete extends Component<AutoCompleteProps, State> {
-  
+
   constructor(props: AutoCompleteProps) {
     super(props);
     this.state = {
-      ref:       React.createRef(),
+      ref_input: React.createRef(),
       ref_index: React.createRef(),
-      active:    false,
       collapsed: true,
+      reset:     false,
     };
   }
-  
-  public setValue(value: string, collapse: boolean = false) {
-    const index = this.getValueIndex(value);
-    this.setState({collapsed: collapse, value, index});
-    if (this.state.index !== index) this.props.onIndexChange?.(index);
-    if (this.state.value !== value) this.props.onInputChange?.(value);
+
+  public setValue(value: string) {
+    this.props.onInputChange?.(value);
+    this.setState({collapsed: false});
   }
-  
-  public setIndex(index: number, collapse: boolean = false) {
-    const value = this.props.onRender?.(index) ?? this.getValueList()[index] ?? "";
-    this.setState({collapsed: collapse, value, index});
-    if (this.state.index !== index) this.props.onIndexChange?.(index);
-    if (this.state.value !== value) this.props.onInputChange?.(value);
+
+  public setIndex(index: number) {
+    this.props.onIndexChange?.(index);
+    this.setState({collapsed: false});
   }
-  
-  public commit(index: number = this.state.index ?? -1, value: string = this.state.value ?? "") {
-    if ((index === undefined || index === -1) && !value) {
+
+  public commit() {
+    if (this.state.reset) {
       this.props.onReset?.();
     }
-    else {
-      this.props.onChange?.(index, value);
-    }
-    this.setState({active: false, collapsed: true, index: undefined, value: undefined});
-  }
-  
-  private getValueList() {
-    return this.state.ref_index.current?.getValueList() ?? [] as string[];
-  }
-  
-  private getList() {
-    return React.Children.toArray(this.props.children);
-  }
-  
-  private getIndex() {
-    return this.state.index ?? this.props.index ?? -1;
-  }
-  
-  private getValue() {
-    return this.state.value ?? this.props.onRender?.(this.getIndex()) ?? this.props.value ?? "";
-  }
-  
-  private getValueIndex(value: string) {
-    if (this.props.onCompare) {
-      for (let i = 0; i < this.getList().length; i++) {
-        if (this.props.onCompare(value, i)) return i;
-      }
+    else if (!this.props.strict || this.props.index > -1) {
+      this.props.onChange(this.props.value, this.props.index);
     }
     else {
-      value = value.toLowerCase();
-      if (this.props.onRender) {
-        for (let i = 0; i < this.getList().length; i++) {
-          if (this.props.onRender(i).toLowerCase() === value) return i;
-        }
-      }
-      else {
-        const list = this.getValueList();
-        for (let i = 0; i < list.length; i++) {
-          if (list[i].toLowerCase() === value) return i;
-        }
-      }
+      this.props.onReset?.();
     }
-    
-    return -1;
+    this.setState({collapsed: true, reset: false});
   }
-  
-  private moveIndex(value: number) {
-    const index = this.getIndex();
-    const list = React.Children.toArray(this.props.children);
-    
-    if (value > 0) return this.setIndex(index === -1 ? 0 : (value + index) % list.length);
-    if (value < 0) return this.setIndex(index === -1 ? list.length - 1 : (list.length + (index + value) % list.length) % list.length);
+
+  private moveIndex(offset: number) {
+    const index = this.props.index;
+    const length = React.Children.toArray(this.props.children).length;
+
+    if (offset > 0) return this.setIndex(index === -1 ? 0 : (offset + index) % length);
+    if (offset < 0) return this.setIndex(index === -1 ? length - 1 : (length + (index + offset) % length) % length);
     return this.setIndex(index);
   }
-  
+
+  public componentDidUpdate(prevProps: Readonly<AutoCompleteProps>, prevState: Readonly<State>, snapshot?: any): void {
+    if (this.state.reset) {
+      this.state.ref_input.current?.blur();
+    }
+  }
+
   public render() {
-    const index = this.getIndex();
-    const value = this.getValue();
+    const {className, label, type, autoComplete, placeholder, loading, children, value, index, disabled} = this.props;
+    const {ref_input, ref_index, collapsed} = this.state;
+
     const classes = [Style.Component];
-    if (this.props.className) classes.push(this.props.className);
-    
+    if (className) classes.push(className);
+    if (disabled) classes.push(Style.Disabled);
+
     return (
-      <label className={classes.join(" ")}>
-        <Input className={Style.Input} value={value} autoComplete={this.props.autoComplete} label={this.props.label} type={this.props.type}
-               onChange={this.eventInputChange} onBlur={this.eventInputBlur} onClick={this.eventInputClick} onKeyDown={this.eventInputKeyDown}/>
-        <div className={Style.Arrow} onMouseDown={this.eventArrowMouseDown} onClick={this.eventArrowClick}>
+      <div className={classes.join(" ")} onMouseDown={this.eventMouseDown} onClick={this.eventClick}>
+        <Input ref={ref_input} className={Style.Input} value={value} autoComplete={autoComplete} label={label} type={type} disabled={disabled}
+               onChange={this.eventInputChange} onBlur={this.eventInputBlur} onFocus={this.eventInputFocus} onKeyDown={this.eventInputKeyDown}/>
+        <div className={Style.Arrow}>
           <Icon type={IconType.CARET_DOWN}/>
         </div>
-        <Dropdown className={Style.Dropdown} collapsed={this.state.collapsed}>
-          <Index ref={this.state.ref_index} className={Style.Select} index={index} loading={this.props.loading} placeholder={this.props.placeholder}
-                 onChange={this.eventIndexChange} onCommit={this.eventIndexCommit} onMouseEnter={this.eventIndexMouseEnter} onMouseLeave={this.eventIndexMouseLeave}>
-            {this.props.children}
+        <Dropdown className={Style.Dropdown} collapsed={collapsed}>
+          <Index ref={ref_index} className={Style.Select} index={index} loading={loading} placeholder={placeholder} onChange={this.eventIndexChange} onCommit={this.eventIndexCommit}>
+            {children}
           </Index>
         </Dropdown>
-      </label>
+      </div>
     );
   }
-  
-  private readonly eventArrowMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-  
-  private readonly eventArrowClick = () => {
-    const collapsed = !this.state.collapsed;
-    this.setState({collapsed});
-    this.props.onDropdown?.(collapsed);
-  };
-  
-  private readonly eventInputChange = (value: string) => {
-    this.setValue(value);
-  };
-  
-  private readonly eventIndexChange = (index: number) => {
-    this.setIndex(index);
-  };
-  
-  private readonly eventIndexCommit = () => {
-    this.commit();
-  };
-  
-  private readonly eventInputBlur = () => {
-    // this.commit();
-  };
-  
-  private readonly eventInputClick = () => {
-    this.setState({collapsed: false});
-  };
-  
+
+  private readonly eventMouseDown = (event: React.MouseEvent<HTMLDivElement>) => event.preventDefault();
+  private readonly eventClick = () => this.state.ref_input.current?.focus();
+
+  private readonly eventInputBlur = () => this.commit();
+  private readonly eventInputFocus = () => this.setState({collapsed: false});
+
+  private readonly eventInputChange = (value: string) => this.setValue(value);
+  private readonly eventIndexChange = (index: number) => this.setIndex(index);
+  private readonly eventIndexCommit = () => this.commit();
+
   private readonly eventInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     this.handleKeyDown(event);
-    
-    if (event.bubbles) return true;
-    event.stopPropagation();
-    event.preventDefault();
-    return false;
+
+    if (!event.bubbles) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
   };
-  
+
   private readonly handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     event.bubbles = false;
-    
+
     switch (event.code as EventCode) {
       case EventCode.ENTER:
       case EventCode.NUMPAD_ENTER:
-        if (!this.state.collapsed && this.state.index !== undefined && this.state.index > -1) this.commit();
-        return this.setState({collapsed: !this.state.collapsed});
+        return this.commit();
       case EventCode.ESCAPE:
-        this.setState({collapsed: true, value: undefined, index: undefined});
-        return this.props.onReset?.();
+        return this.setState({reset: true});
       case EventCode.ARROW_DOWN:
         return this.moveIndex(1);
       case EventCode.ARROW_UP:
         return this.moveIndex(-1);
     }
-    
+
     event.bubbles = true;
-  };
-  
-  private readonly eventIndexMouseEnter = () => {
-    this.setState({active: true});
-  };
-  
-  private readonly eventIndexMouseLeave = () => {
-    if (!this.state.active) return;
-    this.setState({active: false, index: -1, value: ""});
   };
 }
 
 export interface AutoCompleteProps {
   className?: string;
   children?: (React.ReactElement | string)[];
-  
+
   index: number;
   value: string;
   label?: string;
-  
+
   type?: InputType;
   error?: Error;
+  strict?: boolean;
+
   loading?: string | boolean;
   required?: boolean;
+  disabled?: boolean;
   placeholder?: string | boolean;
   autoComplete?: string;
-  
+
   onReset?(): void;
-  onChange?(index: number, value: string): void;
-  
-  onRender?(index: number): string;
-  onCompare?(value: string, index: number): boolean;
-  onDropdown?(collapsed: boolean): void;
-  
+  onChange(value: string, index: number): void;
+  onCompare?(value: string, child: React.ReactChild | React.ReactFragment | React.ReactPortal, index: number): boolean;
   onInputChange?(value: string): void;
   onIndexChange?(index: number): void;
 }
 
 interface State {
-  ref: React.RefObject<HTMLInputElement>;
+  ref_input: React.RefObject<Input>;
   ref_index: React.RefObject<Index>;
-  value?: string;
-  index?: number;
-  active: boolean;
+  reset: boolean;
   collapsed: boolean;
 }

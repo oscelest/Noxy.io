@@ -46,7 +46,7 @@ export default class Index extends Component<IndexProps, State> {
     if (this.props.className) classes.push(this.props.className);
     
     return (
-      <div ref={this.state.ref} className={classes.join(" ")} onMouseEnter={this.props.onMouseEnter} onMouseLeave={this.props.onMouseLeave}>
+      <div ref={this.state.ref} className={classes.join(" ")}>
         <Loader className={Style.Loader} value={this.props.loading} color={"#767676"}>
           <Placeholder className={Style.Placeholder} value={this.props.placeholder}>
             {this.getList().map(this.renderItem)}
@@ -93,9 +93,6 @@ export interface IndexProps {
   
   onChange?(index: number, event: React.MouseEvent<HTMLDivElement>): void;
   onCommit?(index: number, event: React.MouseEvent<HTMLDivElement>): void;
-  
-  onMouseEnter?( event: React.MouseEvent<HTMLDivElement>): void;
-  onMouseLeave?( event: React.MouseEvent<HTMLDivElement>): void;
 }
 
 interface State {
