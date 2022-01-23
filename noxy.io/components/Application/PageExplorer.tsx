@@ -46,8 +46,13 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   }
 
   public decorate(value: Initializer<RichTextDecoration>) {
-    this.state.text?.focus();
-    this.state.text?.decorate(value);
+    if (this.state.text) {
+      this.state.text?.focus();
+      this.state.text?.decorate(value);
+    }
+    else {
+      this.setState({decoration: new RichTextDecoration(value)});
+    }
   };
 
   public componentDidMount(): void {
@@ -250,7 +255,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
 
 export interface PageExplorerBlockProps<Content = any> {
   readonly: boolean;
-  className: string;
+  className?: string;
 
   block: PageBlockEntity<Content>;
   decoration: RichTextDecoration;

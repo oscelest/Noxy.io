@@ -80,7 +80,7 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
         </Conditional>
         <div className={this.getContentClass()}>
           <img className={Style.Preview} src={block.content.url} alt={""}/>
-          <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={ImageBlock.whitelist} blacklist={ImageBlock.blacklist}
+          <EditText className={Style.Caption} readonly={readonly} selection={selection} decoration={decoration} whitelist={ImageBlock.whitelist} blacklist={ImageBlock.blacklist}
                     onFocus={this.eventFocus} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventCaptionChange}>
             {block.content.caption}
           </EditText>

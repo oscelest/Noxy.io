@@ -19,15 +19,6 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     };
   }
 
-  public replaceContent(old_text: RichText, new_text: RichText) {
-    if (this.props.block.content?.id !== old_text.id) throw new Error("Could not find text in TextBlock.");
-
-    return new PageBlockEntity({
-      ...this.props.block,
-      content: new_text,
-    });
-  }
-
   private static parseInitializerValue(entity?: PageBlockEntity<TextBlockInitializer>) {
     return new RichText({
       element:      "div",
@@ -51,10 +42,12 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     if (className) classes.push(className);
 
     return (
-      <EditText className={classes.join(" ")} readonly={readonly} selection={selection} decoration={decoration} whitelist={TextBlock.whitelist} blacklist={TextBlock.blacklist}
-                onFocus={this.eventFocus} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventTextChange}>
-        {block.content}
-      </EditText>
+      <div className={classes.join(" ")}>
+        <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={TextBlock.whitelist} blacklist={TextBlock.blacklist}
+                          onFocus={this.eventFocus} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventTextChange}>
+          {block.content}
+        </EditText>
+      </div>
     );
   }
 
