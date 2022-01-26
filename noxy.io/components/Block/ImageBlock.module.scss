@@ -1,10 +1,10 @@
 @import "../../variables";
 
 .Component {
-  flex:      1 1 auto;
-  flex-flow: column;
+  flex:         1 1 auto;
+  flex-flow:    column;
   grid-row-gap: 10px;
-  overflow:  auto;
+  overflow:     auto;
 
   .Overlay {
     position:        absolute;
@@ -19,37 +19,6 @@
 
   .OptionList {
     grid-column-gap: 10px;
-
-    .Switch {
-
-      .AlignmentButton {
-        flex:          0 1 auto;
-        border-radius: 0;
-
-        &:first-child {
-          border-top-left-radius:    $border-radius;
-          border-bottom-left-radius: $border-radius;
-        }
-
-        &:last-child {
-          border-top-right-radius:    $border-radius;
-          border-bottom-right-radius: $border-radius;
-        }
-
-        &.Active:hover {
-          color: white;
-        }
-
-        &.Inactive {
-          color:            $disabled-color;
-          background-color: $border-color;
-
-          &:hover {
-            color: $focus-color;
-          }
-        }
-      }
-    }
   }
 
   .Content {
@@ -57,21 +26,26 @@
 
     &.Left {
       align-items: flex-start;
+      min-width:   100px;
     }
+
     &.Center {
       align-items: center;
     }
+
     &.Right {
       align-items: flex-end;
     }
 
     .Preview {
-      min-width: 100px;
+      min-width:  100px;
       min-height: 100px;
     }
 
     .Caption {
       flex: 1 0 auto;
+      flex-flow: column;
+      width: 100%;
     }
   }
 }

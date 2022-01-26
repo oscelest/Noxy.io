@@ -13,11 +13,18 @@ import Input from "../Form/Input";
 import Alignment from "../../../common/enums/Alignment";
 import IconType from "../../enums/IconType";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
+import Switch, {SwitchItem} from "../Form/Switch";
 
 export default class ImageBlock extends Component<ImageBlockProps, State> {
 
   private static readonly blacklist: RichTextDecorationKeys[] = [];
   private static readonly whitelist: RichTextDecorationKeys[] = [];
+
+  private static switch_alignment: SwitchItem<Alignment>[] = [
+    {value: Alignment.LEFT, icon: IconType.ALIGN_LEFT},
+    {value: Alignment.CENTER, icon: IconType.ALIGN_CENTER},
+    {value: Alignment.RIGHT, icon: IconType.ALIGN_RIGHT},
+  ];
 
   constructor(props: ImageBlockProps) {
     super(props);
@@ -71,30 +78,19 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
           <div className={Style.OptionList}>
             <Button onClick={this.eventOpenDialog}>Browse</Button>
             <Input label={"Link to image"} value={block.content.url} onChange={this.eventURLChange}/>
-            <div className={Style.Switch}>
-              {this.renderAlignmentSwitchButton(Alignment.LEFT, IconType.ALIGN_LEFT)}
-              {this.renderAlignmentSwitchButton(Alignment.CENTER, IconType.ALIGN_CENTER)}
-              {this.renderAlignmentSwitchButton(Alignment.RIGHT, IconType.ALIGN_RIGHT)}
-            </div>
+            <Switch value={block.content.alignment} onChange={this.eventAlignmentChange} list={ImageBlock.switch_alignment}/>
           </div>
         </Conditional>
         <div className={this.getContentClass()}>
           <img className={Style.Preview} src={block.content.url} alt={""}/>
-          <EditText className={Style.Caption} readonly={readonly} selection={selection} decoration={decoration} whitelist={ImageBlock.whitelist} blacklist={ImageBlock.blacklist}
+          <div className={Style.Caption}>
+          <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={ImageBlock.whitelist} blacklist={ImageBlock.blacklist}
                     onFocus={this.eventFocus} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventCaptionChange}>
             {block.content.caption}
           </EditText>
+          </div>
         </div>
       </div>
-    );
-  }
-
-  private renderAlignmentSwitchButton(alignment: Alignment, icon: IconType) {
-    const classes = [Style.AlignmentButton];
-    classes.push(this.props.block.content?.alignment === alignment ? Style.Active : Style.Inactive);
-
-    return (
-      <Button className={classes.join(" ")} icon={icon} value={alignment} onClick={this.eventAlignmentChange}/>
     );
   }
 

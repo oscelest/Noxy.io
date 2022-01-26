@@ -23,7 +23,6 @@ import Checkbox, {CheckboxCollection} from "../Form/Checkbox";
 import EntityPicker from "../Form/EntityPicker";
 import Input from "../Form/Input";
 import Sortable, {SortableCollection} from "../Form/Sortable";
-import Switch from "../Form/Switch";
 import TablePagination from "../Table/TablePagination";
 import EllipsisText from "../Text/EllipsisText";
 import {ContextMenuItem} from "../UI/ContextMenu";
@@ -37,15 +36,21 @@ import Conditional from "./Conditional";
 import Dialog from "./Dialog";
 import Style from "./FileExplorer.module.scss";
 import Redirect from "./Redirect";
+import Switch, {SwitchItem} from "../Form/Switch";
 
 // noinspection JSUnusedGlobalSymbols
 export default class FileExplorer extends Component<FileBrowserProps, State> {
 
-  private static defaultOrder = {
+  private static default_order = {
     name:         {order: undefined, text: "File name", icon: IconType.TEXT_HEIGHT},
     size:         {order: undefined, text: "File size", icon: IconType.CUBE},
     time_created: {order: Order.DESC, text: "Upload date", icon: IconType.CLOCK},
   };
+
+  private static switch_set_operation: SwitchItem<SetOperation>[] = [
+    {value: SetOperation.UNION, icon: IconType.GEAR, text: "Match any"},
+    {value: SetOperation.INTERSECTION, icon: IconType.GEARS, text: "Match all"},
+  ];
 
   constructor(props: FileBrowserProps) {
     super(props);
@@ -64,7 +69,7 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
       file_search:   "",
       file_list:     [],
       file_selected: [],
-      file_order:    FileExplorer.defaultOrder,
+      file_order:    FileExplorer.default_order,
 
       tag_set_operation:  SetOperation.UNION,
       tag_selected_list:  [],
@@ -134,7 +139,7 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
 
   public render() {
     const {type_tickable_collection} = this.state;
-    const {tag_set_operation, tag_selected_list, tag_available_list} = this.state;
+    const {tag_selected_list, tag_available_list} = this.state;
     const {file_loading, file_selected, file_list, file_order, file_search} = this.state;
     const {pagination_current, pagination_total} = this.state;
 
@@ -178,12 +183,7 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
 
             <Checkbox className={Style.FileTypeList} onChange={this.eventTypeChange}>{type_tickable_collection}</Checkbox>
 
-            <Switch className={Style.Switch} value={tag_set_operation} onChange={this.eventSetOperationChange}>
-              {{
-                "Match Any": SetOperation.UNION,
-                "Match All": SetOperation.INTERSECTION,
-              }}
-            </Switch>
+            <Switch value={this.state.tag_set_operation} onChange={this.eventSetOperationChange} list={FileExplorer.switch_set_operation}/>
 
             <EntityPicker ref={this.state.ref_entity_picker} selected={tag_selected_list} available={tag_available_list}
                           onRender={FileTagEntity.render} onSearch={this.eventTagSearch} onCreate={this.eventTagCreate} onChange={this.eventTagChange} onDelete={this.openTagDeleteDialog}/>
@@ -222,10 +222,10 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
       ),
     });
   };
-  
+
   private readonly dropUploadDialog = (event: React.DragEvent<HTMLDivElement>) => {
     this.state.ref_upload_dialog.current?.appendFileList(event.dataTransfer.files);
-  }
+  };
 
   private readonly eventUploadTagCreate = () => {
     this.setState({dialog_change_tag: true});
@@ -377,7 +377,7 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
   private readonly eventContextMenuReset = () => {
     this.searchFile({
       file_search:              "",
-      file_order:               FileExplorer.defaultOrder,
+      file_order:               FileExplorer.default_order,
       type_tickable_collection: _.mapValues(this.state.type_tickable_collection, val => ({...val, checked: false})) as TypeCheckbox,
       tag_selected_list:        [],
       tag_set_operation:        SetOperation.UNION,
@@ -397,45 +397,45 @@ type SortOrder = "name" | "size" | "time_created"
 type TypeCheckbox = CheckboxCollection<{ [K in keyof Omit<typeof FileTypeName, "UNKNOWN">]: typeof FileTypeName[K] }>
 
 export interface FileBrowserProps {
-  className?: string
+  className?: string;
 
-  search?: string
-  order?: SortableCollection<SortOrder>
+  search?: string;
+  order?: SortableCollection<SortOrder>;
 
-  set_operation?: SetOperation
-  tags?: FileTagEntity[]
-  types?: FileTypeName[]
+  set_operation?: SetOperation;
+  tags?: FileTagEntity[];
+  types?: FileTypeName[];
 
-  size?: number
-  page?: number
+  size?: number;
+  page?: number;
 
-  onSearch?(filter: Partial<State>): void
+  onSearch?(filter: Partial<State>): void;
 }
 
 interface State {
-  ref_context_menu: React.RefObject<HTMLDivElement>
-  ref_entity_picker: React.RefObject<EntityPicker<FileTagEntity>>
-  ref_upload_dialog: React.RefObject<FileUploadForm>
+  ref_context_menu: React.RefObject<HTMLDivElement>;
+  ref_entity_picker: React.RefObject<EntityPicker<FileTagEntity>>;
+  ref_upload_dialog: React.RefObject<FileUploadForm>;
 
-  dialog?: string
-  dialog_change_file: boolean
-  dialog_change_tag: boolean
+  dialog?: string;
+  dialog_change_file: boolean;
+  dialog_change_tag: boolean;
 
-  context_menu: boolean
+  context_menu: boolean;
 
-  file_loading: boolean
-  file_search: string
-  file_list: FileEntity[]
-  file_selected: boolean[]
-  file_order: SortableCollection<SortOrder>
+  file_loading: boolean;
+  file_search: string;
+  file_list: FileEntity[];
+  file_selected: boolean[];
+  file_order: SortableCollection<SortOrder>;
 
-  tag_set_operation: SetOperation
-  tag_selected_list: FileTagEntity[]
-  tag_available_list: FileTagEntity[]
+  tag_set_operation: SetOperation;
+  tag_selected_list: FileTagEntity[];
+  tag_available_list: FileTagEntity[];
 
-  type_tickable_collection: TypeCheckbox
+  type_tickable_collection: TypeCheckbox;
 
-  pagination_size: number
-  pagination_total: number
-  pagination_current: number
+  pagination_size: number;
+  pagination_total: number;
+  pagination_current: number;
 }

@@ -1,4 +1,5 @@
 import {v4} from "uuid";
+import Alignment from "../../../common/enums/Alignment";
 import RichTextCharacter from "./RichTextCharacter";
 import RichTextDecoration, {RichTextDecorationKeys} from "./RichTextDecoration";
 import RichTextSection, {RichTextSectionContent, RichTextSectionSelection} from "./RichTextSection";
@@ -8,6 +9,7 @@ export default class RichText {
   public readonly id: string;
   public readonly section_list: RichTextSection[];
   public readonly element: HTMLTag;
+  public readonly alignment: Alignment;
 
   public get text() {
     return this.section_list.map(section => section.text);
@@ -25,6 +27,7 @@ export default class RichText {
     this.id = initializer.id ?? v4();
     this.element = initializer.element ?? "div";
     this.section_list = [];
+    this.alignment = initializer.alignment ?? Alignment.LEFT;
 
     if (!initializer.section_list) {
       this.section_list.push(new RichTextSection());
@@ -50,7 +53,7 @@ export default class RichText {
   }
 
   public toObject(selection?: RichTextSelection): RichTextObject {
-    const content = {id: this.id, section_list: [], element: this.element} as RichTextObject;
+    const content = {id: this.id, section_list: [], element: this.element, alignment: this.alignment} as RichTextObject;
 
     for (let i = 0; i < this.section_list.length; i++) {
       const section = this.section_list.at(i);
@@ -68,6 +71,16 @@ export default class RichText {
 
     return content;
   }
+
+  public clone() {
+    return new RichText({
+      id:           this.id,
+      element:      this.element,
+      section_list: this.section_list.map(section => section.clone()),
+      alignment:    this.alignment,
+    });
+  }
+
 
   public getSection(id: number | string | undefined): RichTextSection {
     let value: RichTextSection | undefined;
@@ -232,14 +245,6 @@ export default class RichText {
     return selection;
   }
 
-  public clone() {
-    return new RichText({
-      id:           this.id,
-      element:      this.element,
-      section_list: this.section_list.map(section => section.clone()),
-    });
-  }
-
   public slice({section, section_offset, character, character_offset}: RichTextSelection) {
     const section_list = [] as RichTextSection[];
     section = this.parseSectionPosition(section);
@@ -283,12 +288,14 @@ export interface RichTextInitializer {
   id?: string;
   element?: HTMLTag;
   section_list?: string | string[] | RichTextSection[] | RichTextSectionContent[];
+  alignment?: Alignment;
 }
 
 export interface RichTextObject {
   readonly id: string;
   readonly element: HTMLTag;
   readonly section_list: RichTextSectionContent[];
+  readonly alignment: Alignment;
 }
 
 export interface RichTextSelection extends RichTextSectionSelection {

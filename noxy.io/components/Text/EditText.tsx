@@ -317,6 +317,7 @@ export default class EditText extends Component<EditTextProps, State> {
       className:                      classes.join(" "),
       contentEditable:                !readonly,
       suppressContentEditableWarning: !readonly,
+      style:                          {textAlign: content.alignment},
       onBlur:                         this.eventBlur,
       onFocus:                        this.eventFocus,
       onSelect:                       this.eventSelect,
