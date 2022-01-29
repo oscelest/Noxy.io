@@ -21,6 +21,9 @@ import Style from "./PageExplorer.module.scss";
 import ImageBlock from "../Block/ImageBlock";
 import Util from "../../../common/services/Util";
 import DragSortList from "../Base/DragSortList";
+import DropdownButton from "../UI/DropdownButton";
+import ColorPicker from "../Form/ColorPicker";
+import Color from "../../../common/classes/Color";
 
 export default class PageExplorer extends Component<PageExplorerProps, State> {
 
@@ -62,7 +65,7 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   public render() {
     const {readonly = true, className, entity} = this.props;
     const {edit, text} = this.state;
-    const {decoration: {font_family = "", font_size = ""}} = this.state;
+    const {decoration: {font_family = "", font_size = "", color = new Color("#FFFFFFFF"), background_color = new Color("#00000000")}} = this.state;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
@@ -98,10 +101,12 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
                 {PageExplorer.font_size_list}
               </AutoComplete>
 
-              <Button icon={IconType.COLOR_BUCKET}/>
-
-
-              <Button icon={IconType.FONT}/>
+              <DropdownButton icon={IconType.COLOR_BUCKET}>
+                <ColorPicker value={background_color} onChange={this.eventBackgroundColorChange}/>
+              </DropdownButton>
+              <DropdownButton icon={IconType.FONT}>
+                <ColorPicker value={color} onChange={this.eventColorChange}/>
+              </DropdownButton>
             </div>
 
             <div className={Style.Right}>
@@ -193,6 +198,14 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
   private readonly eventReset = () => {
     this.state.text?.preview();
     this.state.text?.focus();
+  };
+
+  private readonly eventBackgroundColorChange = (background_color: Color) => {
+    this.decorate({...this.state.decoration, background_color});
+  };
+
+  private readonly eventColorChange = (color: Color) => {
+    this.decorate({...this.state.decoration, color});
   };
 
   private readonly eventEditModeClick = () => this.setState({edit: !this.state.edit});

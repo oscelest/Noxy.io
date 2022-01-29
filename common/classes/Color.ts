@@ -15,27 +15,48 @@ export default class Color {
   private static max_rgb = 255;
   private static max_alpha = 1;
 
-  constructor(color: RGBColor | HSVColor | string, alpha: number = 1) {
-    this.alpha = Util.clamp(alpha, Color.max_alpha);
+  constructor(color: RGBColor | HSVColor | string) {
     if (typeof color === "string") {
-      const match = color.match(/^#(?<red>[A-F0-9]{2})?(?<green>[A-F0-9]{2})?(?<blue>[A-F0-9]{2})?/i);
-      if (!match?.groups) throw new Error("Could not read hex color.");
-      this.red = Util.clamp(parseInt(match.groups.red ?? 0, 16), Color.max_rgb);
-      this.green = Util.clamp(parseInt(match.groups.green ?? 0, 16), Color.max_rgb);
-      this.blue = Util.clamp(parseInt(match.groups.blue ?? 0, 16), Color.max_rgb);
+      const match = color.match(/^#(?<hex_red>[A-F0-9]{2})(?<hex_green>[A-F0-9]{2})(?<hex_blue>[A-F0-9]{2})(?<hex_alpha>[A-F0-9]{2})?/i)
+        ?? color.match(/rgb\((?<rgb_red>\d{1,3}),\s*(?<rgb_green>\d{1,3}),\s*(?<rgb_blue>\d{1,3})\)/i)
+        ?? color.match(/rgba\((?<rgb_red>\d{1,3}),\s*(?<rgb_green>\d{1,3}),\s*(?<rgb_blue>\d{1,3}),\s*(?<rgb_alpha>\d\.\d+)\)/i);
+
+      if (match) {
+        if (!match?.groups) throw new Error("Could not read hex color.");
+        if (match.groups.hex_red && match.groups.hex_green && match.groups.hex_blue) {
+          this.red = Util.clamp(parseInt(match.groups.hex_red ?? "00", 16), Color.max_rgb);
+          this.green = Util.clamp(parseInt(match.groups.hex_green ?? "00", 16), Color.max_rgb);
+          this.blue = Util.clamp(parseInt(match.groups.hex_blue ?? "00", 16), Color.max_rgb);
+          this.alpha = Util.clamp(parseInt(match.groups.hex_alpha ?? "FF", 16) / 255, Color.max_alpha);
+        }
+        else if (match.groups.rgb_red && match.groups.rgb_green && match.groups.rgb_blue) {
+          this.red = Util.clamp(parseInt(match.groups.rgb_red ?? "0"), Color.max_rgb);
+          this.green = Util.clamp(parseInt(match.groups.rgb_green ?? "0"), Color.max_rgb);
+          this.blue = Util.clamp(parseInt(match.groups.rgb_blue ?? "0"), Color.max_rgb);
+          this.alpha = Util.clamp(parseInt(match.groups.rgb_alpha ?? "1"), Color.max_alpha);
+        }
+        else {
+          throw new Error("Color string doesn't contain full RGB value in Hex or RGB(a) format.");
+        }
+      }
+      else {
+        throw new Error("Color string doesn't should be in Hex or RGB(a) format.");
+      }
     }
     else {
-      const {red, green, blue} = color as RGBColor;
+      const {red, green, blue, alpha = 1} = color as RGBColor;
       const {hue, saturation, value} = color as HSVColor;
       if (red !== undefined && blue !== undefined && green !== undefined) {
         this.red = Util.clamp(Math.round(red), Color.max_rgb);
         this.green = Util.clamp(Math.round(green), Color.max_rgb);
         this.blue = Util.clamp(Math.round(blue), Color.max_rgb);
+        this.alpha = Util.clamp(alpha, Color.max_alpha);
       }
       else if (hue !== undefined && saturation !== undefined && value !== undefined) {
         this.hue = Util.clamp(hue, 1);
         this.saturation = Util.clamp(saturation, 1);
         this.value = Util.clamp(value, 1);
+        this.alpha = Util.clamp(alpha, Color.max_alpha);
       }
       else {
         throw new Error("Could not generate color");
@@ -147,10 +168,12 @@ export interface HSVColor {
   hue: number;
   saturation: number;
   value: number;
+  alpha?: number;
 }
 
 export interface RGBColor {
   red: number;
   green: number;
   blue: number;
+  alpha?: number;
 }

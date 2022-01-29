@@ -32,7 +32,7 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
     const saturation = Util.clamp((x - left) / width, width);
     const value = Util.clamp((1 - (y - top) / height), height);
 
-    return new Color({hue, saturation, value}, alpha);
+    return new Color({hue, saturation, value, alpha});
   }
 
   private getColorByHue(x: number) {
@@ -41,7 +41,7 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
     const {saturation, value, alpha} = this.props.value;
     const hue = (x - left) / width;
 
-    return new Color({hue, saturation, value}, alpha);
+    return new Color({hue, saturation, value, alpha});
   }
 
   private getColorByAlpha(x: number) {
@@ -50,7 +50,7 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
     const {hue, saturation, value} = this.props.value;
     const alpha = (x - left) / width;
 
-    return new Color({hue, saturation, value}, alpha);
+    return new Color({hue, saturation, value, alpha});
   }
 
   private getColorPropText() {
@@ -60,7 +60,7 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
       green: this.props.value.green.toString(),
       blue:  this.props.value.blue.toString(),
       alpha: this.props.value.alpha.toString(),
-    }
+    };
   }
 
   public componentDidMount(): void {
@@ -83,7 +83,7 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
     const {hue} = this.props.value;
     const {hex, red, green, blue, alpha} = this.state;
 
-    const window_style = {background: new Color({hue, saturation: 1, value: 1}).toHex()};
+    const window_style = {background: new Color({hue, saturation: 1, value: 1, alpha: 1}).toHex()};
     const cursor_style = {top: `calc(${(1 - this.props.value.value) * 100}% - 5px)`, left: `calc(${this.props.value.saturation * 100}% - 5px)`, background: this.props.value.toHex()};
 
     const color_handle_style = {left: `calc(${this.props.value.hue * 100}% - 2px)`};
@@ -99,9 +99,9 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
     return (
       <div className={classes.join(" ")}>
         <div ref={this.state.ref_window} className={Style.Window} onMouseDown={this.eventWindowMouseDown}>
-          <div className={Style.MainColor} style={window_style}/>
-          <div className={Style.WhiteColor}/>
-          <div className={Style.BlackColor}/>
+          <div className={Style.Fill} style={window_style}/>
+          <div className={Style.Fill}/>
+          <div className={Style.Fill}/>
           <div className={Style.Cursor} style={cursor_style}/>
         </div>
 
@@ -115,6 +115,7 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
             </div>
             <div ref={this.state.ref_alpha} className={Style.Alpha} onMouseDown={this.eventAlphaMouseDown}>
               <div className={Style.Fill} style={alpha_style}/>
+
               <div className={Style.Handle} style={alpha_handle_style}/>
             </div>
           </div>
@@ -122,10 +123,10 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
 
         <div className={Style.Input}>
           <Input className={Style.Hex} label={"Hex"} value={hex} onChange={this.eventHexChange}/>
-          <Input className={Style.Color} label={"Red"} value={red} onChange={this.eventRedChange}/>
-          <Input className={Style.Color} label={"Green"} value={green} onChange={this.eventGreenChange}/>
-          <Input className={Style.Color} label={"Blue"} value={blue} onChange={this.eventBlueChange}/>
-          <Input className={Style.Alpha} label={"Alpha"} value={(+alpha * 100).toFixed(0)} onChange={this.eventAlphaChange}/>
+          <Input className={Style.Color} label={"Red"} value={red} onChange={this.eventRedChange} onWheel={this.eventRedWheel}/>
+          <Input className={Style.Color} label={"Green"} value={green} onChange={this.eventGreenChange} onWheel={this.eventGreenWheel}/>
+          <Input className={Style.Color} label={"Blue"} value={blue} onChange={this.eventBlueChange} onWheel={this.eventBlueWheel}/>
+          <Input className={Style.Alpha} label={"Alpha"} value={(+alpha * 100).toFixed(0)} onChange={this.eventAlphaChange} onWheel={this.eventAlphaWheel}/>
         </div>
 
         <div className={Style.Recent}>
@@ -152,10 +153,20 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
     const {green, blue, alpha} = this.props.value;
     const value = +red;
     if (value >= 0 && value <= 255) {
-      this.props.onChange(new Color({red: +value, green, blue}, alpha));
+      this.props.onChange(new Color({red: +value, green, blue, alpha}));
     }
     else {
       this.setState({red});
+    }
+  };
+
+  private readonly eventRedWheel = (event: React.WheelEvent) => {
+    let {red, green, blue, alpha} = this.props.value;
+    if (event.deltaY < 0 && red < 255) red += 1;
+    if (event.deltaY > 0 && red > 0) red -= 1;
+    if (red !== this.props.value.red) {
+      this.props.onChange(new Color({red, green, blue, alpha}));
+      this.setState({red: `${red}`});
     }
   };
 
@@ -163,10 +174,20 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
     const {red, blue, alpha} = this.props.value;
     const value = +green;
     if (value >= 0 && value <= 255) {
-      this.props.onChange(new Color({red, green: value, blue}, alpha));
+      this.props.onChange(new Color({red, green: value, blue, alpha}));
     }
     else {
       this.setState({green});
+    }
+  };
+
+  private readonly eventGreenWheel = (event: React.WheelEvent) => {
+    let {red, green, blue, alpha} = this.props.value;
+    if (event.deltaY < 0 && green < 255) green += 1;
+    if (event.deltaY > 0 && green > 0) green -= 1;
+    if (green !== this.props.value.green) {
+      this.props.onChange(new Color({red, green, blue, alpha}));
+      this.setState({green: `${green}`});
     }
   };
 
@@ -174,10 +195,20 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
     const {red, green, alpha} = this.props.value;
     const value = +blue;
     if (value >= 0 && value <= 255) {
-      this.props.onChange(new Color({red, green, blue: value}, alpha));
+      this.props.onChange(new Color({red, green, blue: value, alpha}));
     }
     else {
       this.setState({blue});
+    }
+  };
+
+  private readonly eventBlueWheel = (event: React.WheelEvent) => {
+    let {red, green, blue, alpha} = this.props.value;
+    if (event.deltaY < 0 && blue < 255) blue += 1;
+    if (event.deltaY > 0 && blue > 0) blue -= 1;
+    if (blue !== this.props.value.blue) {
+      this.props.onChange(new Color({red, green, blue, alpha}));
+      this.setState({blue: `${blue}`});
     }
   };
 
@@ -185,10 +216,20 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
     const {red, green, blue} = this.props.value;
     const value = +alpha;
     if (value >= 0 && value <= 255) {
-      this.props.onChange(new Color({red, green, blue}, value));
+      this.props.onChange(new Color({red, green, blue, alpha: value}));
     }
     else {
       this.setState({alpha});
+    }
+  };
+
+  private readonly eventAlphaWheel = (event: React.WheelEvent) => {
+    let {red, green, blue, alpha} = this.props.value;
+    if (event.deltaY < 0 && alpha < 1) alpha += 0.01;
+    if (event.deltaY > 0 && alpha > 0) alpha -= 0.01;
+    if (alpha !== this.props.value.alpha) {
+      this.props.onChange(new Color({red, green, blue, alpha}));
+      this.setState({alpha: `${alpha}`});
     }
   };
 

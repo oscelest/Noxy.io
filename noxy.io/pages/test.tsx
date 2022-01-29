@@ -3,6 +3,7 @@ import React from "react";
 import Component from "../components/Application/Component";
 import ColorPicker from "../components/Form/ColorPicker";
 import Color from "../../common/classes/Color";
+import DropdownButton from "../components/UI/DropdownButton";
 
 // noinspection JSUnusedGlobalSymbols
 export default class TestPage extends Component<PageProps, State> {
@@ -23,6 +24,9 @@ export default class TestPage extends Component<PageProps, State> {
     return (
       <div style={{flexFlow: "column"}}>
         <ColorPicker value={this.state.color} onChange={this.eventChange}/>
+        <DropdownButton>
+          <ColorPicker value={this.state.color} onChange={this.eventChange}/>
+        </DropdownButton>
       </div>
     );
   }

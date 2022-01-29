@@ -40,7 +40,7 @@ export default class Input extends Component<InputProps, State> {
   public render() {
     const {ref} = this.state;
     const {label = "\u00a0", className, disabled, required, error, type, value, autoComplete} = this.props;
-    const {onKeyDown, onSelect, onBlur, onFocus, onClick} = this.props;
+    const {onKeyDown, onSelect, onBlur, onFocus, onClick, onWheel} = this.props;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
@@ -58,7 +58,7 @@ export default class Input extends Component<InputProps, State> {
           </Conditional>
         </div>
         <input ref={ref} className={Style.Value} type={type} value={value} disabled={disabled} autoComplete={autoComplete}
-               onChange={this.eventChange} onClick={onClick} onBlur={onBlur} onFocus={onFocus} onSelect={onSelect} onKeyDown={onKeyDown}/>
+               onChange={this.eventChange} onClick={onClick} onBlur={onBlur} onFocus={onFocus} onSelect={onSelect} onKeyDown={onKeyDown} onWheel={onWheel}/>
       </div>
     );
   }
@@ -82,6 +82,7 @@ export interface InputProps {
   onBlur?(event: React.FocusEvent): void;
   onFocus?(event: React.FocusEvent): void;
   onClick?(event: React.MouseEvent): void;
+  onWheel?(event: React.WheelEvent): void;
   onSelect?(event: React.SyntheticEvent<HTMLInputElement>): void;
   onChange?(value: string, event: React.ChangeEvent<HTMLInputElement>): void;
   onKeyDown?(event: React.KeyboardEvent): void;

@@ -297,10 +297,6 @@ export default class EditText extends Component<EditTextProps, State> {
     }
     catch (error) {
       console.error(error);
-      console.log(document.activeElement);
-      console.log(this.props.selection);
-      console.log(this.getNodeBySectionAndCharacter(this.props.selection.section, this.props.selection.character));
-      console.log(this.getNodeBySectionAndCharacter(this.props.selection.section_offset, this.props.selection.character_offset));
     }
   }
 

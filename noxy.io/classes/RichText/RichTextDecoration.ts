@@ -1,4 +1,5 @@
 import React from "react";
+import Color from "../../../common/classes/Color";
 import Helper from "../../Helper";
 
 export default class RichTextDecoration {
@@ -12,8 +13,9 @@ export default class RichTextDecoration {
 
   public readonly font_size?: string;
   public readonly font_family?: string;
-  public readonly color?: string;
-  public readonly background_color?: string;
+
+  public readonly color?: Color;
+  public readonly background_color?: Color;
 
   public readonly link?: string;
   public readonly selected?: boolean;
@@ -45,8 +47,8 @@ export default class RichTextDecoration {
       underline:     this.underline,
       strikethrough: this.strikethrough,
 
-      font_size:        this.font_size,
-      font_family:      this.font_family,
+      font_size:   this.font_size,
+      font_family: this.font_family,
 
       color:            this.color,
       background_color: this.background_color,
@@ -59,8 +61,8 @@ export default class RichTextDecoration {
   public toCSSProperties() {
     const styling = {} as React.CSSProperties;
 
-    if (this.color) styling.color = this.color;
-    if (this.background_color) styling.backgroundColor = this.background_color;
+    if (this.color) styling.color = this.color.toRGBA();
+    if (this.background_color) styling.backgroundColor = this.background_color.toRGBA();
     if (this.font_family) styling.fontFamily = this.font_family;
     if (this.font_size) styling.fontSize = `${this.font_size}px`;
 
@@ -70,8 +72,8 @@ export default class RichTextDecoration {
   public toNode<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: {[key: string]: string} = {}, ...children: Node[]): HTMLElementTagNameMap[K] {
     const node = Helper.createElementWithChildren(tag, attributes, ...children);
 
-    if (this.color) node.style.color = this.color;
-    if (this.background_color) node.style.backgroundColor = this.background_color;
+    if (this.color) node.style.color = this.color.toRGBA();
+    if (this.background_color) node.style.backgroundColor = this.background_color.toRGBA();
     if (this.font_family) node.style.fontFamily = this.font_family;
     if (this.font_size) node.style.fontSize = this.font_size;
 
@@ -135,8 +137,8 @@ export default class RichTextDecoration {
       font_family: this.parseNodeFontFamily(fontFamily) || decoration?.font_family,
       font_size:   this.parseNodeFontSize(fontSize) || decoration?.font_size,
 
-      color:            color || decoration?.color,
-      background_color: backgroundColor || decoration?.background_color,
+      color:            new Color(color) || decoration?.color,
+      background_color: new Color(backgroundColor) || decoration?.background_color,
 
       link: this.parseNodeLink(node) || decoration?.link,
       code: this.parseNodeCode(node) || decoration?.code,
@@ -183,6 +185,7 @@ export default class RichTextDecoration {
 
 export type RichTextDecorationKeys = NonNullable<keyof Properties<RichTextDecoration>>
 export type RichTextDecorationBooleanKeys = Extract<keyof RichTextDecoration, "bold" | "italic" | "underline" | "strikethrough" | "code" | "mark">
-export type RichTextDecorationStringKeys = Extract<keyof RichTextDecoration, "font_family" | "font_size" | "link" | "code" | "mark" | "color" | "background_color">
+export type RichTextDecorationStringKeys = Extract<keyof RichTextDecoration, "font_family" | "font_size" | "link" | "code" | "mark">
+export type RichTextDecorationColorKeys = Extract<keyof RichTextDecoration, "color" | "background_color">
 export type RichTextDecorationObject = Writeable<Properties<RichTextDecoration>>;
 export type RichTextDecorationInitializer = Initializer<RichTextDecoration>;
