@@ -99,6 +99,8 @@ export default class PageExplorer extends Component<PageExplorerProps, State> {
               </AutoComplete>
 
               <Button icon={IconType.COLOR_BUCKET}/>
+
+
               <Button icon={IconType.FONT}/>
             </div>
 

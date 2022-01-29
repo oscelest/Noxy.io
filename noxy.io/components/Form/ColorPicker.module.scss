@@ -1,38 +1,134 @@
+@import "../../variables";
+
 .Component {
-  flex-flow: column;
-  grid-row-gap: 10px;
-  grid-column-gap: 10px;
+  flex:            0 0 auto;
+  flex-flow:       column;
+  grid-row-gap:    5px;
+  overflow:        auto;
+  width:           260px;
+  padding:         5px;
 
-  .Row {
-    grid-row-gap: 10px;
-    grid-column-gap: 10px;
+  .Window {
+    flex:   0 0 auto;
+    width:  250px;
+    height: 150px;
+    border: $border-width solid $border-color;
 
-    .Window {
-      flex: 0 0 auto;
-      width: 200px;
-      height: 200px;
+    > * {
+      inset:    0;
+      position: absolute;
     }
 
-    ::-webkit-color-swatch {
-      border: none;
+    .Cursor {
+      align-items:     center;
+      justify-content: center;
+      width:           10px;
+      height:          10px;
+      border:          1px solid white;
+      border-radius:   50%;
     }
 
-    .SideBar {
-      flex-flow: column;
-      grid-column-gap: 10px;
-      grid-row-gap: 10px;
-
-      .Mode {
-        width: 100%;
-      }
-
-      .Preset {
-        width: 60px;
-      }
+    .MainColor {
+      background: rgb(0, 0, 0);
     }
 
-    .Recent {
-      height: 50px;
+    .WhiteColor {
+      background: linear-gradient(to right, rgb(255, 255, 255), rgba(255, 255, 255, 0));
+    }
+
+    .BlackColor {
+      background: linear-gradient(to top, rgb(0, 0, 0), rgba(0, 0, 0, 0));
     }
   }
+
+  .OptionList {
+    flex:            1 1 auto;
+    flex-flow:       row;
+    grid-column-gap: 5px;
+
+    .Preview {
+      flex:          0 0 auto;
+      width:         30px;
+      height:        30px;
+      border:        $border-width solid $border-color;
+      border-radius: $border-radius;
+      background:    repeating-conic-gradient(#BFBFBF 0% 25%, #FFFFFF 0% 50%) 0 0 / 18px 18px;
+    }
+
+    .SliderList {
+      flex:         1 1 auto;
+      flex-flow:    column;
+      grid-row-gap: 6px;
+
+      .Hue, .Alpha {
+        flex:          0 0 auto;
+        height:        12px;
+        border:        2px solid $border-color;
+        border-radius: 2px;
+      }
+
+      .Hue {
+        background: linear-gradient(to right, rgb(255, 0, 0) 0%, rgb(255, 255, 0) 17%, rgb(0, 255, 0) 33%, rgb(0, 255, 255) 50%, rgb(0, 0, 255) 67%, rgb(255, 0, 255) 83%, rgb(255, 0, 0) 100%);
+      }
+
+      .Alpha {
+        background: repeating-conic-gradient(#BFBFBF 0% 25%, #FFFFFF 0% 50%) 0 50% / 10px 10px;
+      }
+    }
+  }
+
+  .Input {
+    flex:      0 0 auto;
+    flex-flow: row;
+
+    .Hex, .Color, .Alpha {
+      border-radius: 0;
+      margin-right:  0;
+    }
+
+    .Hex {
+      width:                     86px;
+      margin-right:              -4px;
+      border-top-left-radius:    $border-radius;
+      border-bottom-left-radius: $border-radius;
+    }
+
+    .Color {
+      width:         45px;
+      margin-right:  -4px;
+      border-radius: 0;
+    }
+
+    .Alpha {
+      width:                      45px;
+      margin-right:               0;
+      border-top-right-radius:    $border-radius;
+      border-bottom-right-radius: $border-radius;
+    }
+  }
+
+
+  .Recent {
+
+  }
+
+  .Preset {
+
+  }
+
+  .Fill {
+    position: absolute;
+    inset:    0;
+  }
+
+  .Handle {
+    width:            5px;
+    height:           14px;
+    position:         absolute;
+    top:              -3px;
+    background-color: white;
+    border:           1px solid $border-color;
+    border-radius:    2px;
+  }
+
 }

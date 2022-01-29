@@ -81,7 +81,6 @@ export default class RichText {
     });
   }
 
-
   public getSection(id: number | string | undefined): RichTextSection {
     let value: RichTextSection | undefined;
 

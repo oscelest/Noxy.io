@@ -30,24 +30,12 @@
       width: 160px;
     }
 
-    .FontSizeCombine {
-      flex-flow: row;
-
-      .FontSize {
-        width:                      55px;
-        border-top-right-radius:    0;
-        border-bottom-right-radius: 0;
-        border-right:               none;
-      }
-
-      .FontLength {
-        width:                     70px;
-        border-top-left-radius:    0;
-        border-bottom-left-radius: 0;
-        border-left:               none;
-      }
+    .FontSize {
+      width:                      65px;
+      border-top-right-radius:    0;
+      border-bottom-right-radius: 0;
+      border-right:               none;
     }
-
   }
 
   &.Edit .BlockList {

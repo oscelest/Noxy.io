@@ -3,7 +3,6 @@ import Util from "../../../common/services/Util";
 import RichTextCharacter, {RichTextCharacterContent} from "./RichTextCharacter";
 import RichTextDecoration, {RichTextDecorationObject, RichTextDecorationKeys} from "./RichTextDecoration";
 
-
 export default class RichTextSection {
 
   public readonly id: string;
