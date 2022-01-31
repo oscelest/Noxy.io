@@ -1,13 +1,13 @@
 import React from "react";
-import RichText, {RichTextObject} from "../../classes/RichText/RichText";
 import Component from "../Application/Component";
-import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import EditText, {EditTextSelection} from "../Text/EditText";
-import Util from "../../../common/services/Util";
-import Style from "./TableBlock.module.scss";
-import PageBlockEntity from "../../entities/Page/PageBlockEntity";
-import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 import FatalException from "../../exceptions/FatalException";
+import PageBlockEntity from "../../entities/Page/PageBlockEntity";
+import RichText, {RichTextObject} from "../../classes/RichText/RichText";
+import Util from "../../../common/services/Util";
+import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
+import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
+import Style from "./TableBlock.module.scss";
 
 export default class TableBlock extends Component<TableBlockProps, State> {
 
@@ -97,7 +97,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   };
 
   private readonly renderColumn = (text: TableBlockCell, y: number, x: number) => {
-    const {readonly = true, decoration, block, onDecorationChange} = this.props;
+    const {readonly = true, decoration, block, onAlignmentChange, onDecorationChange} = this.props;
     const cell = this.state.table[y][x];
     const cx = block.content?.x ?? 0;
     const cy = block.content?.y ?? 0;
@@ -118,7 +118,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
 
     return <td className={classes.join(" ")} key={x}>
       <EditText readonly={readonly} selection={cell.selection} decoration={decoration} whitelist={TableBlock.whitelist} blacklist={TableBlock.blacklist}
-                onFocus={this.eventFocus} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventChange}>
+                onFocus={this.eventFocus} onSelect={this.eventSelect} onAlignmentChange={onAlignmentChange} onDecorationChange={onDecorationChange} onTextChange={this.eventChange}>
         {cell.text}
       </EditText>
     </td>;
@@ -129,7 +129,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   };
 
   private readonly eventSelect = (selection: EditTextSelection, component: EditText) => {
-    const {x, y} = this.getTextPosition(component.text);
+    const {x, y} = this.getTextPosition(component.value);
     const row = this.state.table.at(y) ?? [];
     const column = Util.arrayReplace(row, x, {...row[x], selection});
     const table = Util.arrayReplace(this.state.table, y, column);
@@ -138,7 +138,7 @@ export default class TableBlock extends Component<TableBlockProps, State> {
 
   private readonly eventChange = (text: RichText, selection: EditTextSelection, component: EditText) => {
     if (!this.props.block.content) throw new FatalException("Could not get block content.");
-    const {x, y} = this.getTextPosition(component.text);
+    const {x, y} = this.getTextPosition(component.value);
     const cx = this.props.block.content.x - 1;
     const cy = this.props.block.content.y - 1;
     const dx = Math.max(x, cx);

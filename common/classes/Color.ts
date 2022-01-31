@@ -19,7 +19,7 @@ export default class Color {
     if (typeof color === "string") {
       const match = color.match(/^#(?<hex_red>[A-F0-9]{2})(?<hex_green>[A-F0-9]{2})(?<hex_blue>[A-F0-9]{2})(?<hex_alpha>[A-F0-9]{2})?/i)
         ?? color.match(/rgb\((?<rgb_red>\d{1,3}),\s*(?<rgb_green>\d{1,3}),\s*(?<rgb_blue>\d{1,3})\)/i)
-        ?? color.match(/rgba\((?<rgb_red>\d{1,3}),\s*(?<rgb_green>\d{1,3}),\s*(?<rgb_blue>\d{1,3}),\s*(?<rgb_alpha>\d\.\d+)\)/i);
+        ?? color.match(/rgba\((?<rgb_red>\d{1,3}),\s*(?<rgb_green>\d{1,3}),\s*(?<rgb_blue>\d{1,3}),\s*(?<rgb_alpha>\d(?:.\d+)?)\)/i);
 
       if (match) {
         if (!match?.groups) throw new Error("Could not read hex color.");
@@ -36,11 +36,11 @@ export default class Color {
           this.alpha = Util.clamp(parseInt(match.groups.rgb_alpha ?? "1"), Color.max_alpha);
         }
         else {
-          throw new Error("Color string doesn't contain full RGB value in Hex or RGB(a) format.");
+          throw new Error(`Color string (${color}) doesn't contain full RGB value in Hex or RGB(a) format.`);
         }
       }
       else {
-        throw new Error("Color string doesn't should be in Hex or RGB(a) format.");
+        throw new Error(`Color string (${color}) should be in Hex or RGB(a) format.`);
       }
     }
     else {
@@ -59,7 +59,7 @@ export default class Color {
         this.alpha = Util.clamp(alpha, Color.max_alpha);
       }
       else {
-        throw new Error("Could not generate color");
+        throw new Error(`Could not read color object (${JSON.stringify(color)}).`);
       }
     }
 

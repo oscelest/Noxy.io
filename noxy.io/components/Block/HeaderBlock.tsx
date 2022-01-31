@@ -1,13 +1,13 @@
-import EditText, {EditTextSelection} from "components/Text/EditText";
 import React from "react";
-import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
+import Button from "../Form/Button";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
-import {PageExplorerBlockProps} from "../Application/PageExplorer";
-import Button from "../Form/Button";
-import Style from "./HeaderBlock.module.scss";
+import EditText, {EditTextSelection} from "components/Text/EditText";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
+import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
+import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
+import Style from "./HeaderBlock.module.scss";
 
 export default class HeaderBlock extends Component<HeaderBlockProps, State> {
 
@@ -59,7 +59,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
   }
 
   public render() {
-    const {readonly = true, decoration, block, className, onDecorationChange} = this.props;
+    const {readonly = true, decoration, block, className, onAlignmentChange, onDecorationChange} = this.props;
     const {selection} = this.state;
     if (!block.content || !block.content?.size && readonly) return null;
 
@@ -72,7 +72,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
           {this.renderOptionList()}
         </Conditional>
         <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={HeaderBlock.whitelist} blacklist={HeaderBlock.blacklist}
-                  onFocus={this.eventFocus} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventChange}>
+                  onFocus={this.eventFocus} onSelect={this.eventSelect} onAlignmentChange={onAlignmentChange} onDecorationChange={onDecorationChange} onTextChange={this.eventChange}>
           {block.content}
         </EditText>
       </div>

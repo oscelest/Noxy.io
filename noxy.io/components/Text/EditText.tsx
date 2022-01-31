@@ -11,6 +11,7 @@ import Helper from "../../Helper";
 import Component from "../Application/Component";
 import Style from "./EditText.module.scss";
 import History from "../../../common/classes/History";
+import Alignment from "../../../common/enums/Alignment";
 
 export default class EditText extends Component<EditTextProps, State> {
 
@@ -22,7 +23,7 @@ export default class EditText extends Component<EditTextProps, State> {
     };
   }
 
-  public get text() {
+  public get value() {
     return this.props.children as EditTextProps["children"];
   };
 
@@ -109,7 +110,7 @@ export default class EditText extends Component<EditTextProps, State> {
   private getSectionElement(index: number) {
     if (!this.state.ref.current) throw Error("Component is not being rendered.");
 
-    const section = this.text.getSection(index);
+    const section = this.value.getSection(index);
     const [tag, ...tag_list] = section.element;
 
     let value = this.state.ref.current.querySelector(`${tag}:nth-child(${index + 1})`);
@@ -155,14 +156,14 @@ export default class EditText extends Component<EditTextProps, State> {
   }
 
   public selectAll() {
-    const selection = {section: 0, character: 0, section_offset: this.text.section_list.length - 1, character_offset: this.text.getSection(this.text.section_list.length - 1).length, forward: true};
+    const selection = {section: 0, character: 0, section_offset: this.value.section_list.length - 1, character_offset: this.value.getSection(this.value.section_list.length - 1).length, forward: true};
     this.props.onSelect(selection, this);
     return selection;
   }
 
-  private handleTextChange(selection: EditTextSelection) {
-    this.props.onTextChange(this.text.clone(), selection, this);
-    const history = this.state.history.push({selection, value: this.text});
+  private handleTextChange(selection: EditTextSelection, next_text: RichText = this.value.clone()) {
+    this.props.onTextChange(next_text, selection, this);
+    const history = this.state.history.push({selection, value: this.value});
     this.setState({history: history});
   }
 
@@ -188,25 +189,30 @@ export default class EditText extends Component<EditTextProps, State> {
     this.write(parsed.section_list.length > 1 ? parsed.section_list : parsed.section_list[0].character_list, selection);
   }
 
+  public align(alignment: Alignment) {
+    this.props.onAlignmentChange(alignment, this);
+    this.handleTextChange(this.props.selection, new RichText({...this.value, alignment}));
+  };
+
   public write(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: EditTextSelection = this.getSelection()) {
-    selection = this.text.replace(insert, selection);
+    selection = this.value.replace(insert, selection);
     this.handleTextChange(selection);
   };
 
   public decorate(decoration: Initializer<RichTextDecoration>, selection: EditTextSelection = this.getSelection()) {
     const sanitized = this.sanitizeDecoration(decoration);
-    this.props.onDecorationChange(sanitized, this);
-    this.handleTextChange(this.text.decorate(sanitized, selection));
+    this.props.onDecorationChange(new RichTextDecoration(this.props.decoration, sanitized), this);
+    this.handleTextChange(this.value.decorate(sanitized, selection));
   };
 
   public delete(selection: EditTextSelection = this.getSelection()) {
-    this.handleTextChange(this.text.remove(selection));
+    this.handleTextChange(this.value.remove(selection));
   }
 
   public deleteForward(selection: EditTextSelection = this.getSelection(), word: boolean = false) {
-    if (!this.text.size) return;
+    if (!this.value.size) return;
     if (selection.section === selection.section_offset && selection.character === selection.character_offset) {
-      const section = this.text.getSection(selection.section);
+      const section = this.value.getSection(selection.section);
       if (selection.character === section.length) {
         selection.section_offset++;
         selection.character_offset = 0;
@@ -225,9 +231,9 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 
   public deleteBackward(selection: EditTextSelection = this.getSelection(), word: boolean = false) {
-    if (!this.text.size) return;
+    if (!this.value.size) return;
     if (selection.section === selection.section_offset && selection.character === selection.character_offset) {
-      const section = this.text.getSection(selection.section);
+      const section = this.value.getSection(selection.section);
       if (selection.character === 0) {
         if (selection.section === 0) return;
         selection.section--;
@@ -249,9 +255,9 @@ export default class EditText extends Component<EditTextProps, State> {
   public preview(decoration?: Initializer<RichTextDecoration>, selection?: EditTextSelection) {
     if (!decoration) return this.loadHistory();
     const sanitized = this.sanitizeDecoration(decoration);
-    const selected = this.text.decorate(sanitized, selection ?? this.getSelection());
-    this.props.onDecorationChange(sanitized, this);
-    this.props.onTextChange(this.text.clone(), selected, this);
+    const selected = this.value.decorate(sanitized, selection ?? this.getSelection());
+    this.props.onDecorationChange(new RichTextDecoration(this.props.decoration, sanitized), this);
+    this.props.onTextChange(this.value.clone(), selected, this);
   }
 
   public loadHistory(pointer: number = this.state.history.pointer) {
@@ -286,7 +292,7 @@ export default class EditText extends Component<EditTextProps, State> {
   }
 
   public componentDidMount(): void {
-    return this.setState({history: this.state.history.push({selection: this.props.selection, value: this.text.clone()})});
+    return this.setState({history: this.state.history.push({selection: this.props.selection, value: this.value.clone()})});
   }
 
   public componentDidUpdate(prevProps: Readonly<EditTextProps>, prevState: Readonly<State>, snapshot?: any): void {
@@ -303,10 +309,10 @@ export default class EditText extends Component<EditTextProps, State> {
   public render() {
     const readonly = this.props.readonly ?? true;
     const classes = [Style.Component];
-    const content = this.text.toObject(this.getSelection());
+    const content = this.value.toObject(this.getSelection());
     if (this.props.className) classes.push(this.props.className);
     if (this.props.readonly ?? true) classes.push(Style.Readonly);
-    if (!this.text.length) classes.push(Style.Empty);
+    if (!this.value.length) classes.push(Style.Empty);
 
     return Helper.renderReactElementList(content.element, {
       ref:                            this.state.ref,
@@ -352,13 +358,13 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 
   private renderReactFragment = ({decoration, ...fragment}: RichTextFragmentContent, key: number = 0): React.ReactNode => {
-    if (decoration.bold) return <b key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, bold: false}})}</b>;
-    if (decoration.code) return <code key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, code: false}})}</code>;
-    if (decoration.mark) return <mark key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, mark: false}})}</mark>;
-    if (decoration.italic) return <i key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, italic: false}})}</i>;
-    if (decoration.underline) return <u key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, underline: false}})}</u>;
-    if (decoration.strikethrough) return <s key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, strikethrough: false}})}</s>;
-    if (decoration.link) return <a className={Style.Link} href={decoration.link} key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, link: ""}})}</a>;
+    if (decoration.bold) return <b key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, bold: undefined}})}</b>;
+    if (decoration.code) return <code key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, code: undefined}})}</code>;
+    if (decoration.mark) return <mark key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, mark: undefined}})}</mark>;
+    if (decoration.italic) return <i key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, italic: undefined}})}</i>;
+    if (decoration.underline) return <u key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, underline: undefined}})}</u>;
+    if (decoration.strikethrough) return <s key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, strikethrough: undefined}})}</s>;
+    if (decoration.link) return <a className={Style.Link} href={decoration.link} key={key}>{this.renderReactFragment({...fragment, decoration: {...decoration, link: undefined}})}</a>;
 
     const classes = [Style.Text] as string[];
     if (decoration.selected && Helper.getActiveElement() === this.state.ref.current) classes.push(Style.Selected);
@@ -375,7 +381,7 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 
   public readonly renderHTML = (selection: EditTextSelection) => {
-    const content = this.text.slice(selection).toObject();
+    const content = this.value.slice(selection).toObject();
     return Helper.renderHTMLElementList(content.element, {class: "text"}, ...content.section_list.map(this.renderHTMLSection));
   };
 
@@ -401,13 +407,13 @@ export default class EditText extends Component<EditTextProps, State> {
   };
 
   private readonly renderHTMLFragment = ({decoration, ...segment}: RichTextFragmentContent): Node => {
-    if (decoration.bold) return Helper.createElementWithChildren("b", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, bold: false}}));
-    if (decoration.code) return Helper.createElementWithChildren("code", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, code: false}}));
-    if (decoration.mark) return Helper.createElementWithChildren("mark", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, mark: false}}));
-    if (decoration.italic) return Helper.createElementWithChildren("i", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, italic: false}}));
-    if (decoration.underline) return Helper.createElementWithChildren("u", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, underline: false}}));
-    if (decoration.strikethrough) return Helper.createElementWithChildren("s", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, strikethrough: false}}));
-    if (decoration.link) return Helper.createElementWithChildren("a", {"href": decoration.link}, this.renderHTMLFragment({...segment, decoration: {...decoration, link: ""}}));
+    if (decoration.bold) return Helper.createElementWithChildren("b", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, bold: undefined}}));
+    if (decoration.code) return Helper.createElementWithChildren("code", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, code: undefined}}));
+    if (decoration.mark) return Helper.createElementWithChildren("mark", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, mark: undefined}}));
+    if (decoration.italic) return Helper.createElementWithChildren("i", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, italic: undefined}}));
+    if (decoration.underline) return Helper.createElementWithChildren("u", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, underline: undefined}}));
+    if (decoration.strikethrough) return Helper.createElementWithChildren("s", {}, this.renderHTMLFragment({...segment, decoration: {...decoration, strikethrough: undefined}}));
+    if (decoration.link) return Helper.createElementWithChildren("a", {"href": decoration.link}, this.renderHTMLFragment({...segment, decoration: {...decoration, link: undefined}}));
 
     return this.renderHTMLText(segment.text, decoration);
   };
@@ -467,17 +473,17 @@ export default class EditText extends Component<EditTextProps, State> {
       case KeyboardCommand.UNDO_ALT:
         return this.loadHistory(this.state.history.pointer - 1);
       case KeyboardCommand.BOLD_TEXT:
-        return this.decorate({...this.props.decoration, bold: !this.text.hasDecoration("bold", this.getSelection())});
+        return this.decorate({bold: !this.value.hasDecoration("bold", this.getSelection())});
       case KeyboardCommand.ITALIC_TEXT:
-        return this.decorate({...this.props.decoration, italic: !this.text.hasDecoration("italic", this.getSelection())});
+        return this.decorate({italic: !this.value.hasDecoration("italic", this.getSelection())});
       case KeyboardCommand.UNDERLINE_TEXT:
-        return this.decorate({...this.props.decoration, underline: !this.text.hasDecoration("underline", this.getSelection())});
+        return this.decorate({underline: !this.value.hasDecoration("underline", this.getSelection())});
       case KeyboardCommand.MARK_TEXT:
-        return this.decorate({...this.props.decoration, mark: !this.text.hasDecoration("mark", this.getSelection())});
+        return this.decorate({mark: !this.value.hasDecoration("mark", this.getSelection())});
       case KeyboardCommand.CODE_TEXT:
-        return this.decorate({...this.props.decoration, code: !this.text.hasDecoration("code", this.getSelection())});
+        return this.decorate({code: !this.value.hasDecoration("code", this.getSelection())});
       case KeyboardCommand.STRIKETHROUGH_TEXT:
-        return this.decorate({...this.props.decoration, strikethrough: !this.text.hasDecoration("strikethrough", this.getSelection())});
+        return this.decorate({strikethrough: !this.value.hasDecoration("strikethrough", this.getSelection())});
     }
 
     event.bubbles = true;
@@ -498,7 +504,7 @@ export default class EditText extends Component<EditTextProps, State> {
     const {section: prev_section, section_offset: prev_section_offset, character: prev_character, character_offset: prev_character_offset, forward: prev_forward} = selection;
     if (prev_section !== section || prev_section_offset !== section_offset || prev_character !== character || prev_character_offset !== character_offset || prev_forward !== forward) {
       this.props.onSelect(selection, this);
-      this.props.onDecorationChange(this.text.getDecoration(selection) ?? this.props.decoration, this);
+      this.props.onDecorationChange(this.value.getDecoration(selection) ?? this.props.decoration, this);
     }
   };
 
@@ -559,6 +565,7 @@ export interface EditTextProps {
 
   onSelect(selection: EditTextSelection, component: EditText): void;
   onTextChange(text: RichText, selection: EditTextSelection, component: EditText): void;
+  onAlignmentChange(alignment: Alignment, component: EditText): void;
   onDecorationChange(decoration: RichTextDecoration, component: EditText): void;
 }
 

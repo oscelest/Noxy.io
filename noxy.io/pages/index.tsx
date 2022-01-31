@@ -1,7 +1,7 @@
 import {NextPageContext} from "next";
 import React from "react";
 import Component from "../components/Application/Component";
-import PageExplorer from "../components/Application/PageExplorer";
+import BlockEditor from "../components/Application/BlockEditor/BlockEditor";
 import PageEntity from "../entities/Page/PageEntity";
 
 // noinspection JSUnusedGlobalSymbols
@@ -21,7 +21,7 @@ export default class IndexPage extends Component<PageProps, State> {
   
   public render() {
     return (
-      <PageExplorer entity={this.state.page} readonly={false} onChange={this.eventText}/>
+      <BlockEditor entity={this.state.page} readonly={false} onChange={this.eventText}/>
     );
   }
   

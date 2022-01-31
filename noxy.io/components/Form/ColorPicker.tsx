@@ -14,6 +14,7 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
       ref_window: React.createRef(),
       ref_color:  React.createRef(),
       ref_alpha:  React.createRef(),
+      ref_hex:    React.createRef(),
 
       cursor: new Point(0, 0),
 
@@ -23,6 +24,10 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
       blue:  "",
       alpha: "",
     };
+  }
+
+  public focus() {
+    this.state.ref_hex.current?.focus();
   }
 
   private getColorBySaturationAndLevel({x, y}: Point) {
@@ -45,8 +50,8 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
   }
 
   private getColorByAlpha(x: number) {
-    if (!this.state.ref_color.current) throw new Error("Could not get color");
-    const {left, width} = this.state.ref_color.current.getBoundingClientRect();
+    if (!this.state.ref_alpha.current) throw new Error("Could not get color");
+    const {left, width} = this.state.ref_alpha.current.getBoundingClientRect();
     const {hue, saturation, value} = this.props.value;
     const alpha = (x - left) / width;
 
@@ -122,7 +127,7 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
         </div>
 
         <div className={Style.Input}>
-          <Input className={Style.Hex} label={"Hex"} value={hex} onChange={this.eventHexChange}/>
+          <Input ref={this.state.ref_hex} className={Style.Hex} label={"Hex"} value={hex} onChange={this.eventHexChange}/>
           <Input className={Style.Color} label={"Red"} value={red} onChange={this.eventRedChange} onWheel={this.eventRedWheel}/>
           <Input className={Style.Color} label={"Green"} value={green} onChange={this.eventGreenChange} onWheel={this.eventGreenWheel}/>
           <Input className={Style.Color} label={"Blue"} value={blue} onChange={this.eventBlueChange} onWheel={this.eventBlueWheel}/>
@@ -303,6 +308,7 @@ interface State {
   ref_window: React.RefObject<HTMLDivElement>;
   ref_color: React.RefObject<HTMLDivElement>;
   ref_alpha: React.RefObject<HTMLDivElement>;
+  ref_hex: React.RefObject<Input>;
 
   cursor: Point;
 

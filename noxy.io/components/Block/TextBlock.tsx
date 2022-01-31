@@ -1,11 +1,11 @@
 import React from "react";
-import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
 import Component from "../Application/Component";
-import {PageExplorerBlockProps} from "../Application/PageExplorer";
 import EditText, {EditTextSelection} from "../Text/EditText";
-import Style from "./TextBlock.module.scss";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
+import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
+import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
+import Style from "./TextBlock.module.scss";
 
 export default class TextBlock extends Component<TextBlockProps, State> {
 
@@ -34,7 +34,7 @@ export default class TextBlock extends Component<TextBlockProps, State> {
   }
 
   public render() {
-    const {readonly = true, decoration, block, className, onDecorationChange} = this.props;
+    const {readonly = true, decoration, block, className, onAlignmentChange, onDecorationChange} = this.props;
     const {selection} = this.state;
     if (!block.content || !block.content?.length && readonly) return null;
 
@@ -44,7 +44,7 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     return (
       <div className={classes.join(" ")}>
         <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={TextBlock.whitelist} blacklist={TextBlock.blacklist}
-                          onFocus={this.eventFocus} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventTextChange}>
+                          onFocus={this.eventFocus} onSelect={this.eventSelect} onAlignmentChange={onAlignmentChange} onDecorationChange={onDecorationChange} onTextChange={this.eventTextChange}>
           {block.content}
         </EditText>
       </div>

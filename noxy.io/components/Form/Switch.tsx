@@ -27,7 +27,7 @@ export default class Switch<V extends {}> extends Component<SwitchProps<V>, Stat
     if (option.value === this.props.value) classes.push(Style.Active);
 
     return (
-      <Button key={index} className={classes.join(" ")} icon={option.icon} value={option.value} onClick={this.eventClick}>{option.text}</Button>
+      <Button key={index} className={classes.join(" ")} icon={option.icon} value={option.value} disabled={this.props.disabled} onClick={this.eventClick}>{option.text}</Button>
     );
   };
 
@@ -37,16 +37,19 @@ export default class Switch<V extends {}> extends Component<SwitchProps<V>, Stat
 }
 
 export interface SwitchProps<V extends {}> {
-  list: SwitchItem<V>[];
+  list: SwitchCollection<V>;
   value: V;
 
   children?: never;
   className?: string;
+  disabled?: boolean;
 
   onChange: (value: V) => void;
 }
 
-export interface SwitchItem<V> {
+export type SwitchCollection<V> = SwitchItem<V>[];
+
+interface SwitchItem<V> {
   value: V;
   text?: string;
   icon?: IconType;

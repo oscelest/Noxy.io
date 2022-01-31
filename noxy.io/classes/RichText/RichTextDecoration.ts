@@ -20,41 +20,43 @@ export default class RichTextDecoration {
   public readonly link?: string;
   public readonly selected?: boolean;
 
-  constructor(initializer: RichTextDecorationInitializer = {}) {
-    this.bold = initializer.bold;
-    this.code = initializer.code;
-    this.mark = initializer.mark;
-    this.italic = initializer.italic;
-    this.underline = initializer.underline;
-    this.strikethrough = initializer.strikethrough;
+  constructor(...initializer: (RichTextDecorationInitializer | undefined)[]) {
+    for (let i = 0; i < initializer.length; i++) {
+      const value = initializer.at(i);
+      if (!value) continue;
 
-    this.font_size = initializer.font_size;
-    this.font_family = initializer.font_family;
+      this.bold = value.bold ?? this.bold;
+      this.code = value.code ?? this.code;
+      this.mark = value.mark ?? this.mark;
+      this.italic = value.italic ?? this.italic;
+      this.underline = value.underline ?? this.underline;
+      this.strikethrough = value.strikethrough ?? this.strikethrough;
 
-    this.color = initializer.color;
-    this.background_color = initializer.background_color;
+      this.font_size = value.font_size ?? this.font_size;
+      this.font_family = value.font_family ?? this.font_family;
 
-    this.link = initializer.link;
-    this.selected = initializer.selected;
+      this.color = value.color ?? this.color;
+      this.background_color = value.background_color ?? this.background_color;
+
+      this.link = value.link ?? this.link;
+      this.selected = value.selected ?? this.selected;
+    }
   }
 
   public toObject(): RichTextDecorationObject {
     return {
-      bold:          this.bold,
-      code:          this.code,
-      mark:          this.mark,
-      italic:        this.italic,
-      underline:     this.underline,
-      strikethrough: this.strikethrough,
-
-      font_size:   this.font_size,
-      font_family: this.font_family,
-
+      bold:             this.bold,
+      code:             this.code,
+      mark:             this.mark,
+      italic:           this.italic,
+      underline:        this.underline,
+      strikethrough:    this.strikethrough,
+      font_size:        this.font_size,
+      font_family:      this.font_family,
       color:            this.color,
       background_color: this.background_color,
-
-      link:     this.link,
-      selected: this.selected,
+      link:             this.link,
+      selected:         this.selected,
     };
   }
 
@@ -187,5 +189,9 @@ export type RichTextDecorationKeys = NonNullable<keyof Properties<RichTextDecora
 export type RichTextDecorationBooleanKeys = Extract<keyof RichTextDecoration, "bold" | "italic" | "underline" | "strikethrough" | "code" | "mark">
 export type RichTextDecorationStringKeys = Extract<keyof RichTextDecoration, "font_family" | "font_size" | "link" | "code" | "mark">
 export type RichTextDecorationColorKeys = Extract<keyof RichTextDecoration, "color" | "background_color">
+
 export type RichTextDecorationObject = Writeable<Properties<RichTextDecoration>>;
 export type RichTextDecorationInitializer = Initializer<RichTextDecoration>;
+export type RichTextDecorationStyle = Pick<RichTextDecorationInitializer, "code" | "mark" | "bold" | "strikethrough" | "italic" | "link" | "underline">
+export type RichTextDecorationFont = Pick<RichTextDecorationInitializer, "font_size" | "font_family">
+export type RichTextDecorationColor = Pick<RichTextDecorationInitializer, "color" | "background_color">

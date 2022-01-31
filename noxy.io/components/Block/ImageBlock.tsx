@@ -1,30 +1,22 @@
 import React from "react";
-import Component from "../Application/Component";
-import {PageExplorerBlockProps} from "../Application/PageExplorer";
-import Style from "./ImageBlock.module.scss";
-import Dialog from "../Application/Dialog";
-import FileExplorer from "../Application/FileExplorer";
-import PageBlockEntity from "../../entities/Page/PageBlockEntity";
-import EditText, {EditTextSelection} from "../Text/EditText";
-import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
-import Conditional from "../Application/Conditional";
-import Button from "../Form/Button";
-import Input from "../Form/Input";
 import Alignment from "../../../common/enums/Alignment";
-import IconType from "../../enums/IconType";
+import Button from "../Form/Button";
+import Component from "../Application/Component";
+import Conditional from "../Application/Conditional";
+import Dialog from "../Application/Dialog";
+import EditText, {EditTextSelection} from "../Text/EditText";
+import FileExplorer from "../Application/FileExplorer";
+import Input from "../Form/Input";
+import PageBlockEntity from "../../entities/Page/PageBlockEntity";
+import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
+import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
-import Switch, {SwitchItem} from "../Form/Switch";
+import Style from "./ImageBlock.module.scss";
 
 export default class ImageBlock extends Component<ImageBlockProps, State> {
 
   private static readonly blacklist: RichTextDecorationKeys[] = [];
   private static readonly whitelist: RichTextDecorationKeys[] = [];
-
-  private static switch_alignment: SwitchItem<Alignment>[] = [
-    {value: Alignment.LEFT, icon: IconType.ALIGN_LEFT},
-    {value: Alignment.CENTER, icon: IconType.ALIGN_CENTER},
-    {value: Alignment.RIGHT, icon: IconType.ALIGN_RIGHT},
-  ];
 
   constructor(props: ImageBlockProps) {
     super(props);
@@ -65,7 +57,7 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
   }
 
   public render() {
-    const {readonly = true, decoration, block, className, onDecorationChange} = this.props;
+    const {readonly = true, decoration, block, className, onAlignmentChange, onDecorationChange} = this.props;
     const {selection} = this.state;
     if (!block.content || !block.content.caption && readonly) return null;
 
@@ -78,16 +70,15 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
           <div className={Style.OptionList}>
             <Button onClick={this.eventOpenDialog}>Browse</Button>
             <Input label={"Link to image"} value={block.content.url} onChange={this.eventURLChange}/>
-            <Switch value={block.content.alignment} onChange={this.eventAlignmentChange} list={ImageBlock.switch_alignment}/>
           </div>
         </Conditional>
         <div className={this.getContentClass()}>
           <img className={Style.Preview} src={block.content.url} alt={""}/>
           <div className={Style.Caption}>
-          <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={ImageBlock.whitelist} blacklist={ImageBlock.blacklist}
-                    onFocus={this.eventFocus} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventCaptionChange}>
-            {block.content.caption}
-          </EditText>
+            <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={ImageBlock.whitelist} blacklist={ImageBlock.blacklist}
+                      onFocus={this.eventFocus} onSelect={this.eventSelect} onAlignmentChange={onAlignmentChange} onDecorationChange={onDecorationChange} onTextChange={this.eventCaptionChange}>
+              {block.content.caption}
+            </EditText>
           </div>
         </div>
       </div>
@@ -104,15 +95,11 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
 
   private readonly eventSelect = (selection: EditTextSelection, component: EditText) => {
     this.setState({selection});
-    this.props.onDecorationChange(component.text.getDecoration(selection));
+    this.props.onDecorationChange(component.value.getDecoration(selection));
   };
 
   private readonly eventURLChange = (url: string) => {
     this.props.onPageBlockChange(new PageBlockEntity<ImageBlockContent>({...this.props.block, content: {...this.getContent(), url}}));
-  };
-
-  private readonly eventAlignmentChange = (alignment: Alignment) => {
-    this.props.onPageBlockChange(new PageBlockEntity<ImageBlockContent>({...this.props.block, content: {...this.getContent(), alignment}}));
   };
 
   private readonly eventCaptionChange = (caption: RichText, selection: EditTextSelection) => {

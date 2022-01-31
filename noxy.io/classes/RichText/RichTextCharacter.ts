@@ -14,7 +14,7 @@ export default class RichTextCharacter {
   constructor(initializer: RichTextCharacterInitializer) {
     this.id = initializer.id ?? v4();
     this.value = initializer instanceof RichTextCharacter ? initializer.value : initializer.value?.charAt(0) ?? " ";
-    this.decoration = initializer instanceof RichTextCharacter ? initializer.decoration : new RichTextDecoration(initializer.decoration);
+    this.decoration = initializer.decoration instanceof RichTextDecoration ? initializer.decoration : new RichTextDecoration(initializer.decoration);
   }
 
   public clone() {

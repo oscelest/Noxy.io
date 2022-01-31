@@ -1,16 +1,16 @@
 import React from "react";
+import Component from "../Application/Component";
+import EditText, {EditTextSelection} from "../Text/EditText";
+import KeyboardCommand from "../../enums/KeyboardCommand";
+import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
 import RichTextCharacter from "../../classes/RichText/RichTextCharacter";
 import RichTextSection from "../../classes/RichText/RichTextSection";
-import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper from "../../Helper";
-import Component from "../Application/Component";
-import {PageExplorerBlockProps} from "../Application/PageExplorer";
-import EditText, {EditTextSelection} from "../Text/EditText";
-import Style from "./ListBlock.module.scss";
-import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import Util from "../../../common/services/Util";
+import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
+import Style from "./ListBlock.module.scss";
 
 export default class ListBlock extends Component<ListBlockProps, State> {
 
@@ -28,26 +28,16 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     };
   }
 
-  public replaceContent(old_text: RichText, new_text: RichText) {
-    if (this.props.block.content?.id !== old_text.id) throw new Error("Could not find text in HeaderBlock.");
-
-    return new PageBlockEntity({
-      ...this.props.block,
-      content: new_text,
-    });
-  }
-
   private shiftLevel(component: EditText, up: boolean) {
     const selection = component.getSelection();
 
     for (let i = selection.section; i <= selection.section_offset; i++) {
       const element = this.props.block.content?.section_list[i].element;
-      console.log(element);
       if (!element) continue;
 
       const length = element.length ?? 0;
       if (up && length < ListBlock.indent_max) {
-        element.unshift(component.text.element);
+        element.unshift(component.value.element);
       }
       else if (!up && length > ListBlock.indent_min) {
         element.shift();
@@ -57,12 +47,12 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     this.props.onPageBlockChange(this.props.block);
   };
 
-  private insertLineBreak(component: EditText) {
+  private static insertLineBreak(component: EditText) {
     component.insertText(RichTextCharacter.linebreak);
   }
 
-  private insertParagraph(component: EditText) {
-    component.write(new RichTextSection({element: [...component.text.getSection(component.getSelection().section).element]}));
+  private static insertParagraph(component: EditText) {
+    component.write(new RichTextSection({element: [...component.value.getSection(component.getSelection().section).element]}));
   }
 
   private static parseInitializerValue(entity?: PageBlockEntity<ListBlockInitializer>) {
@@ -118,7 +108,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   }
 
   public render() {
-    const {readonly = true, decoration, block, className, onDecorationChange} = this.props;
+    const {readonly = true, decoration, block, className, onAlignmentChange, onDecorationChange} = this.props;
     const {selection} = this.state;
     if (!block.content || !block.content?.length && readonly) return null;
 
@@ -127,7 +117,8 @@ export default class ListBlock extends Component<ListBlockProps, State> {
 
     return (
       <EditText className={classes.join(" ")} readonly={readonly} selection={selection} decoration={decoration} whitelist={ListBlock.whitelist} blacklist={ListBlock.blacklist}
-                onFocus={this.eventFocus} onKeyDown={this.eventKeyDown} onSelect={this.eventSelect} onDecorationChange={onDecorationChange} onTextChange={this.eventChange}>
+                onFocus={this.eventFocus} onKeyDown={this.eventKeyDown} onSelect={this.eventSelect} onAlignmentChange={onAlignmentChange} onDecorationChange={onDecorationChange}
+                onTextChange={this.eventChange}>
         {block.content}
       </EditText>
     );
@@ -167,10 +158,10 @@ export default class ListBlock extends Component<ListBlockProps, State> {
         return this.shiftLevel(component, false);
       case KeyboardCommand.NEW_LINE:
       case KeyboardCommand.NEW_LINE_ALT:
-        return this.insertParagraph(component);
+        return ListBlock.insertParagraph(component);
       case KeyboardCommand.NEW_PARAGRAPH:
       case KeyboardCommand.NEW_PARAGRAPH_ALT:
-        return this.insertLineBreak(component);
+        return ListBlock.insertLineBreak(component);
     }
 
     event.bubbles = true;

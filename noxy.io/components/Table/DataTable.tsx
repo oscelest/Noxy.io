@@ -5,7 +5,7 @@ import IconType from "../../enums/IconType";
 import InputType from "../../enums/InputType";
 import Component from "../Application/Component";
 import Conditional from "../Application/Conditional";
-import Table from "../Base/Table";
+import Table from "./Table";
 import AutoComplete from "../Form/AutoComplete";
 import Button from "../Form/Button";
 import Input from "../Form/Input";
