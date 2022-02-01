@@ -20,6 +20,7 @@ export default class DropdownButton extends Component<DropdownButtonProps, State
   public componentWillUnmount(): void {
     window.removeEventListener("mouseup", this.eventMouseUp);
     window.removeEventListener("mousedown", this.eventMouseDown);
+    window.removeEventListener("keyup", this.eventKeyUp);
   }
 
   public open() {
@@ -107,9 +108,21 @@ export default class DropdownButton extends Component<DropdownButtonProps, State
         return this.close();
       case KeyboardCommand.CANCEL:
         return this.dismiss();
+      case KeyboardCommand.NEXT_FOCUS:
+      case KeyboardCommand.PREV_FOCUS:
+        window.addEventListener("keyup", this.eventKeyUp);
     }
 
     event.bubbles = true;
+  };
+
+  private readonly eventKeyUp = (event: KeyboardEvent) => {
+    const command = Helper.getKeyboardEventCommand(event);
+    if (command === KeyboardCommand.NEXT_FOCUS || command === KeyboardCommand.PREV_FOCUS) {
+      if (!this.state.ref.current || !event.composedPath().includes(this.state.ref.current)) {
+        this.dismiss();
+      }
+    }
   };
 }
 

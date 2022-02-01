@@ -105,7 +105,7 @@ namespace Helper {
     return node;
   }
 
-  export function getKeyboardEventCommand(event: React.KeyboardEvent): KeyboardCommand {
+  export function getKeyboardEventCommand(event: React.KeyboardEvent | KeyboardEvent): KeyboardCommand {
     const parts = [] as string[];
     if (event.ctrlKey) parts.push("Ctrl");
     if (event.shiftKey) parts.push("Shift");
