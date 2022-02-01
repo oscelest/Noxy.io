@@ -453,8 +453,6 @@ export default class EditText extends Component<EditTextProps, State> {
     delegate.handled = true;
 
     switch (delegate.command) {
-      case KeyboardCommand.NEXT_FOCUS:
-        return this.insertText(RichTextCharacter.tab);
       case KeyboardCommand.SELECT_ALL:
         return this.selectAll();
       case KeyboardCommand.NEW_LINE:
@@ -473,11 +471,9 @@ export default class EditText extends Component<EditTextProps, State> {
         return this.deleteBackward(this.getSelection(), true);
       case KeyboardCommand.REDO:
       case KeyboardCommand.REDO_ALT:
-        console.log("test")
         return this.loadHistory(this.state.history.pointer + 1);
       case KeyboardCommand.UNDO:
       case KeyboardCommand.UNDO_ALT:
-        console.log("test")
         return this.loadHistory(this.state.history.pointer - 1);
       case KeyboardCommand.BOLD_TEXT:
         return this.decorate({bold: !this.value.hasDecoration("bold", this.getSelection())});

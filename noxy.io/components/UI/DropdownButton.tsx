@@ -21,21 +21,30 @@ export default class DropdownButton extends Component<DropdownButtonProps, State
   public componentWillUnmount(): void {
     window.removeEventListener("mouseup", this.eventMouseUp);
     window.removeEventListener("mousedown", this.eventMouseDown);
+    window.removeEventListener("focusout", this.eventFocusOut);
   }
 
   public open() {
-    this.setState({collapsed: false});
     this.props.onOpen?.();
+    this.setState({collapsed: false});
+    window.addEventListener("mousedown", this.eventMouseDown);
+    window.addEventListener("focusout", this.eventFocusOut);
   }
 
   public close() {
-    this.setState({collapsed: true});
     this.props.onClose?.();
+    this.setState({collapsed: true});
+    window.removeEventListener("mouseup", this.eventMouseUp);
+    window.removeEventListener("mousedown", this.eventMouseDown);
+    window.removeEventListener("focusout", this.eventFocusOut);
   }
 
   public dismiss() {
-    this.setState({collapsed: true});
     this.props.onDismiss?.();
+    this.setState({collapsed: true});
+    window.removeEventListener("mouseup", this.eventMouseUp);
+    window.removeEventListener("mousedown", this.eventMouseDown);
+    window.removeEventListener("focusout", this.eventFocusOut);
   }
 
   public render() {
@@ -46,7 +55,7 @@ export default class DropdownButton extends Component<DropdownButtonProps, State
     if (className) classes.push(className);
 
     return (
-      <div ref={ref} tabIndex={-1} className={classes.join(" ")} onBlur={this.eventBlur} onKeyDown={this.eventKeyDown}>
+      <div ref={ref} tabIndex={-1} className={classes.join(" ")} onKeyDown={this.eventKeyDown}>
         <Button ref={ref_button} icon={icon} value={!collapsed} onClick={this.eventClick} disabled={disabled}>{text}</Button>
         <Dropdown className={Style.Dropdown} collapsed={collapsed}>
           {children}
@@ -55,42 +64,38 @@ export default class DropdownButton extends Component<DropdownButtonProps, State
     );
   }
 
-  private readonly eventBlur = (event: React.FocusEvent) => {
-    if (event.relatedTarget === this.state.ref_button.current?.state.ref.current) {
-      this.dismiss();
-    }
-    if (!this.state.ref.current?.contains(event.relatedTarget)) {
-      this.close();
+  private readonly eventFocusOut = (event: FocusEvent) => {
+    if (!this.state.collapsed) {
+      if (event.relatedTarget === this.state.ref_button.current?.state.ref.current) {
+        this.dismiss();
+      }
+      if (!this.state.ref.current?.contains(event.relatedTarget as Node)) {
+        this.close();
+      }
     }
   };
 
-  private readonly eventClick = (collapsed: boolean) => {
-    this.setState({collapsed});
-
+  private readonly eventClick = (collapsed: boolean, event: React.MouseEvent) => {
     if (!collapsed) {
-      this.props.onOpen?.();
-      window.addEventListener("mousedown", this.eventMouseDown);
+      this.open();
     }
     else {
-      this.props.onClose?.();
-      window.removeEventListener("mouseup", this.eventMouseUp);
-      window.removeEventListener("mousedown", this.eventMouseDown);
-
+      this.close();
     }
+    event.preventDefault();
   };
 
   private readonly eventMouseDown = (event: MouseEvent) => {
     if (!this.state.ref.current || !event.composedPath().includes(this.state.ref.current)) {
       window.addEventListener("mouseup", this.eventMouseUp);
+      event.preventDefault();
     }
   };
 
   private readonly eventMouseUp = (event: MouseEvent) => {
     if (!this.state.ref.current || !event.composedPath().includes(this.state.ref.current)) {
-      this.props.onClose?.();
-      this.setState({collapsed: true});
-      window.removeEventListener("mouseup", this.eventMouseUp);
-      window.removeEventListener("mousedown", this.eventMouseDown);
+      this.dismiss();
+      event.preventDefault();
     }
   };
 

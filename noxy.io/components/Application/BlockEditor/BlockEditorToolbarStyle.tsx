@@ -13,6 +13,7 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarStyl
     super(props);
     this.state = {
       ref:            React.createRef(),
+      ref_link:       React.createRef(),
       collapsed_link: true,
     };
   }
@@ -24,7 +25,7 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarStyl
   }
 
   public render() {
-    const {ref, link = this.props.value.link ?? ""} = this.state;
+    const {ref, ref_link, link = this.props.value.link ?? ""} = this.state;
     const {className, disabled} = this.props;
     const {bold, italic, underline, strikethrough, code, mark} = this.props.value;
 
@@ -39,8 +40,8 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarStyl
         <Button className={this.getButtonClass("underline")} icon={IconType.UNDERLINE} value={{underline: !underline}} disabled={disabled} onClick={this.eventStyleClick}/>
         <Button className={this.getButtonClass("code")} icon={IconType.CODE_ALT} value={{code: !code}} disabled={disabled} onClick={this.eventStyleClick}/>
         <Button className={this.getButtonClass("mark")} icon={IconType.MARKER} value={{mark: !mark}} disabled={disabled} onClick={this.eventStyleClick}/>
-        <DropdownButton className={this.getButtonClass("link")} icon={IconType.LINK} disabled={disabled} onOpen={this.eventLinkDismiss} onClose={this.eventLinkClose} onDismiss={this.eventLinkDismiss}>
-          <Input className={Style.LinkInput} label={"Link"} value={link} onChange={this.eventLinkChange}/>
+        <DropdownButton className={this.getButtonClass("link")} icon={IconType.LINK} disabled={disabled} onOpen={this.eventLinkOpen} onClose={this.eventLinkClose} onDismiss={this.eventLinkDismiss}>
+          <Input ref={ref_link} className={Style.LinkInput} label={"Link"} value={link} onChange={this.eventLinkChange}/>
         </DropdownButton>
       </div>
     );
@@ -51,12 +52,16 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarStyl
   };
 
   private readonly eventLinkChange = (link: string) => {
-    this.setState({link})
+    this.setState({link});
     this.props.onPreview({link});
   };
 
+  private readonly eventLinkOpen = () => {
+    this.state.ref_link.current?.focus();
+  };
+
   private readonly eventLinkClose = () => {
-    this.props.onChange({link: this.state.link});
+    this.props.onChange({link: this.state.link || ""});
     this.setState({link: undefined});
   };
 
@@ -78,6 +83,8 @@ export interface BlockEditorToolbarStyleProps {
 
 interface State {
   ref: React.RefObject<HTMLDivElement>;
+  ref_link: React.RefObject<Input>;
+
   link?: string;
   dialog?: string;
 
