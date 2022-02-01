@@ -5,40 +5,12 @@
   flex-flow:    column;
   overflow:     auto;
   grid-row-gap: 15px;
+  outline: none;
 
   .Toolbar {
     flex-flow:       row wrap;
     justify-content: space-between;
-
-    .Left, .Right {
-      grid-row-gap:    10px;
-      grid-column-gap: 5px;
-    }
-
-    .Button {
-      &.Active {
-        color: #cf930b;
-      }
-    }
-
-    .Font {
-      flex-flow:       row;
-      grid-column-gap: 5px;
-    }
-
-
-
-    .Color {
-      .Dropdown {
-        flex-flow:        column;
-        position:         absolute;
-        top:              100%;
-        z-index:          100;
-        border-radius:    $border-radius;
-        border:           $border-width solid $border-color;
-        background-color: #5a318e;
-      }
-    }
+    grid-column-gap: 10px;
   }
 
   &.Edit .BlockList {

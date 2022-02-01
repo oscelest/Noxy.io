@@ -1,6 +1,21 @@
 @import "../../../variables";
 
 .Component {
-  flex: 0 0 auto;
+  flex:            0 0 auto;
   grid-column-gap: 5px;
+
+  .Button.Active {
+    color: $focus-color;
+  }
+
+  .Link {
+
+    .Dropdown {
+      right: 0;
+
+      .LinkInput {
+        width: 200px;
+      }
+    }
+  }
 }

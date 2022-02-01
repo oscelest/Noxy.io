@@ -19,6 +19,8 @@ import Util from "../../../../common/services/Util";
 import DragSortList from "../../Base/DragSortList";
 import BlockEditorToolbar from "./BlockEditorToolbar";
 import Alignment from "../../../../common/enums/Alignment";
+import Helper from "../../../Helper";
+import KeyboardCommand from "../../../enums/KeyboardCommand";
 
 export default class BlockEditor extends Component<PageExplorerProps, State> {
 
@@ -58,10 +60,11 @@ export default class BlockEditor extends Component<PageExplorerProps, State> {
     if (readonly) classes.push(Style.Readonly);
 
     return (
-      <div className={classes.join(" ")}>
+      <div tabIndex={0} className={classes.join(" ")} onKeyDown={this.eventKeyDown}>
         <div className={Style.Toolbar}>
           <Conditional condition={!readonly}>
             <BlockEditorToolbar alignment={this.state.alignment} decoration={this.state.decoration} text={this.state.text}/>
+            <Button className={Style.ButtonEdit} icon={edit ? IconType.FILE_DOCUMENT : IconType.EDIT} onClick={this.eventEditModeClick}/>
           </Conditional>
         </div>
 
@@ -113,7 +116,30 @@ export default class BlockEditor extends Component<PageExplorerProps, State> {
     });
   };
 
-  // private readonly eventEditModeClick = () => this.setState({edit: !this.state.edit, dropdown_color: false, dropdown_background_color: false});
+  private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    this.handleKeyDown(event);
+    if (!event.bubbles) {
+      event.stopPropagation();
+      event.preventDefault();
+      return false;
+    }
+  };
+
+  private readonly handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const command = Helper.getKeyboardEventCommand(event);
+    event.bubbles = false;
+
+    switch (command) {
+      case KeyboardCommand.REDO:
+      case KeyboardCommand.REDO_ALT:
+        return console.log("Redo");
+      case KeyboardCommand.UNDO:
+      case KeyboardCommand.UNDO_ALT:
+        return console.log("Undo");
+    }
+
+    event.bubbles = true;
+  };
 
   private readonly eventPageBlockRemove = (index: number) => {
     const page_block_list = [...this.props.entity.page_block_list];
@@ -130,7 +156,6 @@ export default class BlockEditor extends Component<PageExplorerProps, State> {
 
   private readonly eventAlignmentChange = (alignment: Alignment) => {
     this.setState({alignment});
-
   };
 
   private readonly eventDecorationChange = (decoration: RichTextDecoration) => {
@@ -153,6 +178,10 @@ export default class BlockEditor extends Component<PageExplorerProps, State> {
   private readonly eventPageBlockAddClick = (type: PageBlockType) => {
     const page_block_list = [...this.props.entity.page_block_list, new PageBlockEntity({id: v4(), type, weight: this.props.entity.page_block_list.length})];
     this.props.onChange(new PageEntity({...this.props.entity, page_block_list}));
+  };
+
+  private readonly eventEditModeClick = () => {
+    this.setState({edit: !this.state.edit});
   };
 }
 

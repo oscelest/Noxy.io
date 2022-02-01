@@ -1,5 +1,4 @@
 import Util from "../services/Util";
-import HistoryException from "../exceptions/HistoryException";
 
 export default class History<O> {
 
@@ -37,9 +36,9 @@ export default class History<O> {
     return new History<O>(new_pointer, new_value_list);
   }
 
-  public loadPoint(pointer: number) {
-    if (pointer < 0 || pointer >= this.#value_list.length) throw new HistoryException(`Could not load history point (Pointer: ${pointer}) from history`);
-    return new History(pointer, this.#value_list.slice(0, pointer + 1));
+  public loadPoint(pointer: number, reset: boolean = false) {
+    pointer = Util.clamp(pointer, this.#value_list.length - 1);
+    return new History(pointer, reset ? this.#value_list.slice(0, pointer + 1) : this.#value_list);
   }
 
   public forward() {

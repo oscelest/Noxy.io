@@ -17,7 +17,7 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarProp
   }
 
   public render() {
-    const {className, decoration, text} = this.props;
+    const {className, alignment, decoration, text} = this.props;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
@@ -27,7 +27,7 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarProp
         <BlockEditorToolbarStyle value={decoration} disabled={!text} onChange={this.eventDecorationChange} onPreview={this.eventDecorationPreview}/>
         <BlockEditorToolbarFont value={decoration} disabled={!text} onChange={this.eventDecorationChange} onPreview={this.eventDecorationPreview}/>
         <BlockEditorToolbarColor value={decoration} disabled={!text} onChange={this.eventDecorationChange} onPreview={this.eventDecorationPreview}/>
-        <BlockEditorToolbarAlignment alignment={text?.value.alignment} disabled={!text} onChange={this.eventAlignmentChange}/>
+        <BlockEditorToolbarAlignment alignment={alignment} disabled={!text} onChange={this.eventAlignmentChange}/>
       </div>
     );
   }

@@ -163,8 +163,7 @@ export default class EditText extends Component<EditTextProps, State> {
 
   private handleTextChange(selection: EditTextSelection, next_text: RichText = this.value.clone()) {
     this.props.onTextChange(next_text, selection, this);
-    const history = this.state.history.push({selection, value: this.value});
-    this.setState({history: history});
+    this.setState({history: this.state.history.push({selection, value: this.value})});
   }
 
   public insertText(text: string, selection: EditTextSelection = this.getSelection(), decoration: RichTextDecoration = this.props.decoration) {
@@ -202,7 +201,13 @@ export default class EditText extends Component<EditTextProps, State> {
   public decorate(decoration: Initializer<RichTextDecoration>, selection: EditTextSelection = this.getSelection()) {
     const sanitized = this.sanitizeDecoration(decoration);
     this.props.onDecorationChange(new RichTextDecoration(this.props.decoration, sanitized), this);
-    this.handleTextChange(this.value.decorate(sanitized, selection));
+    selection = this.value.decorate(sanitized, selection);
+    if (selection.section === selection.section_offset && selection.character === selection.character_offset) {
+      this.props.onTextChange(this.value.clone(), selection, this);
+    }
+    else {
+      this.handleTextChange(selection);
+    }
   };
 
   public delete(selection: EditTextSelection = this.getSelection()) {
@@ -260,7 +265,7 @@ export default class EditText extends Component<EditTextProps, State> {
     this.props.onTextChange(this.value.clone(), selected, this);
   }
 
-  public loadHistory(pointer: number = this.state.history.pointer) {
+  public loadHistory(pointer: number = this.state.history.pointer, reset: boolean = false) {
     const history = this.state.history.loadPoint(pointer);
     this.props.onDecorationChange(history.value.value.getDecoration(history.value.selection) ?? this.props.decoration, this);
     this.props.onTextChange(history.value.value, history.value.selection, this);
@@ -468,9 +473,11 @@ export default class EditText extends Component<EditTextProps, State> {
         return this.deleteBackward(this.getSelection(), true);
       case KeyboardCommand.REDO:
       case KeyboardCommand.REDO_ALT:
+        console.log("test")
         return this.loadHistory(this.state.history.pointer + 1);
       case KeyboardCommand.UNDO:
       case KeyboardCommand.UNDO_ALT:
+        console.log("test")
         return this.loadHistory(this.state.history.pointer - 1);
       case KeyboardCommand.BOLD_TEXT:
         return this.decorate({bold: !this.value.hasDecoration("bold", this.getSelection())});

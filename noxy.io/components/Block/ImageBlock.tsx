@@ -32,9 +32,9 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
 
   private getContentClass() {
     const classes = [Style.Content];
-    if (this.props.block.content?.alignment === Alignment.LEFT) classes.push(Style.Left);
-    if (this.props.block.content?.alignment === Alignment.CENTER) classes.push(Style.Center);
-    if (this.props.block.content?.alignment === Alignment.RIGHT) classes.push(Style.Right);
+    if (this.props.block.content?.caption.alignment === Alignment.LEFT) classes.push(Style.Left);
+    if (this.props.block.content?.caption.alignment === Alignment.CENTER) classes.push(Style.Center);
+    if (this.props.block.content?.caption.alignment === Alignment.RIGHT) classes.push(Style.Right);
     return classes.join(" ");
   }
 
