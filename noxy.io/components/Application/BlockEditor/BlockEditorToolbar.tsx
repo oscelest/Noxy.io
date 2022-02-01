@@ -39,6 +39,7 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarProp
 
   private readonly eventDecorationPreview = (decoration: RichTextDecorationInitializer) => {
     this.props.text?.preview(decoration);
+    if (!decoration) this.props.text?.focus();
   };
 
   private readonly eventDecorationChange = (decoration: RichTextDecorationInitializer) => {

@@ -3,11 +3,11 @@ import IconType from "../../../enums/IconType";
 import Component from "../Component";
 import Style from "./BlockEditorToolbarAlignment.module.scss";
 import Alignment from "../../../../common/enums/Alignment";
-import Switch, {SwitchCollection} from "../../Form/Switch";
+import Switch, {SwitchItemCollection} from "../../Form/Switch";
 
 export default class BlockEditorToolbarAlignment extends Component<BlockEditorToolbarAlignmentProps, State> {
 
-  private static switch_alignment_collection: SwitchCollection<Alignment> = [
+  private static switch_alignment_collection: SwitchItemCollection<Alignment> = [
     {value: Alignment.LEFT, icon: IconType.ALIGN_LEFT},
     {value: Alignment.CENTER, icon: IconType.ALIGN_CENTER},
     {value: Alignment.RIGHT, icon: IconType.ALIGN_RIGHT},

@@ -1,0 +1,14 @@
+@import "../../variables";
+
+.Component {
+  .Dropdown {
+    flex-flow:        column;
+    position:         absolute;
+    padding: 5px;
+    top:              100%;
+    z-index:          100;
+    border-radius:    $border-radius;
+    border:           $border-width solid $border-color;
+    background-color: $background-secondary-color;
+  }
+}

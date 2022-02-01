@@ -4,8 +4,8 @@ import IconType from "../../../enums/IconType";
 import Button from "../../Form/Button";
 import Component from "../Component";
 import Style from "./BlockEditorToolbarStyle.module.scss";
-import Dropdown from "components/Base/Dropdown";
 import Input from "../../Form/Input";
+import DropdownButton from "../../UI/DropdownButton";
 
 export default class BlockEditorToolbar extends Component<BlockEditorToolbarStyleProps, State> {
 
@@ -17,10 +17,6 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarStyl
     };
   }
 
-  public componentWillUnmount(): void {
-    window.removeEventListener("click", this.eventLinkBlur);
-  }
-
   private getButtonClass(key: keyof RichTextDecorationStyle) {
     const classes = [Style.Button];
     if (this.props.value[key]) classes.push(Style.Active);
@@ -28,9 +24,9 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarStyl
   }
 
   public render() {
-    const {ref, collapsed_link} = this.state;
+    const {ref, link = this.props.value.link ?? ""} = this.state;
     const {className, disabled} = this.props;
-    const {bold, italic, underline, strikethrough, code, mark, link = ""} = this.props.value;
+    const {bold, italic, underline, strikethrough, code, mark} = this.props.value;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
@@ -43,12 +39,9 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarStyl
         <Button className={this.getButtonClass("underline")} icon={IconType.UNDERLINE} value={{underline: !underline}} disabled={disabled} onClick={this.eventStyleClick}/>
         <Button className={this.getButtonClass("code")} icon={IconType.CODE_ALT} value={{code: !code}} disabled={disabled} onClick={this.eventStyleClick}/>
         <Button className={this.getButtonClass("mark")} icon={IconType.MARKER} value={{mark: !mark}} disabled={disabled} onClick={this.eventStyleClick}/>
-        <div className={Style.Link}>
-          <Button className={this.getButtonClass("link")} icon={IconType.LINK} disabled={disabled} value={!collapsed_link} onClick={this.eventLinkClick}/>
-          <Dropdown className={Style.Dropdown} collapsed={collapsed_link}>
-            <Input className={Style.LinkInput} label={"Link"} value={link} onChange={this.eventLinkChange}/>
-          </Dropdown>
-        </div>
+        <DropdownButton className={this.getButtonClass("link")} icon={IconType.LINK} disabled={disabled} onOpen={this.eventLinkDismiss} onClose={this.eventLinkClose} onDismiss={this.eventLinkDismiss}>
+          <Input className={Style.LinkInput} label={"Link"} value={link} onChange={this.eventLinkChange}/>
+        </DropdownButton>
       </div>
     );
   }
@@ -58,24 +51,18 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarStyl
   };
 
   private readonly eventLinkChange = (link: string) => {
+    this.setState({link})
     this.props.onPreview({link});
   };
 
-  private readonly eventLinkClick = (collapsed_link: boolean) => {
-    this.setState({collapsed_link});
-    if (!collapsed_link) {
-      window.addEventListener("click", this.eventLinkBlur);
-    }
-    else {
-      window.removeEventListener("click", this.eventLinkBlur);
-    }
+  private readonly eventLinkClose = () => {
+    this.props.onChange({link: this.state.link});
+    this.setState({link: undefined});
   };
 
-  private readonly eventLinkBlur = (event: MouseEvent) => {
-    if (!this.state.ref.current || !event.composedPath().includes(this.state.ref.current)) {
-      window.removeEventListener("click", this.eventLinkBlur);
-      this.setState({collapsed_link: true});
-    }
+  private readonly eventLinkDismiss = () => {
+    this.props.onPreview();
+    this.setState({link: undefined});
   };
 }
 

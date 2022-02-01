@@ -1,13 +1,12 @@
 import React from "react";
 import {RichTextDecorationColor} from "../../../classes/RichText/RichTextDecoration";
 import IconType from "../../../enums/IconType";
-import Button from "../../Form/Button";
 import Component from "../Component";
 import Style from "./BlockEditorToolbarColor.module.scss";
 import ColorPicker from "../../Form/ColorPicker";
 import Color from "../../../../common/classes/Color";
-import Dropdown from "components/Base/Dropdown";
 import EventCode from "../../../../common/enums/EventCode";
+import DropdownButton from "../../UI/DropdownButton";
 
 export default class BlockEditorToolbar extends Component<BlockEditorToolbarColorProps, State> {
 
@@ -22,35 +21,24 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarColo
 
       color:            BlockEditorToolbar.color,
       background_color: BlockEditorToolbar.background_color,
-
-      collapsed_color:            true,
-      collapsed_background_color: true,
     };
   }
 
   public render() {
     const {className, disabled} = this.props;
     const {color = this.state.color, background_color = this.state.background_color} = this.props.value;
-    const {collapsed_color, collapsed_background_color} = this.state;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
 
     return (
       <div className={classes.join(" ")} onKeyDown={this.eventKeyDown}>
-        <div className={Style.Color}>
-          <Button icon={IconType.FONT} value={!collapsed_color} onClick={this.eventColorDropdown} disabled={disabled}/>
-          <Dropdown className={Style.Dropdown} collapsed={collapsed_color}>
-            <ColorPicker ref={this.state.ref_color} value={color} onChange={this.eventColorPreview}/>
-          </Dropdown>
-        </div>
-
-        <div className={Style.Color}>
-          <Button icon={IconType.COLOR_BUCKET} value={!collapsed_background_color} onClick={this.eventBackgroundColorDropdown} disabled={disabled}/>
-          <Dropdown className={Style.Dropdown} collapsed={collapsed_background_color}>
-            <ColorPicker ref={this.state.ref_background_color} value={background_color} onChange={this.eventBackgroundColorPreview}/>
-          </Dropdown>
-        </div>
+        <DropdownButton icon={IconType.FONT} disabled={disabled} onOpen={this.eventColorOpen} onClose={this.eventColorClose} onDismiss={this.eventColorDismiss}>
+          <ColorPicker ref={this.state.ref_color} value={color} onChange={this.eventColorPreview}/>
+        </DropdownButton>
+        <DropdownButton icon={IconType.COLOR_BUCKET} disabled={disabled} onOpen={this.eventBackgroundColorOpen} onClose={this.eventBackgroundColorClose} onDismiss={this.eventBackgroundColorDismiss}>
+          <ColorPicker ref={this.state.ref_background_color} value={background_color} onChange={this.eventBackgroundColorPreview}/>
+        </DropdownButton>
       </div>
     );
   }
@@ -58,36 +46,61 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarColo
   private readonly eventKeyDown = (event: React.KeyboardEvent) => {
     const key = event.key as EventCode;
     if (key === EventCode.ESCAPE) {
-      this.props.onPreview();
       event.preventDefault();
+      this.props.onPreview();
+      this.setState({
+        color:                      this.props.value.color ?? BlockEditorToolbar.color,
+        background_color:           this.props.value.background_color ?? BlockEditorToolbar.background_color,
+      });
     }
   };
 
-  private readonly eventColorDropdown = (collapsed_color: boolean) => {
-    this.state.ref_color.current?.focus();
-    this.setState({collapsed_color, collapsed_background_color: true});
-    if (collapsed_color) {
-      this.props.onChange({color: this.state.color});
-    }
-  };
+  //region ----- Color handlers -----
 
   private readonly eventColorPreview = (color: Color) => {
     this.props.onPreview({color});
     this.setState({color});
   };
 
-  private readonly eventBackgroundColorDropdown = (collapsed_background_color: boolean) => {
-    this.state.ref_background_color.current?.focus();
-    this.setState({collapsed_background_color, collapsed_color: true});
-    if (collapsed_background_color) {
-      this.props.onChange({background_color: this.state.background_color});
-    }
+  private readonly eventColorOpen = () => {
+    this.state.ref_color.current?.focus();
   };
+
+  private readonly eventColorClose = () => {
+    this.props.onChange({color: this.state.color});
+    this.setState({color: this.state.color});
+  };
+
+  private readonly eventColorDismiss = () => {
+    this.props.onPreview();
+    this.setState({color: this.props.value.color ?? BlockEditorToolbar.color});
+  };
+
+  //endregion ----- Color handlers -----
+
+  //region    ----- Background Color handlers -----
 
   private readonly eventBackgroundColorPreview = (background_color: Color) => {
     this.props.onPreview({background_color});
     this.setState({background_color});
   };
+
+  private readonly eventBackgroundColorOpen = () => {
+    this.state.ref_background_color.current?.focus();
+  };
+
+  private readonly eventBackgroundColorClose = () => {
+    this.props.onChange({background_color: this.state.background_color});
+    this.setState({background_color: this.state.background_color});
+  };
+
+  private readonly eventBackgroundColorDismiss = () => {
+    this.props.onPreview();
+    this.setState({background_color: this.props.value.background_color ?? BlockEditorToolbar.background_color});
+  };
+
+  //endregion ----- Background Color handlers -----
+
 }
 
 export interface BlockEditorToolbarColorProps {
@@ -106,7 +119,4 @@ interface State {
 
   color: Color;
   background_color: Color;
-
-  collapsed_color: boolean;
-  collapsed_background_color: boolean;
 }

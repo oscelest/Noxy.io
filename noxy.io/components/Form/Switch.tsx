@@ -37,7 +37,7 @@ export default class Switch<V extends {}> extends Component<SwitchProps<V>, Stat
 }
 
 export interface SwitchProps<V extends {}> {
-  list: SwitchCollection<V>;
+  list: SwitchItemCollection<V>;
   value: V;
 
   children?: never;
@@ -47,7 +47,7 @@ export interface SwitchProps<V extends {}> {
   onChange: (value: V) => void;
 }
 
-export type SwitchCollection<V> = SwitchItem<V>[];
+export type SwitchItemCollection<V> = SwitchItem<V>[];
 
 interface SwitchItem<V> {
   value: V;

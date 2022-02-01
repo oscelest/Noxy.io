@@ -36,7 +36,7 @@ import Conditional from "./Conditional";
 import Dialog from "./Dialog";
 import Style from "./FileExplorer.module.scss";
 import Redirect from "./Redirect";
-import Switch, {SwitchItem} from "../Form/Switch";
+import Switch, {SwitchItemCollection} from "../Form/Switch";
 
 // noinspection JSUnusedGlobalSymbols
 export default class FileExplorer extends Component<FileBrowserProps, State> {
@@ -47,7 +47,7 @@ export default class FileExplorer extends Component<FileBrowserProps, State> {
     time_created: {order: Order.DESC, text: "Upload date", icon: IconType.CLOCK},
   };
 
-  private static switch_set_operation: SwitchItem<SetOperation>[] = [
+  private static switch_set_operation: SwitchItemCollection<SetOperation> = [
     {value: SetOperation.UNION, icon: IconType.GEAR, text: "Match any"},
     {value: SetOperation.INTERSECTION, icon: IconType.GEARS, text: "Match all"},
   ];
