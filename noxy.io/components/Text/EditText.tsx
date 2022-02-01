@@ -7,7 +7,7 @@ import RichTextCharacter, {RichTextCharacterContent, RichTextFragmentContent} fr
 import RichTextDecoration, {RichTextDecorationObject, RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 import RichTextSection, {RichTextSectionContent} from "../../classes/RichText/RichTextSection";
 import KeyboardCommand from "../../enums/KeyboardCommand";
-import Helper from "../../Helper";
+import Helper, {KeyboardCommandDelegate} from "../../Helper";
 import Component from "../Application/Component";
 import Style from "./EditText.module.scss";
 import History from "../../../common/classes/History";
@@ -437,8 +437,9 @@ export default class EditText extends Component<EditTextProps, State> {
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     this.props.onKeyDown?.(event, this);
 
+    const delegate = Helper.getKeyboardCommandDelegate(event);
     if (!event.defaultPrevented) {
-      this.handleKeyDown(event);
+      this.handleKeyDown(delegate);
     }
 
     if (!event.bubbles) {
@@ -448,11 +449,10 @@ export default class EditText extends Component<EditTextProps, State> {
     }
   };
 
-  private readonly handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    const command = Helper.getKeyboardEventCommand(event);
-    event.bubbles = false;
+  private readonly handleKeyDown = (delegate: KeyboardCommandDelegate) => {
+    delegate.handled = true;
 
-    switch (command) {
+    switch (delegate.command) {
       case KeyboardCommand.NEXT_FOCUS:
         return this.insertText(RichTextCharacter.tab);
       case KeyboardCommand.SELECT_ALL:
@@ -493,7 +493,7 @@ export default class EditText extends Component<EditTextProps, State> {
         return this.decorate({strikethrough: !this.value.hasDecoration("strikethrough", this.getSelection())});
     }
 
-    event.bubbles = true;
+    delegate.handled = false;
   };
 
   private readonly eventBlur = (event: React.FocusEvent<HTMLDivElement>) => {

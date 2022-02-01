@@ -4,7 +4,7 @@ import Style from "./DropdownButton.module.scss";
 import Button from "../Form/Button";
 import IconType from "../../enums/IconType";
 import Dropdown from "../Base/Dropdown";
-import Helper from "../../Helper";
+import Helper, {KeyboardCommandDelegate} from "../../Helper";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 
 export default class DropdownButton extends Component<DropdownButtonProps, State> {
@@ -12,15 +12,15 @@ export default class DropdownButton extends Component<DropdownButtonProps, State
   constructor(props: DropdownButtonProps) {
     super(props);
     this.state = {
-      ref:       React.createRef(),
-      collapsed: true,
+      ref:        React.createRef(),
+      ref_button: React.createRef(),
+      collapsed:  true,
     };
   }
 
   public componentWillUnmount(): void {
     window.removeEventListener("mouseup", this.eventMouseUp);
     window.removeEventListener("mousedown", this.eventMouseDown);
-    window.removeEventListener("keyup", this.eventKeyUp);
   }
 
   public open() {
@@ -39,23 +39,32 @@ export default class DropdownButton extends Component<DropdownButtonProps, State
   }
 
   public render() {
-    const {className, disabled, icon, text} = this.props;
-    const {ref, collapsed} = this.state;
+    const {className, disabled, icon, text, children} = this.props;
+    const {ref, ref_button, collapsed} = this.state;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
 
     return (
-      <div ref={ref} className={classes.join(" ")} onKeyDown={this.eventKeyDown}>
-        <Button icon={icon} value={!collapsed} onClick={this.eventBackgroundColorDropdown} disabled={disabled}>{text}</Button>
+      <div ref={ref} tabIndex={-1} className={classes.join(" ")} onBlur={this.eventBlur} onKeyDown={this.eventKeyDown}>
+        <Button ref={ref_button} icon={icon} value={!collapsed} onClick={this.eventClick} disabled={disabled}>{text}</Button>
         <Dropdown className={Style.Dropdown} collapsed={collapsed}>
-          {this.props.children}
+          {children}
         </Dropdown>
       </div>
     );
   }
 
-  private readonly eventBackgroundColorDropdown = (collapsed: boolean) => {
+  private readonly eventBlur = (event: React.FocusEvent) => {
+    if (event.relatedTarget === this.state.ref_button.current?.state.ref.current) {
+      this.dismiss();
+    }
+    if (!this.state.ref.current?.contains(event.relatedTarget)) {
+      this.close();
+    }
+  };
+
+  private readonly eventClick = (collapsed: boolean) => {
     this.setState({collapsed});
 
     if (!collapsed) {
@@ -66,6 +75,7 @@ export default class DropdownButton extends Component<DropdownButtonProps, State
       this.props.onClose?.();
       window.removeEventListener("mouseup", this.eventMouseUp);
       window.removeEventListener("mousedown", this.eventMouseDown);
+
     }
   };
 
@@ -87,42 +97,30 @@ export default class DropdownButton extends Component<DropdownButtonProps, State
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     this.props.onKeyDown?.(event);
 
-    if (!event.defaultPrevented && event.bubbles) {
-      this.handleKeyDown(event);
+    const command = Helper.getKeyboardCommandDelegate(event);
+    if (!event.defaultPrevented) {
+      this.handleKeyDown(command);
     }
 
-    if (!event.bubbles) {
+    if (command.handled) {
       event.stopPropagation();
       event.preventDefault();
       return false;
     }
   };
 
-  private readonly handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    const command = Helper.getKeyboardEventCommand(event);
-    event.bubbles = false;
+  private readonly handleKeyDown = (event: KeyboardCommandDelegate) => {
+    event.handled = true;
 
-    switch (command) {
+    switch (event.command) {
       case KeyboardCommand.NEW_LINE:
       case KeyboardCommand.NEW_LINE_ALT:
         return this.close();
       case KeyboardCommand.CANCEL:
         return this.dismiss();
-      case KeyboardCommand.NEXT_FOCUS:
-      case KeyboardCommand.PREV_FOCUS:
-        window.addEventListener("keyup", this.eventKeyUp);
     }
 
-    event.bubbles = true;
-  };
-
-  private readonly eventKeyUp = (event: KeyboardEvent) => {
-    const command = Helper.getKeyboardEventCommand(event);
-    if (command === KeyboardCommand.NEXT_FOCUS || command === KeyboardCommand.PREV_FOCUS) {
-      if (!this.state.ref.current || !event.composedPath().includes(this.state.ref.current)) {
-        this.dismiss();
-      }
-    }
+    event.handled = false;
   };
 }
 
@@ -140,5 +138,6 @@ export interface DropdownButtonProps {
 
 interface State {
   ref: React.RefObject<HTMLDivElement>;
+  ref_button: React.RefObject<Button<any>>;
   collapsed: boolean;
 }

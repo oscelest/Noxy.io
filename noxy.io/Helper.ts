@@ -3,6 +3,8 @@ import React from "react";
 import RequestHeader from "../common/enums/RequestHeader";
 import KeyboardCommand from "./enums/KeyboardCommand";
 
+export type KeyboardCommandDelegate = {command: KeyboardCommand, handled: boolean};
+
 namespace Helper {
 
   export const Canvas = process.browser ? document.createElement("canvas") : null;
@@ -105,13 +107,13 @@ namespace Helper {
     return node;
   }
 
-  export function getKeyboardEventCommand(event: React.KeyboardEvent | KeyboardEvent): KeyboardCommand {
+  export function getKeyboardCommandDelegate(event: React.KeyboardEvent | KeyboardEvent): {command: KeyboardCommand, handled: boolean} {
     const parts = [] as string[];
     if (event.ctrlKey) parts.push("Ctrl");
     if (event.shiftKey) parts.push("Shift");
     if (event.altKey) parts.push("Alt");
     parts.push(event.code);
-    return parts.join("+") as KeyboardCommand;
+    return {command: parts.join("+") as KeyboardCommand, handled: false};
   }
 
   export function getAPIPath(...segment: string[]) {

@@ -6,7 +6,7 @@ import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
 import RichTextCharacter from "../../classes/RichText/RichTextCharacter";
 import RichTextSection from "../../classes/RichText/RichTextSection";
-import Helper from "../../Helper";
+import Helper, {KeyboardCommandDelegate} from "../../Helper";
 import Util from "../../../common/services/Util";
 import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
@@ -138,18 +138,19 @@ export default class ListBlock extends Component<ListBlockProps, State> {
   };
 
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, component: EditText) => {
-    this.handleKeyDown(event, component);
+    const delegate = Helper.getKeyboardCommandDelegate(event);
+    this.handleKeyDown(delegate, component);
+
     if (!event.bubbles) {
       event.preventDefault();
       event.stopPropagation();
     }
   };
 
-  private readonly handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, component: EditText) => {
-    const command = Helper.getKeyboardEventCommand(event);
-    event.bubbles = false;
+  private readonly handleKeyDown = (delegate: KeyboardCommandDelegate, component: EditText) => {
+    delegate.handled = true;
 
-    switch (command) {
+    switch (delegate.command) {
       case KeyboardCommand.INDENT:
       case KeyboardCommand.NEXT_FOCUS:
         return this.shiftLevel(component, true);
@@ -164,7 +165,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
         return ListBlock.insertLineBreak(component);
     }
 
-    event.bubbles = true;
+    delegate.handled = false;
   };
 }
 

@@ -49,8 +49,8 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarColo
       event.preventDefault();
       this.props.onPreview();
       this.setState({
-        color:                      this.props.value.color ?? BlockEditorToolbar.color,
-        background_color:           this.props.value.background_color ?? BlockEditorToolbar.background_color,
+        color:            this.props.value.color ?? BlockEditorToolbar.color,
+        background_color: this.props.value.background_color ?? BlockEditorToolbar.background_color,
       });
     }
   };

@@ -14,37 +14,45 @@ export default class Button<V> extends Component<EventProps | ValueProps<V>, Sta
 
   constructor(props: EventProps | ValueProps<V>) {
     super(props);
-    this.state = {};
+    this.state = {
+      ref: React.createRef(),
+    };
+  }
+
+  public focus() {
+    this.state.ref.current?.focus();
   }
 
   public render() {
+    const {ref} = this.state;
+    const {className, icon, children, loading = false, disabled = false} = this.props;
+
     const tab_index = !this.props.disabled ? 0 : undefined;
-    const disabled = this.props.disabled ?? false;
-    const loading = this.props.loading ?? false;
+
     const classes = [Style.Component];
-    if (!this.props.children) classes.push(Style.Simple);
-    if (this.props.className) classes.push(this.props.className);
+    if (!children) classes.push(Style.Simple);
+    if (className) classes.push(className);
 
     return (
-      <div className={classes.join(" ")} tabIndex={tab_index} data-disabled={disabled} data-loading={loading}
+      <div ref={ref} className={classes.join(" ")} tabIndex={tab_index} data-disabled={disabled} data-loading={loading}
            onClick={this.eventClick} onMouseEnter={this.eventMouseEnter} onMouseLeave={this.eventMouseLeave} onMouseDown={this.eventMouseDown} onMouseUp={this.eventMouseUp}
            onFocus={this.eventFocus} onBlur={this.eventBlur} onKeyDown={this.eventKeyDown}>
         <Loader className={Style.Loader} size={Size.SMALL} value={loading}>
-          <Conditional condition={this.props.icon}>
-            <Icon className={Style.Icon} type={this.props.icon!}/>
+          <Conditional condition={icon}>
+            <Icon className={Style.Icon} type={icon!}/>
           </Conditional>
-          <Conditional condition={this.props.children}>
-            {this.props.children}
+          <Conditional condition={children}>
+            {children}
           </Conditional>
         </Loader>
       </div>
     );
   }
-  
+
   private readonly eventMouseDown = (event: React.MouseEvent) => {
     this.invokeEvent(event, this.props.onMouseDown);
   };
-  
+
   private readonly eventMouseUp = (event: React.MouseEvent) => {
     this.invokeEvent(event, this.props.onMouseUp);
   };
@@ -98,40 +106,40 @@ export default class Button<V> extends Component<EventProps | ValueProps<V>, Sta
 }
 
 interface BaseProps {
-  icon?: IconType
-  loading?: boolean
-  disabled?: boolean
-  className?: string
+  icon?: IconType;
+  loading?: boolean;
+  disabled?: boolean;
+  className?: string;
 
-  onClick?(...args: any[]): any | Promise<any>
-  onMouseEnter?(...args: any[]): any | Promise<any>
-  onMouseLeave?(...args: any[]): any | Promise<any>
-  onFocus?(...args: any[]): any | Promise<any>
-  onBlur?(...args: any[]): any | Promise<any>
+  onClick?(...args: any[]): any | Promise<any>;
+  onMouseEnter?(...args: any[]): any | Promise<any>;
+  onMouseLeave?(...args: any[]): any | Promise<any>;
+  onFocus?(...args: any[]): any | Promise<any>;
+  onBlur?(...args: any[]): any | Promise<any>;
 }
 
 interface EventProps extends BaseProps {
-  value?: never
-  onClick?(event: React.MouseEvent): any | Promise<any>
-  onMouseDown?(event: React.MouseEvent): any | Promise<any>
-  onMouseUp?(event: React.MouseEvent): any | Promise<any>
-  onMouseEnter?(event: React.MouseEvent): any | Promise<any>
-  onMouseLeave?(event: React.MouseEvent): any | Promise<any>
-  onFocus?(event: React.MouseEvent): any | Promise<any>
-  onBlur?(event: React.MouseEvent): any | Promise<any>
+  value?: never;
+  onClick?(event: React.MouseEvent): any | Promise<any>;
+  onMouseDown?(event: React.MouseEvent): any | Promise<any>;
+  onMouseUp?(event: React.MouseEvent): any | Promise<any>;
+  onMouseEnter?(event: React.MouseEvent): any | Promise<any>;
+  onMouseLeave?(event: React.MouseEvent): any | Promise<any>;
+  onFocus?(event: React.MouseEvent): any | Promise<any>;
+  onBlur?(event: React.MouseEvent): any | Promise<any>;
 }
 
 interface ValueProps<V> extends BaseProps {
-  value: V
-  onClick?(value: V, event: React.MouseEvent): any | Promise<any>
-  onMouseDown?(value: V, event: React.MouseEvent): any | Promise<any>
-  onMouseUp?(value: V, event: React.MouseEvent): any | Promise<any>
-  onMouseEnter?(value: V, event: React.MouseEvent): any | Promise<any>
-  onMouseLeave?(value: V, event: React.MouseEvent): any | Promise<any>
-  onFocus?(value: V, event: React.MouseEvent): any | Promise<any>
-  onBlur?(value: V, event: React.MouseEvent): any | Promise<any>
+  value: V;
+  onClick?(value: V, event: React.MouseEvent): any | Promise<any>;
+  onMouseDown?(value: V, event: React.MouseEvent): any | Promise<any>;
+  onMouseUp?(value: V, event: React.MouseEvent): any | Promise<any>;
+  onMouseEnter?(value: V, event: React.MouseEvent): any | Promise<any>;
+  onMouseLeave?(value: V, event: React.MouseEvent): any | Promise<any>;
+  onFocus?(value: V, event: React.MouseEvent): any | Promise<any>;
+  onBlur?(value: V, event: React.MouseEvent): any | Promise<any>;
 }
 
 interface State {
-
+  ref: React.RefObject<HTMLDivElement>;
 }

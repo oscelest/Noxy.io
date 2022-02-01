@@ -19,7 +19,7 @@ import Util from "../../../../common/services/Util";
 import DragSortList from "../../Base/DragSortList";
 import BlockEditorToolbar from "./BlockEditorToolbar";
 import Alignment from "../../../../common/enums/Alignment";
-import Helper from "../../../Helper";
+import Helper, {KeyboardCommandDelegate} from "../../../Helper";
 import KeyboardCommand from "../../../enums/KeyboardCommand";
 
 export default class BlockEditor extends Component<PageExplorerProps, State> {
@@ -117,19 +117,20 @@ export default class BlockEditor extends Component<PageExplorerProps, State> {
   };
 
   private readonly eventKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    this.handleKeyDown(event);
-    if (!event.bubbles) {
+    const delegate = Helper.getKeyboardCommandDelegate(event);
+    this.handleKeyDown(delegate);
+
+    if (delegate.handled) {
       event.stopPropagation();
       event.preventDefault();
       return false;
     }
   };
 
-  private readonly handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    const command = Helper.getKeyboardEventCommand(event);
-    event.bubbles = false;
+  private readonly handleKeyDown = (delegate: KeyboardCommandDelegate) => {
+    delegate.handled = true;
 
-    switch (command) {
+    switch (delegate.command) {
       case KeyboardCommand.REDO:
       case KeyboardCommand.REDO_ALT:
         return console.log("Redo");
@@ -138,7 +139,7 @@ export default class BlockEditor extends Component<PageExplorerProps, State> {
         return console.log("Undo");
     }
 
-    event.bubbles = true;
+    delegate.handled = false;
   };
 
   private readonly eventPageBlockRemove = (index: number) => {
