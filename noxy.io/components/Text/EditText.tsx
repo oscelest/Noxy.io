@@ -190,12 +190,12 @@ export default class EditText extends Component<EditTextProps, State> {
 
   public align(alignment: Alignment) {
     this.props.onAlignmentChange(alignment, this);
-    this.handleTextChange(this.props.selection, new RichText({...this.value, alignment}));
   };
 
   public write(insert: RichTextCharacter | RichTextSection | (RichTextCharacter | RichTextSection)[], selection: EditTextSelection = this.getSelection()) {
-    selection = this.value.replace(insert, selection);
-    this.handleTextChange(selection);
+    const next_text = this.value.clone();
+    const next_selection = next_text.replace(insert, selection);
+    this.props.onTextChange(next_text, next_selection, this);
   };
 
   public decorate(decoration: Initializer<RichTextDecoration>, selection: EditTextSelection = this.getSelection()) {
@@ -442,7 +442,7 @@ export default class EditText extends Component<EditTextProps, State> {
       this.handleKeyDown(delegate);
     }
 
-    if (!event.bubbles) {
+    if (delegate.handled) {
       event.stopPropagation();
       event.preventDefault();
       return false;
@@ -469,12 +469,12 @@ export default class EditText extends Component<EditTextProps, State> {
         return this.deleteForward(this.getSelection(), true);
       case KeyboardCommand.DELETE_WORD_BACKWARD:
         return this.deleteBackward(this.getSelection(), true);
-      case KeyboardCommand.REDO:
-      case KeyboardCommand.REDO_ALT:
-        return this.loadHistory(this.state.history.pointer + 1);
-      case KeyboardCommand.UNDO:
-      case KeyboardCommand.UNDO_ALT:
-        return this.loadHistory(this.state.history.pointer - 1);
+      // case KeyboardCommand.REDO:
+      // case KeyboardCommand.REDO_ALT:
+      //   return this.loadHistory(this.state.history.pointer + 1);
+      // case KeyboardCommand.UNDO:
+      // case KeyboardCommand.UNDO_ALT:
+      //   return this.loadHistory(this.state.history.pointer - 1);
       case KeyboardCommand.BOLD_TEXT:
         return this.decorate({bold: !this.value.hasDecoration("bold", this.getSelection())});
       case KeyboardCommand.ITALIC_TEXT:

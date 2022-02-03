@@ -18,15 +18,12 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarColo
     this.state = {
       ref_color:            React.createRef(),
       ref_background_color: React.createRef(),
-
-      color:            BlockEditorToolbar.color,
-      background_color: BlockEditorToolbar.background_color,
     };
   }
 
   public render() {
     const {className, disabled} = this.props;
-    const {color = this.state.color, background_color = this.state.background_color} = this.props.value;
+    const {color, background_color} = this.props.value;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
@@ -34,10 +31,10 @@ export default class BlockEditorToolbar extends Component<BlockEditorToolbarColo
     return (
       <div className={classes.join(" ")} onKeyDown={this.eventKeyDown}>
         <DropdownButton icon={IconType.FONT} disabled={disabled} onOpen={this.eventColorOpen} onClose={this.eventColorClose} onDismiss={this.eventColorDismiss}>
-          <ColorPicker ref={this.state.ref_color} value={color} onChange={this.eventColorPreview}/>
+          <ColorPicker ref={this.state.ref_color} color={color} onChange={this.eventColorPreview}/>
         </DropdownButton>
         <DropdownButton icon={IconType.COLOR_BUCKET} disabled={disabled} onOpen={this.eventBackgroundColorOpen} onClose={this.eventBackgroundColorClose} onDismiss={this.eventBackgroundColorDismiss}>
-          <ColorPicker ref={this.state.ref_background_color} value={background_color} onChange={this.eventBackgroundColorPreview}/>
+          <ColorPicker ref={this.state.ref_background_color} color={background_color} onChange={this.eventBackgroundColorPreview}/>
         </DropdownButton>
       </div>
     );
@@ -117,6 +114,6 @@ interface State {
   ref_color: React.RefObject<ColorPicker>;
   ref_background_color: React.RefObject<ColorPicker>;
 
-  color: Color;
-  background_color: Color;
+  color?: Color;
+  background_color?: Color;
 }

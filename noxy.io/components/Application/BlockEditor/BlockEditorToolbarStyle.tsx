@@ -1,11 +1,11 @@
 import React from "react";
-import {RichTextDecorationStyle} from "../../../classes/RichText/RichTextDecoration";
-import IconType from "../../../enums/IconType";
 import Button from "../../Form/Button";
 import Component from "../Component";
-import Style from "./BlockEditorToolbarStyle.module.scss";
-import Input from "../../Form/Input";
 import DropdownButton from "../../UI/DropdownButton";
+import IconType from "../../../enums/IconType";
+import Input from "../../Form/Input";
+import {RichTextDecorationStyle} from "../../../classes/RichText/RichTextDecoration";
+import Style from "./BlockEditorToolbarStyle.module.scss";
 
 export default class BlockEditorToolbar extends Component<BlockEditorToolbarStyleProps, State> {
 

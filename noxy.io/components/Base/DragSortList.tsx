@@ -42,14 +42,15 @@ export default class DragSortList<T> extends Component<DragSortListProps<T>, Sta
   }
 
   public render() {
-    const {className} = this.props;
+    const {ref_list} = this.state;
+    const {className, list, horizontal} = this.props;
 
-    const classes = [Style.Component, this.props.horizontal ? Style.Horizontal : Style.Vertical];
+    const classes = [Style.Component, horizontal ? Style.Horizontal : Style.Vertical];
     if (className) classes.push(className);
 
     return (
-      <div ref={this.state.ref_list} className={classes.join(" ")}>
-        {this.props.list.map(this.renderItem)}
+      <div ref={ref_list} className={classes.join(" ")}>
+        {list.map(this.renderItem)}
       </div>
     );
   }

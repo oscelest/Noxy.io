@@ -20,7 +20,7 @@ export default class BlockEditorToolbarFont extends Component<BlockEditorToolbar
 
   public render() {
     const {className, disabled} = this.props;
-    const {font_size = Helper.FontSizeDefault, font_family = Helper.FontFamilyDefault} = this.props.value;
+    const {font_size = "", font_family = ""} = this.props.value;
 
     const classes = [Style.Component];
     if (className) classes.push(className);

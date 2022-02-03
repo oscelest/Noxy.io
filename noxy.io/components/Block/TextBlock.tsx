@@ -2,7 +2,9 @@ import React from "react";
 import Component from "../Application/Component";
 import EditText, {EditTextSelection} from "../Text/EditText";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
+import PageBlockType from "../../../common/enums/PageBlockType";
 import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
+import RichTextSection from "../../classes/RichText/RichTextSection";
 import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 import Style from "./TextBlock.module.scss";
@@ -19,24 +21,42 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     };
   }
 
-  private static parseInitializerValue(entity?: PageBlockEntity<TextBlockInitializer>) {
+  private static getContent(content?: TextBlockInitializer) {
     return new RichText({
+      ...content,
       element:      "div",
-      section_list: entity?.content?.section_list,
+      section_list: TextBlock.getSectionList(content?.section_list),
     });
   }
 
-  public componentDidMount() {
-    this.props.onPageBlockChange(new PageBlockEntity<TextBlockContent>({
-      ...this.props.block,
-      content: TextBlock.parseInitializerValue(this.props.block),
-    }));
+  private static getSectionList(list?: TextBlockInitializer["section_list"]) {
+    if (typeof list === "string") return list;
+    if (Array.isArray(list)) {
+      const section_list = [];
+      for (let i = 0; i < list.length; i++) {
+        const item = list.at(i);
+        if (!item) continue;
+        if (item instanceof RichTextSection) {
+          section_list.push(new RichTextSection({...item, element: "p"}));
+        }
+        else if (typeof item === "string") {
+          section_list.push(new RichTextSection({character_list: item}));
+        }
+        else {
+          section_list.push(new RichTextSection({character_list: item?.character_list}));
+        }
+      }
+      return section_list;
+    }
+    return [new RichTextSection()];
   }
 
   public render() {
-    const {readonly = true, decoration, block, className, onAlignmentChange, onDecorationChange} = this.props;
+    const {readonly = true, decoration, className, onAlignmentChange, onDecorationChange} = this.props;
     const {selection} = this.state;
-    if (!block.content || !block.content?.length && readonly) return null;
+
+    const text = TextBlock.getContent(this.props.block.content);
+    if (!text.size && readonly) return null;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
@@ -44,8 +64,8 @@ export default class TextBlock extends Component<TextBlockProps, State> {
     return (
       <div className={classes.join(" ")}>
         <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={TextBlock.whitelist} blacklist={TextBlock.blacklist}
-                          onFocus={this.eventFocus} onSelect={this.eventSelect} onAlignmentChange={onAlignmentChange} onDecorationChange={onDecorationChange} onTextChange={this.eventTextChange}>
-          {block.content}
+                  onFocus={this.eventFocus} onSelect={this.eventSelect} onAlignmentChange={onAlignmentChange} onDecorationChange={onDecorationChange} onTextChange={this.eventTextChange}>
+          {text}
         </EditText>
       </div>
     );
@@ -65,13 +85,23 @@ export default class TextBlock extends Component<TextBlockProps, State> {
   };
 }
 
-export type TextBlockContent = RichText
-export type TextBlockInitializer = RichText | RichTextInitializer
+type TextBlockInitializer = RichText | RichTextInitializer;
 
-export interface TextBlockProps extends PageExplorerBlockProps<TextBlockContent> {
+export interface TextBlockProps extends PageExplorerBlockProps<PageBlockContentInitializer[PageBlockType.TEXT]> {
 
 }
 
 interface State {
   selection: EditTextSelection;
+}
+
+
+declare global {
+  interface PageBlockContentInitializer {
+    [PageBlockType.TEXT]: RichText | RichTextInitializer;
+  }
+
+  interface PageBlockContentValue {
+    [PageBlockType.TEXT]: RichText;
+  }
 }

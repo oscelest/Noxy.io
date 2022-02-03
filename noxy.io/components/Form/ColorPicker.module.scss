@@ -30,6 +30,7 @@
       height:          10px;
       border:          1px solid white;
       border-radius:   50%;
+      transform:       translate(-5px, -5px);
     }
   }
 
@@ -119,10 +120,10 @@
     width:            5px;
     height:           14px;
     position:         absolute;
-    top:              -3px;
     background-color: white;
     border:           1px solid $border-color;
     border-radius:    2px;
+    transform:        translate(-2px, -3px);
   }
 
 }

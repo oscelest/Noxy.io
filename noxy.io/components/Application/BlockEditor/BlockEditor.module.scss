@@ -29,28 +29,12 @@
     overflow-y: auto;
 
     .Block {
-      flex:            0 0 auto;
+      flex:            1 1 auto;
       min-height:      32px;
       grid-column-gap: 10px;
 
       &:empty {
         display: none;
-      }
-
-      .BlockHandle {
-        flex:         0 0 auto;
-        align-items:  center;
-        width:        16px;
-        border-right: $border-width solid $border-color;
-
-        &:before {
-          content:      " ";
-          width:        2px;
-          height:       25px;
-          border-left:  4px dotted $border-color;
-          border-right: 4px dotted $border-color;
-          cursor:       grab;
-        }
       }
 
       .PageBlock {

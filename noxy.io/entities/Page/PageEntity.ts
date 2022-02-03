@@ -7,7 +7,6 @@ export default class PageEntity extends BaseEntity {
   public id: string;
   public url: string;
   public name: string;
-  public content: any;
   public page_block_list: PageBlockEntity[];
   public user: UserEntity;
   public time_created: Date;
@@ -19,8 +18,7 @@ export default class PageEntity extends BaseEntity {
     this.id = entity?.id ?? BaseEntity.defaultID;
     this.name = entity?.name ?? "";
     this.url = entity?.url ?? "";
-    this.content = entity?.content;
-    this.page_block_list = entity?.page_block_list?.map(block => new PageBlockEntity(block)) ?? [];
+    this.page_block_list = PageBlockEntity.instantiate(entity?.page_block_list);
     this.user = new UserEntity(entity?.user);
     this.time_created = new Date(entity?.time_created ?? 0);
   }

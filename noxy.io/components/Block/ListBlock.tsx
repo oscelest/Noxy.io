@@ -55,11 +55,11 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     component.write(new RichTextSection({element: [...component.value.getSection(component.getSelection().section).element]}));
   }
 
-  private static parseInitializerValue(entity?: PageBlockEntity<ListBlockInitializer>) {
-    const parent = this.parseElement(entity?.content?.element);
+  private static getContent(content?: ListBlockInitializer) {
+    const parent = this.parseElement(content?.element);
     return new RichText({
       element:      parent,
-      section_list: this.parseSectionList(entity?.content?.section_list, parent),
+      section_list: this.parseSectionList(content?.section_list, parent),
     });
   }
 
@@ -100,17 +100,11 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     return section_list;
   }
 
-  public componentDidMount() {
-    this.props.onPageBlockChange(new PageBlockEntity<ListBlockContent>({
-      ...this.props.block,
-      content: ListBlock.parseInitializerValue(this.props.block),
-    }));
-  }
-
   public render() {
     const {readonly = true, decoration, block, className, onAlignmentChange, onDecorationChange} = this.props;
     const {selection} = this.state;
-    if (!block.content || !block.content?.length && readonly) return null;
+    const content = ListBlock.getContent(block.content);
+    if (!content?.size && readonly) return null;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
@@ -119,7 +113,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
       <EditText className={classes.join(" ")} readonly={readonly} selection={selection} decoration={decoration} whitelist={ListBlock.whitelist} blacklist={ListBlock.blacklist}
                 onFocus={this.eventFocus} onKeyDown={this.eventKeyDown} onSelect={this.eventSelect} onAlignmentChange={onAlignmentChange} onDecorationChange={onDecorationChange}
                 onTextChange={this.eventChange}>
-        {block.content}
+        {content}
       </EditText>
     );
   }
@@ -141,7 +135,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     const delegate = Helper.getKeyboardCommandDelegate(event);
     this.handleKeyDown(delegate, component);
 
-    if (!event.bubbles) {
+    if (delegate.handled) {
       event.preventDefault();
       event.stopPropagation();
     }

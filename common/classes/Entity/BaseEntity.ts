@@ -63,6 +63,6 @@ export default class BaseEntity {
   }
 
   public static instantiate<E extends typeof BaseEntity, I extends InstanceType<E>>(this: E, target: Initializer<I>[] = []): I[] {
-    return _.map(target, o => new this(o as Properties<I>) as I);
+    return target.map(o => (o instanceof this ? o : new this(o as Properties<I>)) as I);
   }
 }

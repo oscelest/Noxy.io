@@ -12,6 +12,7 @@ import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
 import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 import Style from "./ImageBlock.module.scss";
+import RichTextSection from "../../classes/RichText/RichTextSection";
 
 export default class ImageBlock extends Component<ImageBlockProps, State> {
 
@@ -25,11 +26,6 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
     };
   }
 
-  private getContent() {
-    if (!this.props.block.content) throw new Error("Could not get block content.");
-    return this.props.block.content;
-  }
-
   private getContentClass() {
     const classes = [Style.Content];
     if (this.props.block.content?.caption.alignment === Alignment.LEFT) classes.push(Style.Left);
@@ -38,28 +34,45 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
     return classes.join(" ");
   }
 
-  private static parseInitializerCaption(entity?: PageBlockEntity<ImageBlockInitializer>) {
-    return new RichText({
-      element:      "div",
-      section_list: entity?.content?.caption.section_list,
-    });
+  private static getContent(content?: ImageBlockInitializer): ImageBlockContent {
+    return {
+      url:     content?.url ?? "",
+      caption: new RichText({
+        ...content?.caption,
+        element:      "div",
+        section_list: this.getSectionList(content?.caption?.section_list),
+      }),
+    };
   }
 
-  public componentDidMount() {
-    this.props.onPageBlockChange(new PageBlockEntity<ImageBlockContent>({
-      ...this.props.block,
-      content: {
-        url:       this.props.block.content?.url ?? "",
-        caption:   ImageBlock.parseInitializerCaption(this.props.block),
-        alignment: this.props.block.content?.alignment ?? Alignment.LEFT,
-      },
-    }));
+  private static getSectionList(list?: RichTextInitializer["section_list"]) {
+    if (typeof list === "string") return list;
+    if (Array.isArray(list)) {
+      const section_list = [];
+      for (let i = 0; i < list.length; i++) {
+        const item = list.at(i);
+        if (!item) continue;
+        if (item instanceof RichTextSection) {
+          section_list.push(new RichTextSection({...item, element: "p"}));
+        }
+        else if (typeof item === "string") {
+          section_list.push(new RichTextSection({character_list: item}));
+        }
+        else {
+          section_list.push(new RichTextSection({character_list: item?.character_list}));
+        }
+      }
+      return section_list;
+    }
+    return [new RichTextSection()];
   }
 
   public render() {
     const {readonly = true, decoration, block, className, onAlignmentChange, onDecorationChange} = this.props;
     const {selection} = this.state;
-    if (!block.content || !block.content.caption && readonly) return null;
+
+    const content = ImageBlock.getContent(block.content);
+    if (!content.url && readonly) return null;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
@@ -69,17 +82,19 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
         <Conditional condition={!readonly}>
           <div className={Style.OptionList}>
             <Button onClick={this.eventOpenDialog}>Browse</Button>
-            <Input label={"Link to image"} value={block.content.url} onChange={this.eventURLChange}/>
+            <Input label={"Link to image"} value={content.url} onChange={this.eventURLChange}/>
           </div>
         </Conditional>
         <div className={this.getContentClass()}>
-          <img className={Style.Preview} src={block.content.url} alt={""}/>
-          <div className={Style.Caption}>
-            <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={ImageBlock.whitelist} blacklist={ImageBlock.blacklist}
-                      onFocus={this.eventFocus} onSelect={this.eventSelect} onAlignmentChange={onAlignmentChange} onDecorationChange={onDecorationChange} onTextChange={this.eventCaptionChange}>
-              {block.content.caption}
-            </EditText>
-          </div>
+          <img className={Style.Preview} src={content.url} alt={""}/>
+          <Conditional condition={!readonly || content.caption.size}>
+            <div className={Style.Caption}>
+              <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={ImageBlock.whitelist} blacklist={ImageBlock.blacklist}
+                        onFocus={this.eventFocus} onSelect={this.eventSelect} onAlignmentChange={onAlignmentChange} onDecorationChange={onDecorationChange} onTextChange={this.eventCaptionChange}>
+                {content.caption}
+              </EditText>
+            </div>
+          </Conditional>
         </div>
       </div>
     );
@@ -99,26 +114,23 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
   };
 
   private readonly eventURLChange = (url: string) => {
-    this.props.onPageBlockChange(new PageBlockEntity<ImageBlockContent>({...this.props.block, content: {...this.getContent(), url}}));
+    this.props.onPageBlockChange(new PageBlockEntity({...this.props.block, content: ImageBlock.getContent({...this.props.block.content, url})}));
   };
 
   private readonly eventCaptionChange = (caption: RichText, selection: EditTextSelection) => {
-    this.props.onPageBlockChange(new PageBlockEntity<ImageBlockContent>({...this.props.block, content: {...this.getContent(), caption}}));
+    this.props.onPageBlockChange(new PageBlockEntity({...this.props.block, content: ImageBlock.getContent({...this.props.block.content, caption})}));
     this.setState({selection});
   };
 }
 
-export interface ImageBlockContent extends ImageBlockBase {
+export interface ImageBlockContent {
+  url: string;
   caption: RichText;
 }
 
-export interface ImageBlockInitializer extends ImageBlockBase {
-  caption: RichText | RichTextInitializer;
-}
-
-interface ImageBlockBase {
-  url: string;
-  alignment: Alignment;
+export interface ImageBlockInitializer {
+  url?: string;
+  caption?: RichText | RichTextInitializer;
 }
 
 export interface ImageBlockProps extends PageExplorerBlockProps<ImageBlockContent> {

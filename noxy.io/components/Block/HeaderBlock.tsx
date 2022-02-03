@@ -8,6 +8,8 @@ import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
 import Style from "./HeaderBlock.module.scss";
+import RichTextSection from "../../classes/RichText/RichTextSection";
+import Alignment from "../../../common/enums/Alignment";
 
 export default class HeaderBlock extends Component<HeaderBlockProps, State> {
 
@@ -30,10 +32,12 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     return new PageBlockEntity<HeaderBlockContent>({...this.props.block, content});
   }
 
-  private static parseInitializerValue(value?: PageBlockEntity<HeaderBlockInitializer>) {
+  private static getContent(content?: HeaderBlockInitializer) {
     return new RichText({
-      element:      this.parseElement(value?.content?.element),
-      section_list: value?.content?.section_list,
+      ...content,
+      alignment:    content?.alignment ?? Alignment.LEFT,
+      element:      this.parseElement(content?.element),
+      section_list: this.parseSectionList(content?.section_list),
     });
   }
 
@@ -51,17 +55,34 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
     }
   }
 
-  public componentDidMount() {
-    this.props.onPageBlockChange(new PageBlockEntity<HeaderBlockContent>({
-      ...this.props.block,
-      content: HeaderBlock.parseInitializerValue(this.props.block),
-    }));
+  private static parseSectionList(list?: HeaderBlockInitializer["section_list"]) {
+    if (typeof list === "string") return list;
+    if (Array.isArray(list)) {
+      const section_list = [];
+      for (let i = 0; i < list.length; i++) {
+        const item = list.at(i);
+        if (!item) continue;
+        if (item instanceof RichTextSection) {
+          section_list.push(new RichTextSection({...item, element: "p"}));
+        }
+        else if (typeof item === "string") {
+          section_list.push(new RichTextSection({character_list: item}));
+        }
+        else {
+          section_list.push(new RichTextSection({character_list: item?.character_list}));
+        }
+      }
+      return section_list;
+    }
+    return [new RichTextSection()];
   }
 
   public render() {
     const {readonly = true, decoration, block, className, onAlignmentChange, onDecorationChange} = this.props;
     const {selection} = this.state;
-    if (!block.content || !block.content?.size && readonly) return null;
+
+    const content = HeaderBlock.getContent(block.content);
+    if (!content?.size && readonly) return null;
 
     const classes = [Style.Component];
     if (className) classes.push(className);
@@ -73,7 +94,7 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
         </Conditional>
         <EditText readonly={readonly} selection={selection} decoration={decoration} whitelist={HeaderBlock.whitelist} blacklist={HeaderBlock.blacklist}
                   onFocus={this.eventFocus} onSelect={this.eventSelect} onAlignmentChange={onAlignmentChange} onDecorationChange={onDecorationChange} onTextChange={this.eventChange}>
-          {block.content}
+          {content}
         </EditText>
       </div>
     );

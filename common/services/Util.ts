@@ -13,6 +13,10 @@ namespace Util {
     ];
   }
 
+  export function arrayRemoveIndex<V>(array: V[], index: number, length: number = 1) {
+    return [...array.slice(0, index), ...array.slice(Math.min(array.length, index + length))];
+  }
+
   export function deepFind<V>(value: V, place: V | HierarchyArray): [number, Array<any>] {
     if (Array.isArray(place)) {
       for (let i = 0; i < place.length; i++) {

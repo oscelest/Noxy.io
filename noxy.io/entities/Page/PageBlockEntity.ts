@@ -25,7 +25,7 @@ export default class PageBlockEntity<Content = any> extends BaseEntity {
     this.type = entity?.type ?? PageBlockType.TEXT;
     this.weight = entity?.weight ?? 0;
     this.content = entity?.content;
-    this.page = new PageEntity(entity?.page);
+    this.page = entity?.page ?? new PageEntity();
     this.time_created = new Date(entity?.time_created ?? 0);
     this.time_updated = new Date(entity?.time_updated ?? 0);
   }
@@ -45,5 +45,20 @@ export default class PageBlockEntity<Content = any> extends BaseEntity {
 }
 
 export interface PageBlockEntityInitializer<Content> extends Initializer<PageBlockEntity> {
-  content?: Content
+  content?: Content;
 }
+
+declare global {
+  type PageBlockContentInitializerFn = {
+    [K in PageBlockType]: (initializer?: PageBlockContentInitializer[K]) => PageBlockContentValue[K]
+  }
+
+  interface PageBlockContentInitializer {
+    [key: string]: any;
+  }
+
+  interface PageBlockContentValue {
+    [key: string]: any;
+  }
+}
+

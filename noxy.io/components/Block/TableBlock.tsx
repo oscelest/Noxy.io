@@ -1,13 +1,13 @@
 import React from "react";
 import Component from "../Application/Component";
 import EditText, {EditTextSelection} from "../Text/EditText";
-import FatalException from "../../exceptions/FatalException";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import RichText, {RichTextObject} from "../../classes/RichText/RichText";
 import Util from "../../../common/services/Util";
 import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 import Style from "./TableBlock.module.scss";
+import RichTextSection from "../../classes/RichText/RichTextSection";
 
 export default class TableBlock extends Component<TableBlockProps, State> {
 
@@ -37,21 +37,51 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     throw new Error("Could not find text in TableBlock.");
   }
 
-  private static parseInitializerValue(entity?: PageBlockEntity<TableBlockInitializer>) {
-    const value = {table: {}, x: entity?.content?.x ?? 0, y: entity?.content?.y ?? 0} as TableBlockContent;
+  private static getContent(content?: TableBlockInitializer) {
+    const value = {table: {}, x: content?.x ?? 0, y: content?.y ?? 0} as TableBlockContent;
 
     for (let y = 0; y < value.y; y++) {
       for (let x = 0; x < value.x; x++) {
-        if (!entity?.content?.table[y]?.[x]) continue;
-        value.table[y] = {...value.table[y], [x]: new RichText({element: "div", section_list: entity?.content?.table[y][x].section_list})};
+        if (content?.table[y]?.[x]) {
+          value.table[y] = {
+            ...value.table[y],
+            [x]: new RichText({
+              ...content?.table[y]?.[x],
+              element:      "div",
+              section_list: this.getSectionList(content?.table[y]?.[x]?.section_list),
+            }),
+          };
+        }
       }
     }
 
     return value;
   }
 
+  private static getSectionList(list?: TableBlockInitializer["table"][number][number]["section_list"]) {
+    if (typeof list === "string") return list;
+    if (Array.isArray(list)) {
+      const section_list = [];
+      for (let i = 0; i < list.length; i++) {
+        const item = list.at(i);
+        if (!item) continue;
+        if (item instanceof RichTextSection) {
+          section_list.push(new RichTextSection({...item, element: "p"}));
+        }
+        else if (typeof item === "string") {
+          section_list.push(new RichTextSection({character_list: item}));
+        }
+        else {
+          section_list.push(new RichTextSection({character_list: item?.character_list}));
+        }
+      }
+      return section_list;
+    }
+    return [new RichTextSection()];
+  }
+
   public componentDidMount() {
-    const content = TableBlock.parseInitializerValue(this.props.block);
+    const content = TableBlock.getContent(this.props.block.content);
     const table = [] as TableBlockCell[][];
 
     for (let y = 0; y < content.y + 1; y++) {
@@ -65,11 +95,10 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     }
 
     this.setState({table});
-    this.props.onPageBlockChange(new PageBlockEntity<TableBlockContent>({...this.props.block, content}));
   }
 
   public render() {
-    const {readonly = true, block} = this.props;
+    const {readonly = true, block = {content: {x: 0, y: 0}}} = this.props;
     if (!block.content || !block.content?.x && !block.content?.y && readonly) return null;
 
     const classes = [Style.Component];
@@ -137,14 +166,14 @@ export default class TableBlock extends Component<TableBlockProps, State> {
   };
 
   private readonly eventChange = (text: RichText, selection: EditTextSelection, component: EditText) => {
-    if (!this.props.block.content) throw new FatalException("Could not get block content.");
+    const current = TableBlock.getContent(this.props.block.content);
     const {x, y} = this.getTextPosition(component.value);
-    const cx = this.props.block.content.x - 1;
-    const cy = this.props.block.content.y - 1;
+    const cx = current.x - 1;
+    const cy = current.y - 1;
     const dx = Math.max(x, cx);
     const dy = Math.max(y, cy);
 
-    const content = {...this.props.block.content, table: {...this.props.block.content.table, [y]: {...this.props.block.content.table[y], [x]: text}}};
+    const content = {...current, table: {...current.table, [y]: {...current.table[y], [x]: text}}};
     const next_state = {table: Util.arrayReplace(this.state.table, y, Util.arrayReplace(this.state.table[y], x, {text, selection}))} as State;
 
     if (text.size) {

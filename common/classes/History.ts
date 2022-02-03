@@ -9,8 +9,8 @@ export default class History<O> {
     this.#value_list = [];
 
     for (let i = 0; i < value_list.length; i++) {
-      const value = value_list[i];
-      Array.isArray(value) ? this.#value_list.push(...value) : this.#value_list.push(value);
+      const value = value_list.at(i);
+      if (value) Array.isArray(value) ? this.#value_list.push(...value) : this.#value_list.push(value);
     }
 
     this.#pointer = Util.clamp(pointer, this.#value_list.length - 1);
@@ -22,6 +22,10 @@ export default class History<O> {
 
   public get pointer() {
     return this.#pointer;
+  }
+
+  public get value_list() {
+    return this.#value_list;
   }
 
   public push(...value_list: (O | O[])[]) {
@@ -41,14 +45,14 @@ export default class History<O> {
     return new History(pointer, reset ? this.#value_list.slice(0, pointer + 1) : this.#value_list);
   }
 
-  public forward() {
-    if (this.#pointer === this.#value_list.length - 1) return this;
-    return new History(this.#pointer + 1, this.#value_list);
-  }
-
-  public backward() {
-    if (this.#pointer <= 0) return this;
-    return new History(this.#pointer - 1, this.#value_list);
-  }
+  // public forward() {
+  //   if (this.#pointer === this.#value_list.length - 1) return this;
+  //   return new History(this.#pointer + 1, this.#value_list);
+  // }
+  //
+  // public backward() {
+  //   if (this.#pointer <= 0) return this;
+  //   return new History(this.#pointer - 1, this.#value_list);
+  // }
 
 }
