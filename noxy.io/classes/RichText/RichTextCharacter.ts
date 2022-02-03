@@ -78,6 +78,8 @@ export default class RichTextCharacter {
 
 }
 
+export type RichTextCharacterListInitializer = string | RichTextCharacter[] | RichTextCharacterContent[];
+
 export interface RichTextCharacterInitializer {
   id?: string;
   value?: string;

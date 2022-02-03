@@ -2,7 +2,7 @@ import {v4} from "uuid";
 import Alignment from "../../../common/enums/Alignment";
 import RichTextCharacter from "./RichTextCharacter";
 import RichTextDecoration, {RichTextDecorationKeys} from "./RichTextDecoration";
-import RichTextSection, {RichTextSectionContent, RichTextSectionSelection} from "./RichTextSection";
+import RichTextSection, {RichTextSectionContent, RichTextSectionSelection, RichTextSectionListInitializer, RichTextSectionElementFn} from "./RichTextSection";
 
 export default class RichText {
 
@@ -10,6 +10,8 @@ export default class RichText {
   public readonly section_list: RichTextSection[];
   public readonly element: HTMLTag;
   public readonly alignment: Alignment;
+
+  private static readonly default_element = "div";
 
   public get text() {
     return this.section_list.map(section => section.text);
@@ -25,7 +27,7 @@ export default class RichText {
 
   constructor(initializer: RichTextInitializer = {}) {
     this.id = initializer.id ?? v4();
-    this.element = initializer.element ?? "div";
+    this.element = initializer.element ?? RichText.default_element;
     this.section_list = [];
     this.alignment = initializer.alignment ?? Alignment.LEFT;
 
@@ -275,18 +277,29 @@ export default class RichText {
   }
 
   public static parseObject(content?: RichText | RichTextObject) {
-    return new RichText(content);
+    return content instanceof RichText ? content : new RichText(content);
   }
 
   public static parseHTML(node: HTMLElement) {
     return new RichText({section_list: RichTextSection.parseHTML(node)});
   }
+
+  public static sanitize<Text extends RichText | RichTextInitializer>(text?: Text, element?: RichTextElementFn, section_element?: RichTextSectionElementFn) {
+    return new RichText({
+      ...text,
+      element:      (typeof element === "function" ? element(text) : element) || "div",
+      alignment:    text?.alignment || Alignment.LEFT,
+      section_list: RichTextSection.sanitize(text?.section_list, section_element),
+    });
+  }
 }
+
+export type RichTextElementFn = HTMLTag | ((object?: RichText | RichTextInitializer) => HTMLTag)
 
 export interface RichTextInitializer {
   id?: string;
   element?: HTMLTag;
-  section_list?: string | string[] | RichTextSection[] | RichTextSectionContent[];
+  section_list?: RichTextSectionListInitializer;
   alignment?: Alignment;
 }
 

@@ -8,8 +8,6 @@ import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
 import Style from "./HeaderBlock.module.scss";
-import RichTextSection from "../../classes/RichText/RichTextSection";
-import Alignment from "../../../common/enums/Alignment";
 
 export default class HeaderBlock extends Component<HeaderBlockProps, State> {
 
@@ -33,48 +31,21 @@ export default class HeaderBlock extends Component<HeaderBlockProps, State> {
   }
 
   private static getContent(content?: HeaderBlockInitializer) {
-    return new RichText({
-      ...content,
-      alignment:    content?.alignment ?? Alignment.LEFT,
-      element:      this.parseElement(content?.element),
-      section_list: this.parseSectionList(content?.section_list),
-    });
+    return RichText.sanitize(content, this.parseElement);
   }
 
-  private static parseElement(tag?: HTMLTag) {
-    switch (tag) {
+  private static parseElement(text?: RichTextInitializer) {
+    switch (text?.element) {
       case "h1":
       case "h2":
       case "h3":
       case "h4":
       case "h5":
       case "h6":
-        return tag;
+        return text?.element;
       default:
         return HeaderBlock.default_tag;
     }
-  }
-
-  private static parseSectionList(list?: HeaderBlockInitializer["section_list"]) {
-    if (typeof list === "string") return list;
-    if (Array.isArray(list)) {
-      const section_list = [];
-      for (let i = 0; i < list.length; i++) {
-        const item = list.at(i);
-        if (!item) continue;
-        if (item instanceof RichTextSection) {
-          section_list.push(new RichTextSection({...item, element: "p"}));
-        }
-        else if (typeof item === "string") {
-          section_list.push(new RichTextSection({character_list: item}));
-        }
-        else {
-          section_list.push(new RichTextSection({character_list: item?.character_list}));
-        }
-      }
-      return section_list;
-    }
-    return [new RichTextSection()];
   }
 
   public render() {

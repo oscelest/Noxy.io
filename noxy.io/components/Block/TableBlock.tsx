@@ -7,7 +7,6 @@ import Util from "../../../common/services/Util";
 import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 import Style from "./TableBlock.module.scss";
-import RichTextSection from "../../classes/RichText/RichTextSection";
 
 export default class TableBlock extends Component<TableBlockProps, State> {
 
@@ -43,41 +42,12 @@ export default class TableBlock extends Component<TableBlockProps, State> {
     for (let y = 0; y < value.y; y++) {
       for (let x = 0; x < value.x; x++) {
         if (content?.table[y]?.[x]) {
-          value.table[y] = {
-            ...value.table[y],
-            [x]: new RichText({
-              ...content?.table[y]?.[x],
-              element:      "div",
-              section_list: this.getSectionList(content?.table[y]?.[x]?.section_list),
-            }),
-          };
+          value.table[y] = {...value.table[y], [x]: RichText.sanitize(content?.table[y]?.[x])};
         }
       }
     }
 
     return value;
-  }
-
-  private static getSectionList(list?: TableBlockInitializer["table"][number][number]["section_list"]) {
-    if (typeof list === "string") return list;
-    if (Array.isArray(list)) {
-      const section_list = [];
-      for (let i = 0; i < list.length; i++) {
-        const item = list.at(i);
-        if (!item) continue;
-        if (item instanceof RichTextSection) {
-          section_list.push(new RichTextSection({...item, element: "p"}));
-        }
-        else if (typeof item === "string") {
-          section_list.push(new RichTextSection({character_list: item}));
-        }
-        else {
-          section_list.push(new RichTextSection({character_list: item?.character_list}));
-        }
-      }
-      return section_list;
-    }
-    return [new RichTextSection()];
   }
 
   public componentDidMount() {

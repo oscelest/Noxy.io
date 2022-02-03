@@ -1,6 +1,6 @@
 import {v4} from "uuid";
 import Util from "../../../common/services/Util";
-import RichTextCharacter, {RichTextCharacterContent} from "./RichTextCharacter";
+import RichTextCharacter, {RichTextCharacterContent, RichTextCharacterListInitializer} from "./RichTextCharacter";
 import RichTextDecoration, {RichTextDecorationObject, RichTextDecorationKeys} from "./RichTextDecoration";
 
 export default class RichTextSection {
@@ -8,6 +8,8 @@ export default class RichTextSection {
   public readonly id: string;
   public readonly character_list: RichTextCharacter[];
   public readonly element: (keyof HTMLElementTagNameMap)[];
+
+  private static readonly default_element = "p";
 
   public get length() {
     return this.character_list.length;
@@ -19,7 +21,7 @@ export default class RichTextSection {
 
   constructor(initializer: RichTextSectionInitializer = {}) {
     this.id = initializer.id ?? v4();
-    this.element = Array.isArray(initializer.element) ? initializer.element : [initializer.element ?? "p"];
+    this.element = Array.isArray(initializer.element) ? initializer.element : [initializer.element || RichTextSection.default_element];
     this.character_list = [];
 
     if (typeof initializer.character_list === "string") {
@@ -264,12 +266,44 @@ export default class RichTextSection {
     return value;
   }
 
+  public static sanitize(section?: RichTextSectionListInitializer, fn?: RichTextSectionElementFn) {
+    if (typeof section === "string") return section;
+
+    const section_list = [];
+    if (Array.isArray(section)) {
+      for (let i = 0; i < section.length; i++) {
+        const item = section.at(i);
+        if (!item) continue;
+
+        const element = (typeof fn === "function" ? fn(item) : fn) || RichTextSection.default_element;
+        if (item instanceof RichTextSection) {
+          section_list.push(new RichTextSection({...item, element}));
+        }
+        else if (typeof item === "string") {
+          section_list.push(new RichTextSection({character_list: item, element}));
+        }
+        else {
+          section_list.push(new RichTextSection({character_list: item?.character_list, element}));
+        }
+      }
+    }
+    else {
+      section_list.push(new RichTextSection());
+    }
+
+    return section_list;
+  }
+
 }
+
+export type RichTextSectionElementFn = HTMLTag | HTMLTag[] | ((object?: string | RichTextSection | RichTextSectionInitializer) => HTMLTag | HTMLTag[])
+
+export type RichTextSectionListInitializer = string | string[] | RichTextSection[] | RichTextSectionContent[];
 
 export interface RichTextSectionInitializer {
   id?: string;
   element?: HTMLTag | HTMLTag[];
-  character_list?: string | RichTextCharacter[] | RichTextCharacterContent[];
+  character_list?: RichTextCharacterListInitializer;
 }
 
 export type RichTextSectionContent = {

@@ -12,7 +12,6 @@ import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
 import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 import Style from "./ImageBlock.module.scss";
-import RichTextSection from "../../classes/RichText/RichTextSection";
 
 export default class ImageBlock extends Component<ImageBlockProps, State> {
 
@@ -37,34 +36,8 @@ export default class ImageBlock extends Component<ImageBlockProps, State> {
   private static getContent(content?: ImageBlockInitializer): ImageBlockContent {
     return {
       url:     content?.url ?? "",
-      caption: new RichText({
-        ...content?.caption,
-        element:      "div",
-        section_list: this.getSectionList(content?.caption?.section_list),
-      }),
+      caption: RichText.sanitize(content?.caption),
     };
-  }
-
-  private static getSectionList(list?: RichTextInitializer["section_list"]) {
-    if (typeof list === "string") return list;
-    if (Array.isArray(list)) {
-      const section_list = [];
-      for (let i = 0; i < list.length; i++) {
-        const item = list.at(i);
-        if (!item) continue;
-        if (item instanceof RichTextSection) {
-          section_list.push(new RichTextSection({...item, element: "p"}));
-        }
-        else if (typeof item === "string") {
-          section_list.push(new RichTextSection({character_list: item}));
-        }
-        else {
-          section_list.push(new RichTextSection({character_list: item?.character_list}));
-        }
-      }
-      return section_list;
-    }
-    return [new RichTextSection()];
   }
 
   public render() {

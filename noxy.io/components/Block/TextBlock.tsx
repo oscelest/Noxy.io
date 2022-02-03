@@ -4,7 +4,6 @@ import EditText, {EditTextSelection} from "../Text/EditText";
 import PageBlockEntity from "../../entities/Page/PageBlockEntity";
 import PageBlockType from "../../../common/enums/PageBlockType";
 import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
-import RichTextSection from "../../classes/RichText/RichTextSection";
 import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 import Style from "./TextBlock.module.scss";
@@ -22,33 +21,7 @@ export default class TextBlock extends Component<TextBlockProps, State> {
   }
 
   private static getContent(content?: TextBlockInitializer) {
-    return new RichText({
-      ...content,
-      element:      "div",
-      section_list: TextBlock.getSectionList(content?.section_list),
-    });
-  }
-
-  private static getSectionList(list?: TextBlockInitializer["section_list"]) {
-    if (typeof list === "string") return list;
-    if (Array.isArray(list)) {
-      const section_list = [];
-      for (let i = 0; i < list.length; i++) {
-        const item = list.at(i);
-        if (!item) continue;
-        if (item instanceof RichTextSection) {
-          section_list.push(new RichTextSection({...item, element: "p"}));
-        }
-        else if (typeof item === "string") {
-          section_list.push(new RichTextSection({character_list: item}));
-        }
-        else {
-          section_list.push(new RichTextSection({character_list: item?.character_list}));
-        }
-      }
-      return section_list;
-    }
-    return [new RichTextSection()];
+    return RichText.sanitize(content);
   }
 
   public render() {

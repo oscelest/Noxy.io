@@ -7,7 +7,6 @@ import RichText, {RichTextInitializer} from "../../classes/RichText/RichText";
 import RichTextCharacter from "../../classes/RichText/RichTextCharacter";
 import RichTextSection from "../../classes/RichText/RichTextSection";
 import Helper, {KeyboardCommandDelegate} from "../../Helper";
-import Util from "../../../common/services/Util";
 import {PageExplorerBlockProps} from "../Application/BlockEditor/BlockEditor";
 import {RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
 import Style from "./ListBlock.module.scss";
@@ -57,9 +56,21 @@ export default class ListBlock extends Component<ListBlockProps, State> {
 
   private static getContent(content?: ListBlockInitializer) {
     const parent = this.parseElement(content?.element);
+    const element = parent === "blockquote" ? "blockquote" : "li";
     return new RichText({
       element:      parent,
-      section_list: this.parseSectionList(content?.section_list, parent),
+      section_list: RichTextSection.sanitize(content?.section_list, section => {
+        const array = [] as HTMLTag[];
+
+        if ((section instanceof RichTextSection || typeof section === "object" && section.element) && Array.isArray(section.element)) {
+          for (let i = 0; i < section.element.length - 1; i++) {
+            array.push(parent);
+          }
+        }
+        array.push(element);
+
+        return array;
+      }),
     });
   }
 
@@ -72,32 +83,6 @@ export default class ListBlock extends Component<ListBlockProps, State> {
       default:
         return ListBlock.default_tag;
     }
-  }
-
-  private static parseSectionList(list?: RichTextInitializer["section_list"], parent: HTMLTag = ListBlock.default_tag) {
-    const element = parent === "blockquote" ? "blockquote" : "li";
-    const section_list = [] as RichTextSection[];
-
-    if (!list) {
-      section_list.push(new RichTextSection({element}));
-    }
-    else if (typeof list === "string") {
-      section_list.push(new RichTextSection({character_list: list, element}));
-    }
-    else if (Array.isArray(list)) {
-      for (let i = 0; i < list.length; i++) {
-        const item = list.at(i);
-        if (!item) continue;
-        if (typeof item === "string") {
-          section_list.push(new RichTextSection({character_list: item, element}));
-        }
-        else {
-          section_list.push(new RichTextSection({...item, element: Util.arrayReplace([...item.element].fill(parent, 0, -1), item.element.length - 1, element)}));
-        }
-      }
-    }
-
-    return section_list;
   }
 
   public render() {
