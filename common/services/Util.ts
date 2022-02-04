@@ -50,6 +50,10 @@ namespace Util {
     return Object.getOwnPropertyNames(object) as NonNullable<(keyof O)>[];
   }
 
+  export function hasProperty<O extends object>(object: O, key: keyof O): boolean {
+    return object.hasOwnProperty(key);
+  }
+
   export function n2b(number: number) {
     if (number < 0 || isNaN(number) || number === Number.POSITIVE_INFINITY) throw "The input is not valid";
 
@@ -82,10 +86,6 @@ namespace Util {
 
   export function renderJSON(content: JSONObject) {
     return typeof content === "string" ? content : JSON.stringify(content, undefined, 2);
-  }
-
-  export function hasProperty<O extends object>(object: O, key: keyof O) {
-    return object.hasOwnProperty(key);
   }
 
   export function getDuration(seconds: number) {

@@ -1,5 +1,6 @@
 import React from "react";
 import Color from "../../../common/classes/Color";
+import Util from "../../../common/services/Util";
 import Helper from "../../Helper";
 
 export default class RichTextDecoration {
@@ -22,24 +23,24 @@ export default class RichTextDecoration {
 
   constructor(...initializer: (RichTextDecorationInitializer | undefined)[]) {
     for (let i = 0; i < initializer.length; i++) {
-      const value = initializer.at(i);
+      const value = initializer.at(i) as RichTextDecoration;
       if (!value) continue;
 
-      this.bold = value.bold ?? this.bold;
-      this.code = value.code ?? this.code;
-      this.mark = value.mark ?? this.mark;
-      this.italic = value.italic ?? this.italic;
-      this.underline = value.underline ?? this.underline;
-      this.strikethrough = value.strikethrough ?? this.strikethrough;
+      if (Util.hasProperty(value, "bold")) this.bold = value.bold;
+      if (Util.hasProperty(value, "code")) this.code = value.code;
+      if (Util.hasProperty(value, "mark")) this.mark = value.mark;
+      if (Util.hasProperty(value, "italic")) this.italic = value.italic;
+      if (Util.hasProperty(value, "underline")) this.underline = value.underline;
+      if (Util.hasProperty(value, "strikethrough")) this.strikethrough = value.strikethrough;
 
-      this.font_size = value.font_size ?? this.font_size;
-      this.font_family = value.font_family ?? this.font_family;
+      if (Util.hasProperty(value, "font_size")) this.font_size = value.font_size;
+      if (Util.hasProperty(value, "font_family")) this.font_family = value.font_family;
 
-      this.color = value.color ?? this.color;
-      this.background_color = value.background_color ?? this.background_color;
+      if (Util.hasProperty(value, "color")) this.color = value.color;
+      if (Util.hasProperty(value, "background_color")) this.background_color = value.background_color;
 
-      this.link = value.link ?? this.link;
-      this.selected = value.selected ?? this.selected;
+      if (Util.hasProperty(value, "link")) this.link = value.link;
+      if (Util.hasProperty(value, "selected")) this.selected = value.selected;
     }
   }
 

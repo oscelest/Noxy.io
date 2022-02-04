@@ -4,7 +4,7 @@ import ClipboardDataType from "../../../common/enums/ClipboardDataType";
 import Util from "../../../common/services/Util";
 import RichText, {RichTextSelection} from "../../classes/RichText/RichText";
 import RichTextCharacter, {RichTextCharacterContent, RichTextFragmentContent} from "../../classes/RichText/RichTextCharacter";
-import RichTextDecoration, {RichTextDecorationObject, RichTextDecorationKeys} from "../../classes/RichText/RichTextDecoration";
+import RichTextDecoration, {RichTextDecorationObject, RichTextDecorationKeys, RichTextDecorationInitializer} from "../../classes/RichText/RichTextDecoration";
 import RichTextSection, {RichTextSectionContent} from "../../classes/RichText/RichTextSection";
 import KeyboardCommand from "../../enums/KeyboardCommand";
 import Helper, {KeyboardCommandDelegate} from "../../Helper";
@@ -200,8 +200,9 @@ export default class EditText extends Component<EditTextProps, State> {
 
   public decorate(decoration: Initializer<RichTextDecoration>, selection: EditTextSelection = this.getSelection()) {
     const sanitized = this.sanitizeDecoration(decoration);
-    this.props.onDecorationChange(new RichTextDecoration(this.props.decoration, sanitized), this);
     selection = this.value.decorate(sanitized, selection);
+    this.props.onDecorationChange(new RichTextDecoration(this.props.decoration, sanitized), this);
+
     if (selection.section === selection.section_offset && selection.character === selection.character_offset) {
       this.props.onTextChange(this.value.clone(), selection, this);
     }
@@ -257,7 +258,7 @@ export default class EditText extends Component<EditTextProps, State> {
     this.delete(selection);
   };
 
-  public preview(decoration?: Initializer<RichTextDecoration>, selection?: EditTextSelection) {
+  public preview(decoration?: RichTextDecorationInitializer, selection?: EditTextSelection): void {
     if (!decoration) return this.loadHistory();
     const sanitized = this.sanitizeDecoration(decoration);
     const selected = this.value.decorate(sanitized, selection ?? this.getSelection());
@@ -265,14 +266,14 @@ export default class EditText extends Component<EditTextProps, State> {
     this.props.onTextChange(this.value.clone(), selected, this);
   }
 
-  public loadHistory(pointer: number = this.state.history.pointer, reset: boolean = false) {
+  public loadHistory(pointer: number = this.state.history.pointer) {
     const history = this.state.history.loadPoint(pointer);
     this.props.onDecorationChange(history.value.value.getDecoration(history.value.selection) ?? this.props.decoration, this);
     this.props.onTextChange(history.value.value, history.value.selection, this);
     return this.setState({history});
   }
 
-  private sanitizeDecoration({...decoration}: Initializer<RichTextDecoration>) {
+  private sanitizeDecoration({...decoration}: RichTextDecorationInitializer): RichTextDecorationInitializer {
     const keys = Util.getProperties(decoration);
 
     if (this.props.whitelist?.length) {
@@ -293,7 +294,7 @@ export default class EditText extends Component<EditTextProps, State> {
       }
     }
 
-    return new RichTextDecoration(decoration);
+    return decoration;
   }
 
   public componentDidMount(): void {

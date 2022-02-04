@@ -12,10 +12,7 @@ export default class BlockEditorToolbarFont extends Component<BlockEditorToolbar
 
   constructor(props: BlockEditorToolbarFontProps) {
     super(props);
-    this.state = {
-      dropdown_color:            false,
-      dropdown_background_color: false,
-    };
+    this.state = {};
   }
 
   public render() {
@@ -48,7 +45,7 @@ export default class BlockEditorToolbarFont extends Component<BlockEditorToolbar
   };
 
   private readonly eventFontFamilyChange = (font_family: string) => {
-    this.props.onChange({font_family});
+    this.props.onChange({font_family: font_family ? font_family : undefined});
   };
 
   private readonly eventFontSizePreview = (value: string | number) => {
@@ -56,7 +53,7 @@ export default class BlockEditorToolbarFont extends Component<BlockEditorToolbar
   };
 
   private readonly eventFontSizeChange = (font_size: string) => {
-    this.props.onChange({font_size});
+    this.props.onChange({font_size: font_size ? font_size : undefined});
   };
 
   private readonly eventReset = () => {
@@ -75,8 +72,5 @@ export interface BlockEditorToolbarFontProps {
 }
 
 interface State {
-  dialog?: string;
 
-  dropdown_color: boolean;
-  dropdown_background_color: boolean;
 }

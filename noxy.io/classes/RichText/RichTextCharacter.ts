@@ -1,5 +1,6 @@
 import {v4} from "uuid";
 import RichTextDecoration, {RichTextDecorationInitializer, RichTextDecorationObject} from "./RichTextDecoration";
+import FatalException from "../../exceptions/FatalException";
 
 export default class RichTextCharacter {
 
@@ -13,7 +14,7 @@ export default class RichTextCharacter {
 
   constructor(initializer: RichTextCharacterInitializer) {
     this.id = initializer.id ?? v4();
-    this.value = initializer instanceof RichTextCharacter ? initializer.value : initializer.value?.charAt(0) ?? " ";
+    this.value = initializer.value?.charAt(0) ?? " ";
     this.decoration = initializer.decoration instanceof RichTextDecoration ? initializer.decoration : new RichTextDecoration(initializer.decoration);
   }
 
@@ -23,30 +24,6 @@ export default class RichTextCharacter {
       value:      this.value,
       decoration: this.decoration.clone(),
     });
-  }
-
-  public static parseContent(content: RichTextCharacterContent) {
-    const value = [] as RichTextCharacter[];
-
-    for (let i = 0; i < content.fragment_list.length; i++) {
-      const item = content.fragment_list.at(i);
-      if (item) value.push(...this.parseText(item.text, item.decoration));
-    }
-
-    return value;
-  }
-
-  public static parseText(text?: string, decoration?: RichTextDecorationInitializer): RichTextCharacter[] {
-    const value = [] as RichTextCharacter[];
-
-    if (typeof text === "string") {
-      for (let i = 0; i < text.length; i++) {
-        const item = text.at(i);
-        if (item) value.push(new RichTextCharacter({value: item, decoration}));
-      }
-    }
-
-    return value;
   }
 
   public static parseHTML(element: HTMLElement, decoration?: RichTextDecoration) {
@@ -76,9 +53,33 @@ export default class RichTextCharacter {
     return value;
   }
 
-}
 
-export type RichTextCharacterListInitializer = string | RichTextCharacter[] | RichTextCharacterContent[];
+  public static parseText(text?: string, decoration?: RichTextDecorationInitializer): RichTextCharacter[] {
+    const value = [] as RichTextCharacter[];
+
+    if (typeof text === "string") {
+      for (let i = 0; i < text.length; i++) {
+        const item = text.at(i);
+        if (item) value.push(new RichTextCharacter({value: item, decoration}));
+      }
+    }
+
+    return value;
+  }
+
+  public static sanitize(character?: string | RichTextCharacter | RichTextCharacterInitializer) {
+    if (character instanceof RichTextCharacter || typeof character === "object") {
+      return new RichTextCharacter({...character});
+    }
+    else if (typeof character === "string") {
+      return new RichTextCharacter({value: character});
+    }
+    else {
+      throw new FatalException("Could not parse given RichTextSection.");
+    }
+  }
+
+}
 
 export interface RichTextCharacterInitializer {
   id?: string;

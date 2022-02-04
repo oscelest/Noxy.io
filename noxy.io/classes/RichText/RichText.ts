@@ -2,7 +2,7 @@ import {v4} from "uuid";
 import Alignment from "../../../common/enums/Alignment";
 import RichTextCharacter from "./RichTextCharacter";
 import RichTextDecoration, {RichTextDecorationKeys} from "./RichTextDecoration";
-import RichTextSection, {RichTextSectionContent, RichTextSectionSelection, RichTextSectionListInitializer, RichTextSectionElementFn} from "./RichTextSection";
+import RichTextSection, {RichTextSectionContent, RichTextSectionSelection, RichTextSectionElementFn} from "./RichTextSection";
 
 export default class RichText {
 
@@ -28,30 +28,8 @@ export default class RichText {
   constructor(initializer: RichTextInitializer = {}) {
     this.id = initializer.id ?? v4();
     this.element = initializer.element ?? RichText.default_element;
-    this.section_list = [];
+    this.section_list = RichText.sanitizeSectionList(initializer.section_list);
     this.alignment = initializer.alignment ?? Alignment.LEFT;
-
-    if (!initializer.section_list) {
-      this.section_list.push(new RichTextSection());
-    }
-    else if (typeof initializer.section_list === "string") {
-      this.section_list.push(...RichTextSection.parseText(initializer.section_list));
-    }
-    else if (Array.isArray(initializer.section_list)) {
-      for (let i = 0; i < initializer.section_list.length; i++) {
-        const item = initializer.section_list.at(i);
-        if (!item) continue;
-        if (typeof item === "string") {
-          this.section_list.push(...RichTextSection.parseText(item));
-        }
-        else if (item instanceof RichTextSection) {
-          this.section_list.push(item);
-        }
-        else {
-          this.section_list.push(new RichTextSection({character_list: item.character_list, element: item.element}));
-        }
-      }
-    }
   }
 
   public toObject(selection?: RichTextSelection): RichTextObject {
@@ -289,12 +267,30 @@ export default class RichText {
       ...text,
       element:      (typeof element === "function" ? element(text) : element) || "div",
       alignment:    text?.alignment || Alignment.LEFT,
-      section_list: RichTextSection.sanitize(text?.section_list, section_element),
+      section_list: this.sanitizeSectionList(text?.section_list, section_element),
     });
+  }
+
+  public static sanitizeSectionList(initializer?: RichTextSectionListInitializer, section_element?: RichTextSectionElementFn): RichTextSection[] {
+    const section_list = [] as RichTextSection[];
+
+    if (Array.isArray(initializer)) {
+      for (let i = 0; i < initializer.length; i++) {
+        const section = initializer[i];
+        if (section) section_list.push(...this.sanitizeSectionList(section, section_element));
+      }
+    }
+    else {
+      section_list.push(RichTextSection.sanitize(initializer, section_element));
+    }
+
+    return section_list;
   }
 }
 
 export type RichTextElementFn = HTMLTag | ((object?: RichText | RichTextInitializer) => HTMLTag)
+
+export type RichTextSectionListInitializer = string | RichTextSection | RichTextSectionContent | (string | RichTextSection | RichTextSectionContent)[];
 
 export interface RichTextInitializer {
   id?: string;
