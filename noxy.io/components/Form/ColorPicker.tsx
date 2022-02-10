@@ -192,76 +192,88 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
   };
 
   private readonly eventRedWheel = (event: React.WheelEvent) => {
-    let {red, green, blue, alpha} = this.props.color;
-    if (event.deltaY < 0 && red < 255) red += 1;
-    if (event.deltaY > 0 && red > 0) red -= 1;
-    if (red !== this.props.color.red) {
-      this.props.onChange(new Color({red, green, blue, alpha}));
-      this.setState({red: red.toString()});
+    if (this.props.color?.red !== undefined) {
+      if (event.deltaY < 0 && this.props.color.red < 255) {
+        return this.props.onChange(this.getFullRGBColor({...this.props.color, red: this.props.color.red + 1}));
+      }
+      if (event.deltaY > 0 && this.props.color.red > 0) {
+        return this.props.onChange(this.getFullRGBColor({...this.props.color, red: this.props.color.red - 1}));
+      }
+    }
+    else {
+      return this.props.onChange(this.getFullRGBColor({...this.props.color, red: 255, blue: 0, green: 0}));
     }
   };
 
-  private readonly eventGreenChange = (green: string) => {
-    const {red, blue, alpha} = this.props.color;
-    const value = +green;
-    if (value >= 0 && value <= 255) {
-      this.props.onChange(new Color({red, green: value, blue, alpha}));
+  private readonly eventGreenChange = (value: string) => {
+    const green = +value;
+    if (green >= 0 && green <= 255) {
+      this.props.onChange(this.getFullRGBColor({...this.props.color, green}));
     }
     else {
-      this.setState({green});
+      this.setState({green: value});
     }
   };
 
   private readonly eventGreenWheel = (event: React.WheelEvent) => {
-    let {red, green, blue, alpha} = this.props.color;
-    if (event.deltaY < 0 && green < 255) green += 1;
-    if (event.deltaY > 0 && green > 0) green -= 1;
-    if (green !== this.props.color.green) {
-      this.props.onChange(new Color({red, green, blue, alpha}));
-      this.setState({green: `${green}`});
+    if (this.props.color?.green !== undefined) {
+      if (event.deltaY < 0 && this.props.color.green < 255) {
+        return this.props.onChange(this.getFullRGBColor({...this.props.color, green: this.props.color.green + 1}));
+      }
+      if (event.deltaY > 0 && this.props.color.green > 0) {
+        return this.props.onChange(this.getFullRGBColor({...this.props.color, green: this.props.color.green - 1}));
+      }
+    }
+    else {
+      return this.props.onChange(this.getFullRGBColor({...this.props.color, red: 255, blue: 0, green: 0}));
     }
   };
 
-  private readonly eventBlueChange = (blue: string) => {
-    const {red, green, alpha} = this.props.color;
-    const value = +blue;
-    if (value >= 0 && value <= 255) {
-      this.props.onChange(new Color({red, green, blue: value, alpha}));
+  private readonly eventBlueChange = (value: string) => {
+    const blue = +value;
+    if (blue >= 0 && blue <= 255) {
+      this.props.onChange(this.getFullRGBColor({...this.props.color, blue}));
     }
     else {
-      this.setState({blue});
+      this.setState({green: value});
     }
   };
 
   private readonly eventBlueWheel = (event: React.WheelEvent) => {
-    let {red, green, blue, alpha} = this.props.color;
-    if (event.deltaY < 0 && blue < 255) blue += 1;
-    if (event.deltaY > 0 && blue > 0) blue -= 1;
-    if (blue !== this.props.color.blue) {
-      this.props.onChange(new Color({red, green, blue, alpha}));
-      this.setState({blue: `${blue}`});
+    if (this.props.color?.blue !== undefined) {
+      if (event.deltaY < 0 && this.props.color.blue < 255) {
+        return this.props.onChange(this.getFullRGBColor({...this.props.color, blue: this.props.color.blue + 1}));
+      }
+      if (event.deltaY > 0 && this.props.color.blue > 0) {
+        return this.props.onChange(this.getFullRGBColor({...this.props.color, blue: this.props.color.blue - 1}));
+      }
+    }
+    else {
+      return this.props.onChange(this.getFullRGBColor({...this.props.color, red: 255, blue: 0, green: 0}));
     }
   };
 
-  private readonly eventAlphaChange = (alpha: string) => {
-    const {red, green, blue} = this.props.color;
-    const value = +alpha;
-    if (value >= 0 && value <= 255) {
-      this.props.onChange(new Color({red, green, blue, alpha: value}));
+  private readonly eventAlphaChange = (value: string) => {
+    const alpha = +value;
+    if (alpha >= 0 && alpha <= 100) {
+      this.props.onChange(this.getFullRGBColor({...this.props.color, alpha}));
     }
     else {
-      this.setState({alpha});
+      this.setState({alpha: value});
     }
   };
 
   private readonly eventAlphaWheel = (event: React.WheelEvent) => {
-    const current = this.props.color ?? {red: 255, green: 255, blue: 255, alpha: 1};
-    let {red, green, blue, alpha} = current;
-    if (event.deltaY < 0 && alpha < 1) alpha += 0.01;
-    if (event.deltaY > 0 && alpha > 0) alpha -= 0.01;
-    if (alpha !== current.alpha) {
-      this.props.onChange(new Color({red, green, blue, alpha}));
-      this.setState({alpha: `${alpha}`});
+    if (this.props.color?.alpha !== undefined) {
+      if (event.deltaY < 0 && this.props.color.alpha < 1) {
+        return this.props.onChange(this.getFullRGBColor({...this.props.color, alpha: this.props.color.alpha + 0.01}));
+      }
+      if (event.deltaY > 0 && this.props.color.alpha > 0) {
+        return this.props.onChange(this.getFullRGBColor({...this.props.color, alpha: this.props.color.alpha - 0.01}));
+      }
+    }
+    else {
+      return this.props.onChange(this.getFullRGBColor({...this.props.color, red: 255, blue: 0, green: 0}));
     }
   };
 
@@ -330,7 +342,7 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
 export interface ColorPickerProps {
   className?: string;
 
-  color: Color;
+  color?: Color;
 
   onChange(color?: Color): void;
 }

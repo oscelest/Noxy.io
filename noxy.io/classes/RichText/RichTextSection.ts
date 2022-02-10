@@ -2,7 +2,6 @@ import {v4} from "uuid";
 import Util from "../../../common/services/Util";
 import RichTextCharacter, {RichTextCharacterContent} from "./RichTextCharacter";
 import RichTextDecoration, {RichTextDecorationObject, RichTextDecorationKeys} from "./RichTextDecoration";
-import FatalException from "../../exceptions/FatalException";
 
 export default class RichTextSection {
 
@@ -239,12 +238,12 @@ export default class RichTextSection {
     if (section instanceof RichTextSection || typeof section === "object") {
       return new RichTextSection({...section, element});
     }
-    else if (typeof section === "string") {
+
+    if (typeof section === "string") {
       return new RichTextSection({character_list: RichTextCharacter.parseText(section), element});
     }
-    else {
-      throw new FatalException("Could not parse given RichTextSection.");
-    }
+
+    return new RichTextSection({element});
   }
 
   public static sanitizeCharacterList(initializer?: RichTextCharacterListInitializer) {

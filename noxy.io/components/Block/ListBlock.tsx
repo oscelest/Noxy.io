@@ -59,7 +59,7 @@ export default class ListBlock extends Component<ListBlockProps, State> {
     const element = parent === "blockquote" ? "blockquote" : "li";
     return new RichText({
       element:      parent,
-      section_list: RichTextSection.sanitize(content?.section_list, section => {
+      section_list: RichText.sanitizeSectionList(content?.section_list, section => {
         const array = [] as HTMLTag[];
 
         if ((section instanceof RichTextSection || typeof section === "object" && section.element) && Array.isArray(section.element)) {
