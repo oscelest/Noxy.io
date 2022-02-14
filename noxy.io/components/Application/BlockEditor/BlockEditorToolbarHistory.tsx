@@ -5,9 +5,9 @@ import Style from "./BlockEditorToolbarAlignment.module.scss";
 import Alignment from "../../../../common/enums/Alignment";
 import Button from "../../Form/Button";
 
-export default class BlockEditorToolbarAlignment extends Component<BlockEditorToolbarAlignmentProps, State> {
+export default class BlockEditorToolbarHistory extends Component<BlockEditorToolbarHistoryProps, State> {
 
-  constructor(props: BlockEditorToolbarAlignmentProps) {
+  constructor(props: BlockEditorToolbarHistoryProps) {
     super(props);
     this.state = {
       dropdown_color:            false,
@@ -30,7 +30,7 @@ export default class BlockEditorToolbarAlignment extends Component<BlockEditorTo
   }
 }
 
-export interface BlockEditorToolbarAlignmentProps {
+export interface BlockEditorToolbarHistoryProps {
   className?: string;
   disabled?: boolean;
 

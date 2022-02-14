@@ -74,7 +74,7 @@ namespace Validator {
     if (isNaN(parsed.getTime())) throw new ValidatorException("Date could not be parsed.", received, parsed);
     if (earliest && parsed < earliest) throw new ValidatorException(`Date must be after ${earliest}.`, received, parsed);
     if (latest && parsed > latest) throw new ValidatorException(`Date must be before ${latest}.`, received, parsed);
-    return parsed;
+    return !timestamp ? parsed : parsed.getTime();
   }
 
   function validateEnum(received: string, options: EnumParameterConditions) {

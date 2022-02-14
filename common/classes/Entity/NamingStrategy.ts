@@ -11,7 +11,7 @@ export default class NamingStrategy implements INamingStrategy {
     return _.snakeCase(entityName);
   }
 
-  public getClassName(file: string, separator?: string): string {
+  public getClassName(file: string): string {
     return _.snakeCase(file);
   }
 
@@ -19,11 +19,11 @@ export default class NamingStrategy implements INamingStrategy {
     return `join/${propertyName}`;
   }
 
-  public joinKeyColumnName(entityName: string, referencedColumnName?: string, composite?: boolean): string {
+  public joinKeyColumnName(entityName: string, referencedColumnName?: string): string {
     return referencedColumnName ? `${_.snakeCase(entityName)}_${referencedColumnName}` : `${_.snakeCase(entityName)}`;
   }
 
-  public joinTableName(sourceEntity: string, targetEntity: string, propertyName: string): string {
+  public joinTableName(sourceEntity: string, targetEntity: string): string {
     return `jct/${_.snakeCase(sourceEntity)}-${_.snakeCase(targetEntity)}`;
   }
 
@@ -33,6 +33,18 @@ export default class NamingStrategy implements INamingStrategy {
 
   public referenceColumnName(): string {
     return "reference";
+  }
+
+  public aliasName(entityName: string, index: number): string {
+    return entityName;
+  }
+
+  public columnNameToProperty(columnName: string): string {
+    return columnName;
+  }
+
+  public indexName(tableName: string, columns: string[], type: "primary" | "foreign" | "unique" | "index" | "sequence" | "check"): string {
+    return `${type}_${tableName}_${columns.join("+")}`;
   }
 
 }

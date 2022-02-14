@@ -72,7 +72,7 @@ export default class FileUploadForm extends Component<FileUploadFormProps, State
     Dialog.close(this.state.dialog);
   };
   
-  public componentDidUpdate(prevProps: Readonly<FileUploadFormProps>, prevState: Readonly<State>, snapshot?: any) {
+  public componentDidUpdate(prevProps: Readonly<FileUploadFormProps>) {
     if (this.props.file_list && prevProps.file_list !== this.props.file_list) {
       this.appendFileList(this.props.file_list);
     }

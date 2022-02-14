@@ -1,13 +1,13 @@
-import Entity from "../../../common/classes/Entity/Entity";
+import DatabaseEntity from "../../../common/classes/Entity/DatabaseEntity";
 import FileTypeName from "../../../common/enums/FileTypeName";
-import {Entity as DBEntity, Enum, Unique, Index, Property, PrimaryKey} from "@mikro-orm/core";
+import {Entity, Enum, Unique, Index, Property, PrimaryKey} from "@mikro-orm/core";
 import {v4} from "uuid";
 
-@DBEntity()
+@Entity()
 @Unique({name: "extension", properties: ["name", "mime_type"] as (keyof FileExtension)[]})
 @Index({name: "time_created", properties: ["time_created"] as (keyof FileExtension)[]})
 @Index({name: "time_updated", properties: ["time_updated"] as (keyof FileExtension)[]})
-export default class FileExtension extends Entity<FileExtension>() {
+export default class FileExtension extends DatabaseEntity<FileExtension>() {
 
   //region    ----- Properties -----
 
@@ -26,7 +26,7 @@ export default class FileExtension extends Entity<FileExtension>() {
   @Property()
   public time_created: Date = new Date();
 
-  @Property({onUpdate: () => new Date()})
+  @Property({onUpdate: () => new Date(), nullable: true})
   public time_updated: Date;
 
   //endregion ----- Properties -----

@@ -35,7 +35,7 @@ export default class DragSortList<T> extends Component<DragSortListProps<T>, Sta
     return value;
   }
 
-  public componentDidUpdate(prevProps: Readonly<DragSortListProps<T>>, prevState: Readonly<State<T>>) {
+  public componentDidUpdate() {
     if (this.state.ref_drag.current && !this.state.drag_source_rect) {
       this.setState({drag_source_rect: Rect.fromDOMRect(this.state.ref_drag.current.getBoundingClientRect())});
     }

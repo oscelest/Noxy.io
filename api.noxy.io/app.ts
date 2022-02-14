@@ -11,7 +11,6 @@ import Alias from "../common/classes/Alias";
 import HTTPMethod from "../common/enums/HTTPMethod";
 import PermissionLevel from "../common/enums/PermissionLevel";
 import ServerException from "../common/exceptions/ServerException";
-import Database from "../common/services/Database";
 import Logger from "../common/services/Logger";
 import Server from "../common/services/Server";
 import APIKey from "./entities/APIKey";
@@ -36,13 +35,9 @@ import {RequestContext} from "@mikro-orm/core";
 
     Logger.write(Logger.Level.INFO, "Server starting!");
 
-    await Database.connect();
-
     Server.bindRoute(new Alias(), HTTPMethod.GET, "/", {user: false}, async ({locals: {respond}}) => {
       setTimeout(() => respond?.({}), Math.ceil(Math.random() * 95) + 5);
     });
-
-    Server.bindMiddleware(((req, res, next) => RequestContext.create(Database.manager, next)))
 
     Server.bindMiddleware(async (request: Server.Request, response: any, next: Function) => {
       const authorization = request.get("Authorization");
@@ -55,7 +50,7 @@ import {RequestContext} from "@mikro-orm/core";
       if (authorization) {
         try {
           const {id} = await JSONWebToken.verify(authorization, process.env.JWT_SECRET!) as {id: string};
-          request.locals.api_key = await APIKey.findOne({id}, {populate: {user: "api_key_list"}});
+          request.locals.api_key = await APIKey.getRepository().findOneOrFail({id}, {populate: ["user.api_key_list"]});
         }
         catch (error) {
           if (error instanceof JSONWebToken.TokenExpiredError) return request.locals.respond?.(new ServerException(401, {authorization}, "Authorization token has expired."));
@@ -75,7 +70,8 @@ import {RequestContext} from "@mikro-orm/core";
         }
 
         try {
-          request.locals.user = await User.findOne({id: masquerade}, {populate: "api_key_list"});
+          User.getRepository().findOne({}, {populate: ["api_key_list"]});
+          request.locals.user = await User.getRepository().findOneOrFail({id: masquerade}, {populate: ["api_key_list"]});
         }
         catch (error) {
           if (error instanceof ServerException && error.code === 404) return request.locals.respond?.(new ServerException(404, {authorization}, "Authorization failed - User doesn't exist."));
@@ -104,10 +100,10 @@ import {RequestContext} from "@mikro-orm/core";
 
 declare module "express-serve-static-core" {
   interface Locals<ResBody = any, ReqBody = any> {
-    user: User
-    api_key: APIKey
-    context: RequestContext
-    current_user: boolean
+    user: User;
+    api_key: APIKey;
+    context: RequestContext;
+    current_user: boolean;
   }
 }
 

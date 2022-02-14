@@ -1,4 +1,3 @@
-import {NextPageContext} from "next";
 import React from "react";
 import Component from "../components/Application/Component";
 import BlockEditor from "../components/Application/BlockEditor/BlockEditor";
@@ -8,7 +7,7 @@ import {v4} from "uuid";
 // noinspection JSUnusedGlobalSymbols
 export default class IndexPage extends Component<PageProps, State> {
 
-  public static getInitialProps(context: NextPageContext): PageProps {
+  public static getInitialProps(): PageProps {
     return {permission: null};
   }
 

@@ -103,7 +103,7 @@ class Content extends Component<{}, {permission?: PermissionLevel | null}> {
     this.setState({permission: this.getPermission()});
   }
   
-  public componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<{permission?: PermissionLevel | null}>, snapshot?: any): void {
+  public componentDidUpdate(): void {
     const permission = this.getPermission();
     if (permission !== this.state.permission) {
       this.setState({permission});

@@ -129,7 +129,7 @@ export default class ContextMenu extends Component<ContextMenuProps, State> {
     this.setState({key: Helper.getChildKey(event.currentTarget, this.props.children) as string});
   };
 
-  private readonly eventMouseLeave = (event: React.MouseEvent<HTMLDivElement>) => {
+  private readonly eventMouseLeave = () => {
     this.setState({key: undefined});
   };
 

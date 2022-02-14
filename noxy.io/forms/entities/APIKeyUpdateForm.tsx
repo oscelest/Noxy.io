@@ -34,7 +34,7 @@ export default class APIKeyUpdateForm extends Component<APIKeyUpdateFormProps, S
     this.setState({entity: new APIKeyEntity(this.props.entity)});
   }
 
-  public componentDidUpdate(prevProps: Readonly<APIKeyUpdateFormProps>, prevState: Readonly<State>, snapshot?: any) {
+  public componentDidUpdate(prevProps: Readonly<APIKeyUpdateFormProps>) {
     if (this.props.entity.getPrimaryID() !== prevProps.entity.getPrimaryID()) {
       this.setState({entity: new APIKeyEntity(this.props.entity)});
     }

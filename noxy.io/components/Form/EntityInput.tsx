@@ -41,7 +41,7 @@ export default class EntityInput<E extends BaseEntity> extends Component<EntityI
     }
   }
 
-  public componentDidUpdate(prevProps: Readonly<EntityInputProps<E>>, prevState: Readonly<State<E>>, snapshot?: any): void {
+  public componentDidUpdate(prevProps: Readonly<EntityInputProps<E>>): void {
     if (this.props.value && this.props.value?.getPrimaryID() !== prevProps.value?.getPrimaryID()) {
       this.setState({value: this.getEntityValue(this.props.value), index: 0, list: [this.props.value], loading: true});
     }

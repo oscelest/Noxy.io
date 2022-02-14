@@ -301,7 +301,7 @@ export default class EditText extends Component<EditTextProps, State> {
     return this.setState({history: this.state.history.push({selection: this.props.selection, value: this.value.clone()})});
   }
 
-  public componentDidUpdate(prevProps: Readonly<EditTextProps>, prevState: Readonly<State>, snapshot?: any): void {
+  public componentDidUpdate(): void {
     try {
       if (this.state.ref.current === document.activeElement) {
         this.focus();

@@ -1,45 +1,95 @@
-import {Collection, Constructor, EntityManager, FilterQuery, FindOptions, MikroORM, RequestContext} from "@mikro-orm/core";
+import {Constructor, EntityManager, FindOptions, MikroORM, RequestContext, EntityRepository, EntityMetadata, Collection} from "@mikro-orm/core";
 import _ from "lodash";
 import HTTPMethod from "../../enums/HTTPMethod";
 import Order from "../../enums/Order";
 import ValidatorType from "../../enums/ValidatorType";
 import ServerException from "../../exceptions/ServerException";
-import Database from "../../services/Database";
 import Server from "../../services/Server";
 import Validator from "../../services/Validator";
 import Alias from "../Alias";
 import BaseEntity from "./BaseEntity";
+import {AnyEntity, GetRepository} from "@mikro-orm/core/typings";
+import Database from "../../services/Database";
 
-export default function Entity<E>() {
-  
-  class Entity extends BaseEntity {
-    
+export default function DatabaseEntity<E>() {
+
+  class DatabaseEntity extends BaseEntity {
+
+    constructor(initializer?: Initializer<E>) {
+      super();
+    }
+
     // ----------
     // Decorators
     // ----------
-    
+
+
+    public getPrimaryID() {
+      if (!Database.instance) throw new Error("Cannot get primary ID of entity - No database instance found");
+      const properties = Object.getOwnPropertyNames(this);
+      return Database.instance.getMetadata().get(this.constructor.name).primaryKeys.reduce((result, key) => properties.includes(key) ? [...result, key] : result, [] as string[]).join(";");
+    }
+
+    public getPrimaryKey() {
+      if (!(this.constructor as typeof BaseEntity).database) throw new Error("Cannot get primary key of entity - No database instance found");
+      const properties = Object.getOwnPropertyNames(this);
+      const primary_keys = Database.instance.getMetadata().get(this.constructor.name).primaryKeys;
+      return primary_keys.reduce((result, key) => !properties.includes(key) ? {...result, [key]: this[key as keyof this]} : result, {} as { [K in keyof this]?: this[K] });
+    }
+
+    public toJSON(parent: string = "content", simplify: string[] = []): {[key: string]: any} {
+      if (!Database.instance) throw new Error("Cannot convert entity to JSON - No database instance found");
+      const type = Database.instance.getMetadata().get(this.constructor.name);
+
+      return Object.entries(this).reduce(
+        (result, [key, value]) => {
+          const property = type.properties[key];
+          if (property.hidden) return result;
+
+          if (property.reference === "1:m") {
+            return {...result, [key]: this.toJSONList(key as keyof this, [property.mappedBy])};
+          }
+
+          if (property.reference === "m:1") {
+            const entity = value as DatabaseEntity;
+            return {...result, [key]: simplify.includes(property.name) ? entity.getPrimaryKey() : entity.toJSON(this.constructor.name, [property.inversedBy])};
+          }
+
+          return {...result, [key]: value};
+        },
+        {} as {[key: string]: any},
+      );
+    }
+
+    public toJSONList(field: keyof this, simplify: string[]): {[key: string]: any}[] {
+      if (!Database.instance) throw new Error("Cannot convert field to JSON collection - No database instance found");
+
+      const collection: Collection<DatabaseEntity> = this[field] as any;
+      return collection.isInitialized() ? collection.getItems().map(entity => entity.toJSON(this.constructor.name, simplify)) : [];
+    }
+
     public static [HTTPMethod.GET](path: string, options?: Server.EndpointOptions) {
       return this.bindRoute(HTTPMethod.GET, path, options);
     }
-    
+
     public static [HTTPMethod.POST](path: string, options?: Server.EndpointOptions) {
       return this.bindRoute(HTTPMethod.POST, path, options);
     }
-    
+
     public static [HTTPMethod.PUT](path: string, options?: Server.EndpointOptions) {
       return this.bindRoute(HTTPMethod.PUT, path, options);
     }
-    
+
     public static [HTTPMethod.DELETE](path: string, options?: Server.EndpointOptions) {
       return this.bindRoute(HTTPMethod.DELETE, path, options);
     }
-    
+
     private static bindRoute(http_method: HTTPMethod, path: string, options: Server.EndpointOptions = {}) {
       return function (constructor: DecoratorConstructor, method: string, descriptor: PropertyDescriptor) {
         Server.bindRoute(new Alias(constructor, method), http_method, [_.kebabCase(constructor.name), path], options, descriptor.value.bind(constructor));
       };
     }
-    
+
     public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.BOOLEAN, options?: Server.EndpointParameterOptions): Decorator
     public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.EMAIL, options?: Server.EndpointParameterOptions): Decorator
     public static bindParameter<R extends {}>(key: Key<R>, type: ValidatorType.FILE, options?: Server.EndpointParameterOptions): Decorator
@@ -64,7 +114,7 @@ export default function Entity<E>() {
         }
       };
     }
-    
+
     public static bindPagination<K extends Key<E>>(limit: number, columns: K[]) {
       return function (constructor: DecoratorConstructor, method: string) {
         const alias = new Alias(constructor, method);
@@ -73,94 +123,39 @@ export default function Entity<E>() {
         Server.bindRouteParameter(alias, "order", ValidatorType.ORDER, columns as string[], {array: true});
       };
     }
-    
+
     //region    ----- Query methods -----
-    
-    public static create(values: Initializer<E>): E {
-      return Database.manager.create(this, values) as unknown as E;
+
+    protected static getEntityManager() {
+      const manager = RequestContext.getEntityManager();
+      if (!manager) throw new ServerException(500, "Request context not found.");
+      return manager;
     }
-    
-    public static async count(where: FilterQuery<E>, options: CountOptions<E> = {}) {
-      return await this.getEntityManager().count(this, where, options) as number;
+
+    public static getMetadata() {
+      return this.getEntityManager().getMetadata().get(this.name) as EntityMetadata<E>;
     }
-    
-    public static async find(where: FilterQuery<E>, options: FindManyOptions<E> = {}) {
-      return await this.getEntityManager().find(this, where, {...options, limit: options.limit, offset: options.skip, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E[];
+
+    public static getRepository() {
+      return this.getEntityManager().getRepository(this) as GetRepository<E & AnyEntity, EntityRepository<E>>;
     }
-    
-    public static async findOne(where: FilterQuery<E>, options: FindOneOptions<E> = {}) {
-      try {
-        return await this.getEntityManager().findOneOrFail(this, where, {...options, orderBy: options.order, populate: this.resolvePopulate(options.populate)}) as E;
-      }
-      catch (error) {
-        if (error instanceof Error) {
-          if (error.name === "NotFoundError") throw new ServerException(404, {entity: this.name});
-        }
-        throw error;
-      }
-    }
-    
-    public static async populate(entities: E | E[], populate: Populate<E>) {
-      return await this.getEntityManager().populate(entities, populate) as E[];
-    }
-    
-    public static async persist(object: Initializer<E>, values?: Initializer<E>) {
-      try {
-        if (!(object instanceof this)) object = this.create(object);
-        if (values) {
-          for (let key in values) {
-            const property = key as keyof Initializer<E>;
-            if (!values.hasOwnProperty(property) || values[property] === undefined) continue;
-            object[property] = values[property];
-          }
-        }
-        
-        await this.getEntityManager().persistAndFlush(object);
-        return object as E;
-      }
-      catch (error) {
-        if (error instanceof Error) {
-          if ((error as any).code === "ER_DUP_ENTRY") throw new ServerException(409);
-        }
-        throw error;
-      }
-    }
-    
-    public static async remove(where: FilterQuery<E>, options: FindOneOptions<E> = {}) {
-      const entity = await this.findOne(where, options);
-      await this.getEntityManager().removeAndFlush(entity);
-      return entity;
-    }
-    
-    private static resolvePopulate(object?: Populate<E>, prefix?: string): string[] {
-      if (!object) return [];
-      if (typeof object === "boolean") return object && prefix ? [prefix] : [];
-      if (typeof object !== "object") return [prefix ? `${prefix}.${object}` : object.toString()];
-      if (Array.isArray(object)) return _.map(object as string[], value => prefix ? `${prefix}.${value}` : value);
-      return _.reduce(object, (result, value: any, key: string) => _.concat(result, this.resolvePopulate(value, prefix ? `${prefix}.${key}` : key)), [] as string[]);
-    }
-    
-    private static getEntityManager() {
-      if (!RequestContext.getEntityManager) throw new ServerException(500, "Request context not found.");
-      return RequestContext.getEntityManager()!;
-    }
-    
+
     //endregion ----- Query methods -----
-    
+
   }
-  
-  return Entity;
+
+  return DatabaseEntity;
 }
 
 export interface Entity {
   instance: MikroORM;
   manager: EntityManager;
-  
+
   defaultID: string;
-  
+
   generateDataHash: () => string;
   generateShareHash: () => string;
-  
+
   regexDataHash: RegExp;
   regexShareHash: RegExp;
 }
@@ -168,10 +163,9 @@ export interface Entity {
 type Ordering = {[key: string]: Order}
 type Decorator = <T>(target: DecoratorConstructor, propertyKey: string, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T> | void;
 
-export type Populate<V> = keyof V | (keyof V)[] | { [K in keyof V]?: true | (V[K] extends Collection<infer R> ? Populate<R> : | Populate<V[K]>) }
-export type CountOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy">
-export type FindOneOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy" | "offset" | "limit"> & {populate?: Populate<E>, order?: Ordering}
-export type FindManyOptions<E> = Omit<FindOptions<Constructor<E>>, "populate" | "orderBy" | "offset"> & {populate?: Populate<E>, skip?: number, order?: Ordering}
+export type CountOptions<E> = Omit<FindOptions<Constructor<E>>, "orderBy">
+export type FindOneOptions<E> = Omit<FindOptions<Constructor<E>>, "orderBy" | "offset" | "limit"> & {order?: Ordering}
+export type FindManyOptions<E> = Omit<FindOptions<E>, "orderBy" | "offset"> & {skip?: number, order?: Ordering}
 
 export interface Pagination {
   skip?: number;

@@ -1,21 +1,21 @@
-import {Entity as DBEntity, PrimaryKey, Property, Index, Unique, ManyToOne, FilterQuery} from "@mikro-orm/core";
+import {Entity, PrimaryKey, Property, Index, Unique, ManyToOne, FilterQuery} from "@mikro-orm/core";
 import {v4} from "uuid";
 import User from "../User";
-import Entity, {Pagination, Populate} from "../../../common/classes/Entity/Entity";
+import DatabaseEntity, {Pagination} from "../../../common/classes/Entity/DatabaseEntity";
 import ValidatorType from "../../../common/enums/ValidatorType";
 import ServerException from "../../../common/exceptions/ServerException";
 import Server from "../../../common/services/Server";
 
-@DBEntity()
+@Entity()
 @Unique({name: "file_tag", properties: ["name", "user"] as (keyof FileTag)[]})
 @Index({name: "time_created", properties: ["time_created"] as (keyof FileTag)[]})
 @Index({name: "time_updated", properties: ["time_updated"] as (keyof FileTag)[]})
-export default class FileTag extends Entity<FileTag>() {
+export default class FileTag extends DatabaseEntity<FileTag>() {
 
   //region    ----- Properties -----
 
   @PrimaryKey({length: 36})
-  public id: string = v4();
+  public id: string;
 
   @Property({length: 64})
   public name: string;
@@ -24,10 +24,10 @@ export default class FileTag extends Entity<FileTag>() {
   public user: User;
 
   @Property()
-  public time_created: Date = new Date();
+  public time_created: Date;
 
-  @Property({onUpdate: () => new Date()})
-  public time_updated: Date = new Date();
+  @Property({onUpdate: () => new Date(), nullable: true})
+  public time_updated: Date;
 
   //endregion ----- Properties -----
 
@@ -36,8 +36,6 @@ export default class FileTag extends Entity<FileTag>() {
   //endregion ----- Instance methods -----
 
   //region    ----- Static properties -----
-
-  public static columnPopulate: Populate<FileTag> = ["user"];
 
   //endregion ----- Static properties -----
 
@@ -51,8 +49,8 @@ export default class FileTag extends Entity<FileTag>() {
     const where: FilterQuery<FileTag> = {user, name: {$like: name}, id: {$nin: exclude}};
     if (!name) delete where.name;
     if (!exclude) delete where.id;
-    
-    return respond(await this.count(where));
+
+    return respond(await this.getRepository().count(where));
   }
 
   @FileTag.get("/", {user: true})
@@ -61,31 +59,42 @@ export default class FileTag extends Entity<FileTag>() {
   @FileTag.bindPagination(100, ["id", "name", "time_created"])
   public static async getMany({locals: {respond, user, params: {name, exclude, ...pagination}}}: Server.Request<{}, Response.getMany, Request.getMany>) {
     const where: FilterQuery<FileTag> = {user, name: {$like: name}, id: {$nin: exclude}};
-    if (!name) delete where.name;
-    if (!exclude) delete where.id;
-    
-    return respond(await this.find(where, {...pagination, populate: this.columnPopulate}));
+    if (name) where.name = {$like: name};
+    if (exclude) where.id = {$nin: exclude};
+
+    return respond(await this.getRepository().find(where, {...pagination, populate: ["user"]}));
   }
 
-  @FileTag.get("/:id")
+  @FileTag.get("/:id", {user: true})
   public static async getOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.getOne, Request.getOne>) {
-    return respond(await this.findOne({id, user}, {populate: this.columnPopulate}));
+    return respond(await this.getRepository().findOneOrFail({id, user}, {populate: ["user"]}));
   }
 
-  @FileTag.get("/by-name/:name")
+  @FileTag.get("/by-name/:name", {user: true})
   public static async getOneByName({params: {name}, locals: {respond, user}}: Server.Request<{name: string}, Response.getOne, Request.getOne>) {
-    return respond(await this.findOne({name, user}, {populate: this.columnPopulate}));
+    return respond(await this.getRepository().findOneOrFail({name, user}, {populate: ["user"]}));
   }
 
-  @FileTag.post("/")
+  @FileTag.post("/", {user: true})
   @FileTag.bindParameter<Request.postOne>("name", ValidatorType.STRING, {min_length: 3, max_length: 64})
   private static async postOne({locals: {respond, user, params: {name}}}: Server.Request<{}, Response.postOne, Request.postOne>) {
-    return respond(await this.persist({name, user}));
+    const file_tag_entity = this.getRepository().create({
+      id:           v4(),
+      user:         user,
+      name:         name,
+      time_created: new Date(),
+      time_updated: null,
+    });
+    await this.getRepository().persistAndFlush(file_tag_entity);
+
+    return respond(file_tag_entity);
   }
 
-  @FileTag.delete("/:id")
+  @FileTag.delete("/:id", {user: true})
   private static async deleteOne({params: {id}, locals: {respond, user}}: Server.Request<{id: string}, Response.deleteOne, Request.deleteOne>) {
-    return respond(await this.remove({id, user}, {populate: this.columnPopulate}));
+    const file_tag_entity = await this.getRepository().findOneOrFail({id, user}, {populate: ["user"]});
+    await this.getRepository().remove(file_tag_entity);
+    return respond(file_tag_entity);
   }
 
   //endregion ----- Endpoint methods -----

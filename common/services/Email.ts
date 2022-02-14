@@ -27,7 +27,7 @@ module Email {
 
   export async function send(request: SendEmailRequest) {
     try {
-      if (await client.config.region() === default_region) return console.log(request);
+      if (await client.config.region() === default_region) return console.info(request);
       await client.send(new SendEmailCommand(request));
     }
     catch (error) {

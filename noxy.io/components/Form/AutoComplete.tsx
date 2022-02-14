@@ -53,7 +53,7 @@ export default class AutoComplete extends Component<AutoCompleteProps, State> {
     return this.setIndex(index);
   }
 
-  public componentDidUpdate(prevProps: Readonly<AutoCompleteProps>, prevState: Readonly<State>, snapshot?: any): void {
+  public componentDidUpdate(): void {
     if (this.state.reset) {
       this.state.ref_input.current?.blur();
     }

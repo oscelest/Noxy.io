@@ -101,7 +101,7 @@ export default class ColorPicker extends Component<ColorPickerProps, State> {
     }
   }
 
-  public componentDidUpdate(prevProps: Readonly<ColorPickerProps>, prevState: Readonly<State>, snapshot?: any): void {
+  public componentDidUpdate(prevProps: Readonly<ColorPickerProps>): void {
     const next_state = {} as State;
 
     if (this.props.color !== prevProps.color) {

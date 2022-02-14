@@ -20,6 +20,8 @@ import ServerException from "../exceptions/ServerException";
 import ValidatorException from "../exceptions/ValidatorException";
 import Logger from "./Logger";
 import Validator from "./Validator";
+import Database from "./Database";
+import {RequestContext} from "@mikro-orm/core";
 
 if (!process.env.PORT) throw new Error("PORT environmental value must be defined.");
 if (!process.env.TMP_PATH) throw new Error("TMP_PATH environmental value must be defined.");
@@ -46,6 +48,7 @@ module Server {
         await cb(request, response, next);
       }
       catch (error) {
+        console.log(error);
         request.locals.respond?.(error);
       }
     };
@@ -73,6 +76,7 @@ module Server {
 
 
   export async function start() {
+    await Database.connect();
     const application = Express();
 
     application.set("query parser", "simple");
@@ -85,7 +89,7 @@ module Server {
 
     _.map(route_collection, ({path, method, callback}) => {
       if (!path || !method || !callback) return;
-      application[method](path, attachLocals, attachFiles, attachParameters, ...middleware_collection, callback);
+      application[method](path, attachLocals, attachFiles, attachParameters, attachDatabase, ...middleware_collection, callback);
     });
 
     application.use(attachNotFound);
@@ -105,12 +109,6 @@ module Server {
     next();
   }
 
-  function attachNotFound(request: Express.Request, response: Express.Response, next: Express.NextFunction) {
-    if (_.includes(["GET", "POST", "PUT", "PATCH", "DELETE", "JSONP"], request.method)) {
-      return respond.bind(request, new ServerException(404))();
-    }
-    next();
-  }
 
   function attachLocals(request: Express.Request, response: Express.Response, next: Express.NextFunction) {
     request.locals.id = v4();
@@ -190,6 +188,20 @@ module Server {
 
     _.size(error_collection) ? respond?.(new ServerException(400, error_collection)) : next();
   }
+
+
+  function attachDatabase(request: Express.Request, response: Express.Response, next: Express.NextFunction) {
+    RequestContext.create(Database.manager, next);
+  }
+
+
+  function attachNotFound(request: Express.Request, response: Express.Response, next: Express.NextFunction) {
+    if (_.includes(["GET", "POST", "PUT", "PATCH", "DELETE", "JSONP"], request.method)) {
+      return respond.bind(request, new ServerException(404))();
+    }
+    next();
+  }
+
 
   function respond<T>(this: Express.Request<{[key: string]: string}, Server.ResponseBody<T>>, value: T) {
     const time_started = this.locals.time_created?.toISOString() ?? new Date().toISOString();
